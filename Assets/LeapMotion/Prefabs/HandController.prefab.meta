@@ -1,0 +1,11 @@
+fileFormatVersion: 2
+guid: c9f2277f2b4414ff9abf05e783890171
+labels:
+- Controller
+- Hand
+- Leap
+- Motion
+- Skeletal
+- LeapMotion
+NativeFormatImporter:
+  userData: 
