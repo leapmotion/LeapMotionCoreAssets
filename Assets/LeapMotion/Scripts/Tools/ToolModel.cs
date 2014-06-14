@@ -40,27 +40,26 @@ public class ToolModel : MonoBehaviour {
   }
 
   public Vector3 GetToolTipVelocity() {
-    Vector3 local_point = tool_.TipVelocity.ToUnityScaled();
-    return GetController().transform.TransformDirection(local_point);
+    Vector3 local_velocity = tool_.TipVelocity.ToUnityScaled();
+    Vector3 total_scale = Vector3.Scale(GetController().handMovementScale,
+                                        GetController().transform.localScale);
+    Vector3 scaled_velocity = Vector3.Scale(total_scale, local_velocity);
+    return GetController().transform.TransformDirection(scaled_velocity);
   }
 
   public Vector3 GetToolTipPosition() {
     Vector3 local_point = tool_.TipPosition.ToUnityScaled();
-    return GetController().transform.TransformPoint(local_point);
-  }
-  
-  public Vector3 GetToolCenter() {
-    Vector3 local_point = tool_.TipPosition.ToUnityScaled();
-    return GetController().transform.TransformPoint(local_point);
+    Vector3 scaled_point = Vector3.Scale(GetController().handMovementScale, local_point);
+    return GetController().transform.TransformPoint(scaled_point);
   }
 
   public void InitTool() {
-    transform.position = GetToolCenter();
+    transform.position = GetToolTipPosition();
     transform.rotation = GetToolRotation();
   }
 
   public void UpdateTool() {
-    Vector3 target_position = GetToolCenter();
+    Vector3 target_position = GetToolTipPosition();
     rigidbody.velocity = (target_position - transform.position) *
                          (1 - easing) / Time.fixedDeltaTime;
 
