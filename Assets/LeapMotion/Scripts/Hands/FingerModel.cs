@@ -60,7 +60,7 @@ public abstract class FingerModel : MonoBehaviour {
   // Returns the location of the given joint on the finger in relation to the controller.
   public Vector3 GetJointPosition(int joint) {
     if (joint >= NUM_BONES)
-      return GetTipPosition() + offset_;
+      return GetTipPosition();
     
     Vector3 local_position = finger_.Bone((Bone.BoneType)(joint)).PrevJoint.ToUnityScaled();
     return controller_.transform.TransformPoint(local_position) + offset_;
