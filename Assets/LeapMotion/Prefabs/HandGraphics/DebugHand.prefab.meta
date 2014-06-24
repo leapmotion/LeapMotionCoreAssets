@@ -1,7 +1,7 @@
 fileFormatVersion: 2
-guid: 00a0c033c1cee402a847a30b394643f7
+guid: e98e2c2cadb464c9892b9e4d60d61f6f
 labels:
-- Tool
-- Flashlight
+- Debug
+- Hand
 NativeFormatImporter:
   userData: 

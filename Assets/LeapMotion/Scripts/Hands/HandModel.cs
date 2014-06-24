@@ -46,6 +46,38 @@ public abstract class HandModel : MonoBehaviour {
     return controller_.transform.TransformDirection(hand_.Direction.ToUnity());
   }
 
+  // Returns the palm normal of the hand in relation to the controller.
+  public Vector3 GetPalmNormal() {
+    return controller_.transform.TransformDirection(hand_.PalmNormal.ToUnity());
+  }
+
+  // Returns the lower arm direction in relation to the controller.
+  public Vector3 GetArmDirection() {
+    return controller_.transform.TransformDirection(hand_.Arm.Direction.ToUnity());
+  }
+
+  // Returns the lower arm center in relation to the controller.
+  public Vector3 GetArmCenter() {
+    Vector leap_center = 0.5f * (hand_.Arm.WristPosition + hand_.Arm.ElbowPosition);
+    return controller_.transform.TransformPoint(leap_center.ToUnityScaled());
+  }
+
+  // Returns the lower arm elbow position in relation to the controller.
+  public Vector3 GetElbowPosition() {
+    return controller_.transform.TransformPoint(hand_.Arm.ElbowPosition.ToUnityScaled());
+  }
+
+  // Returns the lower arm wrist position in relation to the controller.
+  public Vector3 GetWristPosition() {
+    return controller_.transform.TransformPoint(hand_.Arm.WristPosition.ToUnityScaled());
+  }
+
+  // Returns the rotation quaternion of the arm in relation to the controller.
+  public Quaternion GetArmRotation() {
+    Quaternion local_rotation = hand_.Arm.Basis.Rotation();
+    return controller_.transform.rotation * local_rotation;
+  }
+
   public Hand GetLeapHand() {
     return hand_;
   }

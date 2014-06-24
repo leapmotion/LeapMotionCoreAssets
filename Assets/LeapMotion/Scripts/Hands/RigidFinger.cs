@@ -31,7 +31,7 @@ public class RigidFinger : SkeletalFinger {
         Vector3 target_bone_position = GetBoneCenter(i);
         
         bones[i].rigidbody.velocity = (target_bone_position - bones[i].transform.position) *
-                                      ((1 - easing) / Time.fixedDeltaTime);
+                                      ((1 - easing) / Time.deltaTime);
 
         // Set angular velocity.
         Quaternion target_rotation = GetBoneRotation(i);

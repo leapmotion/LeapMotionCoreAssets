@@ -32,7 +32,7 @@ public class RigidHand : SkeletalHand {
       // Set palm velocity.
       Vector3 target_position = GetPalmCenter();
       palm.rigidbody.velocity = (target_position - palm.transform.position) *
-                                (1 - easing) / Time.fixedDeltaTime;
+                                (1 - easing) / Time.deltaTime;
 
       // Set palm angular velocity.
       Quaternion target_rotation = GetPalmRotation();

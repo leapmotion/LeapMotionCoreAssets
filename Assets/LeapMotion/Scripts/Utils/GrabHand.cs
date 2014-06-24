@@ -108,7 +108,7 @@ public class GrabHand : MonoBehaviour {
     // Move and rotate what we are grabbing toward the pinch.
     if (grabbed_ != null) {
       pinch_position_ += (1 - filtering) * (pinch_position - pinch_position_);
-      Vector3 velocity = (pinch_position_ - grabbed_.transform.position) / Time.fixedDeltaTime;
+      Vector3 velocity = (pinch_position_ - grabbed_.transform.position) / Time.deltaTime;
       grabbed_.rigidbody.velocity = velocity;
 
       palm_rotation_ = Quaternion.Slerp(palm_rotation_, hand_model.GetPalmRotation(), filtering);

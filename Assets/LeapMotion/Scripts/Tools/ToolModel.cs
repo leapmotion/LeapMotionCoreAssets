@@ -61,7 +61,7 @@ public class ToolModel : MonoBehaviour {
   public void UpdateTool() {
     Vector3 target_position = GetToolTipPosition();
     rigidbody.velocity = (target_position - transform.position) *
-                         (1 - easing) / Time.fixedDeltaTime;
+                         (1 - easing) / Time.deltaTime;
 
     // Set angular velocity.
     Quaternion target_rotation = GetToolRotation();

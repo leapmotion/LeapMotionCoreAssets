@@ -8,25 +8,21 @@ using UnityEngine;
 using System.Collections;
 using Leap;
 
-// The finger model for our skeletal hand made out of various non-deforming models.
-public class SkeletalFinger : FingerModel {
+// The finger model for our debugging. Draws debug lines for each bone.
+public class DebugFinger : FingerModel {
 
-  public Transform[] bones = new Transform[NUM_BONES];
+  private Color[] colors = {Color.yellow, Color.green, Color.cyan, Color.blue};
 
   public override void InitFinger() {
-    SetPositions();
+    DrawDebugLines();
   }
 
   public override void UpdateFinger() {
-    SetPositions();
+    DrawDebugLines();
   }
 
-  private void SetPositions() {
-    for (int i = 0; i < bones.Length; ++i) {
-      if (bones[i] != null) {
-        bones[i].transform.position = GetBoneCenter(i);
-        bones[i].transform.rotation = GetBoneRotation(i);
-      }
-    }
+  private void DrawDebugLines() {
+    for (int i = 0; i < NUM_BONES; ++i)
+      Debug.DrawLine(GetJointPosition(i), GetJointPosition(i + 1), colors[i]);
   }
 }
