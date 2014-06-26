@@ -1,0 +1,10 @@
+v0.2.0
+ - Added non-relative hand movement vector so you can you have small hands travel long distances.
+ - Added tool tracking and some example tools.
+ - Added a robot hand.
+ - Added a debug hand.
+ - Added example scenes.
+ - Fixed a bug in the Magnetic Pinch script for a moving HandController.
+
+v0.1.0
+ - Initial Release
