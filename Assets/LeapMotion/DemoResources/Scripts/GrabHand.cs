@@ -8,23 +8,24 @@ using UnityEngine;
 using System.Collections;
 using Leap;
 
-// NOTE: This script is very new and may change a lot in the near future.
-// Leap Motion hand grab script. Will rotate the grabbed rigidbody with the hand.
+// Leap Motion hand script that detects pinches and grabs the
+// closest rigidbody with a spring force if it's within a given range.
 public class GrabHand : MonoBehaviour {
 
   private const float TRIGGER_DISTANCE_RATIO = 0.7f;
 
   public float grabDistance = 2.0f;
   public float filtering = 0.5f;
+  public float minConfidence = 0.3f;
+  public float maxVelocity = 0.3f;
 
   private bool pinching_;
   private Collider grabbed_;
   private Quaternion start_rotation_;
+  private Vector3 start_position_;
 
-  private Vector3 pinch_position_;
+  private Vector3 palm_position_;
   private Quaternion palm_rotation_;
-
-  private float grabbed_max_angular_velocity_;
 
   void Start() {
     pinching_ = false;
@@ -50,24 +51,32 @@ public class GrabHand : MonoBehaviour {
           !close_things[j].transform.IsChildOf(transform)) {
         grabbed_ = close_things[j];
         distance = new_distance;
-        pinch_position_ = close_things[j].transform.position;
       }
     }
 
     if (grabbed_ != null) {
-      grabbed_max_angular_velocity_ = grabbed_.rigidbody.maxAngularVelocity;
       grabbed_.rigidbody.maxAngularVelocity = Mathf.Infinity;
       grabbed_.rigidbody.detectCollisions = false;
       palm_rotation_ = hand_model.GetPalmRotation();
+      palm_position_ = hand_model.GetPalmPosition();
       start_rotation_ = grabbed_.transform.rotation * Quaternion.Inverse(palm_rotation_);
+      start_position_ = Quaternion.Inverse(palm_rotation_) *
+                        (grabbed_.transform.position - palm_position_);
+      Grabbable grabbable = grabbed_.GetComponent<Grabbable>();
+      if (grabbable != null)
+        grabbable.OnGrab();
     }
   }
 
   void OnRelease() {
     pinching_ = false;
     if (grabbed_ != null) {
-      grabbed_.rigidbody.maxAngularVelocity = grabbed_max_angular_velocity_;
+      grabbed_.rigidbody.maxAngularVelocity = 7.0f;
       grabbed_.rigidbody.detectCollisions = true;
+
+      Grabbable grabbable = grabbed_.GetComponent<Grabbable>();
+      if (grabbable != null)
+        grabbable.OnRelease();
     }
     grabbed_ = null;
   }
@@ -97,22 +106,44 @@ public class GrabHand : MonoBehaviour {
       }
     }
 
-    Vector3 pinch_position = hand_model.fingers[0].GetTipPosition();
+    Vector3 pinch_position = 0.5f * (hand_model.fingers[0].GetTipPosition() + 
+                                     hand_model.fingers[1].GetTipPosition());
 
     // Only change state if it's different.
-    if (trigger_pinch && !pinching_)
-      OnPinch(pinch_position);
-    else if (!trigger_pinch && pinching_)
-      OnRelease();
+    if (leap_hand.Confidence >= minConfidence &&
+        leap_hand.PalmVelocity.ToUnityScaled().magnitude <= maxVelocity) {
+      if (trigger_pinch && !pinching_)
+        OnPinch(pinch_position);
+      else if (!trigger_pinch && pinching_)
+        OnRelease();
+    }
 
-    // Move and rotate what we are grabbing toward the pinch.
+    // Accelerate what we are grabbing toward the pinch.
     if (grabbed_ != null) {
-      pinch_position_ += (1 - filtering) * (pinch_position - pinch_position_);
-      Vector3 velocity = (pinch_position_ - grabbed_.transform.position) / Time.deltaTime;
+      Grabbable grabbable = grabbed_.GetComponent<Grabbable>();
+      palm_rotation_ = Quaternion.Slerp(palm_rotation_, hand_model.GetPalmRotation(),
+                                        1.0f - filtering);
+      Vector3 delta_palm_position = hand_model.GetPalmPosition() - palm_position_;
+      palm_position_ += (1 - filtering) * delta_palm_position;
+
+      Vector3 target_position = pinch_position;
+      Quaternion target_rotation = palm_rotation_ * start_rotation_;
+
+      if (grabbable != null) {
+        if (grabbable.keepDistanceWhenGrabbed)
+          target_position = palm_position_ + palm_rotation_ * start_position_;
+
+        if (grabbable.preferredOrientation) {
+          Quaternion relativeToPalm = Quaternion.FromToRotation(grabbable.objectOrientation,
+                                                                grabbable.palmOrientation);
+          target_rotation = palm_rotation_ * relativeToPalm;
+        }
+      }
+
+      Vector3 velocity = (target_position - grabbed_.transform.position) / Time.fixedDeltaTime;
       grabbed_.rigidbody.velocity = velocity;
 
-      palm_rotation_ = Quaternion.Slerp(palm_rotation_, hand_model.GetPalmRotation(), filtering);
-      Quaternion target_rotation = palm_rotation_ * start_rotation_;
+
       Quaternion delta_rotation = target_rotation *
                                   Quaternion.Inverse(grabbed_.transform.rotation);
 

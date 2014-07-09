@@ -11,7 +11,7 @@ using Leap;
 // The finger model for our rigid hand made out of various cubes.
 public class RigidFinger : SkeletalFinger {
 
-  public float easing = 0.5f;
+  public float filtering = 0.5f;
 
   void Start() {
     for (int i = 0; i < bones.Length; ++i) {
@@ -31,7 +31,7 @@ public class RigidFinger : SkeletalFinger {
         Vector3 target_bone_position = GetBoneCenter(i);
         
         bones[i].rigidbody.velocity = (target_bone_position - bones[i].transform.position) *
-                                      ((1 - easing) / Time.deltaTime);
+                                      ((1 - filtering) / Time.deltaTime);
 
         // Set angular velocity.
         Quaternion target_rotation = GetBoneRotation(i);
@@ -47,7 +47,7 @@ public class RigidFinger : SkeletalFinger {
         }
 
         if (angle != 0)
-          bones[i].rigidbody.angularVelocity = (1 - easing) * angle * axis;
+          bones[i].rigidbody.angularVelocity = (1 - filtering) * angle * axis;
       }
     }
   }

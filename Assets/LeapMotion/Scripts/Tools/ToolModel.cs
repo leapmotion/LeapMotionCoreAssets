@@ -12,7 +12,7 @@ using Leap;
 // NOTE: This file is a work in progress, changes to come.
 public class ToolModel : MonoBehaviour {
 
-  public float easing = 0.5f;
+  public float filtering = 0.5f;
 
   private Tool tool_;
   private HandController controller_;
@@ -60,8 +60,10 @@ public class ToolModel : MonoBehaviour {
 
   public void UpdateTool() {
     Vector3 target_position = GetToolTipPosition();
-    rigidbody.velocity = (target_position - transform.position) *
-                         (1 - easing) / Time.deltaTime;
+    if (Time.deltaTime != 0) {
+      rigidbody.velocity = (target_position - transform.position) *
+                           (1 - filtering) / Time.deltaTime;
+    }
 
     // Set angular velocity.
     Quaternion target_rotation = GetToolRotation();
@@ -76,6 +78,6 @@ public class ToolModel : MonoBehaviour {
       axis = -axis;
     }
     if (angle != 0)
-      rigidbody.angularVelocity = (1 - easing) * angle * axis;
+      rigidbody.angularVelocity = (1 - filtering) * angle * axis;
   }
 }
