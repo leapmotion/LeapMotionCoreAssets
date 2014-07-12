@@ -66,6 +66,12 @@ public abstract class FingerModel : MonoBehaviour {
     return controller_.transform.TransformPoint(local_position) + offset_;
   }
 
+  // Returns a ray from the tip of the finger in the direction it is pointing.
+  public Ray GetRay() {
+    Ray ray = new Ray(GetTipPosition(), GetBoneDirection(NUM_BONES - 1));
+    return ray;
+  }
+
   // Returns the center of the given bone on the finger in relation to the controller.
   public Vector3 GetBoneCenter(int bone_type) {
     Bone bone = finger_.Bone((Bone.BoneType)(bone_type));
@@ -74,8 +80,8 @@ public abstract class FingerModel : MonoBehaviour {
 
   // Returns the direction the given bone is facing on the finger in relation to the controller.
   public Vector3 GetBoneDirection(int bone_type) {
-    Vector3 local_direction = finger_.Bone((Bone.BoneType)(bone_type)).Direction.ToUnity();
-    return controller_.transform.TransformDirection(local_direction);
+    Vector3 direction = GetJointPosition(bone_type + 1) - GetJointPosition(bone_type);
+    return direction.normalized;
   }
 
   // Returns the rotation quaternion of the given bone in relation to the controller.

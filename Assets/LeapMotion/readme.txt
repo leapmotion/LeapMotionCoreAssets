@@ -43,6 +43,17 @@ Customizing Hands:
   become part of the hand. Keep in mind that you shouldn't have Colliders in
   the Hand Graphics Model because it doesn't get updated on the Physics loop.
 
+Tools:
+  If you want to use tools, you can drop a ToolModel object into the
+  HandController's ToolModel parameter. There are currently two tools shipped
+  with these assets: a flash light and a low fidelity spatula but there will
+  be more in the future. Please send in any requests.
+
+Interaction Utilities:
+  We are developing a more complex system to manipulate objects. It is
+  currently in an alpha state so may be unstable and may not be comptabile
+  with current features.
+
 Head Mounted Displays:
   If you want to track your hands from a head mounted display, you can place
   the HandController prefab as a child of the main camera facing forward.
