@@ -5,9 +5,9 @@ using System.Collections;
 [CustomEditor(typeof(HandController))]
 public class HandControllerEditor : Editor {
 
-  private const float BOX_HEIGHT = 0.5f;
-  private const float BOX_WIDTH = 0.5f;
-  private const float BOX_DEPTH = 0.5f;
+  private const float BOX_HEIGHT = 0.45f;
+  private const float BOX_WIDTH = 0.965f;
+  private const float BOX_DEPTH = 0.6671f;
 
   public void OnSceneGUI() {
     HandController controller = (HandController)target;
