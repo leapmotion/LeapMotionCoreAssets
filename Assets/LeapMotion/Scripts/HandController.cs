@@ -95,19 +95,25 @@ public class HandController : MonoBehaviour {
           HandModel new_hand = CreateHand(model);
           new_hand.SetLeapHand(leap_hand);
           new_hand.SetController(this);
+
+          // Set scaling based on reference hand.
+          float hand_scale = leap_hand.PalmWidth / MODEL_PALM_WIDTH;
+          new_hand.transform.localScale = hand_scale * transform.localScale;
+
           new_hand.InitHand();
+          new_hand.UpdateHand();
           all_hands[leap_hand.Id] = new_hand;
         }
+        else {
+          // Make sure we update the Leap Hand reference.
+          HandModel hand_model = all_hands[leap_hand.Id];
+          hand_model.SetLeapHand(leap_hand);
 
-        // Make sure we update the Leap Hand reference.
-        HandModel hand_model = all_hands[leap_hand.Id];
-        hand_model.SetLeapHand(leap_hand);
-
-        // Set scaling based on reference hand.
-        float hand_scale = leap_hand.PalmWidth / MODEL_PALM_WIDTH;
-        hand_model.transform.localScale = hand_scale * transform.localScale;
-
-        hand_model.UpdateHand();
+          // Set scaling based on reference hand.
+          float hand_scale = leap_hand.PalmWidth / MODEL_PALM_WIDTH;
+          hand_model.transform.localScale = hand_scale * transform.localScale;
+          hand_model.UpdateHand();
+        }
       }
     }
 
