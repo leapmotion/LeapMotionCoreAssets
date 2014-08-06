@@ -74,7 +74,7 @@ public class InteractionSceneSetup : MonoBehaviour {
   /// Performs initialization of Leap Interaction.
   /// </summary>
   public void Initialize () {
-    // clientUnitLengthInMillimeters = MM_PER_M / transform.localScale.x;
+    clientUnitLengthInMillimeters = MM_PER_M / transform.localScale.x;
     ReferenceObject = GetComponent<HandController>();
 
     m_scene = new Scene ();

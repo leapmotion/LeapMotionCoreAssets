@@ -14,6 +14,7 @@ public class SkeletalHand : HandModel {
   protected const float PALM_CENTER_OFFSET = 0.0150f;
 
   public GameObject palm;
+  public GameObject forearm;
 
   void Start() {
     IgnoreCollisionsWithSelf();
@@ -41,6 +42,11 @@ public class SkeletalHand : HandModel {
     if (palm != null) {
       palm.transform.position = GetPalmCenter();
       palm.transform.rotation = GetPalmRotation();
+    }
+
+    if (forearm != null) {
+      forearm.transform.position = GetArmCenter();
+      forearm.transform.rotation = GetArmRotation();
     }
   }
 }

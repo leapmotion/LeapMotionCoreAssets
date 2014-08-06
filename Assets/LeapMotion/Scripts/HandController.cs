@@ -24,8 +24,6 @@ public class HandController : MonoBehaviour {
 
   public Vector3 handMovementScale = Vector3.one;
 
-  public bool enableInteraction;
-
   private Controller leap_controller_;
 
   private Dictionary<int, HandModel> hand_graphics_;

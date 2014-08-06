@@ -42,6 +42,12 @@ public class PolyFinger : FingerModel {
     UpdateCapMesh();
   }
 
+  void OnDestroy() {
+    Destroy(mesh_);
+    Destroy(cap_mesh_);
+    Destroy(GetComponent<MeshFilter>().mesh);
+  }
+
   void Update() {
     if (vertices_ == null)
       return;
