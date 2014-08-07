@@ -16,6 +16,7 @@ public class ToolModel : MonoBehaviour {
 
   private Tool tool_;
   private HandController controller_;
+  private bool mirror_z_axis_ = false;
 
   public Tool GetLeapTool() {
     return tool_;
@@ -23,6 +24,10 @@ public class ToolModel : MonoBehaviour {
 
   public void SetLeapTool(Tool tool) {
     tool_ = tool;
+  }
+
+  public void MirrorZAxis(bool mirror = true) {
+    mirror_z_axis_ = mirror;
   }
 
   public HandController GetController() {
@@ -35,12 +40,12 @@ public class ToolModel : MonoBehaviour {
   
   public Quaternion GetToolRotation() {
     Quaternion local_rotation = Quaternion.FromToRotation(Vector3.forward,
-                                                          tool_.Direction.ToUnity());
+                                                          tool_.Direction.ToUnity(mirror_z_axis_));
     return GetController().transform.rotation * local_rotation;
   }
 
   public Vector3 GetToolTipVelocity() {
-    Vector3 local_velocity = tool_.TipVelocity.ToUnityScaled();
+    Vector3 local_velocity = tool_.TipVelocity.ToUnityScaled(mirror_z_axis_);
     Vector3 total_scale = Vector3.Scale(GetController().handMovementScale,
                                         GetController().transform.localScale);
     Vector3 scaled_velocity = Vector3.Scale(total_scale, local_velocity);
@@ -48,7 +53,7 @@ public class ToolModel : MonoBehaviour {
   }
 
   public Vector3 GetToolTipPosition() {
-    Vector3 local_point = tool_.TipPosition.ToUnityScaled();
+    Vector3 local_point = tool_.TipPosition.ToUnityScaled(mirror_z_axis_);
     Vector3 scaled_point = Vector3.Scale(GetController().handMovementScale, local_point);
     return GetController().transform.TransformPoint(scaled_point);
   }

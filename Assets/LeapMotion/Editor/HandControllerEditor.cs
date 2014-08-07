@@ -73,6 +73,8 @@ public class HandControllerEditor : Editor {
                                                controller.toolModel,
                                                typeof(ToolModel), true);
 
+    controller.mirrorZAxis = EditorGUILayout.Toggle("Mirror Z Axis", controller.mirrorZAxis);
+
     controller.handMovementScale =
         EditorGUILayout.Vector3Field("Hand Movement Scale", controller.handMovementScale);
 

@@ -22,6 +22,8 @@ public class HandController : MonoBehaviour {
 
   public ToolModel toolModel;
 
+  public bool mirrorZAxis = false;
+
   public Vector3 handMovementScale = Vector3.one;
 
   private Controller leap_controller_;
@@ -83,7 +85,15 @@ public class HandController : MonoBehaviour {
     for (int h = 0; h < num_hands; ++h) {
       Hand leap_hand = leap_hands[h];
       
-      HandModel model = leap_hand.IsLeft? left_model : right_model;
+      HandModel model = (mirrorZAxis != leap_hand.IsLeft) ? left_model : right_model;
+
+      // If we've mirrored since this hand was updated, destroy it.
+      if (all_hands.ContainsKey(leap_hand.Id) &&
+          all_hands[leap_hand.Id].IsMirrored() == mirrorZAxis) {
+        Destroy(all_hands[leap_hand.Id].gameObject);
+        all_hands.Remove(leap_hand.Id);
+      }
+
       // Only create or update if the hand is enabled.
       if (model != null) {
         ids_to_check.Remove(leap_hand.Id);
@@ -92,6 +102,7 @@ public class HandController : MonoBehaviour {
         if (!all_hands.ContainsKey(leap_hand.Id)) {
           HandModel new_hand = CreateHand(model);
           new_hand.SetLeapHand(leap_hand);
+          new_hand.MirrorZAxis(mirrorZAxis);
           new_hand.SetController(this);
 
           // Set scaling based on reference hand.
@@ -106,6 +117,7 @@ public class HandController : MonoBehaviour {
           // Make sure we update the Leap Hand reference.
           HandModel hand_model = all_hands[leap_hand.Id];
           hand_model.SetLeapHand(leap_hand);
+          hand_model.MirrorZAxis(mirrorZAxis);
 
           // Set scaling based on reference hand.
           float hand_scale = leap_hand.PalmWidth / MODEL_PALM_WIDTH;
@@ -156,6 +168,7 @@ public class HandController : MonoBehaviour {
         // Make sure we update the Leap Tool reference.
         ToolModel tool_model = all_tools[leap_tool.Id];
         tool_model.SetLeapTool(leap_tool);
+        tool_model.MirrorZAxis(mirrorZAxis);
 
         // Set scaling.
         tool_model.transform.localScale = transform.localScale;
