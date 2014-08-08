@@ -89,7 +89,8 @@ public class HandController : MonoBehaviour {
 
       // If we've mirrored since this hand was updated, destroy it.
       if (all_hands.ContainsKey(leap_hand.Id) &&
-          all_hands[leap_hand.Id].IsMirrored() == mirrorZAxis) {
+          all_hands[leap_hand.Id].IsMirrored() != mirrorZAxis) {
+        Debug.Log("DESTROY HANDS");
         Destroy(all_hands[leap_hand.Id].gameObject);
         all_hands.Remove(leap_hand.Id);
       }
