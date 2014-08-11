@@ -26,6 +26,21 @@ public class HandController : MonoBehaviour {
 
   public Vector3 handMovementScale = Vector3.one;
 
+  public RecorderMode recorderMode = RecorderMode.Off;
+  public string recorderFilePath;
+  public TextAsset playerFilePath;
+  public KeyCode keyToRecord = KeyCode.None;
+  public KeyCode keyToSave = KeyCode.None;
+  public KeyCode keyToReset = KeyCode.None;
+  public int playerStartTime = 0;
+  public float playerSpeed = 1.0f;
+  public bool playerLoop = true;
+  public float playerDelay = 0.0f;
+  
+  private LeapRecorder leap_recorder_;
+  private int record_state_ = 0;
+  private float record_index_ = 0.0f;
+  
   private Controller leap_controller_;
 
   private Dictionary<int, HandModel> hand_graphics_;
@@ -36,6 +51,7 @@ public class HandController : MonoBehaviour {
     leap_controller_ = new Controller();
     hand_graphics_ = new Dictionary<int, HandModel>();
     hand_physics_ = new Dictionary<int, HandModel>();
+    leap_recorder_ = new LeapRecorder();
 
     tools_ = new Dictionary<int, ToolModel>();
 
@@ -190,6 +206,48 @@ public class HandController : MonoBehaviour {
       return;
 
     Frame frame = leap_controller_.Frame();
+    
+    if (recorderMode == RecorderMode.Record) {
+      frame = leap_controller_.Frame();
+      if (recorderFilePath == "") {
+        recorderFilePath = Application.dataPath + "/LeapRecording.bytes";
+      }
+      if (Input.GetKeyDown(keyToRecord)) {
+        record_state_ = 1;
+      } else if (Input.GetKeyDown(keyToSave)) {
+        leap_recorder_.Save(recorderFilePath);
+        record_state_ = 2;
+        record_index_ = 0;
+      } else if (Input.GetKeyDown(keyToReset)) {
+        leap_recorder_.Reset();
+        record_state_ = 0;
+      }
+    }
+    
+    if (recorderMode == RecorderMode.Playback && record_state_ != 2) {
+      if (playerFilePath) {
+        leap_recorder_.Load(playerFilePath.bytes);
+        record_state_ = 2;
+      }
+    }
+    
+    if (record_state_ == 1) {
+      leap_recorder_.Record(frame);
+    } else if (record_state_ == 2) {
+      if (Time.frameCount >= playerStartTime) {
+        if (record_index_ >= 0 && leap_recorder_.GetFramesCount() > 0) {
+          frame = leap_recorder_.GetFrame(Mathf.Min((int)record_index_,leap_recorder_.GetFramesCount() - 1));
+        }
+        if (record_index_ < leap_recorder_.GetFramesCount() - 1) {
+          record_index_ += playerSpeed;
+        } else {
+          if (playerLoop) {
+            record_index_ = -playerDelay;
+          }
+        }
+      }
+    }
+    
     UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
   }
 

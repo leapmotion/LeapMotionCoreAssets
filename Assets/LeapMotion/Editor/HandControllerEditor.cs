@@ -127,6 +127,29 @@ public class HandControllerEditor : Editor {
     controller.handMovementScale =
         EditorGUILayout.Vector3Field("Hand Movement Scale", controller.handMovementScale);
 
+    GUIStyle buttonStyle = new GUIStyle("Button");                   
+    buttonStyle.alignment = TextAnchor.MiddleLeft;
+    controller.recorderMode = (RecorderMode)EditorGUILayout.EnumPopup("Recorder Mode", controller.recorderMode);
+    if (controller.recorderMode == RecorderMode.Record) {
+      EditorGUILayout.BeginHorizontal();
+      GUILayout.Label("File Path");
+      if (GUILayout.Button(controller.recorderFilePath, buttonStyle)) {
+        controller.recorderFilePath = EditorUtility.SaveFilePanel("Recorder File Path", "", "LeapRecording_" + System.DateTime.Now.ToString("yyyyMMdd_hhmm"), "bytes");
+      }
+      EditorGUILayout.EndHorizontal();
+      controller.keyToRecord = (KeyCode)EditorGUILayout.EnumPopup("Key To Record", controller.keyToRecord);
+      controller.keyToSave = (KeyCode)EditorGUILayout.EnumPopup("Key To Save", controller.keyToSave);
+      controller.keyToReset = (KeyCode)EditorGUILayout.EnumPopup("Key To Reset", controller.keyToReset);      
+    } else if (controller.recorderMode == RecorderMode.Playback) {
+      controller.playerFilePath = (TextAsset)EditorGUILayout.ObjectField("File Path", controller.playerFilePath, typeof(TextAsset), true);
+      controller.playerStartTime = EditorGUILayout.IntField("Start Time", controller.playerStartTime);
+      controller.playerSpeed = EditorGUILayout.FloatField("Speed Multiplier", controller.playerSpeed);
+      controller.playerLoop = EditorGUILayout.Toggle("Loop", controller.playerLoop);
+      if (controller.playerLoop) {
+        controller.playerDelay = EditorGUILayout.FloatField("Loop Delay", controller.playerDelay);
+      }
+    } 
+        
     if (GUI.changed)
       EditorUtility.SetDirty(controller);
 
