@@ -13,6 +13,7 @@ public class HandController : MonoBehaviour {
 
   // Reference distance from thumb base to pinky base in mm.
   protected const float MODEL_PALM_WIDTH = 85.0f;
+  protected const float GIZMO_SCALE = 5.0f;
 
   public bool separateLeftRight = false;
   public HandModel leftGraphicsModel;
@@ -31,6 +32,11 @@ public class HandController : MonoBehaviour {
   private Dictionary<int, HandModel> hand_graphics_;
   private Dictionary<int, HandModel> hand_physics_;
   private Dictionary<int, ToolModel> tools_;
+  
+  void OnDrawGizmos() {
+    Gizmos.matrix = Matrix4x4.Scale(GIZMO_SCALE * Vector3.one);
+    Gizmos.DrawIcon(transform.position, "leap_motion.png");
+  }
 
   void Start() {
     leap_controller_ = new Controller();

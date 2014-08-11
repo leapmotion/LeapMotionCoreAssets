@@ -9,6 +9,12 @@ public class HandControllerEditor : Editor {
   private const float BOX_WIDTH = 0.965f;
   private const float BOX_DEPTH = 0.6671f;
 
+  public void OnDrawGizmosSelected() {
+    HandController controller = (HandController)target;
+    
+    Gizmos.DrawIcon ( controller.transform.position, "image.png" );
+  }
+
   public void OnSceneGUI() {
     HandController controller = (HandController)target;
     Vector3 origin = controller.transform.TransformPoint(Vector3.zero);
