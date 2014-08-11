@@ -37,25 +37,29 @@ public class HandControllerEditor : Editor {
     Vector3 top_normal = controller.transform.TransformDirection(
         Vector3.Cross(local_top_left, local_top_right));
     float top_angle = Vector3.Angle(local_top_left, local_top_right);
-    Handles.DrawWireArc(origin, top_normal, local_top_left,
+    Handles.DrawWireArc(origin, top_normal,
+                        controller.transform.TransformDirection(local_top_left),
                         top_angle, controller.transform.localScale.x * BOX_RADIUS);
 
     Vector3 left_normal = controller.transform.TransformDirection(
         Vector3.Cross(local_bottom_left, local_top_left));
     float left_angle = Vector3.Angle(local_bottom_left, local_top_left);
-    Handles.DrawWireArc(origin, left_normal, local_bottom_left,
+    Handles.DrawWireArc(origin, left_normal,
+                        controller.transform.TransformDirection(local_bottom_left),
                         left_angle, controller.transform.localScale.x * BOX_RADIUS);
 
     Vector3 bottom_normal = controller.transform.TransformDirection(
         Vector3.Cross(local_bottom_left, local_bottom_right));
     float bottom_angle = Vector3.Angle(local_bottom_left, local_bottom_right);
-    Handles.DrawWireArc(origin, bottom_normal, local_bottom_left,
+    Handles.DrawWireArc(origin, bottom_normal,
+                        controller.transform.TransformDirection(local_bottom_left),
                         bottom_angle, controller.transform.localScale.x * BOX_RADIUS);
 
     Vector3 right_normal = controller.transform.TransformDirection(
         Vector3.Cross(local_bottom_right, local_top_right));
     float right_angle = Vector3.Angle(local_bottom_right, local_top_right);
-    Handles.DrawWireArc(origin, right_normal, local_bottom_right,
+    Handles.DrawWireArc(origin, right_normal,
+                        controller.transform.TransformDirection(local_bottom_right),
                         right_angle, controller.transform.localScale.x * BOX_RADIUS);
 
     Vector3 local_left_face = Vector3.Lerp(local_top_left, local_bottom_left, 0.5f);
@@ -63,7 +67,8 @@ public class HandControllerEditor : Editor {
 
     Vector3 across_normal = controller.transform.TransformDirection(-Vector3.forward);
     float across_angle = Vector3.Angle(local_left_face, local_right_face);
-    Handles.DrawWireArc(origin, across_normal, local_left_face,
+    Handles.DrawWireArc(origin, across_normal,
+                        controller.transform.TransformDirection(local_left_face),
                         across_angle, controller.transform.localScale.x * BOX_RADIUS);
 
     Vector3 local_top_face = Vector3.Lerp(local_top_left, local_top_right, 0.5f);
@@ -71,7 +76,8 @@ public class HandControllerEditor : Editor {
 
     Vector3 depth_normal = controller.transform.TransformDirection(-Vector3.right);
     float depth_angle = Vector3.Angle(local_top_face, local_bottom_face);
-    Handles.DrawWireArc(origin, depth_normal, local_top_face,
+    Handles.DrawWireArc(origin, depth_normal,
+                        controller.transform.TransformDirection(local_top_face),
                         depth_angle, controller.transform.localScale.x * BOX_RADIUS);
   }
 
