@@ -35,11 +35,9 @@ public class HandController : MonoBehaviour {
   public int playerStartTime = 0;
   public float playerSpeed = 1.0f;
   public bool playerLoop = true;
-  public float playerDelay = 0.0f;
+  public int playerDelay = 0;
   
   private LeapRecorder leap_recorder_;
-  private int record_state_ = 0;
-  private float record_index_ = 0.0f;
   
   private Controller leap_controller_;
 
@@ -205,7 +203,7 @@ public class HandController : MonoBehaviour {
     if (leap_controller_ == null)
       return;
 
-    Frame frame = leap_controller_.Frame();
+    Frame frame = new Frame();
     
     if (recorderMode == RecorderMode.Record) {
       frame = leap_controller_.Frame();
@@ -213,39 +211,27 @@ public class HandController : MonoBehaviour {
         recorderFilePath = Application.dataPath + "/LeapRecording.bytes";
       }
       if (Input.GetKeyDown(keyToRecord)) {
-        record_state_ = 1;
+        leap_recorder_.SetState(RecorderState.Recording);
       } else if (Input.GetKeyDown(keyToSave)) {
+        leap_recorder_.SetState(RecorderState.Playbacking);
         leap_recorder_.Save(recorderFilePath);
-        record_state_ = 2;
-        record_index_ = 0;
       } else if (Input.GetKeyDown(keyToReset)) {
+        leap_recorder_.SetState(RecorderState.Idling);
         leap_recorder_.Reset();
-        record_state_ = 0;
       }
+    } else if (recorderMode == RecorderMode.Playback) {
+      if (playerFilePath && leap_recorder_.GetState() != RecorderState.Playbacking) {
+        leap_recorder_.SetState(RecorderState.Playbacking);
+        leap_recorder_.Load(playerFilePath.bytes, playerStartTime, playerSpeed, playerLoop, playerDelay);
+      }
+    } else {
+      frame = leap_controller_.Frame();
     }
     
-    if (recorderMode == RecorderMode.Playback && record_state_ != 2) {
-      if (playerFilePath) {
-        leap_recorder_.Load(playerFilePath.bytes);
-        record_state_ = 2;
-      }
-    }
-    
-    if (record_state_ == 1) {
-      leap_recorder_.Record(frame);
-    } else if (record_state_ == 2) {
-      if (Time.frameCount >= playerStartTime) {
-        if (record_index_ >= 0 && leap_recorder_.GetFramesCount() > 0) {
-          frame = leap_recorder_.GetFrame(Mathf.Min((int)record_index_,leap_recorder_.GetFramesCount() - 1));
-        }
-        if (record_index_ < leap_recorder_.GetFramesCount() - 1) {
-          record_index_ += playerSpeed;
-        } else {
-          if (playerLoop) {
-            record_index_ = -playerDelay;
-          }
-        }
-      }
+    if (leap_recorder_.GetState() == RecorderState.Recording) {
+      leap_recorder_.AddFrame(frame);
+    } else if (leap_recorder_.GetState() == RecorderState.Playbacking) {
+      frame = leap_recorder_.GetFrame();
     }
     
     UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
@@ -255,8 +241,11 @@ public class HandController : MonoBehaviour {
     if (leap_controller_ == null)
       return;
 
-    Frame frame = leap_controller_.Frame();
-    UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
-    UpdateToolModels(tools_, frame.Tools, toolModel);
+    if (recorderMode != RecorderMode.Playback) {
+      Frame frame = leap_controller_.Frame();
+      
+      UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
+      UpdateToolModels(tools_, frame.Tools, toolModel);
+    }    
   }
 }

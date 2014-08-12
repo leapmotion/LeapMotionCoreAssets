@@ -146,7 +146,7 @@ public class HandControllerEditor : Editor {
       controller.playerSpeed = EditorGUILayout.FloatField("Speed Multiplier", controller.playerSpeed);
       controller.playerLoop = EditorGUILayout.Toggle("Loop", controller.playerLoop);
       if (controller.playerLoop) {
-        controller.playerDelay = EditorGUILayout.FloatField("Loop Delay", controller.playerDelay);
+        controller.playerDelay = EditorGUILayout.IntField("Loop Delay", controller.playerDelay);
       }
     } 
         
