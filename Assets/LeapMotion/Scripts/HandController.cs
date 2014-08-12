@@ -8,6 +8,12 @@ using UnityEngine;
 using System.Collections.Generic;
 using Leap;
 
+public enum RecorderMode {
+  Off = 0,
+  Record = 1,
+  Playback = 2
+}
+
 // Overall Controller object that will instantiate hands and tools when they appear.
 public class HandController : MonoBehaviour {
 
@@ -28,17 +34,16 @@ public class HandController : MonoBehaviour {
   public Vector3 handMovementScale = Vector3.one;
 
   public RecorderMode recorderMode = RecorderMode.Off;
-  public string recorderFilePath;
-  public TextAsset playerFilePath;
+  public TextAsset recordingAsset;
   public KeyCode keyToRecord = KeyCode.None;
   public KeyCode keyToSave = KeyCode.None;
   public KeyCode keyToReset = KeyCode.None;
-  public int playerStartTime = 0;
-  public float playerSpeed = 1.0f;
-  public bool playerLoop = true;
-  public int playerDelay = 0;
+  public int recorderStartTime = 0;
+  public float recorderSpeed = 1.0f;
+  public bool recorderLoop = true;
+  public int recorderDelay = 0;
   
-  private LeapRecorder leap_recorder_;
+  public LeapRecorder recorder = new LeapRecorder();
   
   private Controller leap_controller_;
 
@@ -55,7 +60,6 @@ public class HandController : MonoBehaviour {
     leap_controller_ = new Controller();
     hand_graphics_ = new Dictionary<int, HandModel>();
     hand_physics_ = new Dictionary<int, HandModel>();
-    leap_recorder_ = new LeapRecorder();
 
     tools_ = new Dictionary<int, ToolModel>();
 
@@ -210,33 +214,52 @@ public class HandController : MonoBehaviour {
 
     Frame frame = new Frame();
     
-    if (recorderMode == RecorderMode.Record) {
-      frame = leap_controller_.Frame();
-      if (recorderFilePath == "") {
-        recorderFilePath = Application.dataPath + "/LeapRecording.bytes";
-      }
-      if (Input.GetKeyDown(keyToRecord)) {
-        leap_recorder_.SetState(RecorderState.Recording);
-      } else if (Input.GetKeyDown(keyToSave)) {
-        leap_recorder_.SetState(RecorderState.PlayingBack);
-        leap_recorder_.Save(recorderFilePath);
-      } else if (Input.GetKeyDown(keyToReset)) {
-        leap_recorder_.SetState(RecorderState.Idling);
-        leap_recorder_.Reset();
-      }
-    } else if (recorderMode == RecorderMode.Playback) {
-      if (playerFilePath && leap_recorder_.GetState() != RecorderState.PlayingBack) {
-        leap_recorder_.SetState(RecorderState.PlayingBack);
-        leap_recorder_.Load(playerFilePath.bytes, playerStartTime, playerSpeed, playerLoop, playerDelay);
-      }
-    } else {
-      frame = leap_controller_.Frame();
+    recorder.startTime = recorderStartTime;
+    recorder.speed = recorderSpeed;
+    recorder.loop = recorderLoop;
+    recorder.delay = recorderDelay;
+    switch(recorderMode) {
+      case RecorderMode.Record:
+        if (Input.GetKeyDown(keyToRecord)) {
+          recorder.state = RecorderState.Recording;
+        }
+        if (Input.GetKeyDown(keyToSave)) {
+          recorder.state = RecorderState.Playing;
+          string path = "Assets/" + System.DateTime.Now.ToString("yyyyMMdd_hhmm") + ".bytes";
+          recordingAsset = recorder.Save(path);
+          recorder.Load(recordingAsset);
+          recorder.SetDefault();
+        }
+        if (Input.GetKeyDown(keyToReset)) {
+          recorder.state = RecorderState.Idling;
+          recorder.Reset();
+        }
+        break;
+      case RecorderMode.Playback:
+        if (recorder.state != RecorderState.Playing) {
+          recorder.state = RecorderState.Playing;
+          if (recordingAsset) {
+            recorder.Load(recordingAsset);
+          }
+        }
+        break;
+      default:
+        break;
     }
-    
-    if (leap_recorder_.GetState() == RecorderState.Recording) {
-      leap_recorder_.AddFrame(frame);
-    } else if (leap_recorder_.GetState() == RecorderState.PlayingBack) {
-      frame = leap_recorder_.GetFrame();
+
+    switch (recorder.state) {
+      case RecorderState.Idling:
+        frame = leap_controller_.Frame();
+        break;
+      case RecorderState.Recording:
+        frame = leap_controller_.Frame();
+        recorder.AddFrame(frame);
+        break;
+      case RecorderState.Playing:
+        frame = recorder.GetFrame();
+        break;
+      default:
+        break;
     }
     
     UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
