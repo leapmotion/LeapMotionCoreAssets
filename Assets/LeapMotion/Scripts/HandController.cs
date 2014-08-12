@@ -110,7 +110,6 @@ public class HandController : MonoBehaviour {
       // If we've mirrored since this hand was updated, destroy it.
       if (all_hands.ContainsKey(leap_hand.Id) &&
           all_hands[leap_hand.Id].IsMirrored() != mirrorZAxis) {
-        Debug.Log("DESTROY HANDS");
         Destroy(all_hands[leap_hand.Id].gameObject);
         all_hands.Remove(leap_hand.Id);
       }
@@ -219,15 +218,15 @@ public class HandController : MonoBehaviour {
       if (Input.GetKeyDown(keyToRecord)) {
         leap_recorder_.SetState(RecorderState.Recording);
       } else if (Input.GetKeyDown(keyToSave)) {
-        leap_recorder_.SetState(RecorderState.Playbacking);
+        leap_recorder_.SetState(RecorderState.PlayingBack);
         leap_recorder_.Save(recorderFilePath);
       } else if (Input.GetKeyDown(keyToReset)) {
         leap_recorder_.SetState(RecorderState.Idling);
         leap_recorder_.Reset();
       }
     } else if (recorderMode == RecorderMode.Playback) {
-      if (playerFilePath && leap_recorder_.GetState() != RecorderState.Playbacking) {
-        leap_recorder_.SetState(RecorderState.Playbacking);
+      if (playerFilePath && leap_recorder_.GetState() != RecorderState.PlayingBack) {
+        leap_recorder_.SetState(RecorderState.PlayingBack);
         leap_recorder_.Load(playerFilePath.bytes, playerStartTime, playerSpeed, playerLoop, playerDelay);
       }
     } else {
@@ -236,7 +235,7 @@ public class HandController : MonoBehaviour {
     
     if (leap_recorder_.GetState() == RecorderState.Recording) {
       leap_recorder_.AddFrame(frame);
-    } else if (leap_recorder_.GetState() == RecorderState.Playbacking) {
+    } else if (leap_recorder_.GetState() == RecorderState.PlayingBack) {
       frame = leap_recorder_.GetFrame();
     }
     
