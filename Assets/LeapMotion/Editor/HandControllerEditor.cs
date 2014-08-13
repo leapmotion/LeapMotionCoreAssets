@@ -146,15 +146,15 @@ public class HandControllerEditor : Editor {
           (TextAsset)EditorGUILayout.ObjectField("Recording",
                                                  controller.recordingAsset,
                                                  typeof(TextAsset), true);
-      controller.recorder.startTime = EditorGUILayout.IntField("Start Time",
-                                                               controller.recorder.startTime);
-      controller.recorder.speed = EditorGUILayout.FloatField("Speed Multiplier",
-                                                             controller.recorder.speed);
-      controller.recorder.loop = EditorGUILayout.Toggle("Loop",
-                                                        controller.recorder.loop);
-      if (controller.recorder.loop) {
-        controller.recorder.delay = EditorGUILayout.IntField("Loop Delay",
-                                                             controller.recorder.delay);
+      controller.recorderStartTime = EditorGUILayout.IntField("Start Time",
+                                                               controller.recorderStartTime);
+      controller.recorderSpeed = EditorGUILayout.FloatField("Speed Multiplier",
+                                                             controller.recorderSpeed);
+      controller.recorderLoop = EditorGUILayout.Toggle("Loop",
+                                                        controller.recorderLoop);
+      if (controller.recorderLoop) {
+        controller.recorderDelay = EditorGUILayout.IntField("Loop Delay",
+                                                             controller.recorderDelay);
       }
     } 
         
