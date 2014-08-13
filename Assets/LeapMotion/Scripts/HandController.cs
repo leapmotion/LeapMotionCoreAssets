@@ -38,10 +38,6 @@ public class HandController : MonoBehaviour {
   public KeyCode keyToRecord = KeyCode.None;
   public KeyCode keyToSave = KeyCode.None;
   public KeyCode keyToReset = KeyCode.None;
-  public int recorderStartTime = 0;
-  public float recorderSpeed = 1.0f;
-  public bool recorderLoop = true;
-  public int recorderDelay = 0;
   
   public LeapRecorder recorder = new LeapRecorder();
   
@@ -214,10 +210,6 @@ public class HandController : MonoBehaviour {
 
     Frame frame = new Frame();
     
-    recorder.startTime = recorderStartTime;
-    recorder.speed = recorderSpeed;
-    recorder.loop = recorderLoop;
-    recorder.delay = recorderDelay;
     switch(recorderMode) {
       case RecorderMode.Record:
         if (Input.GetKeyDown(keyToRecord)) {
