@@ -33,7 +33,8 @@ public abstract class FingerModel : MonoBehaviour {
 
   public void SetLeapHand(Hand hand) {
     hand_ = hand;
-    finger_ = hand.Fingers[(int)fingerType];
+    if (hand_ != null)
+      finger_ = hand.Fingers[(int)fingerType];
   }
 
   public void SetOffset(Vector3 offset) {

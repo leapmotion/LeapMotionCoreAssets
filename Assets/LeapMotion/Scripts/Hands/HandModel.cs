@@ -20,7 +20,7 @@ public abstract class HandModel : MonoBehaviour {
   private bool mirror_z_axis_ = false;
 
   public Vector3 GetPalmOffset() {
-    if (controller_ == null)
+    if (controller_ == null || hand_ == null)
       return Vector3.zero;
 
     Vector3 additional_movement = controller_.handMovementScale - Vector3.one;
