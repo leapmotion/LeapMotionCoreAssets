@@ -127,36 +127,34 @@ public class HandControllerEditor : Editor {
     controller.handMovementScale =
         EditorGUILayout.Vector3Field("Hand Movement Scale", controller.handMovementScale);
 
-    controller.recorderMode = (RecorderMode)EditorGUILayout.EnumPopup("Recorder Mode",
-                                                                      controller.recorderMode);
-    if (controller.recorderMode == RecorderMode.Record) {
+    controller.destroyHands = EditorGUILayout.Toggle("Destroy Hands",
+                                                      controller.destroyHands);
+
+    controller.enableRecordPlayback = EditorGUILayout.Toggle("Enable Record/Playback",
+                                                             controller.enableRecordPlayback);
+    if (controller.enableRecordPlayback) {
       controller.recordingAsset =
-          (TextAsset)EditorGUILayout.ObjectField("Recording",
+          (TextAsset)EditorGUILayout.ObjectField("Recording File",
                                                  controller.recordingAsset,
                                                  typeof(TextAsset), true);
-      controller.keyToRecord = (KeyCode)EditorGUILayout.EnumPopup("Key To Record",
-                                                                  controller.keyToRecord);
-      controller.keyToSave = (KeyCode)EditorGUILayout.EnumPopup("Key To Save",
-                                                                controller.keyToSave);
-      controller.keyToReset = (KeyCode)EditorGUILayout.EnumPopup("Key To Reset",
-                                                                 controller.keyToReset);      
-    }
-    else if (controller.recorderMode == RecorderMode.Playback) {
-      controller.recordingAsset =
-          (TextAsset)EditorGUILayout.ObjectField("Recording",
-                                                 controller.recordingAsset,
-                                                 typeof(TextAsset), true);
-      controller.recorderStartTime = EditorGUILayout.IntField("Start Time",
+      controller.recorderStartTime = EditorGUILayout.IntField("Playback Start Time",
                                                                controller.recorderStartTime);
-      controller.recorderSpeed = EditorGUILayout.FloatField("Speed Multiplier",
+      controller.recorderSpeed = EditorGUILayout.FloatField("Playback Speed Multiplier",
                                                              controller.recorderSpeed);
-      controller.recorderLoop = EditorGUILayout.Toggle("Loop",
+      controller.recorderLoop = EditorGUILayout.Toggle("Playback Loop",
                                                         controller.recorderLoop);
       if (controller.recorderLoop) {
         controller.recorderDelay = EditorGUILayout.IntField("Loop Delay",
                                                              controller.recorderDelay);
       }
-    } 
+
+      controller.keyToRecord = (KeyCode)EditorGUILayout.EnumPopup("Key To Record",
+                                                                  controller.keyToRecord);
+      controller.keyToSave = (KeyCode)EditorGUILayout.EnumPopup("Key To Save Recording",
+                                                                controller.keyToSave);
+      controller.keyToReset = (KeyCode)EditorGUILayout.EnumPopup("Key To Reset Recording",
+                                                                 controller.keyToReset);      
+    }
         
     if (GUI.changed)
       EditorUtility.SetDirty(controller);

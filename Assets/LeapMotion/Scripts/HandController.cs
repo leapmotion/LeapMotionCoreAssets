@@ -8,12 +8,6 @@ using UnityEngine;
 using System.Collections.Generic;
 using Leap;
 
-public enum RecorderMode {
-  Off = 0,
-  Record = 1,
-  Playback = 2
-}
-
 // Overall Controller object that will instantiate hands and tools when they appear.
 public class HandController : MonoBehaviour {
 
@@ -31,10 +25,13 @@ public class HandController : MonoBehaviour {
 
   public bool mirrorZAxis = false;
 
+  // If hands are in charge of Destroying themselves, make this false.
+  public bool destroyHands = true;
+
   public Vector3 handMovementScale = Vector3.one;
 
   // Recording parameters.
-  public RecorderMode recorderMode = RecorderMode.Off;
+  public bool enableRecordPlayback = false;
   public TextAsset recordingAsset;
   public KeyCode keyToRecord = KeyCode.None;
   public KeyCode keyToSave = KeyCode.None;
@@ -68,6 +65,9 @@ public class HandController : MonoBehaviour {
       Debug.LogWarning(
           "Cannot connect to controller. Make sure you have Leap Motion v2.0+ installed");
     }
+
+    if (enableRecordPlayback && recordingAsset != null)
+      recorder_.Load(recordingAsset);
   }
 
   private void IgnoreCollisions(GameObject first, GameObject second, bool ignore = true) {
@@ -100,6 +100,13 @@ public class HandController : MonoBehaviour {
     return hand_model;
   }
 
+  private void DestroyHand(HandModel hand_model) {
+    if (destroyHands)
+      Destroy(hand_model.gameObject);
+    else
+      hand_model.SetLeapHand(null);
+  }
+
   private void UpdateHandModels(Dictionary<int, HandModel> all_hands,
                                 HandList leap_hands,
                                 HandModel left_model, HandModel right_model) {
@@ -115,7 +122,7 @@ public class HandController : MonoBehaviour {
       // If we've mirrored since this hand was updated, destroy it.
       if (all_hands.ContainsKey(leap_hand.Id) &&
           all_hands[leap_hand.Id].IsMirrored() != mirrorZAxis) {
-        Destroy(all_hands[leap_hand.Id].gameObject);
+        DestroyHand(all_hands[leap_hand.Id]);
         all_hands.Remove(leap_hand.Id);
       }
 
@@ -154,7 +161,7 @@ public class HandController : MonoBehaviour {
 
     // Destroy all hands with defunct IDs.
     for (int i = 0; i < ids_to_check.Count; ++i) {
-      Destroy(all_hands[ids_to_check[i]].gameObject);
+      DestroyHand(all_hands[ids_to_check[i]]);
       all_hands.Remove(ids_to_check[i]);
     }
   }
@@ -209,60 +216,49 @@ public class HandController : MonoBehaviour {
     }
   }
 
-  void Update() {
-    if (leap_controller_ == null)
+  void UpdateRecorder() {
+    if (!enableRecordPlayback)
       return;
 
-    Frame frame = new Frame();
-    
     recorder_.startTime = recorderStartTime;
     recorder_.speed = recorderSpeed;
     recorder_.loop = recorderLoop;
     recorder_.delay = recorderDelay;
-    switch(recorderMode) {
-      case RecorderMode.Record:
-        if (Input.GetKeyDown(keyToRecord)) {
-          recorder_.state = RecorderState.Recording;
-        }
-        if (Input.GetKeyDown(keyToSave)) {
-          recorder_.state = RecorderState.Playing;
-          string path = "Assets/" + System.DateTime.Now.ToString("yyyyMMdd_hhmm") + ".bytes";
-          recordingAsset = recorder_.Save(path);
-          recorder_.Load(recordingAsset);
-          recorder_.SetDefault();
-        }
-        if (Input.GetKeyDown(keyToReset)) {
-          recorder_.state = RecorderState.Idling;
-          recorder_.Reset();
-        }
-        break;
-      case RecorderMode.Playback:
-        if (recorder_.state != RecorderState.Playing) {
-          recorder_.state = RecorderState.Playing;
-          if (recordingAsset) {
-            recorder_.Load(recordingAsset);
-          }
-        }
-        break;
-      default:
-        break;
+
+    if (Input.GetKeyDown(keyToRecord)) {
+      recorder_.state = RecorderState.Recording;
+    }
+    else if (Input.GetKeyDown(keyToSave)) {
+      recorder_.state = RecorderState.Playing;
+      recordingAsset = recorder_.SaveToNewFile();
+      recorder_.Load(recordingAsset);
+      recorder_.SetDefault();
+    }
+    else if (Input.GetKeyDown(keyToReset)) {
+      recorder_.Reset();
     }
 
-    switch (recorder_.state) {
-      case RecorderState.Idling:
-        frame = leap_controller_.Frame();
-        break;
-      case RecorderState.Recording:
-        frame = leap_controller_.Frame();
-        recorder_.AddFrame(frame);
-        break;
-      case RecorderState.Playing:
-        frame = recorder_.GetFrame();
-        break;
-      default:
-        break;
+    if (recorder_.state == RecorderState.Recording) {
+      recorder_.AddFrame(leap_controller_.Frame());
     }
+    else {
+      recorder_.NextFrame();
+    }
+  }
+
+  Frame GetFrame() {
+    if (enableRecordPlayback && recorder_.state == RecorderState.Playing)
+      return recorder_.GetCurrentFrame();
+
+    return leap_controller_.Frame();
+  }
+
+  void Update() {
+    if (leap_controller_ == null)
+      return;
     
+    UpdateRecorder();
+    Frame frame = GetFrame();
     UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
   }
 
@@ -270,11 +266,8 @@ public class HandController : MonoBehaviour {
     if (leap_controller_ == null)
       return;
 
-    if (recorderMode != RecorderMode.Playback) {
-      Frame frame = leap_controller_.Frame();
-      
-      UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
-      UpdateToolModels(tools_, frame.Tools, toolModel);
-    }    
+    Frame frame = GetFrame();
+    UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
+    UpdateToolModels(tools_, frame.Tools, toolModel);
   }
 }

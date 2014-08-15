@@ -6,20 +6,23 @@ using System.Collections.Generic;
 using Leap;
 
 public enum RecorderState {
-  Idling = 0,
-  Recording = 1,
-  Playing = 2
+  Recording = 0,
+  Playing = 1
 }
 
 public class LeapRecorder {
+
+  private const string RECORDINGS_PATH = "Assets/LeapMotion/Recordings/";
+
   public int startTime = 0;
   public float speed = 1.0f;
   public bool loop = true;
   public int delay = 0;
-  public RecorderState state = RecorderState.Idling;
+  public RecorderState state = RecorderState.Playing;
 
   private List<byte[]> frames_;
   private float frame_index_;
+  private Frame current_frame_ = new Frame();
   
   public LeapRecorder() {
     Reset();
@@ -28,7 +31,6 @@ public class LeapRecorder {
   public void Reset() {
     frames_ = new List<byte[]>();
     frame_index_ = 0;
-    state = RecorderState.Idling;
   }
   
   public void SetDefault() {
@@ -51,27 +53,25 @@ public class LeapRecorder {
   public void AddFrame(Frame frame) {
     frames_.Add(frame.Serialize);
   }
+
+  public Frame GetCurrentFrame() {
+    return current_frame_;
+  }
   
-  public Frame GetFrame() {
-    Frame frame = new Frame();
-    if (frame_index_ < 0) {
-      frame_index_++;
-    }
-    else if (frames_.Count > 0) {
-      if (frame_index_ >= frames_.Count) {
+  public Frame NextFrame() {
+    current_frame_ = new Frame();
+    if (frames_.Count > 0) {
+      if (frame_index_ >= frames_.Count + delay) {
         if (loop) {
-          frame_index_ = -delay;
-        }
-        else {
-          return frame;
+          frame_index_ -= frames_.Count + delay;
         }
       }
-      if (frame_index_ >= 0) {
-        frame.Deserialize(frames_[(int)frame_index_]);
+      if (frame_index_ < frames_.Count && frame_index_ >= 0) {
+        current_frame_.Deserialize(frames_[(int)frame_index_]);
         frame_index_ += speed;
       }
     }
-    return frame;
+    return current_frame_;
   }
   
   public List<Frame> GetFrames() {
@@ -88,7 +88,9 @@ public class LeapRecorder {
     return frames_.Count;
   }
   
-  public TextAsset Save(string path) {
+  public TextAsset SaveToNewFile() {
+    string path = RECORDINGS_PATH + System.DateTime.Now.ToString("yyyyMMdd_hhmm") + ".bytes";
+
     if (File.Exists(@path)) {
       File.Delete(@path);
     }
