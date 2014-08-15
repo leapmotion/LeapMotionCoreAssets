@@ -33,6 +33,7 @@ public class HandController : MonoBehaviour {
 
   public Vector3 handMovementScale = Vector3.one;
 
+  // Recording parameters.
   public RecorderMode recorderMode = RecorderMode.Off;
   public TextAsset recordingAsset;
   public KeyCode keyToRecord = KeyCode.None;
@@ -43,7 +44,7 @@ public class HandController : MonoBehaviour {
   public bool recorderLoop = true;
   public int recorderDelay = 0;
   
-  public LeapRecorder recorder = new LeapRecorder();
+  private LeapRecorder recorder_ = new LeapRecorder();
   
   private Controller leap_controller_;
 
@@ -214,32 +215,32 @@ public class HandController : MonoBehaviour {
 
     Frame frame = new Frame();
     
-    recorder.startTime = recorderStartTime;
-    recorder.speed = recorderSpeed;
-    recorder.loop = recorderLoop;
-    recorder.delay = recorderDelay;
+    recorder_.startTime = recorderStartTime;
+    recorder_.speed = recorderSpeed;
+    recorder_.loop = recorderLoop;
+    recorder_.delay = recorderDelay;
     switch(recorderMode) {
       case RecorderMode.Record:
         if (Input.GetKeyDown(keyToRecord)) {
-          recorder.state = RecorderState.Recording;
+          recorder_.state = RecorderState.Recording;
         }
         if (Input.GetKeyDown(keyToSave)) {
-          recorder.state = RecorderState.Playing;
+          recorder_.state = RecorderState.Playing;
           string path = "Assets/LeapSampleRecording.bytes";
-          recordingAsset = recorder.Save(path);
-          recorder.Load(recordingAsset);
-          recorder.SetDefault();
+          recordingAsset = recorder_.Save(path);
+          recorder_.Load(recordingAsset);
+          recorder_.SetDefault();
         }
         if (Input.GetKeyDown(keyToReset)) {
-          recorder.state = RecorderState.Idling;
-          recorder.Reset();
+          recorder_.state = RecorderState.Idling;
+          recorder_.Reset();
         }
         break;
       case RecorderMode.Playback:
-        if (recorder.state != RecorderState.Playing) {
-          recorder.state = RecorderState.Playing;
+        if (recorder_.state != RecorderState.Playing) {
+          recorder_.state = RecorderState.Playing;
           if (recordingAsset) {
-            recorder.Load(recordingAsset);
+            recorder_.Load(recordingAsset);
           }
         }
         break;
@@ -247,16 +248,16 @@ public class HandController : MonoBehaviour {
         break;
     }
 
-    switch (recorder.state) {
+    switch (recorder_.state) {
       case RecorderState.Idling:
         frame = leap_controller_.Frame();
         break;
       case RecorderState.Recording:
         frame = leap_controller_.Frame();
-        recorder.AddFrame(frame);
+        recorder_.AddFrame(frame);
         break;
       case RecorderState.Playing:
-        frame = recorder.GetFrame();
+        frame = recorder_.GetFrame();
         break;
       default:
         break;
