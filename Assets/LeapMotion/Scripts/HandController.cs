@@ -225,7 +225,7 @@ public class HandController : MonoBehaviour {
         }
         if (Input.GetKeyDown(keyToSave)) {
           recorder.state = RecorderState.Playing;
-          string path = "Assets/" + System.DateTime.Now.ToString("yyyyMMdd_hhmm") + ".bytes";
+          string path = "Assets/LeapSampleRecording.bytes";
           recordingAsset = recorder.Save(path);
           recorder.Load(recordingAsset);
           recorder.SetDefault();
