@@ -1,5 +1,10 @@
-﻿using UnityEngine;
-using UnityEditor;
+﻿/******************************************************************************\
+* Copyright (C) Leap Motion, Inc. 2011-2014.                                   *
+* Leap Motion proprietary. Licensed under Apache 2.0                           *
+* Available at http://www.apache.org/licenses/LICENSE-2.0.html                 *
+\******************************************************************************/
+
+using UnityEngine;
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -104,7 +109,6 @@ public class LeapRecorder {
     }
     
     stream.Close();
-    AssetDatabase.Refresh();
     return (TextAsset)Resources.LoadAssetAtPath(path, typeof(TextAsset));
   }
   
