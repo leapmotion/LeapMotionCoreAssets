@@ -11,18 +11,15 @@ using System.Collections.Generic;
 using Leap;
 
 public enum RecorderState {
-  Recording = 0,
-  Playing = 1
+  Idling = 0,
+  Recording = 1,
+  Playing = 2
 }
 
 public class LeapRecorder {
 
-  private const string RECORDINGS_PATH = "Assets/LeapMotion/Recordings/";
-
-  public int startTime = 0;
   public float speed = 1.0f;
   public bool loop = true;
-  public int delay = 0;
   public RecorderState state = RecorderState.Playing;
 
   private List<byte[]> frames_;
@@ -32,6 +29,23 @@ public class LeapRecorder {
   public LeapRecorder() {
     Reset();
   }
+
+  public void Stop() {
+    state = RecorderState.Idling;
+    frame_index_ = 0.0f;
+  }
+
+  public void Pause() {
+    state = RecorderState.Idling;
+  }
+
+  public void Play() {
+    state = RecorderState.Playing;
+  }
+
+  public void Record() {
+    state = RecorderState.Recording;
+  }
   
   public void Reset() {
     frames_ = new List<byte[]>();
@@ -39,13 +53,18 @@ public class LeapRecorder {
   }
   
   public void SetDefault() {
-    startTime = 0;
     speed = 1.0f;
     loop = true;
-    delay = 0;
   }
 
-  public int GetIndex() { return (int)frame_index_; }
+  public float GetProgress() {
+    return frame_index_ / frames_.Count;
+  }
+
+  public int GetIndex() {
+    return (int)frame_index_;
+  }
+
   public void SetIndex(int new_index) { 
     if (new_index >= frames_.Count) {
       frame_index_ = frames_.Count - 1;
@@ -66,10 +85,11 @@ public class LeapRecorder {
   public Frame NextFrame() {
     current_frame_ = new Frame();
     if (frames_.Count > 0) {
-      if (frame_index_ >= frames_.Count + delay) {
-        if (loop) {
-          frame_index_ -= frames_.Count + delay;
-        }
+      if (frame_index_ >= frames_.Count && loop) {
+        frame_index_ -= frames_.Count;
+      }
+      else if (frame_index_ < 0 && loop) {
+        frame_index_ += frames_.Count;
       }
       if (frame_index_ < frames_.Count && frame_index_ >= 0) {
         current_frame_.Deserialize(frames_[(int)frame_index_]);
@@ -93,8 +113,9 @@ public class LeapRecorder {
     return frames_.Count;
   }
   
-  public TextAsset SaveToNewFile() {
-    string path = RECORDINGS_PATH + System.DateTime.Now.ToString("yyyyMMdd_hhmm") + ".bytes";
+  public string SaveToNewFile() {
+    string path = Application.persistentDataPath + "/Recording_" +
+                  System.DateTime.Now.ToString("yyyyMMdd_hhmmss") + ".bytes";
 
     if (File.Exists(@path)) {
       File.Delete(@path);
@@ -109,12 +130,12 @@ public class LeapRecorder {
     }
     
     stream.Close();
-    return (TextAsset)Resources.LoadAssetAtPath(path, typeof(TextAsset));
+    return path;
   }
   
   public void Load(TextAsset text_asset) {
     byte[] data = text_asset.bytes;
-    frame_index_ = -startTime;
+    frame_index_ = 0;
     frames_.Clear();
     int i = 0;
     while (i < data.Length) {

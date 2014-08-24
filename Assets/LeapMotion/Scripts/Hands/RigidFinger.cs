@@ -46,8 +46,10 @@ public class RigidFinger : SkeletalFinger {
           axis  = -axis;
         }
 
-        if (angle != 0)
-          bones[i].rigidbody.angularVelocity = (1 - filtering) * angle * axis;
+        if (angle != 0) {
+          float delta_radians = (1 - filtering) * angle * Mathf.Deg2Rad;
+          bones[i].rigidbody.angularVelocity = delta_radians * axis / Time.deltaTime;
+        }
       }
     }
   }

@@ -33,13 +33,8 @@ public class HandController : MonoBehaviour {
   // Recording parameters.
   public bool enableRecordPlayback = false;
   public TextAsset recordingAsset;
-  public KeyCode keyToRecord = KeyCode.None;
-  public KeyCode keyToSave = KeyCode.None;
-  public KeyCode keyToReset = KeyCode.None;
-  public int recorderStartTime = 0;
   public float recorderSpeed = 1.0f;
   public bool recorderLoop = true;
-  public int recorderDelay = 0;
   
   private LeapRecorder recorder_ = new LeapRecorder();
   
@@ -216,36 +211,6 @@ public class HandController : MonoBehaviour {
     }
   }
 
-  void UpdateRecorder() {
-    if (!enableRecordPlayback)
-      return;
-
-    recorder_.startTime = recorderStartTime;
-    recorder_.speed = recorderSpeed;
-    recorder_.loop = recorderLoop;
-    recorder_.delay = recorderDelay;
-
-    if (Input.GetKeyDown(keyToRecord)) {
-      recorder_.state = RecorderState.Recording;
-    }
-    else if (Input.GetKeyDown(keyToSave)) {
-      recorder_.state = RecorderState.Playing;
-      recordingAsset = recorder_.SaveToNewFile();
-      recorder_.Load(recordingAsset);
-      recorder_.SetDefault();
-    }
-    else if (Input.GetKeyDown(keyToReset)) {
-      recorder_.Reset();
-    }
-
-    if (recorder_.state == RecorderState.Recording) {
-      recorder_.AddFrame(leap_controller_.Frame());
-    }
-    else {
-      recorder_.NextFrame();
-    }
-  }
-
   Frame GetFrame() {
     if (enableRecordPlayback && recorder_.state == RecorderState.Playing)
       return recorder_.GetCurrentFrame();
@@ -269,5 +234,50 @@ public class HandController : MonoBehaviour {
     Frame frame = GetFrame();
     UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
     UpdateToolModels(tools_, frame.Tools, toolModel);
+  }
+
+  public float GetRecordingProgress() {
+    return recorder_.GetProgress();
+  }
+
+  public void StopRecording() {
+    recorder_.Stop();
+  }
+
+  public void PlayRecording() {
+    recorder_.Play();
+  }
+
+  public void PauseRecording() {
+    recorder_.Pause();
+  }
+
+  public string FinishAndSaveRecording() {
+    string path = recorder_.SaveToNewFile();
+    recorder_.Play();
+    return path;
+  }
+
+  public void ResetRecording() {
+    recorder_.Reset();
+  }
+
+  public void Record() {
+    recorder_.Record();
+  }
+
+  void UpdateRecorder() {
+    if (!enableRecordPlayback)
+      return;
+
+    recorder_.speed = recorderSpeed;
+    recorder_.loop = recorderLoop;
+
+    if (recorder_.state == RecorderState.Recording) {
+      recorder_.AddFrame(leap_controller_.Frame());
+    }
+    else {
+      recorder_.NextFrame();
+    }
   }
 }

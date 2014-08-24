@@ -46,8 +46,10 @@ public class RigidHand : SkeletalHand {
         angle = 360 - angle;
         axis = -axis;
       }
-      if (angle != 0)
-        palm.rigidbody.angularVelocity = (1 - filtering) * angle * axis;
+      if (angle != 0) {
+        float delta_radians = (1 - filtering) * angle * Mathf.Deg2Rad;
+        palm.rigidbody.angularVelocity = delta_radians * axis / Time.deltaTime;
+      }
     }
   }
 }
