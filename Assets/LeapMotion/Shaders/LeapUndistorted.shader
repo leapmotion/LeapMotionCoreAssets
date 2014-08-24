@@ -25,6 +25,7 @@
       uniform float _RayScaleX;
       uniform float _RayScaleY;
       uniform int _BlackIsTransparent;
+      uniform float _GammaCorrection;
       uniform sampler2D _MainTex;
       uniform sampler2D _DistortX;
       uniform sampler2D _DistortY;
@@ -59,7 +60,7 @@
 
         // Find the undistorted pixel location.
         float2 texCoord = float2(texImageX, texImageY);
-        float a = tex2D(_MainTex, texCoord).a;
+        float a = pow(tex2D(_MainTex, texCoord).a, (1.0 / _GammaCorrection));
 
         float4 color = _Color;
 

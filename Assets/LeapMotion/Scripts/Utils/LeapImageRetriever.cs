@@ -22,6 +22,7 @@ public class LeapImageRetriever : MonoBehaviour {
 
   public int imageIndex = 0;
   public Color imageColor = Color.white;
+  public float gammaCorrection = 1.0f;
   public bool undistortImage = true;
   public bool blackIsTransparent = true;
 
@@ -120,6 +121,7 @@ public class LeapImageRetriever : MonoBehaviour {
 
     renderer.material.mainTexture = main_texture_;
     renderer.material.SetColor("_Color", imageColor);
+    renderer.material.SetFloat("_GammaCorrection", gammaCorrection);
     renderer.material.SetInt("_BlackIsTransparent", blackIsTransparent ? 1 : 0);
 
     if (undistortImage) {
