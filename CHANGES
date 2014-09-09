@@ -1,10 +1,22 @@
+v0.4.0
+ - Added image passthrough scripts and prefabs.
+ - Added Recording and playback functionality.
+ - Added field of view to HandController prefab in Scene view.
+ - Fixed a couple bugs in the Interaction Utilities.
+ - Fixed a rotational bug in the Rigid Hand for low frame rates.
+
+v0.3.0
+ - Added Interaction Utilities (alpha)
+ - Added the FingerModel GetRay() function.
+ - Fixed Rigid Hand initial scaling issue.
+
 v0.2.0
  - Added non-relative hand movement vector so you can you have small hands travel long distances.
  - Added tool tracking and some example tools.
  - Added a robot hand.
  - Added a debug hand.
  - Added example scenes.
- - Fixed a bug in the Magnetic Pinch script for a moving HandController.
+ - Fixed a bug in the Magnetic Pinch script.
 
 v0.1.0
  - Initial Release
