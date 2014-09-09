@@ -12,8 +12,8 @@ using Leap;
 public class HandController : MonoBehaviour {
 
   // Reference distance from thumb base to pinky base in mm.
-  protected const float MODEL_PALM_WIDTH = 85.0f;
   protected const float GIZMO_SCALE = 5.0f;
+  protected const float MM_TO_M = 0.001f;
 
   public bool separateLeftRight = false;
   public HandModel leftGraphicsModel;
@@ -23,6 +23,7 @@ public class HandController : MonoBehaviour {
 
   public ToolModel toolModel;
 
+  public bool isHeadMounted = false;
   public bool mirrorZAxis = false;
 
   // If hands are in charge of Destroying themselves, make this false.
@@ -51,6 +52,17 @@ public class HandController : MonoBehaviour {
 
   void Start() {
     leap_controller_ = new Controller();
+
+    // Optimize for top-down tracking if on head mounted display.
+    Controller.PolicyFlag policy_flags = leap_controller_.PolicyFlags;
+    if (isHeadMounted)
+      policy_flags |= Controller.PolicyFlag.POLICY_OPTIMIZE_HMD;
+    else
+      policy_flags &= ~Controller.PolicyFlag.POLICY_OPTIMIZE_HMD;
+
+    leap_controller_.SetPolicyFlags(policy_flags);
+
+    // Initialize hand lookup tables.
     hand_graphics_ = new Dictionary<int, HandModel>();
     hand_physics_ = new Dictionary<int, HandModel>();
 
@@ -133,7 +145,7 @@ public class HandController : MonoBehaviour {
           new_hand.SetController(this);
 
           // Set scaling based on reference hand.
-          float hand_scale = leap_hand.PalmWidth / MODEL_PALM_WIDTH;
+          float hand_scale = MM_TO_M * leap_hand.PalmWidth / new_hand.handModelPalmWidth;
           new_hand.transform.localScale = hand_scale * transform.localScale;
 
           new_hand.InitHand();
@@ -147,7 +159,7 @@ public class HandController : MonoBehaviour {
           hand_model.MirrorZAxis(mirrorZAxis);
 
           // Set scaling based on reference hand.
-          float hand_scale = leap_hand.PalmWidth / MODEL_PALM_WIDTH;
+          float hand_scale = MM_TO_M * leap_hand.PalmWidth / hand_model.handModelPalmWidth;
           hand_model.transform.localScale = hand_scale * transform.localScale;
           hand_model.UpdateHand();
         }
@@ -264,6 +276,17 @@ public class HandController : MonoBehaviour {
 
   public void Record() {
     recorder_.Record();
+  }
+
+  public bool IsConnected() {
+    return leap_controller_.IsConnected;
+  }
+
+  public bool IsEmbedded() {
+    DeviceList devices = leap_controller_.Devices;
+    if (devices.Count == 0)
+      return false;
+    return devices[0].IsEmbedded;
   }
 
   void UpdateRecorder() {

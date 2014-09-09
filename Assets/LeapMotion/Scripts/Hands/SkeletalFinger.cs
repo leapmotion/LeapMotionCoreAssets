@@ -12,6 +12,7 @@ using Leap;
 public class SkeletalFinger : FingerModel {
 
   public Transform[] bones = new Transform[NUM_BONES];
+  public Transform[] joints = new Transform[NUM_BONES - 1];
 
   public override void InitFinger() {
     SetPositions();
@@ -26,6 +27,13 @@ public class SkeletalFinger : FingerModel {
       if (bones[i] != null) {
         bones[i].transform.position = GetBoneCenter(i);
         bones[i].transform.rotation = GetBoneRotation(i);
+      }
+    }
+
+    for (int i = 0; i < joints.Length; ++i) {
+      if (joints[i] != null) {
+        joints[i].transform.position = GetJointPosition(i + 1);
+        joints[i].transform.rotation = GetBoneRotation(i + 1);
       }
     }
   }

@@ -128,6 +128,11 @@ public class HandControllerEditor : Editor {
                                                controller.toolModel,
                                                typeof(ToolModel), true);
 
+    EditorGUILayout.Space();
+
+    controller.isHeadMounted = EditorGUILayout.Toggle("Is Head Mounted",
+                                                      controller.isHeadMounted);
+
     controller.mirrorZAxis = EditorGUILayout.Toggle("Mirror Z Axis", controller.mirrorZAxis);
 
     controller.handMovementScale =
@@ -136,6 +141,7 @@ public class HandControllerEditor : Editor {
     controller.destroyHands = EditorGUILayout.Toggle("Destroy Hands",
                                                       controller.destroyHands);
 
+    EditorGUILayout.Space();
     controller.enableRecordPlayback = EditorGUILayout.Toggle("Enable Record/Playback",
                                                              controller.enableRecordPlayback);
     if (controller.enableRecordPlayback) {

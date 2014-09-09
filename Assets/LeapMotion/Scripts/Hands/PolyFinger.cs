@@ -139,6 +139,7 @@ public class PolyFinger : FingerModel {
 
   protected void InitMesh() {
     mesh_ = new Mesh();
+    mesh_.MarkDynamic();
 
     int vertex_index = 0;
     int num_vertices = VERTICES_PER_QUAD * sides * NUM_BONES;
@@ -180,6 +181,7 @@ public class PolyFinger : FingerModel {
 
   protected void InitCapsMesh() {
     cap_mesh_ = new Mesh();
+    cap_mesh_.MarkDynamic();
 
     cap_vertices_ = cap_mesh_.vertices;
     int num_vertices = 2 * sides;

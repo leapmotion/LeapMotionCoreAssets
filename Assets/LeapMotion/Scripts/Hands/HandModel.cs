@@ -13,6 +13,7 @@ public abstract class HandModel : MonoBehaviour {
 
   public const int NUM_FINGERS = 5;
 
+  public float handModelPalmWidth = 0.085f;
   public FingerModel[] fingers = new FingerModel[NUM_FINGERS];
 
   private Hand hand_;

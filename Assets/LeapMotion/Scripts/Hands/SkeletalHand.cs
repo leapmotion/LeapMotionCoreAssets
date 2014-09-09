@@ -15,6 +15,7 @@ public class SkeletalHand : HandModel {
 
   public GameObject palm;
   public GameObject forearm;
+  public GameObject wristJoint;
 
   void Start() {
     IgnoreCollisionsWithSelf();
@@ -42,6 +43,11 @@ public class SkeletalHand : HandModel {
     if (palm != null) {
       palm.transform.position = GetPalmCenter();
       palm.transform.rotation = GetPalmRotation();
+    }
+
+    if (wristJoint != null) {
+      wristJoint.transform.position = GetWristPosition();
+      wristJoint.transform.rotation = GetPalmRotation();
     }
 
     if (forearm != null) {
