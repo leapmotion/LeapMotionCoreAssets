@@ -29,7 +29,7 @@ public class DebugHand : HandModel {
     DrawDebugLines();
   }
 
-  private void DrawDebugLines() {
+  protected void DrawDebugLines() {
     HandModel hand = GetComponent<HandModel>();
     Debug.DrawLine(hand.GetElbowPosition(), hand.GetWristPosition(), Color.red);
     Debug.DrawLine(hand.GetWristPosition(), hand.GetPalmPosition(), Color.white);

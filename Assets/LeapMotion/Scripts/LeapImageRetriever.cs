@@ -12,13 +12,13 @@ using Leap;
 // and enable "Allow Images" in the Leap Motion settings.
 public class LeapImageRetriever : MonoBehaviour {
 
-  private const string NORMAL_SHADER = "LeapMotion/LeapDistorted";
-  private const string UNDISTORT_SHADER = "LeapMotion/LeapUndistorted";
-  private const int DEFAULT_TEXTURE_WIDTH = 640;
-  private const int DEFAULT_TEXTURE_HEIGHT = 240;
-  private const int DEFAULT_DISTORTION_WIDTH = 64;
-  private const int DEFAULT_DISTORTION_HEIGHT = 64;
-  private const int IMAGE_WARNING_WAIT = 10;
+  public const string NORMAL_SHADER = "LeapMotion/LeapDistorted";
+  public const string UNDISTORT_SHADER = "LeapMotion/LeapUndistorted";
+  public const int DEFAULT_TEXTURE_WIDTH = 640;
+  public const int DEFAULT_TEXTURE_HEIGHT = 240;
+  public const int DEFAULT_DISTORTION_WIDTH = 64;
+  public const int DEFAULT_DISTORTION_HEIGHT = 64;
+  public const int IMAGE_WARNING_WAIT = 10;
 
   public int imageIndex = 0;
   public Color imageColor = Color.white;
@@ -26,29 +26,29 @@ public class LeapImageRetriever : MonoBehaviour {
   public bool undistortImage = true;
   public bool blackIsTransparent = true;
 
-  private Controller leap_controller_;
+  protected Controller leap_controller_;
 
   // Main texture.
-  private Texture2D main_texture_;
-  private Color32[] image_pixels_;
-  private byte[] image_data_;
-  private int image_misses_ = 0;
+  protected Texture2D main_texture_;
+  protected Color32[] image_pixels_;
+  protected byte[] image_data_;
+  protected int image_misses_ = 0;
 
   // Distortion textures.
-  private Texture2D distortionX_;
-  private Texture2D distortionY_;
-  private Color32[] dist_pixelsX_;
-  private Color32[] dist_pixelsY_;
-  private float[] distortion_data_;
+  protected Texture2D distortionX_;
+  protected Texture2D distortionY_;
+  protected Color32[] dist_pixelsX_;
+  protected Color32[] dist_pixelsY_;
+  protected float[] distortion_data_;
 
-  private void SetMainTextureDimensions(int width, int height) {
+  protected void SetMainTextureDimensions(int width, int height) {
     int num_pixels = width * height;
     main_texture_ = new Texture2D(width, height, TextureFormat.Alpha8, false);
     main_texture_.wrapMode = TextureWrapMode.Clamp;
     image_pixels_ = new Color32[num_pixels];
   }
 
-  private void SetDistortionDimensions(int width, int height) {
+  protected void SetDistortionDimensions(int width, int height) {
     int num_pixels = width * height;
     distortionX_ = new Texture2D(width, height, TextureFormat.RGBA32, false);
     distortionY_ = new Texture2D(width, height, TextureFormat.RGBA32, false);
@@ -135,14 +135,14 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-  void LoadMainTexture() {
+  protected void LoadMainTexture() {
     int num_pixels = main_texture_.width * main_texture_.height;
     for (int i = 0; i < num_pixels; ++i)
       image_pixels_[i].a = image_data_[i];
   }
 
   // Encodes the float distortion texture as RGBA values to transfer the data to the shader.
-  void EncodeDistortion() {
+  protected void EncodeDistortion() {
     // Move distortion data to distortion x and y textures.
     int num_distortion_floats = 2 * distortionX_.width * distortionX_.height;
     for (int i = 0; i < num_distortion_floats; ++i) {
@@ -185,7 +185,7 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-  void ApplyDataToTextures() {
+  protected void ApplyDataToTextures() {
     main_texture_.SetPixels32(image_pixels_);
     main_texture_.Apply();
 

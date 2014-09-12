@@ -22,9 +22,9 @@ public class LeapRecorder {
   public bool loop = true;
   public RecorderState state = RecorderState.Playing;
 
-  private List<byte[]> frames_;
-  private float frame_index_;
-  private Frame current_frame_ = new Frame();
+  protected List<byte[]> frames_;
+  protected float frame_index_;
+  protected Frame current_frame_ = new Frame();
   
   public LeapRecorder() {
     Reset();

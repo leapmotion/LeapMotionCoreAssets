@@ -20,13 +20,13 @@ public class PolyFinger : FingerModel {
   public float startingAngle = 0.0f;
   public float[] widths = new float[NUM_JOINTS];
   
-  private Vector3[] vertices_;
-  private Vector3[] normals_;
-  private Vector3[] joint_vertices_;
+  protected Vector3[] vertices_;
+  protected Vector3[] normals_;
+  protected Vector3[] joint_vertices_;
 
-  private Mesh mesh_;
-  private Mesh cap_mesh_;
-  private Vector3[] cap_vertices_;
+  protected Mesh mesh_;
+  protected Mesh cap_mesh_;
+  protected Vector3[] cap_vertices_;
 
   public override void InitFinger() {
     InitJointVertices();

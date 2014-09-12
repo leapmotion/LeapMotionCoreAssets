@@ -12,13 +12,13 @@ using Leap;
 // closest rigidbody with a spring force if it's within a given range.
 public class MagneticPinch : MonoBehaviour {
 
-  private const float TRIGGER_DISTANCE_RATIO = 0.7f;
+  public const float TRIGGER_DISTANCE_RATIO = 0.7f;
 
   public float forceSpringConstant = 100.0f;
   public float magnetDistance = 2.0f;
 
-  private bool pinching_;
-  private Collider grabbed_;
+  protected bool pinching_;
+  protected Collider grabbed_;
 
   void Start() {
     pinching_ = false;

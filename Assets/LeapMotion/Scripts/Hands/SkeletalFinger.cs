@@ -22,7 +22,7 @@ public class SkeletalFinger : FingerModel {
     SetPositions();
   }
 
-  private void SetPositions() {
+  protected void SetPositions() {
     for (int i = 0; i < bones.Length; ++i) {
       if (bones[i] != null) {
         bones[i].transform.position = GetBoneCenter(i);

@@ -34,7 +34,7 @@ public class SkeletalHand : HandModel {
     return GetPalmPosition() - offset;
   }
 
-  private void SetPositions() {
+  protected void SetPositions() {
     for (int f = 0; f < fingers.Length; ++f) {
       if (fingers[f] != null)
         fingers[f].InitFinger();

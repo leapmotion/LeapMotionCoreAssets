@@ -16,12 +16,12 @@ public abstract class FingerModel : MonoBehaviour {
 
   public Finger.FingerType fingerType = Finger.FingerType.TYPE_INDEX;
 
-  private Hand hand_;
-  private Finger finger_;
-  private Vector3 offset_ = Vector3.zero;
-  private bool mirror_z_axis_ = false;
+  protected Hand hand_;
+  protected Finger finger_;
+  protected Vector3 offset_ = Vector3.zero;
+  protected bool mirror_z_axis_ = false;
 
-  HandController controller_;
+  protected HandController controller_;
 
   public void SetController(HandController controller) {
     controller_ = controller;

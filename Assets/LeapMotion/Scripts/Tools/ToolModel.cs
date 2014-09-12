@@ -14,9 +14,9 @@ public class ToolModel : MonoBehaviour {
 
   public float filtering = 0.5f;
 
-  private Tool tool_;
-  private HandController controller_;
-  private bool mirror_z_axis_ = false;
+  protected Tool tool_;
+  protected HandController controller_;
+  protected bool mirror_z_axis_ = false;
 
   public Tool GetLeapTool() {
     return tool_;
