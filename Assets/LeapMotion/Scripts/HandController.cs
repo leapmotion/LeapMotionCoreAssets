@@ -80,33 +80,16 @@ public class HandController : MonoBehaviour {
       recorder_.Load(recordingAsset);
   }
 
-  protected void IgnoreCollisions(GameObject first, GameObject second, bool ignore = true) {
-    if (first == null || second == null)
-      return;
-
-    Collider[] first_colliders = first.GetComponentsInChildren<Collider>();
-    Collider[] second_colliders = second.GetComponentsInChildren<Collider>();
-
-    for (int i = 0; i < first_colliders.Length; ++i) {
-      for (int j = 0; j < second_colliders.Length; ++j)
-        Physics.IgnoreCollision(first_colliders[i], second_colliders[j], ignore);
-    }
-  }
-
-  protected void IgnoreCollisionsWithChildren(GameObject to_ignore) {
-    IgnoreCollisions(gameObject, to_ignore);
-  }
-
   public void IgnoreCollisionsWithHands(GameObject to_ignore, bool ignore = true) {
     foreach (HandModel hand in hand_physics_.Values)
-      IgnoreCollisions(hand.gameObject, to_ignore, ignore);
+      Leap.Utils.IgnoreCollisions(hand.gameObject, to_ignore, ignore);
   }
 
   protected HandModel CreateHand(HandModel model) {
     HandModel hand_model = Instantiate(model, transform.position, transform.rotation)
                            as HandModel;
     hand_model.gameObject.SetActive(true);
-    IgnoreCollisionsWithChildren(hand_model.gameObject);
+    Leap.Utils.IgnoreCollisions(hand_model.gameObject, gameObject);
     return hand_model;
   }
 
@@ -149,7 +132,7 @@ public class HandController : MonoBehaviour {
 
           // Set scaling based on reference hand.
           float hand_scale = MM_TO_M * leap_hand.PalmWidth / new_hand.handModelPalmWidth;
-          new_hand.transform.localScale = hand_scale * transform.localScale;
+          new_hand.transform.localScale = hand_scale * transform.lossyScale;
 
           new_hand.InitHand();
           new_hand.UpdateHand();
@@ -163,7 +146,7 @@ public class HandController : MonoBehaviour {
 
           // Set scaling based on reference hand.
           float hand_scale = MM_TO_M * leap_hand.PalmWidth / hand_model.handModelPalmWidth;
-          hand_model.transform.localScale = hand_scale * transform.localScale;
+          hand_model.transform.localScale = hand_scale * transform.lossyScale;
           hand_model.UpdateHand();
         }
       }
@@ -177,10 +160,9 @@ public class HandController : MonoBehaviour {
   }
 
   ToolModel CreateTool(ToolModel model) {
-    ToolModel tool_model = Instantiate(model, transform.position, transform.rotation)
-                           as ToolModel;
+    ToolModel tool_model = Instantiate(model, transform.position, transform.rotation) as ToolModel;
     tool_model.gameObject.SetActive(true);
-    IgnoreCollisionsWithChildren(tool_model.gameObject);
+    Leap.Utils.IgnoreCollisions(tool_model.gameObject, gameObject);
     return tool_model;
   }
 
@@ -213,7 +195,7 @@ public class HandController : MonoBehaviour {
         tool_model.MirrorZAxis(mirrorZAxis);
 
         // Set scaling.
-        tool_model.transform.localScale = transform.localScale;
+        tool_model.transform.localScale = transform.lossyScale;
 
         tool_model.UpdateTool();
       }
@@ -226,7 +208,11 @@ public class HandController : MonoBehaviour {
     }
   }
 
-  Frame GetFrame() {
+  public Controller GetLeapController() {
+    return leap_controller_;
+  }
+
+  public Frame GetFrame() {
     if (enableRecordPlayback && recorder_.state == RecorderState.Playing)
       return recorder_.GetCurrentFrame();
 

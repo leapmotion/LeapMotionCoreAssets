@@ -123,11 +123,4 @@ public abstract class HandModel : MonoBehaviour {
   public abstract void InitHand();
 
   public abstract void UpdateHand();
-
-  protected void IgnoreCollisionsWithSelf() {
-    Collider[] colliders = gameObject.GetComponentsInChildren<Collider>();
-    for (int i = 0; i < colliders.Length; ++i)
-      for (int j = i + 1; j < colliders.Length; ++j)
-        Physics.IgnoreCollision(colliders[i], colliders[j]);
-  }
 }

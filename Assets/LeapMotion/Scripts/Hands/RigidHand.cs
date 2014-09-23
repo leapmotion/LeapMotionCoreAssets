@@ -15,7 +15,7 @@ public class RigidHand : SkeletalHand {
 
   void Start() {
     palm.rigidbody.maxAngularVelocity = Mathf.Infinity;
-    IgnoreCollisionsWithSelf();
+    Leap.Utils.IgnoreCollisions(gameObject, gameObject);
   }
 
   public override void InitHand() {
