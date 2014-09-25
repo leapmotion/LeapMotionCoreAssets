@@ -17,9 +17,6 @@ public class GrabbingHand : MonoBehaviour {
     kReleasing
   }
 
-  protected const float RELEASE_MAXIMUM_SPRING = 0.05f;
-  protected const float RELEASE_DAMPING = 0.1f;
-
   // Layers that we can grab.
   public LayerMask grabbableLayers = ~0;
 
@@ -102,6 +99,7 @@ public class GrabbingHand : MonoBehaviour {
     return closest;
   }
 
+  // Notify grabbable objects when they are ready to grab :)
   protected void Hover() {
     Collider hover = FindClosestGrabbableObject(current_pinch_position_);
 
@@ -129,23 +127,40 @@ public class GrabbingHand : MonoBehaviour {
 
     HandModel hand_model = GetComponent<HandModel>();
     Leap.Utils.IgnoreCollisions(gameObject, active_object_.gameObject, true);
+    GrabbableObject grabbable = active_object_.GetComponent<GrabbableObject>();
 
     // Setup initial position and rotation conditions.
     palm_rotation_ = hand_model.GetPalmRotation();
-    object_pinch_offset_ = active_object_.transform.position - 
-                           active_object_.ClosestPointOnBounds(current_pinch_position_);
+    object_pinch_offset_ = Vector3.zero;
+
+    // If we don't center the object, find the closest point in the collider for our grab point.
+    if (grabbable == null || !grabbable.centerGrabbedObject) {
+      Vector3 delta_position = active_object_.transform.position - current_pinch_position_;
+
+      Ray pinch_ray = new Ray(current_pinch_position_, delta_position);
+      RaycastHit pinch_hit;
+
+      // If we raycast hits the object, we're outside the collider so grab the hit point.
+      // If not, we're inside the collider so just use the pinch position.
+      if (active_object_.Raycast(pinch_ray, out pinch_hit, grabObjectDistance))
+        object_pinch_offset_ = active_object_.transform.position - pinch_hit.point;
+      else
+        object_pinch_offset_ = active_object_.transform.position - current_pinch_position_;
+    }
+
     filtered_pinch_position_ = active_object_.transform.position - object_pinch_offset_;
     object_pinch_offset_ = Quaternion.Inverse(active_object_.transform.rotation) *
                            object_pinch_offset_;
     rotation_from_palm_ = Quaternion.Inverse(palm_rotation_) * active_object_.transform.rotation;
 
-    GrabbableObject grabbable = active_object_.GetComponent<GrabbableObject>();
+    // If we can rotate the object quickly, increase max angular velocity for now.
     if (grabbable == null || grabbable.rotateQuickly) {
       last_max_angular_velocity_ = active_object_.rigidbody.maxAngularVelocity;
       active_object_.rigidbody.maxAngularVelocity = Mathf.Infinity;
     }
 
     if (grabbable != null) {
+      // Notify grabbable object that it was grabbed.
       grabbable.OnGrab();
 
       if (grabbable.useAxisAlignment) {
@@ -167,6 +182,7 @@ public class GrabbingHand : MonoBehaviour {
 
   protected void OnRelease() {
     if (active_object_ != null) {
+      // Notify the grabbable object that is was released.
       GrabbableObject grabbable = active_object_.GetComponent<GrabbableObject>();
       if (grabbable != null)
         grabbable.OnRelease();

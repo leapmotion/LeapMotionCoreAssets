@@ -13,10 +13,12 @@ public class GrabbableObject : MonoBehaviour {
   public Vector3 rightHandAxis;
   public Vector3 objectAxis;
 
+  public bool rotateQuickly = true;
+  public bool centerGrabbedObject = false;
+
   public Rigidbody breakableJoint;
   public float breakForce;
   public float breakTorque;
-  public bool rotateQuickly = true;
 
   protected bool grabbed_ = false;
   protected bool hovered_ = false;
@@ -58,16 +60,6 @@ public class GrabbableObject : MonoBehaviour {
       if (breakJoint != null) {
         breakJoint.breakForce = Mathf.Infinity;
         breakJoint.breakTorque = Mathf.Infinity;
-      }
-    }
-  }
-
-  void Update() {
-    if (grabbed_ && breakableJoint != null) {
-      Joint breakJoint = breakableJoint.GetComponent<Joint>();
-      if (breakJoint != null) {
-        breakJoint.breakForce = breakForce;
-        breakJoint.breakTorque = breakTorque;
       }
     }
   }
