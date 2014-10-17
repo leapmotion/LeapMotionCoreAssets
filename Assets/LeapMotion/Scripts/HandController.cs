@@ -159,7 +159,7 @@ public class HandController : MonoBehaviour {
     }
   }
 
-  ToolModel CreateTool(ToolModel model) {
+  protected ToolModel CreateTool(ToolModel model) {
     ToolModel tool_model = Instantiate(model, transform.position, transform.rotation) as ToolModel;
     tool_model.gameObject.SetActive(true);
     Leap.Utils.IgnoreCollisions(tool_model.gameObject, gameObject);
@@ -270,10 +270,14 @@ public class HandController : MonoBehaviour {
     if (hand_graphics_ != null) {
       foreach (HandModel model in hand_graphics_.Values)
         Destroy(model.gameObject);
+
+      hand_graphics_.Clear();
     }
     if (hand_physics_ != null) {
       foreach (HandModel model in hand_physics_.Values)
         Destroy(model.gameObject);
+
+      hand_physics_.Clear();
     }
   }
 
