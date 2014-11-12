@@ -5,17 +5,60 @@
 \******************************************************************************/
 
 using UnityEngine;
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using Leap;
+
+public struct LMDevice
+{
+  public static int PERIPERAL_WIDTH = 640;
+  public static int PERIPERAL_HEIGHT = 240;
+  public static int DRAGONFLY_WIDTH = 608;
+  public static int DRAGONFLY_HEIGHT = 540;
+
+  public int width;
+  public int height;
+  public int pixels;
+  public LM_DEVICE type;
+
+  public LMDevice (LM_DEVICE device = LM_DEVICE.PERIPHERAL)
+  {
+    type = device;
+    switch (type)
+    {
+      case LM_DEVICE.PERIPHERAL:
+        width = PERIPERAL_WIDTH;
+        height = PERIPERAL_HEIGHT;
+        break;
+      case LM_DEVICE.DRAGONFLY:
+        width = DRAGONFLY_WIDTH;
+        height = DRAGONFLY_HEIGHT;
+        break;
+      default:
+        width = PERIPERAL_WIDTH;
+        height = PERIPERAL_HEIGHT;
+        break;
+    }
+    this.pixels = width * height;
+  }
+}
+
+public enum LM_DEVICE
+{
+  PERIPHERAL = 0,
+  DRAGONFLY = 1
+}
 
 // To use the LeapImageRetriever you must be on version 2.1+
 // and enable "Allow Images" in the Leap Motion settings.
-public class LeapImageRetriever : MonoBehaviour {
+public class LeapImageRetriever : MonoBehaviour
+{
+  public const string IR_NORMAL_SHADER = "LeapMotion/LeapIRDistorted";
+  public const string IR_UNDISTORT_SHADER = "LeapMotion/LeapIRUndistorted";
+  public const string RGB_NORMAL_SHADER = "LeapMotion/LeapRGBDistorted";
+  public const string RGB_UNDISTORT_SHADER = "LeapMotion/LeapRGBUndistorted";
 
-  public const string NORMAL_SHADER = "LeapMotion/LeapDistorted";
-  public const string UNDISTORT_SHADER = "LeapMotion/LeapUndistorted";
-  public const int DEFAULT_TEXTURE_WIDTH = 640;
-  public const int DEFAULT_TEXTURE_HEIGHT = 240;
   public const int DEFAULT_DISTORTION_WIDTH = 64;
   public const int DEFAULT_DISTORTION_HEIGHT = 64;
   public const int IMAGE_WARNING_WAIT = 10;
@@ -27,6 +70,7 @@ public class LeapImageRetriever : MonoBehaviour {
   public bool blackIsTransparent = true;
 
   protected Controller leap_controller_;
+  private LMDevice attached_device_ = new LMDevice();
 
   // Main texture.
   protected Texture2D main_texture_;
@@ -41,14 +85,39 @@ public class LeapImageRetriever : MonoBehaviour {
   protected Color32[] dist_pixelsY_;
   protected float[] distortion_data_;
 
-  protected void SetMainTextureDimensions(int width, int height) {
-    int num_pixels = width * height;
-    main_texture_ = new Texture2D(width, height, TextureFormat.Alpha8, false);
-    main_texture_.wrapMode = TextureWrapMode.Clamp;
-    image_pixels_ = new Color32[num_pixels];
+  private LM_DEVICE SetDevice(int width, int height)
+  {
+    if (width == LMDevice.PERIPERAL_WIDTH && height == LMDevice.PERIPERAL_HEIGHT)
+    {
+      return LM_DEVICE.PERIPHERAL;
+    }
+    else if (width == LMDevice.DRAGONFLY_WIDTH && height == LMDevice.DRAGONFLY_HEIGHT)
+    {
+      return LM_DEVICE.DRAGONFLY;
+    }
+    return LM_DEVICE.PERIPHERAL;
   }
 
-  protected void SetDistortionDimensions(int width, int height) {
+  protected void SetMainTextureDimensions()
+  {
+    switch (attached_device_.type)
+    {
+      case LM_DEVICE.PERIPHERAL:
+        main_texture_ = new Texture2D(attached_device_.width, attached_device_.height, TextureFormat.Alpha8, false);
+        break;
+      case LM_DEVICE.DRAGONFLY:
+        main_texture_ = new Texture2D(attached_device_.width, attached_device_.height, TextureFormat.RGBA32, false);
+        break;
+      default:
+        main_texture_ = new Texture2D(attached_device_.width, attached_device_.height, TextureFormat.Alpha8, false);
+        break;
+    }
+    main_texture_.wrapMode = TextureWrapMode.Clamp;
+    image_pixels_ = new Color32[attached_device_.pixels];
+  }
+
+  protected void SetDistortionDimensions(int width, int height)
+  {
     int num_pixels = width * height;
     distortionX_ = new Texture2D(width, height, TextureFormat.RGBA32, false);
     distortionY_ = new Texture2D(width, height, TextureFormat.RGBA32, false);
@@ -59,50 +128,81 @@ public class LeapImageRetriever : MonoBehaviour {
     dist_pixelsY_ = new Color32[num_pixels];
   }
 
-  void Start() {
+  void Start()
+  {
     leap_controller_ = new Controller();
     leap_controller_.SetPolicyFlags(Controller.PolicyFlag.POLICY_IMAGES);
 
-    SetMainTextureDimensions(DEFAULT_TEXTURE_WIDTH, DEFAULT_TEXTURE_HEIGHT);
+    SetMainTextureDimensions();
     SetDistortionDimensions(DEFAULT_DISTORTION_WIDTH, DEFAULT_DISTORTION_HEIGHT);
   }
 
-  void Update () {
-    if (undistortImage)
-      renderer.material = new Material(Shader.Find(UNDISTORT_SHADER));
+  void Update()
+  {
+    if (undistortImage) 
+    {
+      switch (attached_device_.type) {
+        case LM_DEVICE.PERIPHERAL:
+          renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
+          break;
+        case LM_DEVICE.DRAGONFLY:
+          renderer.material = new Material(Shader.Find(RGB_UNDISTORT_SHADER));
+          break;
+        default:
+          renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
+          break;
+      }
+    }
     else
-      renderer.material = new Material(Shader.Find(NORMAL_SHADER));
+    {
+      switch (attached_device_.type)
+      {
+        case LM_DEVICE.PERIPHERAL:
+          renderer.material = new Material(Shader.Find(IR_NORMAL_SHADER));
+          break;
+        case LM_DEVICE.DRAGONFLY:
+          renderer.material = new Material(Shader.Find(RGB_NORMAL_SHADER));
+          break;
+        default:
+          renderer.material = new Material(Shader.Find(IR_NORMAL_SHADER));
+          break;
+      }
+    }
 
     Frame frame = leap_controller_.Frame();
 
-    if (frame.Images.Count == 0) {
+    if (frame.Images.Count == 0)
+    {
       image_misses_++;
-      if (image_misses_ == IMAGE_WARNING_WAIT) {
+      if (image_misses_ == IMAGE_WARNING_WAIT)
+      {
         Debug.LogWarning("Can't find any images. " +
-                         "Make sure you enabled 'Allow Images' in the Leap Motion Settings, " +
-                         "you are on tracking version 2.1+ and " +
-                         "your Leap Motion device is plugged in.");
+                          "Make sure you enabled 'Allow Images' in the Leap Motion Settings, " +
+                          "you are on tracking version 2.1+ and " +
+                          "your Leap Motion device is plugged in.");
       }
       return;
     }
 
     // Check main texture dimensions.
     Image image = frame.Images[imageIndex];
-    int image_width = image.Width;
-    int image_height = image.Height;
-    if (image_width == 0 || image_height == 0) {
+    attached_device_ = new LMDevice(SetDevice(image.Width, image.Height));
+
+    if (attached_device_.width == 0 || attached_device_.height == 0)
+    {
       Debug.LogWarning("No data in the image texture.");
       return;
     }
 
-    if (image_width != main_texture_.width || image_height != main_texture_.height)
-      SetMainTextureDimensions(image_width, image_height);
+    if (attached_device_.width != main_texture_.width || attached_device_.height != main_texture_.height)
+      SetMainTextureDimensions();
 
     // Check distortion texture dimensions.
     // Divide by two 2 because there are floats per pixel.
     int distortion_width = image.DistortionWidth / 2;
     int distortion_height = image.DistortionHeight;
-    if (distortion_width == 0 || distortion_height == 0) {
+    if (distortion_width == 0 || distortion_height == 0)
+    {
       Debug.LogWarning("No data in the distortion texture.");
       return;
     }
@@ -121,10 +221,12 @@ public class LeapImageRetriever : MonoBehaviour {
 
     renderer.material.mainTexture = main_texture_;
     renderer.material.SetColor("_Color", imageColor);
+    renderer.material.SetInt("_DeviceType", Convert.ToInt32(attached_device_.type));
     renderer.material.SetFloat("_GammaCorrection", gammaCorrection);
     renderer.material.SetInt("_BlackIsTransparent", blackIsTransparent ? 1 : 0);
 
-    if (undistortImage) {
+    if (undistortImage)
+    {
       renderer.material.SetTexture("_DistortX", distortionX_);
       renderer.material.SetTexture("_DistortY", distortionY_);
 
@@ -135,25 +237,43 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-  protected void LoadMainTexture() {
-    int num_pixels = main_texture_.width * main_texture_.height;
-    for (int i = 0; i < num_pixels; ++i)
-      image_pixels_[i].a = image_data_[i];
+  protected void LoadMainTexture()
+  {
+    switch (attached_device_.type)
+    {
+      case LM_DEVICE.PERIPHERAL:
+        for (int i = 0; i < image_data_.Length; ++i)
+          image_pixels_[i].a = image_data_[i];
+        break;
+      case LM_DEVICE.DRAGONFLY:
+        int image_index = 0;
+        for (int i = 0; i < image_data_.Length; image_index++)
+        {
+          image_pixels_[image_index].r = image_data_[i++];
+          image_pixels_[image_index].g = image_data_[i++];
+          image_pixels_[image_index].b = image_data_[i++];
+          image_pixels_[image_index].a = image_data_[i++];
+        }
+        gammaCorrection = Mathf.Max(gammaCorrection, 1.7f);
+        break;
+      default:
+        for (int i = 0; i < image_data_.Length; ++i)
+          image_pixels_[i].a = image_data_[i];
+        break;
+    }
   }
 
   // Encodes the float distortion texture as RGBA values to transfer the data to the shader.
-  protected void EncodeDistortion() {
+  protected void EncodeDistortion()
+  {
     // Move distortion data to distortion x and y textures.
     int num_distortion_floats = 2 * distortionX_.width * distortionX_.height;
-    for (int i = 0; i < num_distortion_floats; ++i) {
+    for (int i = 0; i < num_distortion_floats; ++i)
+    {
 
       float dval = distortion_data_[i];
       // The distortion range is -0.6 to +1.7. Normalize to range [0..1).
       dval = (dval + 0.6f) / 2.3f;
-      if (dval > 1.0f || dval < 0.0f) {
-          Debug.Log("WARNING: got a distortion value outside my encoded range at pixel " +
-                    i + ": " + distortion_data_[i]);
-      }
 
       // Encode the float as RGBA.
       float enc_x = dval;
@@ -166,17 +286,20 @@ public class LeapImageRetriever : MonoBehaviour {
       enc_z = enc_z - Mathf.Floor(enc_z);
       enc_w = enc_w - Mathf.Floor(enc_w);
 
-      enc_x -= 1.0f/255.0f * enc_y;
-      enc_y -= 1.0f/255.0f * enc_z;
-      enc_z -= 1.0f/255.0f * enc_w;
+      enc_x -= 1.0f / 255.0f * enc_y;
+      enc_y -= 1.0f / 255.0f * enc_z;
+      enc_z -= 1.0f / 255.0f * enc_w;
 
       int index = i >> 1;
-      if (i % 2 == 0) {
+      if (i % 2 == 0)
+      {
         dist_pixelsX_[index].r = (byte)(256 * enc_x);
         dist_pixelsX_[index].g = (byte)(256 * enc_y);
         dist_pixelsX_[index].b = (byte)(256 * enc_z);
         dist_pixelsX_[index].a = (byte)(256 * enc_w);
-      } else {
+      }
+      else
+      {
         dist_pixelsY_[index].r = (byte)(256 * enc_x);
         dist_pixelsY_[index].g = (byte)(256 * enc_y);
         dist_pixelsY_[index].b = (byte)(256 * enc_z);
@@ -185,7 +308,8 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-  protected void ApplyDataToTextures() {
+  protected void ApplyDataToTextures()
+  {
     main_texture_.SetPixels32(image_pixels_);
     main_texture_.Apply();
 

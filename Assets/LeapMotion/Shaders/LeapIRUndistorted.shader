@@ -1,4 +1,4 @@
-﻿Shader "LeapMotion/LeapUndistorted" {
+﻿Shader "LeapMotion/LeapIRUndistorted" {
   Properties {
     _Color ("Main Color (A=Opacity)", Color) = (1,1,1,1)
     _MainTex ("Base (A=Opacity)", 2D) = ""
