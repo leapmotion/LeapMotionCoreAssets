@@ -1,3 +1,12 @@
+v1.0
+ - Skin textures for hands
+ - Rigged hand with forearms
+ - Miscellaneous bug fixes
+
+v0.5
+ - New hand models!
+ - Easy to enable Head Mounted Display (HMD) mode
+
 v0.4.0
  - Added image passthrough scripts and prefabs.
  - Added Recording and playback functionality.
