@@ -23,10 +23,7 @@ public class ButtonDemoToggle : ButtonToggleBase
   {
     onGraphics.SetActive(true);
     offGraphics.SetActive(false);
-    onGraphics.SetBloomGain(3.0f);
-    midGraphics.SetBloomGain(10.0f);
-    midGraphics.SetColor(new Color(0.0f, 0.05f, 0.05f, 1.0f));
-    botGraphics.SetBloomGain(2.5f);
+    midGraphics.SetColor(new Color(0.0f, 0.5f, 0.5f, 1.0f));
     botGraphics.SetColor(new Color(0.0f, 1.0f, 1.0f, 1.0f));
   }
 
@@ -34,10 +31,7 @@ public class ButtonDemoToggle : ButtonToggleBase
   {
     onGraphics.SetActive(false);
     offGraphics.SetActive(true);
-    offGraphics.SetBloomGain(1.0f);
-    midGraphics.SetBloomGain(1.0f);
-    midGraphics.SetColor(new Color(0.0f, 0.05f, 0.05f, 0.25f));
-    botGraphics.SetBloomGain(1.0f);
+    midGraphics.SetColor(new Color(0.0f, 0.5f, 0.5f, 0.25f));
     botGraphics.SetColor(new Color(0.0f, 0.1f, 0.1f, 1.0f));
   }
 
