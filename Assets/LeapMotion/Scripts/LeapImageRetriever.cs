@@ -22,7 +22,7 @@ public struct LMDevice
   public int pixels;
   public LM_DEVICE type;
 
-  public LMDevice (LM_DEVICE device = LM_DEVICE.PERIPHERAL)
+  public LMDevice (LM_DEVICE device = LM_DEVICE.INVALID)
   {
     type = device;
     switch (type)
@@ -36,8 +36,8 @@ public struct LMDevice
         height = DRAGONFLY_HEIGHT;
         break;
       default:
-        width = PERIPERAL_WIDTH;
-        height = PERIPERAL_HEIGHT;
+        width = 0;
+        height = 0;
         break;
     }
     this.pixels = width * height;
@@ -46,6 +46,7 @@ public struct LMDevice
 
 public enum LM_DEVICE
 {
+  INVALID = -1,
   PERIPHERAL = 0,
   DRAGONFLY = 1
 }
@@ -83,7 +84,6 @@ public class LeapImageRetriever : MonoBehaviour
   protected Texture2D distortionY_;
   protected Color32[] dist_pixelsX_;
   protected Color32[] dist_pixelsY_;
-  protected float[] distortion_data_;
 
   private LM_DEVICE SetDevice(int width, int height)
   {
@@ -116,32 +116,12 @@ public class LeapImageRetriever : MonoBehaviour
     image_pixels_ = new Color32[attached_device_.pixels];
   }
 
-  protected void SetDistortionDimensions(int width, int height)
+  protected void SetShader() 
   {
-    int num_pixels = width * height;
-    distortionX_ = new Texture2D(width, height, TextureFormat.RGBA32, false);
-    distortionY_ = new Texture2D(width, height, TextureFormat.RGBA32, false);
-    distortionX_.wrapMode = TextureWrapMode.Clamp;
-    distortionY_.wrapMode = TextureWrapMode.Clamp;
-
-    dist_pixelsX_ = new Color32[num_pixels];
-    dist_pixelsY_ = new Color32[num_pixels];
-  }
-
-  void Start()
-  {
-    leap_controller_ = new Controller();
-    leap_controller_.SetPolicyFlags(Controller.PolicyFlag.POLICY_IMAGES);
-
-    SetMainTextureDimensions();
-    SetDistortionDimensions(DEFAULT_DISTORTION_WIDTH, DEFAULT_DISTORTION_HEIGHT);
-  }
-
-  void Update()
-  {
-    if (undistortImage) 
+    if (undistortImage)
     {
-      switch (attached_device_.type) {
+      switch (attached_device_.type)
+      {
         case LM_DEVICE.PERIPHERAL:
           renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
           break;
@@ -168,6 +148,98 @@ public class LeapImageRetriever : MonoBehaviour
           break;
       }
     }
+  }
+
+  protected void SetRenderer(ref Image image)
+  {
+    renderer.material.mainTexture = main_texture_;
+    renderer.material.SetColor("_Color", imageColor);
+    renderer.material.SetInt("_DeviceType", Convert.ToInt32(attached_device_.type));
+    renderer.material.SetFloat("_GammaCorrection", gammaCorrection);
+    renderer.material.SetInt("_BlackIsTransparent", blackIsTransparent ? 1 : 0);
+
+    if (undistortImage)
+    {
+      renderer.material.SetTexture("_DistortX", distortionX_);
+      renderer.material.SetTexture("_DistortY", distortionY_);
+
+      renderer.material.SetFloat("_RayOffsetX", image.RayOffsetX);
+      renderer.material.SetFloat("_RayOffsetY", image.RayOffsetY);
+      renderer.material.SetFloat("_RayScaleX", image.RayScaleX);
+      renderer.material.SetFloat("_RayScaleY", image.RayScaleY);
+    }
+  }
+
+  protected bool InitiateTexture(ref Image image)
+  {
+    int width = image.Width;
+    int height = image.Height;
+
+    attached_device_ = new LMDevice(SetDevice(width, height));
+    if (attached_device_.width == 0 || attached_device_.height == 0)
+    {
+      Debug.LogWarning("No data in the image texture.");
+      return false;
+    }
+
+    SetMainTextureDimensions();
+    return true;
+  }
+
+  protected bool InitiateDistortion(ref Image image)
+  {
+    int width = image.DistortionWidth / 2;
+    int height = image.DistortionHeight;
+
+    if (width == 0 || height == 0)
+    {
+      Debug.LogWarning("No data in the distortion texture.");
+      return false;
+    }
+
+    if (undistortImage)
+    {
+      int num_pixels = width * height;
+      distortionX_ = new Texture2D(width, height, TextureFormat.RGBA32, false);
+      distortionY_ = new Texture2D(width, height, TextureFormat.RGBA32, false);
+      distortionX_.wrapMode = TextureWrapMode.Clamp;
+      distortionY_.wrapMode = TextureWrapMode.Clamp;
+
+      dist_pixelsX_ = new Color32[num_pixels];
+      dist_pixelsY_ = new Color32[num_pixels];
+
+      EncodeDistortion(image.Distortion);
+      distortionX_.SetPixels32(dist_pixelsX_);
+      distortionX_.Apply();
+      distortionY_.SetPixels32(dist_pixelsY_);
+      distortionY_.Apply();
+    }
+      
+    return true;
+  }
+
+  protected bool InitiatePassthrough(ref Image image)
+  {
+    if (!InitiateTexture(ref image) || !InitiateDistortion(ref image))
+    {
+      attached_device_ = new LMDevice();
+      return false;
+    }
+
+    SetShader();
+    SetRenderer(ref image);
+
+    return true;
+  }
+
+  void Start()
+  {
+    leap_controller_ = new Controller();
+    leap_controller_.SetPolicyFlags(Controller.PolicyFlag.POLICY_IMAGES);
+  }
+
+  void Update()
+  {
 
     Frame frame = leap_controller_.Frame();
 
@@ -186,55 +258,16 @@ public class LeapImageRetriever : MonoBehaviour
 
     // Check main texture dimensions.
     Image image = frame.Images[imageIndex];
-    attached_device_ = new LMDevice(SetDevice(image.Width, image.Height));
 
-    if (attached_device_.width == 0 || attached_device_.height == 0)
+    if (attached_device_.width != image.Width || attached_device_.height != image.Height)
     {
-      Debug.LogWarning("No data in the image texture.");
-      return;
+      if (!InitiatePassthrough(ref image))
+        return;
     }
-
-    if (attached_device_.width != main_texture_.width || attached_device_.height != main_texture_.height)
-      SetMainTextureDimensions();
-
-    // Check distortion texture dimensions.
-    // Divide by two 2 because there are floats per pixel.
-    int distortion_width = image.DistortionWidth / 2;
-    int distortion_height = image.DistortionHeight;
-    if (distortion_width == 0 || distortion_height == 0)
-    {
-      Debug.LogWarning("No data in the distortion texture.");
-      return;
-    }
-
-    if (distortion_width != distortionX_.width || distortion_height != distortionX_.height)
-      SetDistortionDimensions(distortion_width, distortion_height);
 
     // Load image texture data.
     image_data_ = image.Data;
-    distortion_data_ = image.Distortion;
-
     LoadMainTexture();
-    if (undistortImage)
-      EncodeDistortion();
-    ApplyDataToTextures();
-
-    renderer.material.mainTexture = main_texture_;
-    renderer.material.SetColor("_Color", imageColor);
-    renderer.material.SetInt("_DeviceType", Convert.ToInt32(attached_device_.type));
-    renderer.material.SetFloat("_GammaCorrection", gammaCorrection);
-    renderer.material.SetInt("_BlackIsTransparent", blackIsTransparent ? 1 : 0);
-
-    if (undistortImage)
-    {
-      renderer.material.SetTexture("_DistortX", distortionX_);
-      renderer.material.SetTexture("_DistortY", distortionY_);
-
-      renderer.material.SetFloat("_RayOffsetX", image.RayOffsetX);
-      renderer.material.SetFloat("_RayOffsetY", image.RayOffsetY);
-      renderer.material.SetFloat("_RayScaleX", image.RayScaleX);
-      renderer.material.SetFloat("_RayScaleY", image.RayScaleY);
-    }
   }
 
   protected void LoadMainTexture()
@@ -261,17 +294,20 @@ public class LeapImageRetriever : MonoBehaviour
           image_pixels_[i].a = image_data_[i];
         break;
     }
+
+    main_texture_.SetPixels32(image_pixels_);
+    main_texture_.Apply();
   }
 
   // Encodes the float distortion texture as RGBA values to transfer the data to the shader.
-  protected void EncodeDistortion()
+  protected void EncodeDistortion(float[] distortion_data)
   {
     // Move distortion data to distortion x and y textures.
     int num_distortion_floats = 2 * distortionX_.width * distortionX_.height;
     for (int i = 0; i < num_distortion_floats; ++i)
     {
 
-      float dval = distortion_data_[i];
+      float dval = distortion_data[i];
       // The distortion range is -0.6 to +1.7. Normalize to range [0..1).
       dval = (dval + 0.6f) / 2.3f;
 
@@ -306,16 +342,5 @@ public class LeapImageRetriever : MonoBehaviour
         dist_pixelsY_[index].a = (byte)(256 * enc_w);
       }
     }
-  }
-
-  protected void ApplyDataToTextures()
-  {
-    main_texture_.SetPixels32(image_pixels_);
-    main_texture_.Apply();
-
-    distortionX_.SetPixels32(dist_pixelsX_);
-    distortionX_.Apply();
-    distortionY_.SetPixels32(dist_pixelsY_);
-    distortionY_.Apply();
   }
 }
