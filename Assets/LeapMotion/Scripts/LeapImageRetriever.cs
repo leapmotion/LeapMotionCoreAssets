@@ -157,17 +157,6 @@ public class LeapImageRetriever : MonoBehaviour
     renderer.material.SetInt("_DeviceType", Convert.ToInt32(attached_device_.type));
     renderer.material.SetFloat("_GammaCorrection", gammaCorrection);
     renderer.material.SetInt("_BlackIsTransparent", blackIsTransparent ? 1 : 0);
-
-    if (undistortImage)
-    {
-      renderer.material.SetTexture("_DistortX", distortionX_);
-      renderer.material.SetTexture("_DistortY", distortionY_);
-
-      renderer.material.SetFloat("_RayOffsetX", image.RayOffsetX);
-      renderer.material.SetFloat("_RayOffsetY", image.RayOffsetY);
-      renderer.material.SetFloat("_RayScaleX", image.RayScaleX);
-      renderer.material.SetFloat("_RayScaleY", image.RayScaleY);
-    }
   }
 
   protected bool InitiateTexture(ref Image image)
@@ -186,7 +175,7 @@ public class LeapImageRetriever : MonoBehaviour
     return true;
   }
 
-  protected bool InitiateDistortion(ref Image image)
+  protected bool SetDistortion(ref Image image)
   {
     int width = image.DistortionWidth / 2;
     int height = image.DistortionHeight;
@@ -213,6 +202,14 @@ public class LeapImageRetriever : MonoBehaviour
       distortionX_.Apply();
       distortionY_.SetPixels32(dist_pixelsY_);
       distortionY_.Apply();
+
+      renderer.material.SetTexture("_DistortX", distortionX_);
+      renderer.material.SetTexture("_DistortY", distortionY_);
+
+      renderer.material.SetFloat("_RayOffsetX", image.RayOffsetX);
+      renderer.material.SetFloat("_RayOffsetY", image.RayOffsetY);
+      renderer.material.SetFloat("_RayScaleX", image.RayScaleX);
+      renderer.material.SetFloat("_RayScaleY", image.RayScaleY);
     }
       
     return true;
@@ -220,7 +217,7 @@ public class LeapImageRetriever : MonoBehaviour
 
   protected bool InitiatePassthrough(ref Image image)
   {
-    if (!InitiateTexture(ref image) || !InitiateDistortion(ref image))
+    if (!InitiateTexture(ref image))
     {
       attached_device_ = new LMDevice();
       return false;
@@ -264,6 +261,7 @@ public class LeapImageRetriever : MonoBehaviour
       if (!InitiatePassthrough(ref image))
         return;
     }
+    SetDistortion(ref image);
 
     // Load image texture data.
     image_data_ = image.Data;
@@ -302,14 +300,12 @@ public class LeapImageRetriever : MonoBehaviour
   // Encodes the float distortion texture as RGBA values to transfer the data to the shader.
   protected void EncodeDistortion(float[] distortion_data)
   {
-    // Move distortion data to distortion x and y textures.
     int num_distortion_floats = 2 * distortionX_.width * distortionX_.height;
-    for (int i = 0; i < num_distortion_floats; ++i)
+    // Move distortion data to distortion x textures.
+    for (int i = 0; i < num_distortion_floats; i += 2)
     {
-
-      float dval = distortion_data[i];
       // The distortion range is -0.6 to +1.7. Normalize to range [0..1).
-      dval = (dval + 0.6f) / 2.3f;
+      float dval = (distortion_data[i] + 0.6f) / 2.3f;
 
       // Encode the float as RGBA.
       float enc_x = dval;
@@ -317,30 +313,48 @@ public class LeapImageRetriever : MonoBehaviour
       float enc_z = 65025.0f * dval;
       float enc_w = 160581375.0f * dval;
 
-      enc_x = enc_x - Mathf.Floor(enc_x);
-      enc_y = enc_y - Mathf.Floor(enc_y);
-      enc_z = enc_z - Mathf.Floor(enc_z);
-      enc_w = enc_w - Mathf.Floor(enc_w);
+      enc_x = enc_x - (int)enc_x;
+      enc_y = enc_y - (int)enc_y;
+      enc_z = enc_z - (int)enc_z;
+      enc_w = enc_w - (int)enc_w;
 
       enc_x -= 1.0f / 255.0f * enc_y;
       enc_y -= 1.0f / 255.0f * enc_z;
       enc_z -= 1.0f / 255.0f * enc_w;
 
       int index = i >> 1;
-      if (i % 2 == 0)
-      {
-        dist_pixelsX_[index].r = (byte)(256 * enc_x);
-        dist_pixelsX_[index].g = (byte)(256 * enc_y);
-        dist_pixelsX_[index].b = (byte)(256 * enc_z);
-        dist_pixelsX_[index].a = (byte)(256 * enc_w);
-      }
-      else
-      {
-        dist_pixelsY_[index].r = (byte)(256 * enc_x);
-        dist_pixelsY_[index].g = (byte)(256 * enc_y);
-        dist_pixelsY_[index].b = (byte)(256 * enc_z);
-        dist_pixelsY_[index].a = (byte)(256 * enc_w);
-      }
+      dist_pixelsX_[index].r = (byte)(256 * enc_x);
+      dist_pixelsX_[index].g = (byte)(256 * enc_y);
+      dist_pixelsX_[index].b = (byte)(256 * enc_z);
+      dist_pixelsX_[index].a = (byte)(256 * enc_w);
+    }
+
+    // Move distortion data to distortion y textures.
+    for (int i = 1; i < num_distortion_floats; i += 2)
+    {
+      // The distortion range is -0.6 to +1.7. Normalize to range [0..1).
+      float dval = (distortion_data[i] + 0.6f) / 2.3f;
+
+      // Encode the float as RGBA.
+      float enc_x = dval;
+      float enc_y = dval * 255.0f;
+      float enc_z = 65025.0f * dval;
+      float enc_w = 160581375.0f * dval;
+
+      enc_x = enc_x - (int)enc_x;
+      enc_y = enc_y - (int)enc_y;
+      enc_z = enc_z - (int)enc_z;
+      enc_w = enc_w - (int)enc_w;
+
+      enc_x -= 1.0f / 255.0f * enc_y;
+      enc_y -= 1.0f / 255.0f * enc_z;
+      enc_z -= 1.0f / 255.0f * enc_w;
+
+      int index = i >> 1;
+      dist_pixelsY_[index].r = (byte)(256 * enc_x);
+      dist_pixelsY_[index].g = (byte)(256 * enc_y);
+      dist_pixelsY_[index].b = (byte)(256 * enc_z);
+      dist_pixelsY_[index].a = (byte)(256 * enc_w);
     }
   }
 }
