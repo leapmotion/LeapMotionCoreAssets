@@ -44,6 +44,8 @@ public class HandController : MonoBehaviour {
   protected Dictionary<int, HandModel> hand_graphics_;
   protected Dictionary<int, HandModel> hand_physics_;
   protected Dictionary<int, ToolModel> tools_;
+
+  private bool show_hands_ = true;
   
   void OnDrawGizmos() {
     // Draws the little Leap Motion Controller in the Editor view.
@@ -225,7 +227,26 @@ public class HandController : MonoBehaviour {
     
     UpdateRecorder();
     Frame frame = GetFrame();
-    UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
+
+    if (Input.GetKeyDown(KeyCode.H))
+    {
+      show_hands_ = !show_hands_;
+    }
+
+    if (show_hands_)
+    {
+      UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
+    }
+    else
+    {
+      // Destroy all hands with defunct IDs.
+      List<int> hands = new List<int>(hand_graphics_.Keys);
+      for (int i = 0; i < hands.Count; ++i)
+      {
+        DestroyHand(hand_graphics_[hands[i]]);
+        hand_graphics_.Remove(hands[i]);
+      }
+    }
   }
 
   void FixedUpdate() {
