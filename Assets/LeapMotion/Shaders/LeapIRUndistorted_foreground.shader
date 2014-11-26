@@ -4,7 +4,7 @@
     _MainTex ("Base (A=Opacity)", 2D) = ""
   }
   SubShader {
-  	Tags { "Queue"="Overlay" }
+  	Tags {"Queue" = "Overlay" }
     // Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
 
     Lighting Off

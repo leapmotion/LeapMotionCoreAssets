@@ -36,7 +36,6 @@ public class QuickSwitcher : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-	
 	}
 
 	private void onWipeUpdate(object sender, SystemWipeArgs eventArgs) {
