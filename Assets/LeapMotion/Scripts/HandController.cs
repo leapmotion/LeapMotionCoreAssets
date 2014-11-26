@@ -46,6 +46,8 @@ public class HandController : MonoBehaviour {
   protected Dictionary<int, ToolModel> tools_;
 
   private bool show_hands_ = true;
+  private long prev_graphics_id_ = 0;
+  private long prev_physics_id_ = 0;
   
   void OnDrawGizmos() {
     // Draws the little Leap Motion Controller in the Editor view.
@@ -227,7 +229,7 @@ public class HandController : MonoBehaviour {
     
     UpdateRecorder();
     Frame frame = GetFrame();
-
+    
     if (Input.GetKeyDown(KeyCode.H))
     {
       show_hands_ = !show_hands_;
@@ -235,7 +237,11 @@ public class HandController : MonoBehaviour {
 
     if (show_hands_)
     {
-      UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
+      if (frame.Id != prev_graphics_id_)
+      {
+        UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
+        prev_graphics_id_ = frame.Id;
+      }
     }
     else
     {
@@ -254,8 +260,13 @@ public class HandController : MonoBehaviour {
       return;
 
     Frame frame = GetFrame();
-    UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
-    UpdateToolModels(tools_, frame.Tools, toolModel);
+
+    if (frame.Id != prev_physics_id_)
+    {
+      UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
+      UpdateToolModels(tools_, frame.Tools, toolModel);
+      prev_physics_id_ = frame.Id;
+    }
   }
 
   public bool IsConnected() {
