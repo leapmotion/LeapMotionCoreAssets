@@ -57,6 +57,7 @@ public class LeapImageRetriever : MonoBehaviour
 {
   public const string IR_NORMAL_SHADER = "LeapMotion/LeapIRDistorted";
   public const string IR_UNDISTORT_SHADER = "LeapMotion/LeapIRUndistorted";
+  public const string IR_UNDISTORT_SHADER_FOREGROUND = "LeapMotion/LeapIRUndistorted_Foreground";
   public const string RGB_NORMAL_SHADER = "LeapMotion/LeapRGBDistorted";
   public const string RGB_UNDISTORT_SHADER = "LeapMotion/LeapRGBUndistorted";
 
@@ -67,6 +68,7 @@ public class LeapImageRetriever : MonoBehaviour
   public int imageIndex = 0;
   public Color imageColor = Color.white;
   public float gammaCorrection = 1.0f;
+  public bool overlayImage = false;
   public bool undistortImage = true;
   public bool blackIsTransparent = true;
 
@@ -123,7 +125,12 @@ public class LeapImageRetriever : MonoBehaviour
       switch (attached_device_.type)
       {
         case LM_DEVICE.PERIPHERAL:
-          renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
+		  if ( overlayImage ) {
+		  	renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER_FOREGROUND));
+		  }
+		  else {
+			renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
+		  }
           break;
         case LM_DEVICE.DRAGONFLY:
           renderer.material = new Material(Shader.Find(RGB_UNDISTORT_SHADER));
