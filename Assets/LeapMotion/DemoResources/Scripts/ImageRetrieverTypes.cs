@@ -27,11 +27,6 @@ namespace Leap
         images.blackIsTransparent = true;
         images.undistortImage = true;
       }
-      if (Input.GetKeyDown(KeyCode.P))
-      {
-        images.enabled = !images.enabled;
-        images.renderer.enabled = !images.renderer.enabled;
-      }
     }
   }
 }
