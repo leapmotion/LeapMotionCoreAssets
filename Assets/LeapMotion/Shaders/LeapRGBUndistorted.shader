@@ -93,10 +93,6 @@
         // float b_b = tex2D(_MainTex, texCoord + blueOffset + float2(0, dy)).g;
         // float b_hf = input_lf.b - 0.25*(b_l + b_t + b_r + b_b);
         
-        if (texImageX > 1 || texImageX < 0 || texImageY > 1 || texImageY < 0) {
-          return float4(0, 0, 0, 0);
-        } 
-        
         //float4x4 transformation = float4x4(5.6220, -1.5456, 0.3634, -0.1106, -1.6410, 3.1944, -1.7204, 0.0189, 0.1410, 0.4896, 10.8399, -0.1053, -3.7440, -1.9080, -8.6066, 1.0000);
         //float4x4 conservative = float4x4(5.6220, 0.0000, 0.3634, 0.0000, 0.0000, 3.1944, 0.0000, 0.0189, 0.1410, 0.4896, 10.8399, 0.0000, 0.0000, 0.0000, 0.0000, 1.0000);
         float4x4 transformation = float4x4(5.0670, -1.2312, 0.8625, -0.0507, -1.5210, 3.1104, -2.0194, 0.0017, -0.8310, -0.3000, 13.1744, -0.1052, -2.4540, -1.3848, -10.9618, 1.0000);
@@ -142,7 +138,7 @@
         float gamma = 1.0/_GammaCorrection;
         //gl_FragColor.rgb = show_ir > 0.5 ? float3(pow(ir_out, gamma)): pow(gl_FragColor.rgb, float3(gamma));
         
-        gl_FragColor = float4(pow(gl_FragColor.rgb, float3(gamma)), 1.0);
+        gl_FragColor = float4(pow(gl_FragColor.rgb, float(gamma)), 1.0);
         return gl_FragColor;
       }
       

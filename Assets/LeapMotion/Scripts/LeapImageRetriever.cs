@@ -70,7 +70,8 @@ public class LeapImageRetriever : MonoBehaviour
   public bool undistortImage = true;
   public bool blackIsTransparent = true;
 
-  protected Controller leap_controller_;
+  public HandController controller_;
+
   private LMDevice attached_device_ = new LMDevice();
 
   // Main texture.
@@ -100,35 +101,18 @@ public class LeapImageRetriever : MonoBehaviour
   protected void SetShader() 
   {
     DestroyImmediate(renderer.material);
-    if (undistortImage)
+    switch (attached_device_.type)
     {
-      switch (attached_device_.type)
-      {
-        case LM_DEVICE.PERIPHERAL:
-          renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
-          break;
-        case LM_DEVICE.DRAGONFLY:
-          renderer.material = new Material(Shader.Find(RGB_UNDISTORT_SHADER));
-          break;
-        default:
-          renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
-          break;
-      }
-    }
-    else
-    {
-      switch (attached_device_.type)
-      {
-        case LM_DEVICE.PERIPHERAL:
-          renderer.material = new Material(Shader.Find(IR_NORMAL_SHADER));
-          break;
-        case LM_DEVICE.DRAGONFLY:
-          renderer.material = new Material(Shader.Find(RGB_NORMAL_SHADER));
-          break;
-        default:
-          renderer.material = new Material(Shader.Find(IR_NORMAL_SHADER));
-          break;
-      }
+      case LM_DEVICE.PERIPHERAL:
+        renderer.material = (undistortImage) ? new Material(Shader.Find(IR_UNDISTORT_SHADER)) : new Material(Shader.Find(IR_NORMAL_SHADER));
+        controller_.transform.localScale = Vector3.one * 1.6f;
+        break;
+      case LM_DEVICE.DRAGONFLY:
+        renderer.material = (undistortImage) ? new Material(Shader.Find(RGB_UNDISTORT_SHADER)) : new Material(Shader.Find(RGB_NORMAL_SHADER));
+        controller_.transform.localScale = Vector3.one;
+        break;
+      default:
+        break;
     }
   }
 
@@ -324,14 +308,18 @@ public class LeapImageRetriever : MonoBehaviour
 
   void Start()
   {
-    leap_controller_ = new Controller();
-    leap_controller_.SetPolicyFlags(Controller.PolicyFlag.POLICY_IMAGES);
+    if (controller_ == null)
+      return;
+
+    controller_.GetLeapController().SetPolicyFlags(Controller.PolicyFlag.POLICY_IMAGES);
   }
 
   void Update()
   {
+    if (controller_ == null)
+      return;
 
-    Frame frame = leap_controller_.Frame();
+    Frame frame = controller_.GetFrame();
 
     if (frame.Images.Count == 0)
     {

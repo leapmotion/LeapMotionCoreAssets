@@ -2,7 +2,7 @@
 using System.Collections;
 
 public class WidgetsEnabler : MonoBehaviour {
-  private bool isActive = false;
+  private bool isActive = true;
 	// Update is called once per frame
 	void Update () {
     if (Input.GetKeyDown(KeyCode.W))
