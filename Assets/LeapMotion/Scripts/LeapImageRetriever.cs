@@ -72,13 +72,13 @@ public class LeapImageRetriever : MonoBehaviour
   public bool undistortImage = true;
   public bool blackIsTransparent = true;
 
-  protected Controller leap_controller_;
+  public HandController controller_;
+
   private LMDevice attached_device_ = new LMDevice();
 
   // Main texture.
   protected Texture2D main_texture_;
   protected Color32[] image_pixels_;
-  protected byte[] image_data_;
   protected int image_misses_ = 0;
 
   // Distortion textures.
@@ -87,7 +87,7 @@ public class LeapImageRetriever : MonoBehaviour
   protected Color32[] dist_pixelsX_;
   protected Color32[] dist_pixelsY_;
 
-  private LM_DEVICE SetDevice(int width, int height)
+  private LM_DEVICE GetDevice(int width, int height)
   {
     if (width == LMDevice.PERIPERAL_WIDTH && height == LMDevice.PERIPERAL_HEIGHT)
     {
@@ -100,37 +100,39 @@ public class LeapImageRetriever : MonoBehaviour
     return LM_DEVICE.PERIPHERAL;
   }
 
-  protected void SetMainTextureDimensions()
+  protected void SetShader()
   {
+    DestroyImmediate(renderer.material);
     switch (attached_device_.type)
     {
       case LM_DEVICE.PERIPHERAL:
-        main_texture_ = new Texture2D(attached_device_.width, attached_device_.height, TextureFormat.Alpha8, false);
+        renderer.material = (undistortImage) ? new Material(Shader.Find(IR_UNDISTORT_SHADER)) : new Material(Shader.Find(IR_NORMAL_SHADER));
+        controller_.transform.localScale = Vector3.one * 1.6f;
         break;
       case LM_DEVICE.DRAGONFLY:
-        main_texture_ = new Texture2D(attached_device_.width, attached_device_.height, TextureFormat.RGBA32, false);
+        renderer.material = (undistortImage) ? new Material(Shader.Find(RGB_UNDISTORT_SHADER)) : new Material(Shader.Find(RGB_NORMAL_SHADER));
+        controller_.transform.localScale = Vector3.one;
         break;
       default:
-        main_texture_ = new Texture2D(attached_device_.width, attached_device_.height, TextureFormat.Alpha8, false);
         break;
     }
     main_texture_.wrapMode = TextureWrapMode.Clamp;
     image_pixels_ = new Color32[attached_device_.pixels];
   }
 
-  protected void SetShader() 
+  protected void SetShader()
   {
     if (undistortImage)
     {
       switch (attached_device_.type)
       {
         case LM_DEVICE.PERIPHERAL:
-		  if ( overlayImage ) {
-		  	renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER_FOREGROUND));
-		  }
-		  else {
-			renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
-		  }
+          if ( overlayImage ) {
+            renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER_FOREGROUND));
+          }
+          else {
+            renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
+          }
           break;
         case LM_DEVICE.DRAGONFLY:
           renderer.material = new Material(Shader.Find(RGB_UNDISTORT_SHADER));
@@ -164,6 +166,13 @@ public class LeapImageRetriever : MonoBehaviour
     renderer.material.SetInt("_DeviceType", Convert.ToInt32(attached_device_.type));
     renderer.material.SetFloat("_GammaCorrection", gammaCorrection);
     renderer.material.SetInt("_BlackIsTransparent", blackIsTransparent ? 1 : 0);
+
+    renderer.material.SetTexture("_DistortX", distortionX_);
+    renderer.material.SetTexture("_DistortY", distortionY_);
+    renderer.material.SetFloat("_RayOffsetX", image.RayOffsetX);
+    renderer.material.SetFloat("_RayOffsetY", image.RayOffsetY);
+    renderer.material.SetFloat("_RayScaleX", image.RayScaleX);
+    renderer.material.SetFloat("_RayScaleY", image.RayScaleY);
   }
 
   protected bool InitiateTexture(ref Image image)
@@ -171,64 +180,65 @@ public class LeapImageRetriever : MonoBehaviour
     int width = image.Width;
     int height = image.Height;
 
-    attached_device_ = new LMDevice(SetDevice(width, height));
+    attached_device_ = new LMDevice(GetDevice(width, height));
     if (attached_device_.width == 0 || attached_device_.height == 0)
     {
+      attached_device_ = new LMDevice();
       Debug.LogWarning("No data in the image texture.");
       return false;
     }
-
-    SetMainTextureDimensions();
+    else
+    {
+      switch (attached_device_.type)
+      {
+        case LM_DEVICE.PERIPHERAL:
+          main_texture_ = new Texture2D(attached_device_.width, attached_device_.height, TextureFormat.Alpha8, false);
+          break;
+        case LM_DEVICE.DRAGONFLY:
+          main_texture_ = new Texture2D(attached_device_.width, attached_device_.height, TextureFormat.RGBA32, false);
+          break;
+        default:
+          main_texture_ = new Texture2D(attached_device_.width, attached_device_.height, TextureFormat.Alpha8, false);
+          break;
+      }
+      main_texture_.wrapMode = TextureWrapMode.Clamp;
+      image_pixels_ = new Color32[attached_device_.pixels];
+    }
     return true;
   }
 
-  protected bool SetDistortion(ref Image image)
+  protected bool InitiateDistortion(ref Image image)
   {
     int width = image.DistortionWidth / 2;
     int height = image.DistortionHeight;
 
     if (width == 0 || height == 0)
     {
-      Debug.LogWarning("No data in the distortion texture.");
+      Debug.LogWarning("No data in image distortion");
       return false;
     }
-
-    if (undistortImage)
+    else
     {
-      int num_pixels = width * height;
+      dist_pixelsX_ = new Color32[width * height];
+      dist_pixelsY_ = new Color32[width * height];
+      DestroyImmediate(distortionX_);
+      DestroyImmediate(distortionY_);
       distortionX_ = new Texture2D(width, height, TextureFormat.RGBA32, false);
       distortionY_ = new Texture2D(width, height, TextureFormat.RGBA32, false);
       distortionX_.wrapMode = TextureWrapMode.Clamp;
       distortionY_.wrapMode = TextureWrapMode.Clamp;
-
-      dist_pixelsX_ = new Color32[num_pixels];
-      dist_pixelsY_ = new Color32[num_pixels];
-
-      EncodeDistortion(image.Distortion);
-      distortionX_.SetPixels32(dist_pixelsX_);
-      distortionX_.Apply();
-      distortionY_.SetPixels32(dist_pixelsY_);
-      distortionY_.Apply();
-
-      renderer.material.SetTexture("_DistortX", distortionX_);
-      renderer.material.SetTexture("_DistortY", distortionY_);
-
-      renderer.material.SetFloat("_RayOffsetX", image.RayOffsetX);
-      renderer.material.SetFloat("_RayOffsetY", image.RayOffsetY);
-      renderer.material.SetFloat("_RayScaleX", image.RayScaleX);
-      renderer.material.SetFloat("_RayScaleY", image.RayScaleY);
     }
-      
+
     return true;
   }
 
   protected bool InitiatePassthrough(ref Image image)
   {
     if (!InitiateTexture(ref image))
-    {
-      attached_device_ = new LMDevice();
       return false;
-    }
+
+    if (!InitiateDistortion(ref image))
+      return false;
 
     SetShader();
     SetRenderer(ref image);
@@ -236,16 +246,123 @@ public class LeapImageRetriever : MonoBehaviour
     return true;
   }
 
+  protected void LoadMainTexture(ref Image image)
+  {
+    byte[] image_data = image.Data;
+    switch (attached_device_.type)
+    {
+      case LM_DEVICE.PERIPHERAL:
+        for (int i = 0; i < image_data.Length; ++i)
+          image_pixels_[i].a = image_data[i];
+        break;
+      case LM_DEVICE.DRAGONFLY:
+        int image_index = 0;
+        for (int i = 0; i < image_data.Length; image_index++)
+        {
+          image_pixels_[image_index].r = image_data[i++];
+          image_pixels_[image_index].g = image_data[i++];
+          image_pixels_[image_index].b = image_data[i++];
+          image_pixels_[image_index].a = image_data[i++];
+        }
+        gammaCorrection = Mathf.Max(gammaCorrection, 1.7f);
+        break;
+      default:
+        for (int i = 0; i < image_data.Length; ++i)
+          image_pixels_[i].a = image_data[i];
+        break;
+    }
+
+    main_texture_.SetPixels32(image_pixels_);
+    main_texture_.Apply();
+  }
+
+  protected bool LoadDistortion(ref Image image)
+  {
+    if (image.DistortionWidth == 0 || image.DistortionHeight == 0)
+    {
+      Debug.LogWarning("No data in the distortion texture.");
+      return false;
+    }
+
+    if (undistortImage)
+    {
+      float[] distortion_data = image.Distortion;
+      int num_distortion_floats = 2 * distortionX_.width * distortionX_.height;
+
+      // Move distortion data to distortion x textures.
+      for (int i = 0; i < num_distortion_floats; i += 2)
+      {
+        // The distortion range is -0.6 to +1.7. Normalize to range [0..1).
+        float dval = (distortion_data[i] + 0.6f) / 2.3f;
+        float enc_x = dval;
+        float enc_y = dval * 255.0f;
+        float enc_z = dval * 65025.0f;
+        float enc_w = dval * 160581375.0f;
+
+        enc_x = enc_x - (int)enc_x;
+        enc_y = enc_y - (int)enc_y;
+        enc_z = enc_z - (int)enc_z;
+        enc_w = enc_w - (int)enc_w;
+
+        enc_x -= 1.0f / 255.0f * enc_y;
+        enc_y -= 1.0f / 255.0f * enc_z;
+        enc_z -= 1.0f / 255.0f * enc_w;
+
+        int index = i >> 1;
+        dist_pixelsX_[index].r = (byte)(256 * enc_x);
+        dist_pixelsX_[index].g = (byte)(256 * enc_y);
+        dist_pixelsX_[index].b = (byte)(256 * enc_z);
+        dist_pixelsX_[index].a = (byte)(256 * enc_w);
+      }
+      distortionX_.SetPixels32(dist_pixelsX_);
+      distortionX_.Apply();
+
+      // Move distortion data to distortion y textures.
+      for (int i = 1; i < num_distortion_floats; i += 2)
+      {
+        // The distortion range is -0.6 to +1.7. Normalize to range [0..1).
+        float dval = (distortion_data[i] + 0.6f) / 2.3f;
+        float enc_x = dval;
+        float enc_y = dval * 255.0f;
+        float enc_z = dval * 65025.0f;
+        float enc_w = dval * 160581375.0f;
+
+        enc_x = enc_x - (int)enc_x;
+        enc_y = enc_y - (int)enc_y;
+        enc_z = enc_z - (int)enc_z;
+        enc_w = enc_w - (int)enc_w;
+
+        enc_x -= 1.0f / 255.0f * enc_y;
+        enc_y -= 1.0f / 255.0f * enc_z;
+        enc_z -= 1.0f / 255.0f * enc_w;
+
+        int index = i >> 1;
+        dist_pixelsY_[index].r = (byte)(256 * enc_x);
+        dist_pixelsY_[index].g = (byte)(256 * enc_y);
+        dist_pixelsY_[index].b = (byte)(256 * enc_z);
+        dist_pixelsY_[index].a = (byte)(256 * enc_w);
+      }
+      distortionY_.SetPixels32(dist_pixelsY_);
+      distortionY_.Apply();
+    }
+
+    return true;
+  }
+
   void Start()
   {
-    leap_controller_ = new Controller();
-    leap_controller_.SetPolicyFlags(Controller.PolicyFlag.POLICY_IMAGES);
+    if (controller_ == null)
+      return;
+
+    controller_.GetLeapController().SetPolicyFlags(Controller.PolicyFlag.POLICY_IMAGES);
   }
 
   void Update()
   {
+    if (controller_ == null)
+      return;
 
-    Frame frame = leap_controller_.Frame();
+    Frame frame = controller_.GetFrame();
 
     if (frame.Images.Count == 0)
     {
@@ -268,100 +385,8 @@ public class LeapImageRetriever : MonoBehaviour
       if (!InitiatePassthrough(ref image))
         return;
     }
-    SetDistortion(ref image);
 
-    // Load image texture data.
-    image_data_ = image.Data;
-    LoadMainTexture();
-  }
-
-  protected void LoadMainTexture()
-  {
-    switch (attached_device_.type)
-    {
-      case LM_DEVICE.PERIPHERAL:
-        for (int i = 0; i < image_data_.Length; ++i)
-          image_pixels_[i].a = image_data_[i];
-        break;
-      case LM_DEVICE.DRAGONFLY:
-        int image_index = 0;
-        for (int i = 0; i < image_data_.Length; image_index++)
-        {
-          image_pixels_[image_index].r = image_data_[i++];
-          image_pixels_[image_index].g = image_data_[i++];
-          image_pixels_[image_index].b = image_data_[i++];
-          image_pixels_[image_index].a = image_data_[i++];
-        }
-        gammaCorrection = Mathf.Max(gammaCorrection, 1.7f);
-        break;
-      default:
-        for (int i = 0; i < image_data_.Length; ++i)
-          image_pixels_[i].a = image_data_[i];
-        break;
-    }
-
-    main_texture_.SetPixels32(image_pixels_);
-    main_texture_.Apply();
-  }
-
-  // Encodes the float distortion texture as RGBA values to transfer the data to the shader.
-  protected void EncodeDistortion(float[] distortion_data)
-  {
-    int num_distortion_floats = 2 * distortionX_.width * distortionX_.height;
-    // Move distortion data to distortion x textures.
-    for (int i = 0; i < num_distortion_floats; i += 2)
-    {
-      // The distortion range is -0.6 to +1.7. Normalize to range [0..1).
-      float dval = (distortion_data[i] + 0.6f) / 2.3f;
-
-      // Encode the float as RGBA.
-      float enc_x = dval;
-      float enc_y = dval * 255.0f;
-      float enc_z = 65025.0f * dval;
-      float enc_w = 160581375.0f * dval;
-
-      enc_x = enc_x - (int)enc_x;
-      enc_y = enc_y - (int)enc_y;
-      enc_z = enc_z - (int)enc_z;
-      enc_w = enc_w - (int)enc_w;
-
-      enc_x -= 1.0f / 255.0f * enc_y;
-      enc_y -= 1.0f / 255.0f * enc_z;
-      enc_z -= 1.0f / 255.0f * enc_w;
-
-      int index = i >> 1;
-      dist_pixelsX_[index].r = (byte)(256 * enc_x);
-      dist_pixelsX_[index].g = (byte)(256 * enc_y);
-      dist_pixelsX_[index].b = (byte)(256 * enc_z);
-      dist_pixelsX_[index].a = (byte)(256 * enc_w);
-    }
-
-    // Move distortion data to distortion y textures.
-    for (int i = 1; i < num_distortion_floats; i += 2)
-    {
-      // The distortion range is -0.6 to +1.7. Normalize to range [0..1).
-      float dval = (distortion_data[i] + 0.6f) / 2.3f;
-
-      // Encode the float as RGBA.
-      float enc_x = dval;
-      float enc_y = dval * 255.0f;
-      float enc_z = 65025.0f * dval;
-      float enc_w = 160581375.0f * dval;
-
-      enc_x = enc_x - (int)enc_x;
-      enc_y = enc_y - (int)enc_y;
-      enc_z = enc_z - (int)enc_z;
-      enc_w = enc_w - (int)enc_w;
-
-      enc_x -= 1.0f / 255.0f * enc_y;
-      enc_y -= 1.0f / 255.0f * enc_z;
-      enc_z -= 1.0f / 255.0f * enc_w;
-
-      int index = i >> 1;
-      dist_pixelsY_[index].r = (byte)(256 * enc_x);
-      dist_pixelsY_[index].g = (byte)(256 * enc_y);
-      dist_pixelsY_[index].b = (byte)(256 * enc_z);
-      dist_pixelsY_[index].a = (byte)(256 * enc_w);
-    }
+    LoadMainTexture(ref image);
+    LoadDistortion(ref image);
   }
 }

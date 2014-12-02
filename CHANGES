@@ -1,3 +1,8 @@
+v2.2
+ - Added support for LeapMotion v2.2
+ - Passthrough improvement
+ - Added support for Dragonfly
+
 v1.0
  - Skin textures for hands
  - Rigged hand with forearms
