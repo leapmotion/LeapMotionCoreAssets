@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
-using VRWidgets;
+using LMWidgets;
 
 public class ButtonDemoBasic : ButtonBase 
 {

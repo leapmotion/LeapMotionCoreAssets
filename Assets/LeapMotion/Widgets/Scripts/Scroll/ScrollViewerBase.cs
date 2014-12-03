@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace VRWidgets
+namespace LMWidgets
 {
   public abstract class ScrollViewerBase : MonoBehaviour
   {
