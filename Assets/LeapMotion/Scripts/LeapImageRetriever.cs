@@ -55,11 +55,11 @@ public enum LM_DEVICE
 // and enable "Allow Images" in the Leap Motion settings.
 public class LeapImageRetriever : MonoBehaviour
 {
-  public const string IR_NORMAL_SHADER = "LeapMotion/LeapIRDistorted";
-  public const string IR_UNDISTORT_SHADER = "LeapMotion/LeapIRUndistorted";
-  public const string IR_UNDISTORT_SHADER_FOREGROUND = "LeapMotion/LeapIRUndistorted_Foreground";
-  public const string RGB_NORMAL_SHADER = "LeapMotion/LeapRGBDistorted";
-  public const string RGB_UNDISTORT_SHADER = "LeapMotion/LeapRGBUndistorted";
+  private Shader IR_NORMAL_SHADER;
+  private Shader IR_UNDISTORT_SHADER;
+  private Shader IR_UNDISTORT_SHADER_FOREGROUND;
+  private Shader RGB_NORMAL_SHADER;
+  private Shader RGB_UNDISTORT_SHADER;
 
   public const int DEFAULT_DISTORTION_WIDTH = 64;
   public const int DEFAULT_DISTORTION_HEIGHT = 64;
@@ -105,11 +105,11 @@ public class LeapImageRetriever : MonoBehaviour
     switch (attached_device_.type)
     {
       case LM_DEVICE.PERIPHERAL:
-        renderer.material = (undistortImage) ? new Material(Shader.Find(IR_UNDISTORT_SHADER)) : new Material(Shader.Find(IR_NORMAL_SHADER));
+        renderer.material = (undistortImage) ? new Material((overlayImage) ? IR_UNDISTORT_SHADER_FOREGROUND : IR_UNDISTORT_SHADER) : new Material(IR_NORMAL_SHADER);
         controller_.transform.localScale = Vector3.one * 1.6f;
         break;
       case LM_DEVICE.DRAGONFLY:
-        renderer.material = (undistortImage) ? new Material(Shader.Find(RGB_UNDISTORT_SHADER)) : new Material(Shader.Find(RGB_NORMAL_SHADER));
+        renderer.material = (undistortImage) ? new Material(RGB_UNDISTORT_SHADER) : new Material(RGB_NORMAL_SHADER);
         controller_.transform.localScale = Vector3.one;
         break;
       default:
@@ -117,45 +117,6 @@ public class LeapImageRetriever : MonoBehaviour
     }
     main_texture_.wrapMode = TextureWrapMode.Clamp;
     image_pixels_ = new Color32[attached_device_.pixels];
-  }
-
-  protected void SetShader()
-  {
-    if (undistortImage)
-    {
-      switch (attached_device_.type)
-      {
-        case LM_DEVICE.PERIPHERAL:
-          if ( overlayImage ) {
-            renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER_FOREGROUND));
-          }
-          else {
-            renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
-          }
-          break;
-        case LM_DEVICE.DRAGONFLY:
-          renderer.material = new Material(Shader.Find(RGB_UNDISTORT_SHADER));
-          break;
-        default:
-          renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
-          break;
-      }
-    }
-    else
-    {
-      switch (attached_device_.type)
-      {
-        case LM_DEVICE.PERIPHERAL:
-          renderer.material = new Material(Shader.Find(IR_NORMAL_SHADER));
-          break;
-        case LM_DEVICE.DRAGONFLY:
-          renderer.material = new Material(Shader.Find(RGB_NORMAL_SHADER));
-          break;
-        default:
-          renderer.material = new Material(Shader.Find(IR_NORMAL_SHADER));
-          break;
-      }
-    }
   }
 
   protected void SetRenderer(ref Image image)
@@ -172,6 +133,15 @@ public class LeapImageRetriever : MonoBehaviour
     renderer.material.SetFloat("_RayOffsetY", image.RayOffsetY);
     renderer.material.SetFloat("_RayScaleX", image.RayScaleX);
     renderer.material.SetFloat("_RayScaleY", image.RayScaleY);
+  }
+
+  protected void InitiateShaders() 
+  {
+    IR_NORMAL_SHADER = Resources.Load<Shader>("LeapIRDistorted");
+    IR_UNDISTORT_SHADER = Resources.Load<Shader>("LeapIRUndistorted");
+    IR_UNDISTORT_SHADER_FOREGROUND = Resources.Load<Shader>("LeapIRUndistorted_Foreground");
+    RGB_NORMAL_SHADER = Resources.Load<Shader>("LeapRGBDistorted");
+    RGB_UNDISTORT_SHADER = Resources.Load<Shader>("LeapRGBUndistorted");
   }
 
   protected bool InitiateTexture(ref Image image)
@@ -358,6 +328,7 @@ public class LeapImageRetriever : MonoBehaviour
       return;
 
     controller_.GetLeapController().SetPolicyFlags(Controller.PolicyFlag.POLICY_IMAGES);
+    InitiateShaders();
   }
 
   void Update()
