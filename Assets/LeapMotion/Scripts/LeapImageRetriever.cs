@@ -57,6 +57,7 @@ public class LeapImageRetriever : MonoBehaviour
 {
   public const string IR_NORMAL_SHADER = "LeapMotion/LeapIRDistorted";
   public const string IR_UNDISTORT_SHADER = "LeapMotion/LeapIRUndistorted";
+  public const string IR_UNDISTORT_SHADER_FOREGROUND = "LeapMotion/LeapIRUndistorted_Foreground";
   public const string RGB_NORMAL_SHADER = "LeapMotion/LeapRGBDistorted";
   public const string RGB_UNDISTORT_SHADER = "LeapMotion/LeapRGBUndistorted";
 
@@ -67,6 +68,7 @@ public class LeapImageRetriever : MonoBehaviour
   public int imageIndex = 0;
   public Color imageColor = Color.white;
   public float gammaCorrection = 1.0f;
+  public bool overlayImage = false;
   public bool undistortImage = true;
   public bool blackIsTransparent = true;
 
@@ -97,7 +99,7 @@ public class LeapImageRetriever : MonoBehaviour
     return LM_DEVICE.PERIPHERAL;
   }
 
-  protected void SetShader() 
+  protected void SetShader()
   {
     DestroyImmediate(renderer.material);
     switch (attached_device_.type)
@@ -112,6 +114,47 @@ public class LeapImageRetriever : MonoBehaviour
         break;
       default:
         break;
+    }
+    main_texture_.wrapMode = TextureWrapMode.Clamp;
+    image_pixels_ = new Color32[attached_device_.pixels];
+  }
+
+  protected void SetShader()
+  {
+    if (undistortImage)
+    {
+      switch (attached_device_.type)
+      {
+        case LM_DEVICE.PERIPHERAL:
+          if ( overlayImage ) {
+            renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER_FOREGROUND));
+          }
+          else {
+            renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
+          }
+          break;
+        case LM_DEVICE.DRAGONFLY:
+          renderer.material = new Material(Shader.Find(RGB_UNDISTORT_SHADER));
+          break;
+        default:
+          renderer.material = new Material(Shader.Find(IR_UNDISTORT_SHADER));
+          break;
+      }
+    }
+    else
+    {
+      switch (attached_device_.type)
+      {
+        case LM_DEVICE.PERIPHERAL:
+          renderer.material = new Material(Shader.Find(IR_NORMAL_SHADER));
+          break;
+        case LM_DEVICE.DRAGONFLY:
+          renderer.material = new Material(Shader.Find(RGB_NORMAL_SHADER));
+          break;
+        default:
+          renderer.material = new Material(Shader.Find(IR_NORMAL_SHADER));
+          break;
+      }
     }
   }
 
@@ -195,7 +238,7 @@ public class LeapImageRetriever : MonoBehaviour
 
     if (!InitiateDistortion(ref image))
       return false;
-    
+
     SetShader();
     SetRenderer(ref image);
 
@@ -301,7 +344,7 @@ public class LeapImageRetriever : MonoBehaviour
       distortionY_.SetPixels32(dist_pixelsY_);
       distortionY_.Apply();
     }
-      
+
     return true;
   }
 
