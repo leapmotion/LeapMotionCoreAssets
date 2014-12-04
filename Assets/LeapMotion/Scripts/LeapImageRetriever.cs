@@ -72,8 +72,7 @@ public class LeapImageRetriever : MonoBehaviour
   public bool undistortImage = true;
   public bool blackIsTransparent = true;
 
-  public HandController controller_;
-
+  private HandController controller_ = null;
   private LMDevice attached_device_ = new LMDevice();
 
   // Main texture.
@@ -351,6 +350,10 @@ public class LeapImageRetriever : MonoBehaviour
 
   void Start()
   {
+    GameObject hand_controller = GameObject.Find("HandController");
+    if (hand_controller && hand_controller.GetComponent<HandController>())
+      controller_ = hand_controller.GetComponent<HandController>();
+
     if (controller_ == null)
       return;
 

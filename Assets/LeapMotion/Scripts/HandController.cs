@@ -45,6 +45,7 @@ public class HandController : MonoBehaviour {
   protected Dictionary<int, HandModel> hand_physics_;
   protected Dictionary<int, ToolModel> tools_;
 
+  private bool flag_initialized_ = false;
   private bool show_hands_ = true;
   private long prev_graphics_id_ = 0;
   private long prev_physics_id_ = 0;
@@ -55,9 +56,8 @@ public class HandController : MonoBehaviour {
     Gizmos.DrawIcon(transform.position, "leap_motion.png");
   }
 
-  void Awake() {
-    leap_controller_ = new Controller();
-
+  void InitializeFlags()
+  {
     // Optimize for top-down tracking if on head mounted display.
     Controller.PolicyFlag policy_flags = leap_controller_.PolicyFlags;
     if (isHeadMounted)
@@ -66,6 +66,10 @@ public class HandController : MonoBehaviour {
       policy_flags &= ~Controller.PolicyFlag.POLICY_OPTIMIZE_HMD;
 
     leap_controller_.SetPolicyFlags(policy_flags);
+  }
+
+  void Awake() {
+    leap_controller_ = new Controller();
   }
 
   void Start() {
@@ -229,7 +233,12 @@ public class HandController : MonoBehaviour {
     
     UpdateRecorder();
     Frame frame = GetFrame();
-    
+
+    if (frame != null && !flag_initialized_)
+    {
+      InitializeFlags();
+    }
+
     if (Input.GetKeyDown(KeyCode.H))
     {
       show_hands_ = !show_hands_;
