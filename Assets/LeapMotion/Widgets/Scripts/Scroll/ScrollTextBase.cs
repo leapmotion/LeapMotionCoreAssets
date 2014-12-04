@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 namespace LMWidgets
@@ -10,6 +11,8 @@ namespace LMWidgets
     private Vector3 local_pivot_ = Vector3.zero;
     private Vector3 target_pivot_ = Vector3.zero;
     private Vector3 content_pivot_ = Vector3.zero;
+
+    private Vector3 prev_content_pos_ = Vector3.zero;
 
     private GameObject target_ = null;
 
@@ -35,9 +38,10 @@ namespace LMWidgets
       local_position.z = Mathf.Max(local_position.z, 0.0f);
       transform.localPosition = local_position;
 
-      Vector3 content_displacement = content.transform.InverseTransformDirection(displacement);
+      prev_content_pos_ = content.transform.localPosition;
+      Vector3 content_displacement = displacement;
       Vector3 content_position = content.transform.localPosition;
-      content_position.y = content_pivot_.y + content_displacement.y * 1000;
+      content_position.y = content_pivot_.y + content_displacement.y;
       content.transform.localPosition = content_position;
     }
 
@@ -55,6 +59,10 @@ namespace LMWidgets
     {
       target_ = null;
       transform.localPosition = Vector3.zero;
+      //content.rigidbody2D.velocity = new Vector2(
+      //  content.transform.localPosition.x - prev_content_pos_.x,
+      //  content.transform.localPosition.y - prev_content_pos_.y
+      //  );
     }
 
     public override void Update()
