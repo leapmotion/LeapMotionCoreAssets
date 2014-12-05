@@ -51,15 +51,39 @@ using UnityEngine.UI;
 /// </summary>
 public class OVRMainMenu : MonoBehaviour
 {
+	/// <summary>
+	/// The amount of time in seconds that it takes for the menu to fade in.
+	/// </summary>
 	public float 	FadeInTime    	= 2.0f;
+
+	/// <summary>
+	/// An optional texture that appears before the menu fades in.
+	/// </summary>
 	public UnityEngine.Texture 	FadeInTexture 	= null;
+
+	/// <summary>
+	/// An optional font that replaces Unity's default Arial.
+	/// </summary>
 	public Font 	FontReplace		= null;
 
+	/// <summary>
+	/// The key that toggles the menu.
+	/// </summary>
 	public KeyCode	MenuKey			= KeyCode.Space;
+
+	/// <summary>
+	/// The key that quits the application.
+	/// </summary>
 	public KeyCode	QuitKey			= KeyCode.Escape;
 	
-	// Scenes to show onscreen
+	/// <summary>
+	/// Scene names to show on-screen for each of the scenes in Scenes.
+	/// </summary>
 	public string [] SceneNames;
+
+	/// <summary>
+	/// The set of scenes that the user can jump to.
+	/// </summary>
 	public string [] Scenes;
 	
 	private bool ScenesVisible   	= false;
@@ -76,8 +100,8 @@ public class OVRMainMenu : MonoBehaviour
 	private int    	VRVarsWidthX 	= 175;
 	private int    	VRVarsWidthY 	= 23;
 
-	private int    	StepY			= 25;
-		
+    private int    	StepY			= 25;
+
 	// Handle to OVRCameraRig
 	private OVRCameraRig CameraController = null;
 	
@@ -100,27 +124,24 @@ public class OVRMainMenu : MonoBehaviour
 	private float  TimeLeft			= 0; 				
 	private string strFPS			= "FPS: 0";
 	
-	// IPD shift from physical IPD
-	public float   IPDIncrement		= 0.0025f;
 	private string strIPD 			= "IPD: 0.000";	
 	
-	// Prediction (in ms)
+	/// <summary>
+	/// Prediction (in ms)
+	/// </summary>
 	public float   PredictionIncrement = 0.001f; // 1 ms
 	private string strPrediction       = "Pred: OFF";	
 	
-	// FOV Variables
-	public float   FOVIncrement		= 0.2f;
 	private string strFOV     		= "FOV: 0.0f";
-	
-	// Height adjustment
-	public float   HeightIncrement   = 0.01f;
 	private string strHeight     	 = "Height: 0.0f";
 	
-	// Speed and rotation adjustment
+	/// <summary>
+	/// Controls how quickly the player's speed and rotation change based on input.
+	/// </summary>
 	public float   SpeedRotationIncrement   	= 0.05f;
 	private string strSpeedRotationMultipler    = "Spd. X: 0.0f Rot. X: 0.0f";
 	
-	private bool   LoadingLevel 	= false;	
+	private bool   LoadingLevel 	= false;		
 	private float  AlphaFadeValue	= 1.0f;
 	private int    CurrentLevel		= 0;
 	
@@ -143,11 +164,15 @@ public class OVRMainMenu : MonoBehaviour
 	private GameObject RiftPresentGUIObject         = null;
 #endif
     
-	// We can set the layer to be anything we want to, this allows
-	// a specific camera to render it
+	/// <summary>
+	/// We can set the layer to be anything we want to, this allows
+	/// a specific camera to render it.
+	/// </summary>
 	public string 			LayerName 		 = "Default";
 
-	// Crosshair system, rendered onto 3D plane
+	/// <summary>
+	/// Crosshair rendered onto 3D plane.
+	/// </summary>
 	public UnityEngine.Texture  CrosshairImage 			= null;
 	private OVRCrosshair Crosshair        	= new OVRCrosshair();
 
@@ -234,7 +259,7 @@ public class OVRMainMenu : MonoBehaviour
 	/// Start this instance.
 	/// </summary>
 	void Start()
-	{
+	{		
 		AlphaFadeValue = 1.0f;
 		CurrentLevel   = 0;
 		PrevStartDown  = false;

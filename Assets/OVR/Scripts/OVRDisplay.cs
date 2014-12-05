@@ -34,7 +34,14 @@ public class OVRDisplay
 	/// </summary>
 	public struct EyeRenderDesc
 	{
+		/// <summary>
+		/// The horizontal and vertical size of the texture.
+		/// </summary>
 		public Vector2 resolution;
+
+		/// <summary>
+		/// The angle of the horizontal and vertical field of view in degrees.
+		/// </summary>
 		public Vector2 fov;
 	}
 
@@ -43,8 +50,19 @@ public class OVRDisplay
 	/// </summary>
 	public struct LatencyData
 	{
+		/// <summary>
+		/// The time it took to render both eyes in seconds.
+		/// </summary>
 		public float render;
+
+		/// <summary>
+		/// The time it took to perform TimeWarp in seconds.
+		/// </summary>
 		public float timeWarp;
+
+		/// <summary>
+		/// The time between the end of TimeWarp and scan-out in seconds.
+		/// </summary>
 		public float postPresent;
 	}
 	
@@ -129,6 +147,9 @@ public class OVRDisplay
 		UpdateTextures();
 	}
 
+	/// <summary>
+	/// Marks the beginning of all rendering.
+	/// </summary>
     public void BeginFrame()
 	{
 		bool updateFrameCount = !(OVRManager.instance.timeWarp && OVRManager.instance.freezeTimeWarp);
@@ -140,6 +161,9 @@ public class OVRDisplay
 		OVRPluginEvent.IssueWithData(RenderEventType.BeginFrame, frameCount);
     }
 
+	/// <summary>
+	/// Marks the end of all rendering.
+	/// </summary>
     public void EndFrame()
     {
 		OVRPluginEvent.Issue(RenderEventType.EndFrame);
@@ -171,6 +195,10 @@ public class OVRDisplay
 #endif
 	}
 
+#if UNITY_ANDROID && !UNITY_EDITOR
+	private float w = 0, x = 0, y = 0, z = 0, fov = 90f;
+#endif
+
 	/// <summary>
 	/// Gets the pose of the given eye, predicted for the time when the current frame will scan out.
 	/// </summary>
@@ -185,17 +213,15 @@ public class OVRDisplay
 
 		return eyePoses[(int)eye];
 #else
-		float w = 0, x = 0, y = 0, z = 0;
-		float fov = 90.0f;
-
-		OVR_GetSensorState(
-				false,
-			   	ref w,
-			   	ref x,
-			   	ref y,
-			   	ref z,
-			   	ref fov,
-			   	ref OVRManager.timeWarpViewNumber);
+		if (eye == OVREye.Left)
+			OVR_GetSensorState(
+					false,
+				   	ref w,
+				   	ref x,
+				   	ref y,
+				   	ref z,
+				   	ref fov,
+				   	ref OVRManager.timeWarpViewNumber);
 
 		Quaternion rot = new Quaternion(-x, -y, z, w);
 

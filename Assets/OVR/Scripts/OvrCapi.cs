@@ -178,12 +178,30 @@ namespace Ovr
 	[StructLayout(LayoutKind.Sequential)]
 	public struct PoseStatef
 	{
+	    /// <summary>
+        /// The body's position and orientation.
+	    /// </summary>
 		public Posef ThePose;
+	    /// <summary>
+        /// The body's angular velocity in radians per second.        
+	    /// </summary>
 		public Vector3f AngularVelocity;
+	    /// <summary>
+        /// The body's velocity in meters per second.   
+	    /// </summary>
 		public Vector3f LinearVelocity;
+	    /// <summary>
+        /// The body's angular acceleration in radians per second per second.    
+	    /// </summary>
 		public Vector3f AngularAcceleration;
+	    /// <summary>
+        /// The body's acceleration in meters per second per second.
+	    /// </summary>
 		public Vector3f LinearAcceleration;
-		public double TimeInSeconds; // Absolute time of this state sample.
+	    /// <summary>
+        /// Absolute time of this state sample.
+	    /// </summary>
+		public double TimeInSeconds;         
 	};
 
 	/// <summary>
@@ -721,7 +739,13 @@ namespace Ovr
 	[StructLayout(LayoutKind.Sequential)]
 	public struct EyeRenderDesc
 	{
+        /// <summary>
+        /// The eye index this instance corresponds to.
+        /// </summary>
 		public Eye Eye;
+        /// <summary>
+        /// The field of view.
+        /// </summary>
 		public FovPort Fov;
         /// <summary>
 		/// Distortion viewport.
@@ -773,9 +797,6 @@ namespace Ovr
 		public int Multisample;
 	};
 
-	/// <summary>
-	/// Contains platform-specific information for rendering.
-	/// </summary>
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct RenderAPIConfig_Raw
 	{
@@ -977,14 +998,14 @@ namespace Ovr
 		public Recti RenderViewport;  // Pixel viewport in texture that holds eye image.
 	};
 
-	/// <summary>
+    /// <summary>
     /// Contains platform-specific information for rendering.
-	/// </summary>
+    /// </summary>
     public abstract class Texture
-	{
+    {
         public Texture() { Header.API = RenderAPIType.None; }
 
-		public TextureHeader Header;
+        public TextureHeader Header;
 
         internal abstract Texture_Raw ToRaw();
     }
@@ -1079,7 +1100,7 @@ namespace Ovr
         }
 
         internal override Texture_Raw ToRaw()
-		{
+        {
             Texture_Raw config = new Texture_Raw();
             config.Header = this.Header;
             config.PlatformData_0 = this._ID3D11Texture2D_pTexture;
@@ -1088,7 +1109,7 @@ namespace Ovr
         }
 
         public IntPtr _ID3D11Texture2D_pTexture, _ID3D11ShaderResourceView_pSRView;
-		}
+    }
 
 	// Internal description for ovrTexture; must match C 'ovrTexture' layout.
 	[StructLayout(LayoutKind.Sequential)]
@@ -1126,8 +1147,17 @@ namespace Ovr
 		/// Vignette fade factor. Can be encoded in Pos.w.
         /// </summary>
 		public float VignetteFactor;
+        /// <summary>
+        /// The tangents of the horizontal and vertical eye angles for the red channel.
+        /// </summary>
 		public Vector2f TanEyeAnglesR;
+        /// <summary>
+        /// The tangents of the horizontal and vertical eye angles for the green channel.
+        /// </summary>
 		public Vector2f TanEyeAnglesG;
+        /// <summary>
+        /// The tangents of the horizontal and vertical eye angles for the blue channel.
+        /// </summary>
 		public Vector2f TanEyeAnglesB;
 	};
 
@@ -1137,9 +1167,21 @@ namespace Ovr
 	/// </summary>
 	public struct DistortionMesh
 	{
+        /// <summary>
+        /// The distortion vertices representing each point in the mesh.
+        /// </summary>
 		public DistortionVertex[] pVertexData;
+        /// <summary>
+        /// Indices for connecting the mesh vertices into polygons.
+        /// </summary>
 		public short[] pIndexData;
+        /// <summary>
+        /// The number of vertices in the mesh.
+        /// </summary>
 		public uint VertexCount;
+        /// <summary>
+        /// The number of indices in the mesh.        
+        /// </summary>
 		public uint IndexCount;
 
 		internal DistortionMesh(DistortionMesh_Raw raw)
@@ -1192,6 +1234,7 @@ namespace Ovr
 		/// If true then the warning should be currently visible
 		/// and the following variables have meaning. Else there is no
 		/// warning being displayed for this application on the given HMD.
+        /// True if the Health&Safety Warning is currently displayed.
         /// </summary>
 		public bool Displayed;
         /// <summary>
@@ -1230,7 +1273,7 @@ namespace Ovr
 	/// </summary>
 	public class Hmd
 	{
-		public const string OVR_VERSION_STRING                    = "0.4.3";
+		public const string OVR_VERSION_STRING                    = "0.4.4";
 		public const string OVR_KEY_USER                          = "User";
 		public const string OVR_KEY_NAME                          = "Name";
 		public const string OVR_KEY_GENDER                        = "Gender";
@@ -1396,7 +1439,6 @@ namespace Ovr
 			return ovrHmd_GetLastError(HmdPtr);
 		}
 
-#if false
         /// <summary>
 		/// Platform specific function to specify the application window whose output will be 
 		/// displayed on the HMD. Only used if the ovrHmdCap_ExtendDesktop flag is false.
@@ -1406,11 +1448,10 @@ namespace Ovr
 		///            Null pointers mean "full size".
 		/// @note Source and dest mirror rects are not yet implemented.
         /// </summary>
-		public bool AttachToWindow(Recti destMirrorRect, Recti sourceRenderTargetRect)
+        public bool AttachToWindow(Recti destMirrorRect, Recti sourceRenderTargetRect, IntPtr WindowPtr = default(IntPtr))
 		{
-			return ovrHmd_AttachToWindow(HmdPtr, IntPtr.Zero, destMirrorRect, sourceRenderTargetRect);
+            return ovrHmd_AttachToWindow(HmdPtr, WindowPtr, destMirrorRect, sourceRenderTargetRect) != 0;
 		}
-#endif
 
         /// <summary>
 		/// Returns capability bits that are enabled at this time as described by ovrHmdCaps.
@@ -1606,7 +1647,6 @@ namespace Ovr
 		}
 
         /// <summary>
-		/// DEPRECATED: Prefer using ovrHmd_GetEyePoses instead
 		/// Function was previously called ovrHmd_GetEyePose
 		/// Returns the predicted head pose to use when rendering the specified eye.
 		/// - Important: Caller must apply HmdToEyeViewOffset before using ovrPosef for rendering

@@ -289,6 +289,9 @@ public class OVRManager : MonoBehaviour
 	private static AndroidJavaClass javaVrActivityClass;
 	internal static int timeWarpViewNumber = 0;
 	public static event Action OnCustomPostRender;
+#else
+	private static bool ovrIsInitialized;
+	private static bool isQuitting;
 #endif
 
     public static bool isPaused
@@ -320,6 +323,14 @@ public class OVRManager : MonoBehaviour
 		instance = this;
 
 #if !UNITY_ANDROID || UNITY_EDITOR
+		if (!ovrIsInitialized)
+		{
+			OVR_Initialize();
+			OVRPluginEvent.Issue(RenderEventType.Initialize);
+
+			ovrIsInitialized = true;
+		}
+
 		var netVersion = new System.Version(Ovr.Hmd.OVR_VERSION_STRING);
 		var ovrVersion = new System.Version(Ovr.Hmd.GetVersionString());
 		if (netVersion > ovrVersion)
@@ -435,19 +446,44 @@ public class OVRManager : MonoBehaviour
 #endif
 	}
 
+#if !UNITY_ANDROID || UNITY_EDITOR
+	private void OnApplicationQuit()
+	{
+		isQuitting = true;
+	}
+
+	private void OnDisable()
+	{
+		if (!isQuitting)
+			return;
+
+		if (ovrIsInitialized)
+		{
+			OVR_Destroy();
+			OVRPluginEvent.Issue(RenderEventType.Destroy);
+			_capiHmd = null;
+
+			ovrIsInitialized = false;
+		}
+	}
+#endif
+
 	private void Start()
 	{
+#if !UNITY_ANDROID || UNITY_EDITOR
 		Camera cam = GetComponent<Camera>();
 		if (cam == null)
 		{
 			// Ensure there is a non-RT camera in the scene to force rendering of the left and right eyes.
 			cam = gameObject.AddComponent<Camera>();
 			cam.cullingMask = 0;
-			cam.clearFlags = CameraClearFlags.Nothing;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.0f, 0.0f, 0.0f);
 			cam.renderingPath = RenderingPath.Forward;
 			cam.orthographic = true;
 			cam.useOcclusionCulling = false;
 		}
+#endif
 
 		bool isD3d = SystemInfo.graphicsDeviceVersion.Contains("Direct3D") ||
 			Application.platform == RuntimePlatform.WindowsEditor &&
@@ -645,6 +681,10 @@ public class OVRManager : MonoBehaviour
     private static extern void OVR_SetEditorPlay(bool isEditorPlay);
     [DllImport(LibOVR, CallingConvention = CallingConvention.Cdecl)]
     private static extern void OVR_SetDistortionCaps(uint distortionCaps);
+	[DllImport(LibOVR, CallingConvention = CallingConvention.Cdecl)]
+	private static extern void OVR_Initialize();
+	[DllImport(LibOVR, CallingConvention = CallingConvention.Cdecl)]
+	private static extern void OVR_Destroy();
 
 #if UNITY_STANDALONE_WIN
 	[DllImport("user32", EntryPoint = "MessageBoxA", CharSet = CharSet.Ansi)]

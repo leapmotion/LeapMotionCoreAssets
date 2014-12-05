@@ -227,16 +227,19 @@ public class OVRPlayerController : MonoBehaviour
 		if (dpad_move || Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
 			moveInfluence *= 2.0f;
 
-		Transform dirXform = (HmdRotatesY) ? CameraController.centerEyeAnchor : transform;
+		Quaternion ort = (HmdRotatesY) ? CameraController.centerEyeAnchor.rotation : transform.rotation;
+		Vector3 ortEuler = ort.eulerAngles;
+		ortEuler.z = ortEuler.x = 0f;
+		ort = Quaternion.Euler(ortEuler);
 
-			if (moveForward)
-			MoveThrottle += dirXform.TransformDirection(Vector3.forward * moveInfluence * transform.lossyScale.z);
-			if (moveBack)
-			MoveThrottle += dirXform.TransformDirection(Vector3.back * moveInfluence * transform.lossyScale.z) * BackAndSideDampen;
-			if (moveLeft)
-			MoveThrottle += dirXform.TransformDirection(Vector3.left * moveInfluence * transform.lossyScale.x) * BackAndSideDampen;
-			if (moveRight)
-			MoveThrottle += dirXform.TransformDirection(Vector3.right * moveInfluence * transform.lossyScale.x) * BackAndSideDampen;
+		if (moveForward)
+			MoveThrottle += ort * (transform.lossyScale.z * moveInfluence * Vector3.forward);
+		if (moveBack)
+			MoveThrottle += ort * (transform.lossyScale.z * moveInfluence * BackAndSideDampen * Vector3.back);
+		if (moveLeft)
+			MoveThrottle += ort * (transform.lossyScale.x * moveInfluence * BackAndSideDampen * Vector3.left);
+		if (moveRight)
+			MoveThrottle += ort * (transform.lossyScale.x * moveInfluence * BackAndSideDampen * Vector3.right);
 
 		bool curHatLeft = OVRGamepadController.GPC_GetButton(OVRGamepadController.Button.LeftShoulder);
 
@@ -272,24 +275,20 @@ public class OVRPlayerController : MonoBehaviour
 		moveInfluence *= 1.0f + OVRGamepadController.GPC_GetAxis(OVRGamepadController.Axis.LeftTrigger);
 #endif
 
-			float leftAxisX = OVRGamepadController.GPC_GetAxis(OVRGamepadController.Axis.LeftXAxis);
-			float leftAxisY = OVRGamepadController.GPC_GetAxis(OVRGamepadController.Axis.LeftYAxis);
+		float leftAxisX = OVRGamepadController.GPC_GetAxis(OVRGamepadController.Axis.LeftXAxis);
+		float leftAxisY = OVRGamepadController.GPC_GetAxis(OVRGamepadController.Axis.LeftYAxis);
 
-			if(leftAxisY > 0.0f)
-	    		MoveThrottle += leftAxisY
-				* dirXform.TransformDirection(Vector3.forward * moveInfluence);
+		if(leftAxisY > 0.0f)
+			MoveThrottle += ort * (leftAxisY * moveInfluence * Vector3.forward);
 
-			if(leftAxisY < 0.0f)
-	    		MoveThrottle += Mathf.Abs(leftAxisY)
-				* dirXform.TransformDirection(Vector3.back * moveInfluence) * BackAndSideDampen;
+		if(leftAxisY < 0.0f)
+			MoveThrottle += ort * (Mathf.Abs(leftAxisY) * moveInfluence * BackAndSideDampen * Vector3.back);
 
-			if(leftAxisX < 0.0f)
-	    		MoveThrottle += Mathf.Abs(leftAxisX)
-				* dirXform.TransformDirection(Vector3.left * moveInfluence) * BackAndSideDampen;
+		if(leftAxisX < 0.0f)
+			MoveThrottle += ort * (Mathf.Abs(leftAxisX) * moveInfluence * BackAndSideDampen * Vector3.left);
 
-			if(leftAxisX > 0.0f)
-				MoveThrottle += leftAxisX
-				* dirXform.TransformDirection(Vector3.right * moveInfluence) * BackAndSideDampen;
+		if(leftAxisX > 0.0f)
+			MoveThrottle += ort * (leftAxisX * moveInfluence * BackAndSideDampen * Vector3.right);
 
 		float rightAxisX = OVRGamepadController.GPC_GetAxis(OVRGamepadController.Axis.RightXAxis);
 
