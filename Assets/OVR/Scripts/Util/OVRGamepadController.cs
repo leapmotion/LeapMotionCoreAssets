@@ -28,8 +28,7 @@ using UnityEngine;
 /// </summary>
 public class OVRGamepadController : MonoBehaviour
 {
-	//-------------------------
-	// Input enums
+	/// <summary> An axis on the gamepad. </summary>
 	public enum Axis
 	{
 		None = -1,
@@ -42,6 +41,7 @@ public class OVRGamepadController : MonoBehaviour
 		Max,
 	};
 
+	/// <summary> A button on the gamepad. </summary>
 	public enum Button
 	{
 		None = -1,
@@ -62,6 +62,9 @@ public class OVRGamepadController : MonoBehaviour
 		Max
 	};
 
+	/// <summary>
+	/// The default Unity input name for each gamepad Axis.
+	/// </summary>
 	public static string[] DefaultAxisNames = new string[(int)Axis.Max]
 	{
 		"Left_X_Axis",
@@ -72,6 +75,9 @@ public class OVRGamepadController : MonoBehaviour
 		"RightTrigger",
 	};
 
+	/// <summary>
+	/// The default Unity input name for each gamepad Button.
+	/// </summary>
     public static string[] DefaultButtonNames = new string[(int)Button.Max]
 	{
 		"Button A",
@@ -95,7 +101,14 @@ public class OVRGamepadController : MonoBehaviour
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 	};
 
+	/// <summary>
+	/// The current Unity input names for all gamepad axes.
+	/// </summary>
     public static string[] AxisNames = null;
+
+	/// <summary>
+	/// The current Unity input names for all gamepad buttons.
+	/// </summary>
     public static string[] ButtonNames = null;
 
     static OVRGamepadController()
@@ -104,20 +117,33 @@ public class OVRGamepadController : MonoBehaviour
         SetButtonNames(DefaultButtonNames);
     }
 
+	/// <summary>
+	/// Sets the current names for all gamepad axes.
+	/// </summary>
 	public static void SetAxisNames(string[] axisNames)
 	{
 		AxisNames = axisNames;
 	}
-	
+
+	/// <summary>
+	/// Sets the current Unity input names for all gamepad buttons.
+	/// </summary>
+	/// <param name="buttonNames">Button names.</param>
 	public static void SetButtonNames(string[] buttonNames)
 	{
 		ButtonNames = buttonNames;
 	}
 
+	/// <summary> Handles an axis read event. </summary>
 	public delegate float ReadAxisDelegate(Axis axis);
+
+	/// <summary> Handles an button read event. </summary>
 	public delegate bool ReadButtonDelegate(Button button);
-	
+
+	/// <summary> Occurs when an axis has been read. </summary>
 	public static ReadAxisDelegate ReadAxis = DefaultReadAxis;
+
+	/// <summary> Occurs when a button has been read. </summary>
 	public static ReadButtonDelegate ReadButton = DefaultReadButton;
 
 #if (!UNITY_ANDROID || UNITY_EDITOR)
@@ -175,6 +201,9 @@ public class OVRGamepadController : MonoBehaviour
 #endif
 	}
 	
+	/// <summary>
+	/// Returns the current value of the given Axis.
+	/// </summary>
 	public static float GPC_GetAxis(Axis axis)
 	{
 		if (ReadAxis == null)
@@ -188,10 +217,8 @@ public class OVRGamepadController : MonoBehaviour
 	}
 
 	/// <summary>
-	/// GPC_GetButton
+	/// Uses XInput to check if the given Button is down.
 	/// </summary>
-	/// <returns><c>true</c>, if c_ get button was GPed, <c>false</c> otherwise.</returns>
-	/// <param name="button">Button.</param>
 	public static bool DefaultReadButton(Button button)
 	{
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -201,6 +228,9 @@ public class OVRGamepadController : MonoBehaviour
 #endif
 	}
 
+	/// <summary>
+	/// Returns true if the given Button is down.
+	/// </summary>
 	public static bool GPC_GetButton(Button button)
 	{
 		if (ReadButton == null)
@@ -214,9 +244,8 @@ public class OVRGamepadController : MonoBehaviour
 	}
 
 	/// <summary>
-	/// GPC_IsAvailable
+	/// Returns true if the gamepad controller is available.
 	/// </summary>
-	/// <returns><c>true</c>, if c_ is available was GPed, <c>false</c> otherwise.</returns>
 	public static bool GPC_IsAvailable()
 	{
 #if !UNITY_ANDROID || UNITY_EDITOR
@@ -225,10 +254,7 @@ public class OVRGamepadController : MonoBehaviour
 		return true;
 #endif
 	}
-	
-	/// <summary>
-	/// GPC_Test
-	/// </summary>
+
 	void GPC_Test()
 	{
 		// Axis test

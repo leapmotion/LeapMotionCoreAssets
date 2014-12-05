@@ -60,6 +60,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 400010}
   - 20: {fileID: 2000002}
+  - 114: {fileID: 11400004}
   m_Layer: 0
   m_Name: LeftEyeAnchor
   m_TagString: Untagged
@@ -92,6 +93,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 400014}
   - 20: {fileID: 2000000}
+  - 114: {fileID: 11400006}
   m_Layer: 0
   m_Name: RightEyeAnchor
   m_TagString: Untagged
@@ -117,8 +119,8 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 100008}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0, y: .964049041, z: 0, w: -.265724421}
+  m_LocalPosition: {x: 3.98164845, y: 1.41190863, z: 20.6666603}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 400002}
@@ -229,7 +231,7 @@ Camera:
   field of view: 106.092934
   orthographic: 0
   orthographic size: 5
-  m_Depth: 0
+  m_Depth: 1
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -290,11 +292,38 @@ MonoBehaviour:
   usePositionTracking: 1
   eyeTextureFormat: 7
   eyeTextureDepth: 24
-  mirrorToMainWindow: 1
   timeWarp: 1
   freezeTimeWarp: 0
   resetTrackerOnLoad: 1
   monoscopic: 0
+--- !u!114 &11400004
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 100010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df8e1d778abf442e4bec449c360e9e1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fadeTime: 2
+  fadeColor: {r: .00999999978, g: .00999999978, b: .00999999978, a: 1}
+  fadeShader: {fileID: 30, guid: 0000000000000000f000000000000000, type: 0}
+--- !u!114 &11400006
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 100014}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df8e1d778abf442e4bec449c360e9e1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fadeTime: 2
+  fadeColor: {r: .00999999978, g: .00999999978, b: .00999999978, a: 1}
+  fadeShader: {fileID: 30, guid: 0000000000000000f000000000000000, type: 0}
 --- !u!114 &11400008
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -324,7 +353,7 @@ MonoBehaviour:
   RotationAmount: 1.5
   RotationRatchet: 45
   HmdRotatesY: 1
-  GravityModifier: .379000008
+  GravityModifier: 1
   useProfileHeight: 1
 --- !u!114 &11400020
 MonoBehaviour:

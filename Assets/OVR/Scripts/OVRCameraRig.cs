@@ -78,7 +78,11 @@ public class OVRCameraRig : MonoBehaviour
 		UpdateAnchors();
 	}
 
+#if !UNITY_ANDROID || UNITY_EDITOR
 	private void LateUpdate()
+#else
+	private void Update()
+#endif
 	{
 		EnsureGameObjectIntegrity();
 		
@@ -186,7 +190,7 @@ public class OVRCameraRig : MonoBehaviour
 		cam.aspect = eyeDesc.resolution.x / eyeDesc.resolution.y;
 		cam.rect = new Rect(0f, 0f, OVRManager.instance.virtualTextureScale, OVRManager.instance.virtualTextureScale);
 		cam.targetTexture = OVRManager.display.GetEyeTexture(eye);
-
+		
 		// AA is documented to have no effect in deferred, but it causes black screens.
 		if (cam.actualRenderingPath == RenderingPath.DeferredLighting)
 			QualitySettings.antiAliasing = 0;
