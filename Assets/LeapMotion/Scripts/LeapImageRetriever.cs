@@ -20,6 +20,7 @@ public struct LMDevice
   public int width;
   public int height;
   public int pixels;
+  public bool isRobustMode;
   public LM_DEVICE type;
 
   public LMDevice (LM_DEVICE device = LM_DEVICE.INVALID)
@@ -41,6 +42,23 @@ public struct LMDevice
         break;
     }
     this.pixels = width * height;
+    isRobustMode = false;
+  }
+
+  public void UpdateRobustMode(int height) 
+  {
+    switch (type)
+    {
+      case LM_DEVICE.PERIPHERAL:
+        isRobustMode = (height < PERIPERAL_HEIGHT) ? true : false;
+        break;
+      case LM_DEVICE.DRAGONFLY:
+        isRobustMode = (height < DRAGONFLY_HEIGHT) ? true : false;
+        break;
+      default:
+        isRobustMode = false;
+        break;
+    }
   }
 }
 
@@ -86,17 +104,17 @@ public class LeapImageRetriever : MonoBehaviour
   protected Color32[] dist_pixelsX_;
   protected Color32[] dist_pixelsY_;
 
-  private LM_DEVICE GetDevice(int width, int height)
+  private LM_DEVICE GetDevice(int width)
   {
-    if (width == LMDevice.PERIPERAL_WIDTH && height == LMDevice.PERIPERAL_HEIGHT)
+    if (width == LMDevice.PERIPERAL_WIDTH)
     {
       return LM_DEVICE.PERIPHERAL;
     }
-    else if (width == LMDevice.DRAGONFLY_WIDTH && height == LMDevice.DRAGONFLY_HEIGHT)
+    else if (width == LMDevice.DRAGONFLY_WIDTH)
     {
       return LM_DEVICE.DRAGONFLY;
     }
-    return LM_DEVICE.PERIPHERAL;
+    return LM_DEVICE.INVALID;
   }
 
   protected void SetShader()
@@ -149,7 +167,8 @@ public class LeapImageRetriever : MonoBehaviour
     int width = image.Width;
     int height = image.Height;
 
-    attached_device_ = new LMDevice(GetDevice(width, height));
+    attached_device_ = new LMDevice(GetDevice(width));
+    attached_device_.UpdateRobustMode(height);
     if (attached_device_.width == 0 || attached_device_.height == 0)
     {
       attached_device_ = new LMDevice();
@@ -221,8 +240,28 @@ public class LeapImageRetriever : MonoBehaviour
     switch (attached_device_.type)
     {
       case LM_DEVICE.PERIPHERAL:
-        for (int i = 0; i < image_data.Length; ++i)
-          image_pixels_[i].a = image_data[i];
+        if (attached_device_.isRobustMode) 
+        {
+          int width = attached_device_.width;
+          int height = attached_device_.height;
+          int data_index = 0;
+          for (int j = 0; j < height; j += 2)
+          {
+            for (int i = 0; i < width; ++i)  
+            {
+              image_pixels_[i + (j + 0) * width].a = image_data[data_index];
+              image_pixels_[i + (j + 1) * width].a = image_data[data_index];
+              data_index++;
+            }
+          }
+        }
+        else
+        {
+          for (int i = 0; i < image_data.Length; ++i)
+          {
+            image_pixels_[i].a = image_data[i];
+          }
+        }
         break;
       case LM_DEVICE.DRAGONFLY:
         int image_index = 0;
