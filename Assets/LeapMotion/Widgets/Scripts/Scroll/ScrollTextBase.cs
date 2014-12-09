@@ -59,10 +59,7 @@ namespace LMWidgets
     {
       target_ = null;
       transform.localPosition = Vector3.zero;
-      content.rigidbody2D.velocity = new Vector2(
-        content.transform.localPosition.x - prev_content_pos_.x,
-        content.transform.localPosition.y - prev_content_pos_.y
-        );
+      content.rigidbody2D.velocity = (content.transform.localPosition - prev_content_pos_) / Time.deltaTime;
     }
 
     public override void Update()
@@ -75,8 +72,6 @@ namespace LMWidgets
           UpdatePosition(target_.transform.position - target_pivot_);
         }
       }
-      Debug.Log(content.rigidbody2D.velocity.y);
     }
   }
 }
-
