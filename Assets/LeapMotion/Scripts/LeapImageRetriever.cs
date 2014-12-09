@@ -16,6 +16,8 @@ public struct LMDevice
   public static int PERIPERAL_HEIGHT = 240;
   public static int DRAGONFLY_WIDTH = 608;
   public static int DRAGONFLY_HEIGHT = 540;
+  public static int MANTIS_WIDTH = 640;
+  public static int MANTIS_HEIGHT = 240;
 
   public int width;
   public int height;
@@ -36,6 +38,10 @@ public struct LMDevice
         width = DRAGONFLY_WIDTH;
         height = DRAGONFLY_HEIGHT;
         break;
+      case LM_DEVICE.MANTIS:
+        width = MANTIS_WIDTH;
+        height = MANTIS_HEIGHT;
+        break;
       default:
         width = 0;
         height = 0;
@@ -55,6 +61,9 @@ public struct LMDevice
       case LM_DEVICE.DRAGONFLY:
         isRobustMode = (height < DRAGONFLY_HEIGHT) ? true : false;
         break;
+      case LM_DEVICE.MANTIS:
+        isRobustMode = (height < MANTIS_HEIGHT) ? true : false;
+        break;
       default:
         isRobustMode = false;
         break;
@@ -66,7 +75,8 @@ public enum LM_DEVICE
 {
   INVALID = -1,
   PERIPHERAL = 0,
-  DRAGONFLY = 1
+  DRAGONFLY = 1,
+  MANTIS = 2
 }
 
 // To use the LeapImageRetriever you must be on version 2.1+
@@ -114,6 +124,10 @@ public class LeapImageRetriever : MonoBehaviour
     {
       return LM_DEVICE.DRAGONFLY;
     }
+    else if (width == LMDevice.MANTIS_WIDTH)
+    {
+      return LM_DEVICE.MANTIS;
+    }
     return LM_DEVICE.INVALID;
   }
 
@@ -128,6 +142,10 @@ public class LeapImageRetriever : MonoBehaviour
         break;
       case LM_DEVICE.DRAGONFLY:
         renderer.material = (undistortImage) ? new Material(RGB_UNDISTORT_SHADER) : new Material(RGB_NORMAL_SHADER);
+        controller_.transform.localScale = Vector3.one;
+        break;
+      case LM_DEVICE.MANTIS:
+        renderer.material = (undistortImage) ? new Material((overlayImage) ? IR_UNDISTORT_SHADER_FOREGROUND : IR_UNDISTORT_SHADER) : new Material(IR_NORMAL_SHADER);
         controller_.transform.localScale = Vector3.one;
         break;
       default:
@@ -185,6 +203,9 @@ public class LeapImageRetriever : MonoBehaviour
         case LM_DEVICE.DRAGONFLY:
           main_texture_ = new Texture2D(attached_device_.width, attached_device_.height, TextureFormat.RGBA32, false);
           break;
+        case LM_DEVICE.MANTIS:
+          main_texture_ = new Texture2D(attached_device_.width, attached_device_.height, TextureFormat.Alpha8, false);
+          break;
         default:
           main_texture_ = new Texture2D(attached_device_.width, attached_device_.height, TextureFormat.Alpha8, false);
           break;
@@ -240,6 +261,7 @@ public class LeapImageRetriever : MonoBehaviour
     switch (attached_device_.type)
     {
       case LM_DEVICE.PERIPHERAL:
+      case LM_DEVICE.MANTIS:
         if (attached_device_.isRobustMode) 
         {
           int width = attached_device_.width;
