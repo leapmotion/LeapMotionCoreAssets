@@ -116,7 +116,7 @@ public class LeapImageRetriever : MonoBehaviour
 
   private LM_DEVICE GetDevice(int width)
   {
-    const bool OVERRIDE_MANTIS = false;
+    const bool OVERRIDE_MANTIS = true;
     if (OVERRIDE_MANTIS)
     {
       return LM_DEVICE.MANTIS;
