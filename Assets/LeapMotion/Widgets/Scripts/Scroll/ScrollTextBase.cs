@@ -33,8 +33,9 @@ namespace LMWidgets
       }
     }
 
-    private void UpdatePosition(Vector3 displacement)
+    private void UpdatePosition(Vector3 target_position)
     {
+      Vector3 displacement = target_position - target_pivot_;
       Vector3 local_displacement = transform.InverseTransformDirection(displacement);
       Vector3 local_position = transform.localPosition;
       local_position.x = 0.0f;
@@ -77,7 +78,7 @@ namespace LMWidgets
       {
         if (target_ != null)
         {
-          UpdatePosition(target_.transform.position - target_pivot_);
+          UpdatePosition(target_.transform.position);
         }
       }
       if (Mathf.Abs(content.transform.parent.GetComponent<ScrollRect>().velocity.y) > 0.001f)
