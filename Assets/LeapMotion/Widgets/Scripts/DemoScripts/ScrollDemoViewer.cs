@@ -12,7 +12,7 @@ public class ScrollDemoViewer : ScrollViewerBase
 
   protected Limits cursor_boundaries_ = new Limits();
 
-  private ExponentialSmoothing velocity_ = new ExponentialSmoothing(0.5f);
+  private ExponentialSmoothing velocity_ = new ExponentialSmoothing(0.01f);
   private float previous_percent_ = -1.0f;
 
   private void SetRenderers(GameObject game_object, bool enabled)
