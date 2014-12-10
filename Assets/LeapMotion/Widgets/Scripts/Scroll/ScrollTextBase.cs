@@ -4,17 +4,21 @@ using System.Collections;
 
 namespace LMWidgets
 {
-  public class ScrollTextBase : ButtonBase
+  public abstract class ScrollTextBase : ButtonBase
   {
     public GameObject content;
 
     private Vector3 local_pivot_ = Vector3.zero;
     private Vector3 target_pivot_ = Vector3.zero;
     private Vector3 content_pivot_ = Vector3.zero;
+    private ExponentialSmoothingXYZ content_velocity_ = new ExponentialSmoothingXYZ(0.5f);
 
     private Vector3 prev_content_pos_ = Vector3.zero;
 
     private GameObject target_ = null;
+
+    public abstract void ScrollActive();
+    public abstract void ScrollInactive();
 
     private bool IsHand(Collision other)
     {
@@ -43,6 +47,8 @@ namespace LMWidgets
       Vector3 content_position = content.transform.localPosition;
       content_position.y = content_pivot_.y + content_displacement.y;
       content.transform.localPosition = content_position;
+      Vector3 curr_velocity = (content_position - prev_content_pos_) / Time.deltaTime;
+      content_velocity_.Calculate(curr_velocity.x, curr_velocity.y, curr_velocity.z);
     }
 
     public override void ButtonPressed()
@@ -53,13 +59,15 @@ namespace LMWidgets
         target_pivot_ = target_.transform.position;
         content_pivot_ = content.transform.localPosition;
       }
+      ScrollActive();
     }
 
     public override void ButtonReleased()
     {
       target_ = null;
       transform.localPosition = Vector3.zero;
-      content.rigidbody2D.velocity = (content.transform.localPosition - prev_content_pos_) / Time.deltaTime;
+      content.rigidbody2D.velocity = new Vector2(content_velocity_.GetX(), content_velocity_.GetY());
+      ScrollInactive();
     }
 
     public override void Update()
@@ -71,6 +79,10 @@ namespace LMWidgets
         {
           UpdatePosition(target_.transform.position - target_pivot_);
         }
+      }
+      if (Mathf.Abs(content.transform.parent.GetComponent<ScrollRect>().velocity.y) > 0.001f)
+      {
+        content.rigidbody2D.velocity = Vector2.zero;
       }
     }
   }

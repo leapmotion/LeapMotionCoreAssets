@@ -2,27 +2,6 @@
 using System.Collections;
 using LMWidgets;
 
-public class ExponentialSmoothing {
-  float alpha;
-  float value = float.MinValue;
-
-  public ExponentialSmoothing(float alpha)
-  {
-    this.alpha = alpha;
-  }
-
-  public float Calculate(float value) 
-  {
-    this.value = (this.value == float.MinValue) ? value : alpha * value + (1 - alpha) * this.value;
-    return this.value;
-  }
-
-  public float Value()
-  {
-    return this.value;
-  }
-}
-
 public class ScrollDemoViewer : ScrollViewerBase
 {
   public ScrollContentBase content;
