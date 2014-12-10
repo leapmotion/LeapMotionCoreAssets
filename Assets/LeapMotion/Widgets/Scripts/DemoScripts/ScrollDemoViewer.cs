@@ -1,27 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
-using VRWidgets;
-
-public class ExponentialSmoothing {
-  float alpha;
-  float value = float.MinValue;
-
-  public ExponentialSmoothing(float alpha)
-  {
-    this.alpha = alpha;
-  }
-
-  public float Calculate(float value) 
-  {
-    this.value = (this.value == float.MinValue) ? value : alpha * value + (1 - alpha) * this.value;
-    return this.value;
-  }
-
-  public float Value()
-  {
-    return this.value;
-  }
-}
+using LMWidgets;
 
 public class ScrollDemoViewer : ScrollViewerBase
 {
@@ -33,7 +12,7 @@ public class ScrollDemoViewer : ScrollViewerBase
 
   protected Limits cursor_boundaries_ = new Limits();
 
-  private ExponentialSmoothing velocity_ = new ExponentialSmoothing(0.5f);
+  private ExponentialSmoothing velocity_ = new ExponentialSmoothing(0.01f);
   private float previous_percent_ = -1.0f;
 
   private void SetRenderers(GameObject game_object, bool enabled)

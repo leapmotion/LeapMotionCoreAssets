@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using VRWidgets;
+using LMWidgets;
 
 public class SliderDemo : SliderBase 
 {

@@ -1,15 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace VRWidgets
+namespace LMWidgets
 {
-  [RequireComponent(typeof(BoxCollider))]
   [RequireComponent(typeof(Rigidbody))]
   public abstract class ButtonBase : MonoBehaviour
   {
     public float spring = 50.0f;
-    public float triggerDistance = 0.025f;
-    public float cushionThickness = 0.005f;
+    public float triggerDistance = 0.25f;
+    public float cushionThickness = 0.05f;
 
     protected bool is_pressed_;
     protected float min_distance_;
@@ -79,6 +78,10 @@ namespace VRWidgets
 
     public virtual void Awake()
     {
+      if (GetComponent<Collider>() == null)
+      {
+        Debug.LogWarning("This Widget lacks a collider. Will not function as expected");
+      }
       is_pressed_ = false;
       cushionThickness = Mathf.Clamp(cushionThickness, 0.0f, triggerDistance - 0.001f);
       min_distance_ = 0.0f;
