@@ -1,4 +1,6 @@
 LeapMotionCoreAssets
 ========================
 
-Unity Assets for Leap Motion v2.1.6.23110
+Supports:
+- Leap Motion v2.2.0.23475
+- Oculus 0.4.4
