@@ -37,8 +37,9 @@ namespace LMWidgets
       if (other.gameObject == target_)
       {
         target_ = null;
-        transform.rigidbody.AddRelativeTorque(new Vector3(0.0f, 0.0f, (next_angle_ - curr_angle_) / (Time.deltaTime)));
-        Debug.Log((next_angle_ - curr_angle_) / (Time.deltaTime));
+        float FPS_INVERSE = 1.0f / Time.deltaTime;
+        float angular_velocity = (next_angle_ - curr_angle_) * FPS_INVERSE;
+        transform.rigidbody.AddRelativeTorque(new Vector3(0.0f, 0.0f, angular_velocity));
       }
     }
 
@@ -48,9 +49,9 @@ namespace LMWidgets
       {
         Vector3 curr_direction = transform.InverseTransformPoint(target_.transform.position) - transform.localPosition;
         curr_direction.z = 0.0f;
-        curr_angle_ = transform.localRotation.z;
+        curr_angle_ = transform.localRotation.eulerAngles.z;
         transform.localRotation = Quaternion.FromToRotation(pivot_, curr_direction) * transform.localRotation;
-        next_angle_ = transform.localRotation.z;
+        next_angle_ = transform.localRotation.eulerAngles.z;
       }
     }
   }
