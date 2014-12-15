@@ -407,10 +407,10 @@ public class LeapImageRetriever : MonoBehaviour
 
     if (frame.Images.Count == 0)
     {
-      Debug.Log ("No images in " + frame.Id);
       image_misses_++;
       if (image_misses_ == IMAGE_WARNING_WAIT)
       {
+        // TODO: Make this visible IN applications
         Debug.LogWarning("Can't find any images. " +
                           "Make sure you enabled 'Allow Images' in the Leap Motion Settings, " +
                           "you are on tracking version 2.1+ and " +
@@ -424,7 +424,6 @@ public class LeapImageRetriever : MonoBehaviour
 
     if (attached_device_.width != image.Width || attached_device_.height != image.Height)
     {
-      Debug.Log ("Re-Initiate Passthrough...");
       if (!InitiatePassthrough(ref image)) {
         Debug.Log ("InitiatePassthrough FAILED");
         return;
@@ -435,15 +434,12 @@ public class LeapImageRetriever : MonoBehaviour
     LoadDistortion(ref image);
   }
 
-	void OnApplicationFocus(bool focusStatus) {
-		bool paused = focusStatus;
-		if (focusStatus) {
-						// Ensure reinitialization in Update
-			Debug.Log ("SoAwakeNOW!!!");
-						attached_device_.width = 0;
-						attached_device_.height = 0;
-				} else {
-			Debug.Log ("Sleeeeepy...");
-				}
-	}
+  void OnApplicationFocus(bool focusStatus) {
+    bool paused = focusStatus;
+    if (focusStatus) {
+            // Ensure reinitialization in Update
+            attached_device_.width = 0;
+            attached_device_.height = 0;
+        }
+  }
 }
