@@ -407,6 +407,7 @@ public class LeapImageRetriever : MonoBehaviour
 
     if (frame.Images.Count == 0)
     {
+      Debug.Log ("No images in " + frame.Id);
       image_misses_++;
       if (image_misses_ == IMAGE_WARNING_WAIT)
       {
@@ -423,8 +424,11 @@ public class LeapImageRetriever : MonoBehaviour
 
     if (attached_device_.width != image.Width || attached_device_.height != image.Height)
     {
-      if (!InitiatePassthrough(ref image))
+      Debug.Log ("Re-Initiate Passthrough...");
+      if (!InitiatePassthrough(ref image)) {
+        Debug.Log ("InitiatePassthrough FAILED");
         return;
+      }
     }
 
     LoadMainTexture(ref image);
