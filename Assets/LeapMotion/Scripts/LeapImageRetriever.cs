@@ -434,4 +434,16 @@ public class LeapImageRetriever : MonoBehaviour
     LoadMainTexture(ref image);
     LoadDistortion(ref image);
   }
+
+	void OnApplicationFocus(bool focusStatus) {
+		bool paused = focusStatus;
+		if (focusStatus) {
+						// Ensure reinitialization in Update
+			Debug.Log ("SoAwakeNOW!!!");
+						attached_device_.width = 0;
+						attached_device_.height = 0;
+				} else {
+			Debug.Log ("Sleeeeepy...");
+				}
+	}
 }
