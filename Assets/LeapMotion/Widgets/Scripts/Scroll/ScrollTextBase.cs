@@ -67,6 +67,7 @@ namespace LMWidgets
     {
       target_ = null;
       transform.localPosition = Vector3.zero;
+      transform.rigidbody.velocity = Vector3.zero;
       content.rigidbody2D.velocity = new Vector2(content_velocity_.GetX(), content_velocity_.GetY());
       ScrollInactive();
     }
@@ -82,6 +83,7 @@ namespace LMWidgets
         }
       }
 
+      // Velocity will be greater than 0 if it starts bouncing at the edges
       if (Mathf.Abs(content.transform.parent.GetComponent<ScrollRect>().velocity.y) > 0.001f)
       {
         content.rigidbody2D.velocity = Vector2.zero;

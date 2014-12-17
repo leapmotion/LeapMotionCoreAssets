@@ -18,7 +18,6 @@ public class ScrollTextDemo : ScrollTextBase
   {
     Vector3 content_position = content.transform.localPosition;
     content_position.z = Mathf.Min(transform.localPosition.z, contentLimit);
-    Debug.Log(content_position.z);
     content.transform.localPosition = content_position;
   }
 
