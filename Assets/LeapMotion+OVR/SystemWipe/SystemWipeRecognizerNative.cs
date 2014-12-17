@@ -3,50 +3,44 @@ using System.Runtime.InteropServices;
 
 namespace Leap.Util
 {
-	public enum Direction : int { Up, Down };
-	public enum Status : int { ErrorCannotAccessImages, Idle, SwipeBegin, SwipeUpdate, SwipeComplete, SwipeAbort };
+  public enum Direction : int { Invalid, Up, Down };
+  public enum Status : int { Invalid, ErrorCannotAccessImages, Idle, SwipeBegin, SwipeUpdate, SwipeComplete, SwipeAbort, InfoQueueEmpty };
 
-	[StructLayout(LayoutKind.Sequential)]
-	public struct SystemWipeInfo
-	{
-		public Direction Direction;
-		public Status Status;
-		public float Progress; 
-	}
+  [StructLayout(LayoutKind.Sequential)]
+  public struct SystemWipeInfo
+  {
+    public Direction Direction;
+    public Status Status;
+    public float Progress;
+  }
 
   public class SystemWipeRecognizerNative
-	{
+  {
+#   if UNITY_STANDALONE_OSX
+      const CallingConvention LeapCallingConvention = CallingConvention.Cdecl;
+#   else
+      const CallingConvention LeapCallingConvention = CallingConvention.StdCall;
+#   endif
+
+    [UnmanagedFunctionPointer(LeapCallingConvention)]
     public delegate void CallbackSystemWipeInfoDelegate(SystemWipeInfo systemWipeInfo);
-#if UNITY_STANDALONE_OSX
-	[DllImport("SystemWipeRecognizerDll")]
-	public static extern void SetSystemWipeRecognizerCallback(IntPtr property);
-	
-	[DllImport("SystemWipeRecognizerDll")]
-	public static extern void EnableSystemWipeRecognizer();
-	
-	[DllImport("SystemWipeRecognizerDll")]
-	public static extern void DisableSystemWipeRecognizer();
-	
-	[DllImport("SystemWipeRecognizerDll")]
-	public static extern bool WasLastImageAccessOk();
-	
-	[DllImport("SystemWipeRecognizerDll")]
-	public static extern int GetFrameCount();
-#else
-	[DllImport("SystemWipeRecognizerDll", CallingConvention = CallingConvention.StdCall)]
+
+    [DllImport("SystemWipeRecognizerDll", CallingConvention = LeapCallingConvention)]
     public static extern void SetSystemWipeRecognizerCallback(IntPtr property);
 
-    [DllImport("SystemWipeRecognizerDll", CallingConvention = CallingConvention.StdCall)]
+    [DllImport("SystemWipeRecognizerDll", CallingConvention = LeapCallingConvention)]
     public static extern void EnableSystemWipeRecognizer();
 
-    [DllImport("SystemWipeRecognizerDll", CallingConvention = CallingConvention.StdCall)]
+    [DllImport("SystemWipeRecognizerDll", CallingConvention = LeapCallingConvention)]
     public static extern void DisableSystemWipeRecognizer();
 
-    [DllImport("SystemWipeRecognizerDll", CallingConvention = CallingConvention.StdCall)]
+    [DllImport("SystemWipeRecognizerDll", CallingConvention = LeapCallingConvention)]
     public static extern bool WasLastImageAccessOk();
 
-    [DllImport("SystemWipeRecognizerDll", CallingConvention = CallingConvention.StdCall)]
+    [DllImport("SystemWipeRecognizerDll", CallingConvention = LeapCallingConvention)]
     public static extern int GetFrameCount();
-#endif
+
+    [DllImport("SystemWipeRecognizerDll", CallingConvention = LeapCallingConvention)]
+    public static extern SystemWipeInfo GetNextSystemWipeInfo();
   }
 }
