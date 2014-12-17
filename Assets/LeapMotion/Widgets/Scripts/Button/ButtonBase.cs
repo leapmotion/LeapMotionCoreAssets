@@ -6,9 +6,13 @@ namespace LMWidgets
   [RequireComponent(typeof(Rigidbody))]
   public abstract class ButtonBase : MonoBehaviour
   {
-    public float spring = 50.0f;
-    public float triggerDistance = 0.25f;
-    public float cushionThickness = 0.05f;
+    public float spring = 1000.0f;
+    public float triggerDistance = 0.025f;
+    public float cushionThickness = 0.005f;
+
+    protected float scaled_spring_;
+    protected float scaled_trigger_distance_;
+    protected float scaled_cushion_thickness_;
 
     protected bool is_pressed_;
     protected float min_distance_;
@@ -19,7 +23,7 @@ namespace LMWidgets
 
     public float GetPercent()
     {
-      return Mathf.Clamp(transform.localPosition.z / triggerDistance, 0.0f, 1.0f);
+      return Mathf.Clamp(transform.localPosition.z / scaled_trigger_distance_, 0.0f, 1.0f);
     }
 
     public Vector3 GetPosition()
@@ -28,7 +32,7 @@ namespace LMWidgets
         return Vector3.zero;
 
       Vector3 position = transform.localPosition;
-      position.z = GetPercent() * triggerDistance;
+      position.z = GetPercent() * scaled_trigger_distance_;
       return position;
     }
 
@@ -53,14 +57,14 @@ namespace LMWidgets
 
     protected void ApplySpring()
     {
-      rigidbody.AddRelativeForce(new Vector3(0.0f, 0.0f, -spring * (transform.localPosition.z)));
+      rigidbody.AddRelativeForce(new Vector3(0.0f, 0.0f, -scaled_spring_ * (transform.localPosition.z)));
     }
 
     protected void CheckTrigger()
     {
       if (is_pressed_ == false)
       {
-        if (transform.localPosition.z > triggerDistance)
+        if (transform.localPosition.z > scaled_trigger_distance_)
         {
           is_pressed_ = true;
           ButtonPressed();
@@ -68,12 +72,20 @@ namespace LMWidgets
       }
       else if (is_pressed_ == true)
       {
-        if (transform.localPosition.z < (triggerDistance - cushionThickness))
+        if (transform.localPosition.z < (scaled_trigger_distance_- scaled_cushion_thickness_))
         {
           is_pressed_ = false;
           ButtonReleased();
         }
       }
+    }
+
+    private void ScaleProperties()
+    {
+      float scale = transform.lossyScale.z;
+      scaled_spring_ = spring * scale;
+      scaled_trigger_distance_ = triggerDistance / scale;
+      scaled_cushion_thickness_ = Mathf.Clamp(cushionThickness / scale, 0.0f, scaled_trigger_distance_ - 0.001f);
     }
 
     public virtual void Awake()
@@ -86,10 +98,12 @@ namespace LMWidgets
       cushionThickness = Mathf.Clamp(cushionThickness, 0.0f, triggerDistance - 0.001f);
       min_distance_ = 0.0f;
       max_distance_ = float.MaxValue;
+      ScaleProperties();
     }
 
     public virtual void Update()
     {
+      ScaleProperties();
       ApplySpring();
       ApplyConstraints();
       CheckTrigger();
