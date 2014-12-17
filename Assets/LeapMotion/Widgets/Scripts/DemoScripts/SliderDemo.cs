@@ -42,11 +42,20 @@ public class SliderDemo : SliderBase
   private void UpdateGraphics()
   {
     Vector3 position = GetPosition();
-    position.z -= (triggerDistance + 0.01f);
+    position.z -= (scaled_trigger_distance_ + 0.01f);
 
     topLayer.transform.localPosition = position - new Vector3(0.0f, 0.0f, 0.01f + 0.25f * (1 - GetPercent()));
     botLayer.transform.localPosition = position;
     midLayer.transform.localPosition = (topLayer.transform.localPosition + botLayer.transform.localPosition) / 2.0f;
+
+    if (activeBar)
+    {
+      UpdateActiveBar();
+    }
+    if (numberOfDots > 0)
+    {
+      UpdateDots();
+    }
   }
 
   // Updates the active bar behind the handle
@@ -105,19 +114,6 @@ public class SliderDemo : SliderBase
           renderer.material.SetFloat("_Gain", 1.0f);
         }
       }
-    }
-  }
-
-  // Overrides the UpdatePosition to update the activeBar and dots whenever the position is updated
-  public override void UpdatePosition(Vector3 displacement)
-  {
-    base.UpdatePosition(displacement);
-    if (activeBar)
-    {
-      UpdateActiveBar();
-    }
-    if (numberOfDots > 0) {
-      UpdateDots();
     }
   }
 
