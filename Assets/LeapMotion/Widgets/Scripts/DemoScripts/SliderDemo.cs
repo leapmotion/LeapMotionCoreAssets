@@ -151,9 +151,9 @@ public class SliderDemo : SliderBase
     }
   }
 
-  public override void Update()
+  public override void FixedUpdate()
   {
-    base.Update();
+    base.FixedUpdate();
     UpdateGraphics();
   }
 }

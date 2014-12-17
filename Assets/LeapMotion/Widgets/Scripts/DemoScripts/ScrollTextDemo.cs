@@ -21,9 +21,9 @@ public class ScrollTextDemo : ScrollTextBase
     content.transform.localPosition = content_position;
   }
 
-  public override void Update()
+  public override void FixedUpdate()
   {
-    base.Update();
+    base.FixedUpdate();
     UpdateContentPosition();
   }
 }
