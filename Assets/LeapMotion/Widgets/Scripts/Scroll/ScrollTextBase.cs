@@ -66,20 +66,23 @@ namespace LMWidgets
     public override void ButtonReleased()
     {
       target_ = null;
-      transform.localPosition = Vector3.zero;
       content.rigidbody2D.velocity = new Vector2(content_velocity_.GetX(), content_velocity_.GetY());
       ScrollInactive();
     }
 
-    public override void Update()
+    public override void FixedUpdate()
     {
-      base.Update();
+      base.FixedUpdate();
       if (is_pressed_)
       {
         if (target_ != null)
         {
           UpdatePosition(target_.transform.position);
         }
+      }
+      else
+      {
+        transform.localPosition = Vector3.zero;
       }
       if (Mathf.Abs(content.transform.parent.GetComponent<ScrollRect>().velocity.y) > 0.001f)
       {

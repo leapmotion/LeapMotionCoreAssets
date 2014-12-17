@@ -101,7 +101,7 @@ namespace LMWidgets
       ScaleProperties();
     }
 
-    public virtual void Update()
+    public virtual void FixedUpdate()
     {
       ScaleProperties();
       ApplySpring();
