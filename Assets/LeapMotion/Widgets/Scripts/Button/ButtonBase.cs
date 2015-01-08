@@ -21,7 +21,7 @@ namespace LMWidgets
     public abstract void ButtonReleased();
     public abstract void ButtonPressed();
 
-    public float GetPercent()
+    public float GetFraction()
     {
       return Mathf.Clamp(transform.localPosition.z / scaled_trigger_distance_, 0.0f, 1.0f);
     }
@@ -32,7 +32,7 @@ namespace LMWidgets
         return Vector3.zero;
 
       Vector3 position = transform.localPosition;
-      position.z = GetPercent() * scaled_trigger_distance_;
+      position.z = GetFraction() * scaled_trigger_distance_;
       return position;
     }
 

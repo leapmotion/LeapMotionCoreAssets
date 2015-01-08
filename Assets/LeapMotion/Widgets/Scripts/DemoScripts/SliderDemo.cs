@@ -44,7 +44,7 @@ public class SliderDemo : SliderBase
     Vector3 position = GetPosition();
     position.z -= (scaled_trigger_distance_ + 0.01f);
 
-    topLayer.transform.localPosition = position - new Vector3(0.0f, 0.0f, 0.01f + 0.25f * (1 - GetPercent()));
+    topLayer.transform.localPosition = position - new Vector3(0.0f, 0.0f, 0.01f + 0.25f * (1 - GetFraction()));
     botLayer.transform.localPosition = position;
     midLayer.transform.localPosition = (topLayer.transform.localPosition + botLayer.transform.localPosition) / 2.0f;
 
@@ -73,7 +73,7 @@ public class SliderDemo : SliderBase
       renderer.material.SetFloat("_Gain", 3.0f);
     }
 
-    if (GetPercent() > 99.0f)
+    if (GetFraction() > 99.0f)
     {
       Renderer[] upper_limit_renderers = upperLimit.GetComponentsInChildren<Renderer>();
       foreach (Renderer renderer in upper_limit_renderers)
