@@ -72,7 +72,7 @@ namespace LMWidgets
       ScrollInactive();
     }
 
-    public override void FixedUpdate()
+    protected override void FixedUpdate()
     {
       base.FixedUpdate();
       if (is_pressed_)

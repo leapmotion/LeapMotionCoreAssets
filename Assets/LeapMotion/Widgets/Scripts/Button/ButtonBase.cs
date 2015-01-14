@@ -1,14 +1,18 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 
 namespace LMWidgets
 {
   [RequireComponent(typeof(Rigidbody))]
-  public abstract class ButtonBase : MonoBehaviour
+  public abstract class ButtonBase : MonoBehaviour, WidgetBinaryEventHandler<bool>
   {
     public float spring = 1000.0f;
     public float triggerDistance = 0.025f;
     public float cushionThickness = 0.005f;
+    
+    public virtual event EventHandler<WidgetEventArg<bool>> StartHandler;
+    public virtual event EventHandler<WidgetEventArg<bool>> EndHandler;
 
     protected float scaled_spring_;
     protected float scaled_trigger_distance_;
@@ -17,10 +21,23 @@ namespace LMWidgets
     protected bool is_pressed_;
     protected float min_distance_;
     protected float max_distance_;
+    
+    public abstract void ButtonPressed();
+    protected void FireButtonPressed(bool value = true) 
+    {
+      if (StartHandler != null) {
+        StartHandler(this, new WidgetEventArg<bool>(value));
+      }
+    }
 
     public abstract void ButtonReleased();
-    public abstract void ButtonPressed();
-
+    protected void FireButtonReleased(bool value = false)
+    {
+      if (EndHandler != null) {
+        EndHandler(this, new WidgetEventArg<bool>(value));
+      }
+    }
+    
     public float GetFraction()
     {
       return Mathf.Clamp(transform.localPosition.z / scaled_trigger_distance_, 0.0f, 1.0f);
@@ -68,6 +85,7 @@ namespace LMWidgets
         {
           is_pressed_ = true;
           ButtonPressed();
+          FireButtonPressed();
         }
       }
       else if (is_pressed_ == true)
@@ -76,6 +94,7 @@ namespace LMWidgets
         {
           is_pressed_ = false;
           ButtonReleased();
+          FireButtonReleased();
         }
       }
     }
@@ -88,7 +107,7 @@ namespace LMWidgets
       scaled_cushion_thickness_ = Mathf.Clamp(cushionThickness / scale, 0.0f, scaled_trigger_distance_ - 0.001f);
     }
 
-    public virtual void Awake()
+    protected virtual void Awake()
     {
       if (GetComponent<Collider>() == null)
       {
@@ -101,11 +120,15 @@ namespace LMWidgets
       ScaleProperties();
     }
 
-    public virtual void FixedUpdate()
+    protected virtual void FixedUpdate()
     {
       ScaleProperties();
       ApplySpring();
       ApplyConstraints();
+    }
+    
+    protected virtual void Update() 
+    {
       CheckTrigger();
     }
   }

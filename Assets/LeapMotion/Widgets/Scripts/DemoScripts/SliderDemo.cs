@@ -117,7 +117,7 @@ public class SliderDemo : SliderBase
     }
   }
 
-  public override void Awake()
+  protected override void Awake()
   {
     base.Awake();
     // Initiate the graphics for the handle
@@ -151,7 +151,7 @@ public class SliderDemo : SliderBase
     }
   }
 
-  public override void FixedUpdate()
+  protected override void FixedUpdate()
   {
     base.FixedUpdate();
     UpdateGraphics();

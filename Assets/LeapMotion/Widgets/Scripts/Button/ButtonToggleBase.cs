@@ -33,7 +33,7 @@ namespace LMWidgets
       }
     }
 
-    public override void Awake()
+    protected override void Awake()
     {
       base.Awake();
       onDistance = Mathf.Min(onDistance, triggerDistance - cushionThickness - 0.001f);

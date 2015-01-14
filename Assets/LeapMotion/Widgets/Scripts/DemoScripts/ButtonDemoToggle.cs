@@ -48,13 +48,13 @@ public class ButtonDemoToggle : ButtonToggleBase
     midGraphics.transform.localPosition = mid_position;
   }
 
-  public override void Awake()
+  protected override void Awake()
   {
     base.Awake();
     TurnsOffGraphics();
   }
 
-  public override void FixedUpdate()
+  protected override void FixedUpdate()
   {
     base.FixedUpdate();
     UpdateGraphics();
