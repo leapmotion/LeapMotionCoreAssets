@@ -1,19 +1,49 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class PhysicsSpring : MonoBehaviour 
+namespace LMWidgets
 {
-  public float spring = 1000.0f;
+  public class PhysicsSpring : LeapPhysics
+  {
+    public float spring = 1000.0f;
 
-  protected float scaled_spring_;
+    protected float m_scaled_spring;
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+    protected override void ApplyPhysics()
+    {
+    }
+
+    private void ApplyDisplacements()
+    {
+
+    }
+
+    private void ApplySpring()
+    {
+      // Apply Spring
+    }
+
+    private void ApplyConstraints()
+    {
+
+    }
+
+    protected override void FixedUpdate()
+    {
+      base.FixedUpdate();
+      switch (m_state)
+      {
+        case LeapPhysicsState.Interacting:
+          ApplyDisplacements();
+          break;
+        case LeapPhysicsState.Reflecting:
+          ApplySpring();
+          break;
+        default:
+          ApplySpring();
+          break;
+      }
+      ApplyConstraints();
+    }
+  }
 }
