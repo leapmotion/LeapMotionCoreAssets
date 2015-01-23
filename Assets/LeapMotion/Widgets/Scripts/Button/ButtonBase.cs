@@ -4,10 +4,8 @@ using System.Collections;
 
 namespace LMWidgets
 {
-  [RequireComponent(typeof(Rigidbody))]
-  public abstract class ButtonBase : MonoBehaviour, WidgetBinaryEventHandler<bool>
+  public abstract class ButtonBase : LeapPhysicsSpring, WidgetBinaryEventHandler<bool>
   {
-    public float spring = 1000.0f;
     public float triggerDistance = 0.025f;
     public float cushionThickness = 0.005f;
     

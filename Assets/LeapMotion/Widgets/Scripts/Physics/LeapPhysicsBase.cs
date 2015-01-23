@@ -46,6 +46,8 @@ namespace LMWidgets
 
     protected virtual void OnTriggerExit(Collider other)
     {
+      // TODO: Use interpolation to determine if the hand should still continue interacting with the widget.
+      // TODO(cont): It should solve low-FPS or fast hand movement problems
       // Change state to reflecting if the collider exiting is part of a hand
       if (other.gameObject == m_target)
       {
