@@ -8,19 +8,23 @@ namespace LMWidgets
     Reflecting // Responsible for reflecting widget information and simulating the physics
   }
 
-  [RequireComponent(typeof(Rigidbody))]
-  public abstract class LeapPhysics : MonoBehaviour
+  public abstract class LeapPhysicsBase : MonoBehaviour
   {
     protected LeapPhysicsState m_state = LeapPhysicsState.Reflecting;
+    protected GameObject m_target = null;
+    protected Vector3 m_pivot = Vector3.zero;
+    protected Vector3 m_targetPivot = Vector3.zero;
 
-    private GameObject m_target;
-    private Vector3 m_pivot_;
-    private Vector3 m_target_pivot_;
-
+    // Apply the physics interactions when the hand is no longer interacting with the object
     protected abstract void ApplyPhysics();
+
+    // Apply constraints for the object (e.g. Constrain movements along a specific axis)
+    protected abstract void ApplyConstraints();
+
+    // Let the object follow the hand
     private void ApplyInteraction()
     {
-                                                            
+      transform.localPosition = transform.InverseTransformPoint(m_target.transform.position) - m_targetPivot + m_pivot;
     }
 
     private bool IsHand(Collider other)
@@ -35,8 +39,8 @@ namespace LMWidgets
       {
         m_target = other.gameObject;
         m_state = LeapPhysicsState.Interacting;
-        m_pivot_ = transform.localPosition;
-        m_target_pivot_ = transform.InverseTransformPoint(m_target.transform.position);
+        m_pivot = transform.localPosition;
+        m_targetPivot = transform.InverseTransformPoint(m_target.transform.position);
       }
     }
 
@@ -65,7 +69,10 @@ namespace LMWidgets
         case LeapPhysicsState.Reflecting:
           ApplyPhysics();
           break;
+        default:
+          break;
       }
+      ApplyConstraints();
     }
   }
 }
