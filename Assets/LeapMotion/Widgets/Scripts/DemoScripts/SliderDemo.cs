@@ -41,8 +41,10 @@ public class SliderDemo : SliderBase
   // Updates the slider handle graphics
   private void UpdateGraphics()
   {
+
+
     Vector3 position = transform.localPosition;
-    position.z = Mathf.Min(position.z, 0.0f);
+    position.z += m_localTriggerDistance;
     topLayer.transform.localPosition = position;
     Vector3 bot_position = position;
     bot_position.z = Mathf.Max(bot_position.z, m_localTriggerDistance - m_localCushionThickness);
@@ -76,7 +78,7 @@ public class SliderDemo : SliderBase
       renderer.material.SetFloat("_Gain", 3.0f);
     }
 
-    if (GetFraction() > 99.0f)
+    if (GetSliderFraction() > 99.0f)
     {
       Renderer[] upper_limit_renderers = upperLimit.GetComponentsInChildren<Renderer>();
       foreach (Renderer renderer in upper_limit_renderers)

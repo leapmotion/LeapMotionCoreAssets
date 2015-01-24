@@ -21,10 +21,19 @@ namespace LMWidgets
 
     // Apply the physics interactions when the hand is no longer interacting with the object
     protected abstract void ApplyPhysics();
-    // Apply interactions with the objects  
+    // Apply interactions with the objects
     protected abstract void ApplyInteractions();
     // Apply constraints for the object (e.g. Constrain movements along a specific axis)
     protected abstract void ApplyConstraints();
+
+    /// <summary>
+    /// Resets the pivots
+    /// </summary>
+    protected void ResetPivots()
+    {
+      m_pivot = transform.localPosition;
+      m_targetPivot = transform.parent.InverseTransformPoint(m_target.transform.position);
+    }
 
     /// <summary>
     /// Returns true or false by checking if "HandModel" exits in the parent of the collider
@@ -46,8 +55,7 @@ namespace LMWidgets
       {
         m_state = LeapPhysicsState.Interacting;
         m_target = collider.gameObject;
-        m_pivot = transform.localPosition;
-        m_targetPivot = transform.parent.InverseTransformPoint(m_target.transform.position);
+        ResetPivots();
       }
     }
 

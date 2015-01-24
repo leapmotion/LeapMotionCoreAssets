@@ -18,12 +18,14 @@ namespace LMWidgets
     public abstract void SliderPressed();
     protected void FireSliderPressed()
     {
+      ApplyInteractionConstraints(Vector3.one);
       SliderPressed();
     }
 
     public abstract void SliderReleased();
     private void FireSliderReleased()
     {
+      ApplyInteractionConstraints(new Vector3(0.0f, 0.0f, 1.0f));
       SliderReleased();
     }
 
@@ -31,17 +33,29 @@ namespace LMWidgets
     /// Returns the fraction of the slider between lower and upper limit. 0.0 = At Lower. 1.0 = At Upper
     /// </summary>
     /// <returns></returns>
-    public float GetFraction()
+    public float GetSliderFraction()
     {
       float lowerLimitValue = lowerLimit.transform.localPosition.x;
       float upperLimitValue = upperLimit.transform.localPosition.x;
-      if (triggerDistance == 0.0f || lowerLimitValue <= upperLimitValue)
-      {
+      if (lowerLimitValue <= upperLimitValue)
         return 0.0f;
-      }
+      else
+        return (transform.localPosition.x + lowerLimitValue) / (upperLimitValue - lowerLimitValue);
+    }
+
+    /// <summary>
+    /// Returns the fraction of how much the handle is pressed down. 0.0 = At Rest. 1.0 = At Triggered Distance
+    /// </summary>
+    /// <returns></returns>
+    public float GetHandleFraction()
+    {
+      if (triggerDistance == 0.0f)
+        return 0.0f;
       else
       {
-        return (transform.localPosition.x + lowerLimitValue) / (upperLimitValue - lowerLimitValue);
+        float scale = transform.lossyScale.z;
+        float fraction = transform.localPosition.z / m_localTriggerDistance;
+        return Mathf.Clamp(fraction, 0.0f, 1.0f);
       }
     }
 
