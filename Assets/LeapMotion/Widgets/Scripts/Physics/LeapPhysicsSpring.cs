@@ -5,8 +5,6 @@ namespace LMWidgets
   public class LeapPhysicsSpring : LeapPhysicsBase
   {
     public float springConstant = 1000.0f;
-    public float minimumDistance = float.MinValue;
-    public float maximumDistance = float.MaxValue;
 
     protected override void ApplyPhysics()
     {
@@ -21,7 +19,7 @@ namespace LMWidgets
       Vector3 localPosition = transform.localPosition;
       localPosition.x = 0.0f;
       localPosition.y = 0.0f;
-      localPosition.z = Mathf.Clamp(localPosition.z, minimumDistance, maximumDistance);
+      localPosition.z = Mathf.Max(localPosition.z, 0.0f);
       transform.localPosition = localPosition;
     }
   }

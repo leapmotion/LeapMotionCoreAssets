@@ -34,7 +34,6 @@ namespace LMWidgets
 
     protected virtual void OnTriggerEnter(Collider other)
     {
-      // Change state to interacting if the collider entering is part of a hand
       if (m_target == null && IsHand(other))
       {
         m_state = LeapPhysicsState.Interacting;
@@ -51,8 +50,17 @@ namespace LMWidgets
       // Change state to reflecting if the collider exiting is part of a hand
       if (other.gameObject == m_target)
       {
-        m_target = null;
         m_state = LeapPhysicsState.Reflecting;
+        m_target = null;
+      }
+    }
+
+    protected virtual void Awake()
+    {
+      // A collider is required for this script to function properly
+      if (GetComponent<Collider>() == null)
+      {
+        Debug.LogWarning("This Widget lacks a collider. Will not function as expected.");
       }
     }
 

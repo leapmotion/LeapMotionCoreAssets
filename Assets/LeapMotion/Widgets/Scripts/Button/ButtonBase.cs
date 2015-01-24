@@ -12,15 +12,15 @@ namespace LMWidgets
     public virtual event EventHandler<WidgetEventArg<bool>> StartHandler;
     public virtual event EventHandler<WidgetEventArg<bool>> EndHandler;
 
-    protected float scaled_spring_;
-    protected float scaled_trigger_distance_;
-    protected float scaled_cushion_thickness_;
+    protected float m_scaledTriggerDistance;
+    protected float m_scaledCushionThickness;
 
     protected bool is_pressed_;
     
     public abstract void ButtonPressed();
     protected void FireButtonPressed(bool value = true) 
     {
+      ButtonPressed();
       if (StartHandler != null) {
         StartHandler(this, new WidgetEventArg<bool>(value));
       }
@@ -29,6 +29,7 @@ namespace LMWidgets
     public abstract void ButtonReleased();
     protected void FireButtonReleased(bool value = false)
     {
+      ButtonReleased();
       if (EndHandler != null) {
         EndHandler(this, new WidgetEventArg<bool>(value));
       }
@@ -36,36 +37,37 @@ namespace LMWidgets
     
     public float GetFraction()
     {
-      return Mathf.Clamp(transform.localPosition.z / scaled_trigger_distance_, 0.0f, 1.0f);
+      if (m_scaledTriggerDistance == 0.0f)
+        return 0.0f;
+      else
+        return Mathf.Clamp(transform.localPosition.z / m_scaledTriggerDistance, 0.0f, 1.0f);
     }
 
     public Vector3 GetPosition()
     {
-      if (triggerDistance == 0.0f)
-        return Vector3.zero;
-
       Vector3 position = transform.localPosition;
-      position.z = GetFraction() * scaled_trigger_distance_;
+      position.z = GetFraction() * m_scaledTriggerDistance;
       return position;
     }
 
     protected void CheckTrigger()
     {
+      float scale = transform.lossyScale.z;
+      m_scaledTriggerDistance = triggerDistance / scale;
+      m_scaledCushionThickness = Mathf.Clamp(cushionThickness / scale, 0.0f, m_scaledTriggerDistance - 0.001f);
       if (is_pressed_ == false)
       {
-        if (transform.localPosition.z > scaled_trigger_distance_)
+        if (transform.localPosition.z > m_scaledTriggerDistance)
         {
           is_pressed_ = true;
-          ButtonPressed();
           FireButtonPressed();
         }
       }
       else if (is_pressed_ == true)
       {
-        if (transform.localPosition.z < (scaled_trigger_distance_- scaled_cushion_thickness_))
+        if (transform.localPosition.z < (m_scaledTriggerDistance - m_scaledCushionThickness))
         {
           is_pressed_ = false;
-          ButtonReleased();
           FireButtonReleased();
         }
       }
@@ -73,10 +75,7 @@ namespace LMWidgets
 
     protected virtual void Awake()
     {
-      if (GetComponent<Collider>() == null)
-      {
-        Debug.LogWarning("This Widget lacks a collider. Will not function as expected");
-      }
+      base.Awake();
       is_pressed_ = false;
       cushionThickness = Mathf.Clamp(cushionThickness, 0.0f, triggerDistance - 0.001f);
     }

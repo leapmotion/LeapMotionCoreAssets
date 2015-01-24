@@ -42,7 +42,7 @@ public class SliderDemo : SliderBase
   private void UpdateGraphics()
   {
     Vector3 position = GetPosition();
-    position.z -= (scaled_trigger_distance_ + 0.01f);
+    position.z -= (m_scaledTriggerDistance + 0.01f);
 
     topLayer.transform.localPosition = position - new Vector3(0.0f, 0.0f, 0.01f + 0.25f * (1 - GetFraction()));
     botLayer.transform.localPosition = position;

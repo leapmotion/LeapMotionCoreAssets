@@ -29,7 +29,7 @@ namespace LMWidgets
       Vector3 local_position = transform.localPosition;
       local_position.x = Mathf.Clamp(local_position.x, lowerLimit.transform.localPosition.x, upperLimit.transform.localPosition.x);
       local_position.y = 0.0f;
-      local_position.z = Mathf.Clamp(local_position.z, minimumDistance, maximumDistance);
+      //local_position.z = Mathf.Clamp(local_position.z, minimumDistance, maximumDistance);
       transform.localPosition = local_position;
       transform.rigidbody.velocity = Vector3.zero;
     }
