@@ -8,6 +8,10 @@ namespace LMWidgets
     Reflecting // Responsible for reflecting widget information and simulating the physics
   }
 
+  /// <summary>
+  /// Base class for physics. 
+  /// Handles state changes between Interacting and Reflecting.
+  /// </summary>
   public abstract class LeapPhysicsBase : MonoBehaviour
   {
     protected LeapPhysicsState m_state = LeapPhysicsState.Reflecting;
@@ -17,38 +21,45 @@ namespace LMWidgets
 
     // Apply the physics interactions when the hand is no longer interacting with the object
     protected abstract void ApplyPhysics();
-
+    // Apply interactions with the objects  
+    protected abstract void ApplyInteractions();
     // Apply constraints for the object (e.g. Constrain movements along a specific axis)
     protected abstract void ApplyConstraints();
 
-    // Let the object follow the hand
-    private void ApplyInteraction()
+    /// <summary>
+    /// Returns true or false by checking if "HandModel" exits in the parent of the collider
+    /// </summary>
+    /// <param name="collider"></param>
+    /// <returns></returns>
+    private bool IsHand(Collider collider)
     {
-      transform.localPosition = transform.parent.InverseTransformPoint(m_target.transform.position) - m_targetPivot + m_pivot;
+      return collider.transform.parent && collider.transform.parent.parent && collider.transform.parent.parent.GetComponent<HandModel>();
     }
 
-    private bool IsHand(Collider other)
+    /// <summary>
+    /// Change the state of the physics to "Interacting" if no other hands were interacting and if the collider is a hand
+    /// </summary>
+    /// <param name="collider"></param>
+    protected virtual void OnTriggerEnter(Collider collider)
     {
-      return other.transform.parent && other.transform.parent.parent && other.transform.parent.parent.GetComponent<HandModel>();
-    }
-
-    protected virtual void OnTriggerEnter(Collider other)
-    {
-      if (m_target == null && IsHand(other))
+      if (m_target == null && IsHand(collider))
       {
         m_state = LeapPhysicsState.Interacting;
-        m_target = other.gameObject;
+        m_target = collider.gameObject;
         m_pivot = transform.localPosition;
         m_targetPivot = transform.parent.InverseTransformPoint(m_target.transform.position);
       }
     }
 
-    protected virtual void OnTriggerExit(Collider other)
+    /// <summary>
+    /// Change the state of the physics to "Reflecting" if the object exiting is the hand
+    /// </summary>
+    /// <param name="collider"></param>
+    protected virtual void OnTriggerExit(Collider collider)
     {
-      // TODO: Use interpolation to determine if the hand should still continue interacting with the widget.
+      // TODO: Use interpolation to determine if the hand should still continue interacting with the widget to solve low-FPS
       // TODO(cont): It should solve low-FPS or fast hand movement problems
-      // Change state to reflecting if the collider exiting is part of a hand
-      if (other.gameObject == m_target)
+      if (collider.gameObject == m_target)
       {
         m_state = LeapPhysicsState.Reflecting;
         m_target = null;
@@ -57,7 +68,6 @@ namespace LMWidgets
 
     protected virtual void Awake()
     {
-      // A collider is required for this script to function properly
       if (GetComponent<Collider>() == null)
       {
         Debug.LogWarning("This Widget lacks a collider. Will not function as expected.");
@@ -74,7 +84,7 @@ namespace LMWidgets
       switch (m_state)
       {
         case LeapPhysicsState.Interacting:
-          ApplyInteraction();
+          ApplyInteractions();
           break;
         case LeapPhysicsState.Reflecting:
           ApplyPhysics();

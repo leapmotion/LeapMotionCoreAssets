@@ -4,6 +4,9 @@ using LMWidgets;
 
 public class ButtonDemoToggle : ButtonToggleBase 
 {
+  public float onDistance = 0.0f;
+  public float offDistance = 0.0f;
+
   public ButtonDemoGraphics onGraphics;
   public ButtonDemoGraphics offGraphics;
   public ButtonDemoGraphics midGraphics;
@@ -37,21 +40,24 @@ public class ButtonDemoToggle : ButtonToggleBase
 
   private void UpdateGraphics()
   {
-    Vector3 position = GetPosition();
-    //onGraphics.transform.localPosition = position;
-    //offGraphics.transform.localPosition = position;
+    Vector3 position = transform.localPosition;
+    position.z = Mathf.Min(position.z, m_localTriggerDistance);
+    onGraphics.transform.localPosition = position;
+    offGraphics.transform.localPosition = position;
     Vector3 bot_position = position;
     bot_position.z = Mathf.Max(bot_position.z, onDistance);
-    //botGraphics.transform.localPosition = bot_position;
+    botGraphics.transform.localPosition = bot_position;
     Vector3 mid_position = position;
     mid_position.z = (position.z + bot_position.z) / 2.0f;
-    //midGraphics.transform.localPosition = mid_position;
+    midGraphics.transform.localPosition = mid_position;
   }
 
   protected override void Awake()
   {
     base.Awake();
     TurnsOffGraphics();
+    onDistance = Mathf.Min(onDistance, triggerDistance - cushionThickness - 0.001f);
+    offDistance = Mathf.Min(offDistance, triggerDistance - cushionThickness - 0.001f);
   }
 
   protected override void FixedUpdate()

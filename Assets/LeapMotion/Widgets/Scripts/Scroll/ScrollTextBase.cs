@@ -75,7 +75,7 @@ namespace LMWidgets
     protected override void FixedUpdate()
     {
       base.FixedUpdate();
-      if (is_pressed_)
+      if (m_isPressed)
       {
         if (target_ != null)
         {

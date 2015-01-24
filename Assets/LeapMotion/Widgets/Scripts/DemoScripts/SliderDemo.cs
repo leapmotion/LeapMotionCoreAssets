@@ -41,21 +41,21 @@ public class SliderDemo : SliderBase
   // Updates the slider handle graphics
   private void UpdateGraphics()
   {
-    Vector3 position = GetPosition();
-    position.z -= (m_scaledTriggerDistance + 0.01f);
+    //Vector3 position = GetLocalPosition();
+    //position.z -= (scaledTriggerDistance + 0.01f);
 
-    topLayer.transform.localPosition = position - new Vector3(0.0f, 0.0f, 0.01f + 0.25f * (1 - GetFraction()));
-    botLayer.transform.localPosition = position;
-    midLayer.transform.localPosition = (topLayer.transform.localPosition + botLayer.transform.localPosition) / 2.0f;
+    //topLayer.transform.localPosition = position - new Vector3(0.0f, 0.0f, 0.01f + 0.25f * (1 - GetFraction()));
+    //botLayer.transform.localPosition = position;
+    //midLayer.transform.localPosition = (topLayer.transform.localPosition + botLayer.transform.localPosition) / 2.0f;
 
-    if (activeBar)
-    {
-      UpdateActiveBar();
-    }
-    if (numberOfDots > 0)
-    {
-      UpdateDots();
-    }
+    //if (activeBar)
+    //{
+    //  UpdateActiveBar();
+    //}
+    //if (numberOfDots > 0)
+    //{
+    //  UpdateDots();
+    //}
   }
 
   // Updates the active bar behind the handle

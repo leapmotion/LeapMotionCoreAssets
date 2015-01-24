@@ -2,25 +2,32 @@
 
 namespace LMWidgets
 {
-  public class LeapPhysicsSpring : LeapPhysicsBase
+  /// <summary>
+  /// Base class for spring. Restrains the widget in its local z-axis.
+  /// It will apply spring physics in ApplyPhysics and translate the button with hand in ApplyInteractions
+  /// </summary>
+  public abstract class LeapPhysicsSpring : LeapPhysicsBase
   {
-    public float springConstant = 1000.0f;
-
+    /// <summary>
+    /// Spring constant is separated to xyz-axis for more flexible configuration
+    /// </summary>
+    public Vector3 springConstant = Vector3.one * 1000.0f;
+    
+    /// <summary>
+    /// Apply spring physics
+    /// </summary>
     protected override void ApplyPhysics()
     {
-      float scale = transform.lossyScale.z;
-      float localSpringConstant = springConstant * scale;
-      float springVelocity = -localSpringConstant * Time.deltaTime * transform.localPosition.z;
-      transform.localPosition += new Vector3(0.0f, 0.0f, springVelocity);
+      Vector3 localSpringConstant = Vector3.Scale(springConstant, transform.lossyScale);
+      transform.localPosition += Vector3.Scale(-localSpringConstant * Time.deltaTime, transform.localPosition);
     }
 
-    protected override void ApplyConstraints()
+    /// <summary>
+    /// Translate the widget with the hand during interaction
+    /// </summary>
+    protected override void ApplyInteractions()
     {
-      Vector3 localPosition = transform.localPosition;
-      localPosition.x = 0.0f;
-      localPosition.y = 0.0f;
-      localPosition.z = Mathf.Max(localPosition.z, 0.0f);
-      transform.localPosition = localPosition;
+      transform.localPosition = transform.parent.InverseTransformPoint(m_target.transform.position) - m_targetPivot + m_pivot;
     }
   }
 }

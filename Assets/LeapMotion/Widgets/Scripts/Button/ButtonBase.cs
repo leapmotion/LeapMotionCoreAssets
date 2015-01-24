@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System;
-using System.Collections;
 
 namespace LMWidgets
 {
@@ -12,10 +11,8 @@ namespace LMWidgets
     public virtual event EventHandler<WidgetEventArg<bool>> StartHandler;
     public virtual event EventHandler<WidgetEventArg<bool>> EndHandler;
 
-    protected float m_scaledTriggerDistance;
-    protected float m_scaledCushionThickness;
-
-    protected bool is_pressed_;
+    protected float m_localTriggerDistance;
+    protected bool m_isPressed = false;
     
     public abstract void ButtonPressed();
     protected void FireButtonPressed(bool value = true) 
@@ -35,48 +32,59 @@ namespace LMWidgets
       }
     }
     
+    /// <summary>
+    /// Returns the fraction of position of the button between rest and trigger. 0.0 = At Rest. 1.0 = At Triggered Distance.
+    /// </summary>
+    /// <returns>fraction</returns>
     public float GetFraction()
     {
-      if (m_scaledTriggerDistance == 0.0f)
+      if (triggerDistance == 0.0f)
         return 0.0f;
       else
-        return Mathf.Clamp(transform.localPosition.z / m_scaledTriggerDistance, 0.0f, 1.0f);
+      {
+        float scale = transform.lossyScale.z;
+        float fraction = transform.localPosition.z / m_localTriggerDistance;
+        return Mathf.Clamp(fraction, 0.0f, 1.0f);
+      }
     }
 
-    public Vector3 GetPosition()
+    /// <summary>
+    ///  Constrain the button to the z-axis
+    /// </summary>
+    protected override void ApplyConstraints()
     {
-      Vector3 position = transform.localPosition;
-      position.z = GetFraction() * m_scaledTriggerDistance;
-      return position;
+      Vector3 localPosition = transform.localPosition;
+      localPosition.x = 0.0f;
+      localPosition.y = 0.0f;
+      localPosition.z = Mathf.Max(localPosition.z, 0.0f);
+      transform.localPosition = localPosition;
     }
 
     protected void CheckTrigger()
     {
       float scale = transform.lossyScale.z;
-      m_scaledTriggerDistance = triggerDistance / scale;
-      m_scaledCushionThickness = Mathf.Clamp(cushionThickness / scale, 0.0f, m_scaledTriggerDistance - 0.001f);
-      if (is_pressed_ == false)
+      m_localTriggerDistance = triggerDistance / scale;
+      float localCushionThickness = Mathf.Clamp(cushionThickness / scale, 0.0f, m_localTriggerDistance - 0.001f);
+      if (m_isPressed == false)
       {
-        if (transform.localPosition.z > m_scaledTriggerDistance)
+        if (transform.localPosition.z > m_localTriggerDistance)
         {
-          is_pressed_ = true;
+          m_isPressed = true;
           FireButtonPressed();
         }
       }
-      else if (is_pressed_ == true)
+      else if (m_isPressed == true)
       {
-        if (transform.localPosition.z < (m_scaledTriggerDistance - m_scaledCushionThickness))
+        if (transform.localPosition.z < (m_localTriggerDistance - localCushionThickness))
         {
-          is_pressed_ = false;
+          m_isPressed = false;
           FireButtonReleased();
         }
       }
     }
 
-    protected virtual void Awake()
+    protected virtual void Start()
     {
-      base.Awake();
-      is_pressed_ = false;
       cushionThickness = Mathf.Clamp(cushionThickness, 0.0f, triggerDistance - 0.001f);
     }
     
