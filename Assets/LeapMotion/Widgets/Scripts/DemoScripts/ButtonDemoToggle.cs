@@ -9,8 +9,6 @@ public class ButtonDemoToggle : ButtonToggleBase
   public ButtonDemoGraphics midGraphics;
   public ButtonDemoGraphics botGraphics;
 
-  private float m_onDistance = 0.0f;
-
   public override void ButtonTurnsOn()
   {
     TurnsOnGraphics();
@@ -44,7 +42,7 @@ public class ButtonDemoToggle : ButtonToggleBase
     onGraphics.transform.localPosition = position;
     offGraphics.transform.localPosition = position;
     Vector3 bot_position = position;
-    bot_position.z = Mathf.Max(bot_position.z, m_onDistance);
+    bot_position.z = Mathf.Max(bot_position.z, m_localTriggerDistance - m_localCushionThickness);
     botGraphics.transform.localPosition = bot_position;
     Vector3 mid_position = position;
     mid_position.z = (position.z + bot_position.z) / 2.0f;
@@ -55,7 +53,6 @@ public class ButtonDemoToggle : ButtonToggleBase
   {
     base.Start();
     TurnsOffGraphics();
-    m_onDistance = Mathf.Min(m_onDistance, m_localTriggerDistance - m_localCushionThickness - 0.001f);
   }
 
   protected override void FixedUpdate()
