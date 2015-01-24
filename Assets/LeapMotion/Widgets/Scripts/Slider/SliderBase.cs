@@ -49,7 +49,7 @@ namespace LMWidgets
     /// <returns></returns>
     public float GetHandleFraction()
     {
-      if (triggerDistance == 0.0f)
+      if (m_localTriggerDistance == 0.0f)
         return 0.0f;
       else
       {

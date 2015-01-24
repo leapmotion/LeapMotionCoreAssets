@@ -41,17 +41,17 @@ public class SliderDemo : SliderBase
   // Updates the slider handle graphics
   private void UpdateGraphics()
   {
+    float handleFraction = GetHandleFraction();
+    Vector3 topPosition = transform.localPosition;
+    topPosition.z -= (1.0f - handleFraction) * 0.25f;
+    topPosition.z = Mathf.Min(topPosition.z, -0.003f); // -0.003 is so midLayer will never intercept with top or bot layer
+    topLayer.transform.localPosition = topPosition;
 
+    Vector3 botPosition = transform.localPosition;
+    botPosition.z = -0.001f;
+    botLayer.transform.localPosition = botPosition;
 
-    Vector3 position = transform.localPosition;
-    position.z += m_localTriggerDistance;
-    topLayer.transform.localPosition = position;
-    Vector3 bot_position = position;
-    bot_position.z = Mathf.Max(bot_position.z, m_localTriggerDistance - m_localCushionThickness);
-    botLayer.transform.localPosition = bot_position;
-    Vector3 mid_position = position;
-    mid_position.z = (position.z + bot_position.z) / 2.0f;
-    midLayer.transform.localPosition = mid_position;
+    midLayer.transform.localPosition = (topPosition + botPosition) / 2.0f;
 
     if (activeBar)
     {
