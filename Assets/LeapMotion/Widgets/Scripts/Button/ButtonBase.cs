@@ -16,7 +16,7 @@ namespace LMWidgets
     protected bool m_isPressed = false;
     
     public abstract void ButtonPressed();
-    protected void FireButtonPressed(bool value = true) 
+    private void FireButtonPressed(bool value = true) 
     {
       ButtonPressed();
       if (StartHandler != null) {
@@ -25,7 +25,7 @@ namespace LMWidgets
     }
 
     public abstract void ButtonReleased();
-    protected void FireButtonReleased(bool value = false)
+    private void FireButtonReleased(bool value = false)
     {
       ButtonReleased();
       if (EndHandler != null) {
@@ -61,7 +61,10 @@ namespace LMWidgets
       transform.localPosition = localPosition;
     }
 
-    protected void CheckTrigger()
+    /// <summary>
+    /// Check if the button is being pressed or not
+    /// </summary>
+    private void CheckTrigger()
     {
       float scale = transform.lossyScale.z;
       m_localTriggerDistance = triggerDistance / scale;

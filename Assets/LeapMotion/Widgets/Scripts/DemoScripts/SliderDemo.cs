@@ -41,21 +41,24 @@ public class SliderDemo : SliderBase
   // Updates the slider handle graphics
   private void UpdateGraphics()
   {
-    //Vector3 position = GetLocalPosition();
-    //position.z -= (scaledTriggerDistance + 0.01f);
+    Vector3 position = transform.localPosition;
+    position.z = Mathf.Min(position.z, 0.0f);
+    topLayer.transform.localPosition = position;
+    Vector3 bot_position = position;
+    bot_position.z = Mathf.Max(bot_position.z, m_localTriggerDistance - m_localCushionThickness);
+    botLayer.transform.localPosition = bot_position;
+    Vector3 mid_position = position;
+    mid_position.z = (position.z + bot_position.z) / 2.0f;
+    midLayer.transform.localPosition = mid_position;
 
-    //topLayer.transform.localPosition = position - new Vector3(0.0f, 0.0f, 0.01f + 0.25f * (1 - GetFraction()));
-    //botLayer.transform.localPosition = position;
-    //midLayer.transform.localPosition = (topLayer.transform.localPosition + botLayer.transform.localPosition) / 2.0f;
-
-    //if (activeBar)
-    //{
-    //  UpdateActiveBar();
-    //}
-    //if (numberOfDots > 0)
-    //{
-    //  UpdateDots();
-    //}
+    if (activeBar)
+    {
+      UpdateActiveBar();
+    }
+    if (numberOfDots > 0)
+    {
+      UpdateDots();
+    }
   }
 
   // Updates the active bar behind the handle
@@ -135,7 +138,8 @@ public class SliderDemo : SliderBase
       {
         GameObject new_dot = Instantiate(dot) as GameObject;
         new_dot.transform.parent = transform;
-        new_dot.transform.localPosition = new Vector3(x, 1.0f, -0.1f);
+        new_dot.transform.localPosition = new Vector3(x, 1.0f, m_localTriggerDistance);
+        new_dot.transform.localRotation = dot.transform.localRotation;
         new_dot.transform.localScale = Vector3.one;
         new_dot.transform.parent = transform.parent;
         dots.Add(new_dot);
