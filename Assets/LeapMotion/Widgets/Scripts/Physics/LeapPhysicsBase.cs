@@ -24,7 +24,7 @@ namespace LMWidgets
     // Let the object follow the hand
     private void ApplyInteraction()
     {
-      transform.localPosition = transform.InverseTransformPoint(m_target.transform.position) - m_targetPivot + m_pivot;
+      transform.localPosition = transform.parent.InverseTransformPoint(m_target.transform.position) - m_targetPivot + m_pivot;
     }
 
     private bool IsHand(Collider other)
@@ -37,10 +37,10 @@ namespace LMWidgets
       // Change state to interacting if the collider entering is part of a hand
       if (m_target == null && IsHand(other))
       {
-        m_target = other.gameObject;
         m_state = LeapPhysicsState.Interacting;
+        m_target = other.gameObject;
         m_pivot = transform.localPosition;
-        m_targetPivot = transform.InverseTransformPoint(m_target.transform.position);
+        m_targetPivot = transform.parent.InverseTransformPoint(m_target.transform.position);
       }
     }
 

@@ -17,8 +17,6 @@ namespace LMWidgets
     protected float scaled_cushion_thickness_;
 
     protected bool is_pressed_;
-    protected float min_distance_;
-    protected float max_distance_;
     
     public abstract void ButtonPressed();
     protected void FireButtonPressed(bool value = true) 
@@ -51,30 +49,6 @@ namespace LMWidgets
       return position;
     }
 
-    protected void SetMinDistance(float distance)
-    {
-      min_distance_ = distance;
-    }
-
-    protected void SetMaxDistance(float distance)
-    {
-      max_distance_ = distance;
-    }
-
-    protected virtual void ApplyConstraints()
-    {
-      Vector3 local_position = transform.localPosition;
-      local_position.x = 0.0f;
-      local_position.y = 0.0f;
-      local_position.z = Mathf.Clamp(local_position.z, min_distance_, max_distance_);
-      transform.localPosition = local_position;
-    }
-
-    protected void ApplySpring()
-    {
-      rigidbody.AddRelativeForce(new Vector3(0.0f, 0.0f, -scaled_spring_ * (transform.localPosition.z)));
-    }
-
     protected void CheckTrigger()
     {
       if (is_pressed_ == false)
@@ -97,14 +71,6 @@ namespace LMWidgets
       }
     }
 
-    private void ScaleProperties()
-    {
-      float scale = transform.lossyScale.z;
-      scaled_spring_ = spring * scale;
-      scaled_trigger_distance_ = triggerDistance / scale;
-      scaled_cushion_thickness_ = Mathf.Clamp(cushionThickness / scale, 0.0f, scaled_trigger_distance_ - 0.001f);
-    }
-
     protected virtual void Awake()
     {
       if (GetComponent<Collider>() == null)
@@ -113,16 +79,6 @@ namespace LMWidgets
       }
       is_pressed_ = false;
       cushionThickness = Mathf.Clamp(cushionThickness, 0.0f, triggerDistance - 0.001f);
-      min_distance_ = 0.0f;
-      max_distance_ = float.MaxValue;
-      ScaleProperties();
-    }
-
-    protected virtual void FixedUpdate()
-    {
-      ScaleProperties();
-      ApplySpring();
-      ApplyConstraints();
     }
     
     protected virtual void Update() 

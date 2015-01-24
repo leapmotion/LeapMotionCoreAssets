@@ -22,13 +22,13 @@ namespace LMWidgets
       if (toggle_state_ == false)
       {
         ButtonTurnsOn();
-        SetMinDistance(onDistance);
+        minimumDistance = onDistance;
         toggle_state_ = !toggle_state_;
       } 
       else
       {
         ButtonTurnsOff();
-        SetMinDistance(offDistance);
+        minimumDistance = offDistance;
         toggle_state_ = !toggle_state_;
       }
     }

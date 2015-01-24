@@ -38,14 +38,14 @@ public class ButtonDemoToggle : ButtonToggleBase
   private void UpdateGraphics()
   {
     Vector3 position = GetPosition();
-    onGraphics.transform.localPosition = position;
-    offGraphics.transform.localPosition = position;
+    //onGraphics.transform.localPosition = position;
+    //offGraphics.transform.localPosition = position;
     Vector3 bot_position = position;
     bot_position.z = Mathf.Max(bot_position.z, onDistance);
-    botGraphics.transform.localPosition = bot_position;
+    //botGraphics.transform.localPosition = bot_position;
     Vector3 mid_position = position;
     mid_position.z = (position.z + bot_position.z) / 2.0f;
-    midGraphics.transform.localPosition = mid_position;
+    //midGraphics.transform.localPosition = mid_position;
   }
 
   protected override void Awake()

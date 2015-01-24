@@ -8,20 +8,21 @@ namespace LMWidgets
     public float minimumDistance = float.MinValue;
     public float maximumDistance = float.MaxValue;
 
-    private Vector3 m_springVelocity = Vector3.zero;
-
     protected override void ApplyPhysics()
     {
       float scale = transform.lossyScale.z;
       float localSpringConstant = springConstant * scale;
-
-      m_springVelocity.z += -localSpringConstant * Time.deltaTime;
-      transform.position += transform.TransformDirection(m_springVelocity) * Time.deltaTime;
+      float springVelocity = -localSpringConstant * Time.deltaTime * transform.localPosition.z;
+      transform.localPosition += new Vector3(0.0f, 0.0f, springVelocity);
     }
 
     protected override void ApplyConstraints()
     {
-      transform.localPosition.Scale(new Vector3(0.0f, 0.0f, 1.0f));
+      Vector3 localPosition = transform.localPosition;
+      localPosition.x = 0.0f;
+      localPosition.y = 0.0f;
+      localPosition.z = Mathf.Clamp(localPosition.z, minimumDistance, maximumDistance);
+      transform.localPosition = localPosition;
     }
   }
 }
