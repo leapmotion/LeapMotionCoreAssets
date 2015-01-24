@@ -12,6 +12,7 @@ namespace LMWidgets
     public virtual event EventHandler<WidgetEventArg<bool>> EndHandler;
 
     protected float m_localTriggerDistance;
+    protected float m_localCushionThickness;
     protected bool m_isPressed = false;
     
     public abstract void ButtonPressed();
@@ -64,7 +65,7 @@ namespace LMWidgets
     {
       float scale = transform.lossyScale.z;
       m_localTriggerDistance = triggerDistance / scale;
-      float localCushionThickness = Mathf.Clamp(cushionThickness / scale, 0.0f, m_localTriggerDistance - 0.001f);
+      m_localCushionThickness = Mathf.Clamp(cushionThickness / scale, 0.0f, m_localTriggerDistance - 0.001f);
       if (m_isPressed == false)
       {
         if (transform.localPosition.z > m_localTriggerDistance)
@@ -75,7 +76,7 @@ namespace LMWidgets
       }
       else if (m_isPressed == true)
       {
-        if (transform.localPosition.z < (m_localTriggerDistance - localCushionThickness))
+        if (transform.localPosition.z < (m_localTriggerDistance - m_localCushionThickness))
         {
           m_isPressed = false;
           FireButtonReleased();

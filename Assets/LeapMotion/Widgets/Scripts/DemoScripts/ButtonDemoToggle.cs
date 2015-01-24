@@ -4,13 +4,12 @@ using LMWidgets;
 
 public class ButtonDemoToggle : ButtonToggleBase 
 {
-  public float onDistance = 0.0f;
-  public float offDistance = 0.0f;
-
   public ButtonDemoGraphics onGraphics;
   public ButtonDemoGraphics offGraphics;
   public ButtonDemoGraphics midGraphics;
   public ButtonDemoGraphics botGraphics;
+
+  private float m_onDistance = 0.0f;
 
   public override void ButtonTurnsOn()
   {
@@ -45,19 +44,18 @@ public class ButtonDemoToggle : ButtonToggleBase
     onGraphics.transform.localPosition = position;
     offGraphics.transform.localPosition = position;
     Vector3 bot_position = position;
-    bot_position.z = Mathf.Max(bot_position.z, onDistance);
+    bot_position.z = Mathf.Max(bot_position.z, m_onDistance);
     botGraphics.transform.localPosition = bot_position;
     Vector3 mid_position = position;
     mid_position.z = (position.z + bot_position.z) / 2.0f;
     midGraphics.transform.localPosition = mid_position;
   }
 
-  protected override void Awake()
+  protected override void Start()
   {
-    base.Awake();
+    base.Start();
     TurnsOffGraphics();
-    onDistance = Mathf.Min(onDistance, triggerDistance - cushionThickness - 0.001f);
-    offDistance = Mathf.Min(offDistance, triggerDistance - cushionThickness - 0.001f);
+    m_onDistance = Mathf.Min(m_onDistance, m_localTriggerDistance - m_localCushionThickness - 0.001f);
   }
 
   protected override void FixedUpdate()
