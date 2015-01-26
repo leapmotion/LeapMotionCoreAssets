@@ -34,6 +34,9 @@ namespace LMWidgets
       content.rigidbody2D.velocity = new Vector2(m_scrollVelocity.X, m_scrollVelocity.Y);
     }
 
+    /// <summary>
+    /// Update the content position based on how the scroll has moved. Will also save the momentum
+    /// </summary>
     private void UpdateContentPosition()
     {
       Vector3 prevPosition = content.transform.localPosition;
@@ -46,6 +49,19 @@ namespace LMWidgets
       m_scrollVelocity.Calculate(contentVelocity.x, contentVelocity.y, contentVelocity.z);
     }
 
+    /// <summary>
+    /// Constrain the scroll to the z-axis
+    /// </summary>
+    protected override void ApplyConstraints()
+    {
+      Vector3 localPosition = transform.localPosition;
+      localPosition.z = Mathf.Max(localPosition.z, 0.0f);
+      transform.localPosition = localPosition;
+    }
+
+    /// <summary>
+    /// Check if the scroll is being pressed or not
+    /// </summary>
     private void CheckTrigger()
     {
       float scale = transform.lossyScale.z;
@@ -67,13 +83,6 @@ namespace LMWidgets
           FireScrollReleased();
         }
       }
-    }
-
-    protected override void ApplyConstraints()
-    {
-      Vector3 localPosition = transform.localPosition;
-      localPosition.z = Mathf.Max(localPosition.z, 0.0f);
-      transform.localPosition = localPosition;
     }
 
     protected virtual void Start()

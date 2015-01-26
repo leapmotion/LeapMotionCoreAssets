@@ -12,6 +12,7 @@ public class ScrollTextDemo : ScrollTextBase
 
   public override void ScrollReleased()
   {
+    // Don't allow the scroll to move sideways because the content is only 1-dimensional
     m_scrollVelocity.X = 0.0f;
   }
 
