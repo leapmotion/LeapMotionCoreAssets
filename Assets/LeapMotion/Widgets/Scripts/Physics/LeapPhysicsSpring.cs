@@ -11,8 +11,10 @@ namespace LMWidgets
     /// <summary>
     /// Spring constant is separated to xyz-axis for more flexible configuration
     /// </summary>
-    public Vector3 springConstant = Vector3.one * 1000.0f;
+    public Vector3 springCoefficient = Vector3.one * 100.0f;
+    public bool applyCriticalDamping = true;
 
+    private Vector3 dampingCoefficient = Vector3.zero;
     private Vector3 m_interactionConstraints = Vector3.one;
 
     /// <summary>
@@ -33,8 +35,16 @@ namespace LMWidgets
     /// </summary>
     protected override void ApplyPhysics()
     {
-      Vector3 localSpringConstant = Vector3.Scale(springConstant, transform.lossyScale);
-      transform.localPosition += Vector3.Scale(-localSpringConstant * Time.deltaTime, transform.localPosition);
+      Vector3 localSpringConstant = Vector3.Scale(springCoefficient, transform.lossyScale);
+      Vector3 springForce = Vector3.Scale(-localSpringConstant, transform.localPosition);
+
+      Vector3 dampingForce = Vector3.zero;
+      if (applyCriticalDamping)
+      {
+        Vector3 instantVelocity = springForce * Time.deltaTime;
+        dampingForce = Vector3.Scale(-dampingCoefficient, instantVelocity);
+      }
+      transform.localPosition += (springForce + dampingForce) * Time.deltaTime;
     }
 
     /// <summary>
@@ -44,6 +54,13 @@ namespace LMWidgets
     {
       Vector3 displacement = Vector3.Scale(transform.parent.InverseTransformPoint(m_target.transform.position) - m_targetPivot, m_interactionConstraints);
       transform.localPosition = displacement + m_pivot;
+    }
+
+    protected override void Awake()
+    {
+      base.Awake();
+      Vector3 k = springCoefficient;
+      dampingCoefficient = 2 * new Vector3(Mathf.Sqrt(k.x), Mathf.Sqrt(k.y), Mathf.Sqrt(k.z));
     }
   }
 }

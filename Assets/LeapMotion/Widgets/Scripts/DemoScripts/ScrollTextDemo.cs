@@ -6,17 +6,19 @@ public class ScrollTextDemo : ScrollTextBase
 {
   public float contentLimit;
 
-  public override void ScrollActive()
+  public override void ScrollPressed()
   {
   }
 
-  public override void ScrollInactive()
+  public override void ScrollReleased()
   {
+    m_scrollVelocity.X = 0.0f;
   }
 
-  private void UpdateContentPosition()
+  private void ApplyContentConstraints()
   {
     Vector3 content_position = content.transform.localPosition;
+    content_position.x = 0.0f;
     content_position.z = Mathf.Min(transform.localPosition.z, contentLimit);
     content.transform.localPosition = content_position;
   }
@@ -24,6 +26,6 @@ public class ScrollTextDemo : ScrollTextBase
   protected override void FixedUpdate()
   {
     base.FixedUpdate();
-    UpdateContentPosition();
+    ApplyContentConstraints();
   }
 }

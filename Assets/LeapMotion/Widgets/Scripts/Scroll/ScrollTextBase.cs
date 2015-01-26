@@ -4,72 +4,81 @@ using System.Collections;
 
 namespace LMWidgets
 {
-  public abstract class ScrollTextBase : ButtonBase
+  public abstract class ScrollTextBase : LeapPhysicsSpring
   {
     public GameObject content;
 
-    private Vector3 local_pivot_ = Vector3.zero;
-    private Vector3 target_pivot_ = Vector3.zero;
-    private Vector3 content_pivot_ = Vector3.zero;
-    private ExponentialSmoothingXYZ content_velocity_ = new ExponentialSmoothingXYZ(0.5f);
+    public float triggerDistance = 0.025f;
+    public float cushionThickness = 0.005f;
 
-    private Vector3 prev_content_pos_ = Vector3.zero;
+    protected ExponentialSmoothingXYZ m_scrollVelocity = new ExponentialSmoothingXYZ(0.5f);
+    private Vector3 m_scrollPivot = Vector3.zero;
+    private Vector3 m_contentPivot = Vector3.zero;
 
-    private GameObject target_ = null;
+    protected float m_localTriggerDistance;
+    protected float m_localCushionThickness;
+    protected bool m_isPressed = false;
 
-    public abstract void ScrollActive();
-    public abstract void ScrollInactive();
-
-    private bool IsHand(Collision other)
+    public abstract void ScrollPressed();
+    private void FireScrollPressed()
     {
-      return other.transform.parent && other.transform.parent.parent && other.transform.parent.parent.GetComponent<HandModel>();
+      ScrollPressed();
+      m_scrollPivot = transform.localPosition;
+      m_contentPivot = content.transform.localPosition;
     }
 
-    void OnCollisionEnter(Collision other)
+    public abstract void ScrollReleased();
+    private void FireScrollReleased()
     {
-      if (target_ == null && IsHand(other))
+      ScrollReleased();
+      content.rigidbody2D.velocity = new Vector2(m_scrollVelocity.X, m_scrollVelocity.Y);
+    }
+
+    private void UpdateContentPosition()
+    {
+      Vector3 prevPosition = content.transform.localPosition;
+      Vector3 contentLocalPosition = content.transform.localPosition;
+      contentLocalPosition = transform.localPosition - m_scrollPivot + m_contentPivot;
+      contentLocalPosition.z = Mathf.Max(contentLocalPosition.z, 0.0f);
+      content.transform.localPosition = contentLocalPosition;
+      Vector3 currPosition = content.transform.localPosition;
+      Vector3 contentVelocity = (currPosition - prevPosition) / Time.deltaTime;
+      m_scrollVelocity.Calculate(contentVelocity.x, contentVelocity.y, contentVelocity.z);
+    }
+
+    private void CheckTrigger()
+    {
+      float scale = transform.lossyScale.z;
+      m_localTriggerDistance = triggerDistance / scale;
+      m_localCushionThickness = Mathf.Clamp(cushionThickness / scale, 0.0f, m_localTriggerDistance - 0.001f);
+      if (m_isPressed == false)
       {
-        target_ = other.gameObject;
+        if (transform.localPosition.z > m_localTriggerDistance)
+        {
+          m_isPressed = true;
+          FireScrollPressed();
+        }
+      }
+      else if (m_isPressed == true)
+      {
+        if (transform.localPosition.z < (m_localTriggerDistance - m_localCushionThickness))
+        {
+          m_isPressed = false;
+          FireScrollReleased();
+        }
       }
     }
 
-    private void UpdatePosition(Vector3 target_position)
+    protected override void ApplyConstraints()
     {
-      Vector3 displacement = target_position - target_pivot_;
-      Vector3 local_displacement = transform.InverseTransformDirection(displacement);
-      Vector3 local_position = transform.localPosition;
-      local_position.x = 0.0f;
-      local_position.y = local_pivot_.y + local_displacement.y;
-      local_position.z = Mathf.Max(local_position.z, 0.0f);
-      transform.localPosition = local_position;
-
-      prev_content_pos_ = content.transform.localPosition;
-      Vector3 content_displacement = displacement;
-      Vector3 content_position = content.transform.localPosition;
-      content_position.y = content_pivot_.y + content_displacement.y;
-      content.transform.localPosition = content_position;
-      Vector3 curr_velocity = (content_position - prev_content_pos_) / Time.deltaTime;
-      content_velocity_.Calculate(curr_velocity.x, curr_velocity.y, curr_velocity.z);
+      Vector3 localPosition = transform.localPosition;
+      localPosition.z = Mathf.Max(localPosition.z, 0.0f);
+      transform.localPosition = localPosition;
     }
 
-    public override void ButtonPressed()
+    protected virtual void Start()
     {
-      if (target_ != null)
-      {
-        local_pivot_ = transform.localPosition;
-        target_pivot_ = target_.transform.position;
-        content_pivot_ = content.transform.localPosition;
-      }
-      ScrollActive();
-    }
-
-    public override void ButtonReleased()
-    {
-      target_ = null;
-      transform.localPosition = Vector3.zero;
-      transform.rigidbody.velocity = Vector3.zero;
-      content.rigidbody2D.velocity = new Vector2(content_velocity_.GetX(), content_velocity_.GetY());
-      ScrollInactive();
+      cushionThickness = Mathf.Clamp(cushionThickness, 0.0f, triggerDistance - 0.001f);
     }
 
     protected override void FixedUpdate()
@@ -77,17 +86,19 @@ namespace LMWidgets
       base.FixedUpdate();
       if (m_isPressed)
       {
-        if (target_ != null)
-        {
-          UpdatePosition(target_.transform.position);
-        }
+        UpdateContentPosition();
       }
 
-      // Velocity will be greater than 0 if it starts bouncing at the edges
+      // Set content velocity to zero once it's bouncing from the edges (ScrollRect vel > 0)
       if (Mathf.Abs(content.transform.parent.GetComponent<ScrollRect>().velocity.y) > 0.001f)
       {
         content.rigidbody2D.velocity = Vector2.zero;
       }
+    }
+
+    protected virtual void Update()
+    {
+      CheckTrigger();
     }
   }
 }
