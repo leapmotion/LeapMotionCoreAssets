@@ -32,7 +32,8 @@ namespace LMWidgets
     protected void ResetPivots()
     {
       m_pivot = transform.localPosition;
-      m_targetPivot = transform.parent.InverseTransformPoint(m_target.transform.position);
+      if (m_target != null)
+        m_targetPivot = transform.parent.InverseTransformPoint(m_target.transform.position);
     }
 
     /// <summary>
