@@ -18,7 +18,6 @@ namespace LMWidgets
     public abstract void ButtonPressed();
     private void FireButtonPressed(bool value = true) 
     {
-      ButtonPressed();
       if (StartHandler != null) {
         StartHandler(this, new WidgetEventArg<bool>(value));
       }
@@ -27,7 +26,6 @@ namespace LMWidgets
     public abstract void ButtonReleased();
     private void FireButtonReleased(bool value = false)
     {
-      ButtonReleased();
       if (EndHandler != null) {
         EndHandler(this, new WidgetEventArg<bool>(value));
       }
@@ -74,6 +72,7 @@ namespace LMWidgets
         if (transform.localPosition.z > m_localTriggerDistance)
         {
           m_isPressed = true;
+          ButtonPressed();
           FireButtonPressed();
         }
       }
@@ -82,6 +81,7 @@ namespace LMWidgets
         if (transform.localPosition.z < (m_localTriggerDistance - m_localCushionThickness))
         {
           m_isPressed = false;
+          ButtonReleased();
           FireButtonReleased();
         }
       }

@@ -20,19 +20,7 @@ namespace LMWidgets
     protected bool m_isPressed = false;
 
     public abstract void ScrollPressed();
-    private void FireScrollPressed()
-    {
-      ScrollPressed();
-      m_scrollPivot = transform.localPosition;
-      m_contentPivot = content.transform.localPosition;
-    }
-
     public abstract void ScrollReleased();
-    private void FireScrollReleased()
-    {
-      ScrollReleased();
-      content.rigidbody2D.velocity = new Vector2(m_scrollVelocity.X, m_scrollVelocity.Y);
-    }
 
     /// <summary>
     /// Update the content position based on how the scroll has moved. Will also save the momentum
@@ -72,7 +60,9 @@ namespace LMWidgets
         if (transform.localPosition.z > m_localTriggerDistance)
         {
           m_isPressed = true;
-          FireScrollPressed();
+          ScrollPressed();
+          m_scrollPivot = transform.localPosition;
+          m_contentPivot = content.transform.localPosition;
         }
       }
       else if (m_isPressed == true)
@@ -80,7 +70,8 @@ namespace LMWidgets
         if (transform.localPosition.z < (m_localTriggerDistance - m_localCushionThickness))
         {
           m_isPressed = false;
-          FireScrollReleased();
+          ScrollReleased();
+          content.rigidbody2D.velocity = new Vector2(m_scrollVelocity.X, m_scrollVelocity.Y);
         }
       }
     }

@@ -16,18 +16,7 @@ namespace LMWidgets
     protected bool m_isPressed = false;
 
     public abstract void SliderPressed();
-    protected void FireSliderPressed()
-    {
-      ApplyInteractionConstraints(Vector3.one);
-      SliderPressed();
-    }
-
     public abstract void SliderReleased();
-    private void FireSliderReleased()
-    {
-      ApplyInteractionConstraints(new Vector3(0.0f, 0.0f, 1.0f));
-      SliderReleased();
-    }
 
     /// <summary>
     /// Returns the fraction of the slider between lower and upper limit. 0.0 = At Lower. 1.0 = At Upper
@@ -84,7 +73,8 @@ namespace LMWidgets
         if (transform.localPosition.z > m_localTriggerDistance)
         {
           m_isPressed = true;
-          FireSliderPressed();
+          ApplyInteractionConstraints(Vector3.one);
+          SliderPressed();
         }
       }
       else if (m_isPressed == true)
@@ -92,7 +82,8 @@ namespace LMWidgets
         if (transform.localPosition.z < (m_localTriggerDistance - m_localCushionThickness))
         {
           m_isPressed = false;
-          FireSliderReleased();
+          ApplyInteractionConstraints(new Vector3(0.0f, 0.0f, 1.0f));
+          SliderReleased();
         }
       }
     }
