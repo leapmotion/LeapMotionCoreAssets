@@ -2,7 +2,7 @@
 using System;
 using System.Collections;
 
-namespace LmWidgets {
+namespace LMWidgets {
   public class EventArg<T> : EventArgs {
     private T m_currentValue;
     public T CurrentValue { get { return m_currentValue; } } 

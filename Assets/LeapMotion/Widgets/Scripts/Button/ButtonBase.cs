@@ -1,11 +1,17 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 
 namespace LMWidgets
 {
   [RequireComponent(typeof(Rigidbody))]
-  public abstract class ButtonBase : MonoBehaviour
+  public abstract class ButtonBase : MonoBehaviour, BinaryInteractionHandler<bool>
   {
+    // Binary Interaction Handler - Fires when interaction with the widget starts.
+    public event EventHandler<LMWidgets.EventArg<bool>> StartHandler;
+    // Binary Interaction Handler - Fires when interaction with the widget ends.
+    public event EventHandler<LMWidgets.EventArg<bool>> EndHandler;
+
     public float spring = 1000.0f;
     public float triggerDistance = 0.025f;
     public float cushionThickness = 0.005f;
@@ -18,8 +24,29 @@ namespace LMWidgets
     protected float min_distance_;
     protected float max_distance_;
 
-    public abstract void ButtonReleased();
-    public abstract void ButtonPressed();
+    public virtual void ButtonReleased ()
+    {
+      FireButtonStart ();
+    }
+    
+    public virtual void ButtonPressed ()
+    {
+      FireButtonEnd ();
+    }
+    
+    protected void FireButtonStart (bool value = true)
+    {
+      if (StartHandler != null) {
+        StartHandler (this, new LMWidgets.EventArg<bool> (value));
+      } 
+    }
+    
+    protected void FireButtonEnd (bool value = false)
+    {
+      if (EndHandler != null) {
+        EndHandler (this, new LMWidgets.EventArg<bool> (value));
+      } 
+    }
 
     public float GetFraction()
     {

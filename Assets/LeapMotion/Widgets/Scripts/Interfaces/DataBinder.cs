@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LmWidgets {
+namespace LMWidgets {
   // Interface to define an object that can be a data provider to a widget.
   public abstract class DataBinder<T> : MonoBehaviour {
     private T m_lastDataValue;
