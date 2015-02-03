@@ -65,26 +65,13 @@ namespace LMWidgets
     /// </summary>
     private void CheckTrigger()
     {
-      float scale = transform.lossyScale.z;
-      m_localTriggerDistance = triggerDistance / scale;
-      m_localCushionThickness = Mathf.Clamp(cushionThickness / scale, 0.0f, m_localTriggerDistance - 0.001f);
-      if (m_isPressed == false)
+      if (m_state == LeapPhysicsState.Interacting)
       {
-        if (transform.localPosition.z > m_localTriggerDistance)
-        {
-          m_isPressed = true;
-          ApplyInteractionConstraints(Vector3.one);
-          SliderPressed();
-        }
+        SliderPressed();
       }
-      else if (m_isPressed == true)
+      else
       {
-        if (transform.localPosition.z < (m_localTriggerDistance - m_localCushionThickness))
-        {
-          m_isPressed = false;
-          ApplyInteractionConstraints(new Vector3(0.0f, 0.0f, 1.0f));
-          SliderReleased();
-        }
+        SliderReleased();
       }
     }
 
