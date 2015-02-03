@@ -3,35 +3,81 @@ using System.Collections;
 
 namespace LMWidgets
 {
-  public abstract class SliderBase : ButtonBase
+  public abstract class SliderBase : LeapPhysicsSpring
   {
+    public float triggerDistance = 0.025f;
+    public float cushionThickness = 0.005f;
+
     public GameObject upperLimit;
     public GameObject lowerLimit;
+
+    protected float m_localTriggerDistance;
+    protected float m_localCushionThickness;
+    protected bool m_isPressed = false;
 
     public abstract void SliderPressed();
     public abstract void SliderReleased();
 
-    // When button is pressed, set the pivot and target_pivot in preparation for moving the handle
-    public override void ButtonPressed()
+    /// <summary>
+    /// Returns the fraction of the slider between lower and upper limit. 0.0 = At Lower. 1.0 = At Upper
+    /// </summary>
+    /// <returns></returns>
+    public float GetSliderFraction()
     {
-      SliderPressed();
+      float lowerLimitValue = lowerLimit.transform.localPosition.x;
+      float upperLimitValue = upperLimit.transform.localPosition.x;
+      if (lowerLimitValue <= upperLimitValue)
+        return 0.0f;
+      else
+        return (transform.localPosition.x + lowerLimitValue) / (upperLimitValue - lowerLimitValue);
     }
 
-    // When button is released, reset the target_pivot
-    public override void ButtonReleased()
+    /// <summary>
+    /// Returns the fraction of how much the handle is pressed down. 0.0 = At Rest. 1.0 = At Triggered Distance
+    /// </summary>
+    /// <returns></returns>
+    public float GetHandleFraction()
     {
-      SliderReleased();
+      if (m_localTriggerDistance == 0.0f)
+        return 0.0f;
+      else
+      {
+        float scale = transform.lossyScale.z;
+        float fraction = transform.localPosition.z / m_localTriggerDistance;
+        return Mathf.Clamp(fraction, 0.0f, 1.0f);
+      }
     }
 
-    // Apply constraint to prevent the slider by going pass the lower and upper limits
+    /// <summary>
+    /// Constrain the slider to y-axis and z-axis
+    /// </summary>
     protected override void ApplyConstraints()
     {
-      Vector3 local_position = transform.localPosition;
-      local_position.x = Mathf.Clamp(local_position.x, lowerLimit.transform.localPosition.x, upperLimit.transform.localPosition.x);
-      local_position.y = 0.0f;
-      local_position.z = Mathf.Clamp(local_position.z, min_distance_, max_distance_);
-      transform.localPosition = local_position;
-      transform.rigidbody.velocity = Vector3.zero;
+      Vector3 localPosition = transform.localPosition;
+      localPosition.x = Mathf.Clamp(localPosition.x, lowerLimit.transform.localPosition.x, upperLimit.transform.localPosition.x);
+      localPosition.y = 0.0f;
+      localPosition.z = Mathf.Max(localPosition.z, 0.0f);
+      transform.localPosition = localPosition;
+    }
+
+    /// <summary>
+    /// Check if the slider is being pressed or not
+    /// </summary>
+    private void CheckTrigger()
+    {
+      if (m_state == LeapPhysicsState.Interacting)
+      {
+        SliderPressed();
+      }
+      else
+      {
+        SliderReleased();
+      }
+    }
+
+    protected virtual void Update()
+    {
+      CheckTrigger();
     }
   }
 }

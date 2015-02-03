@@ -37,24 +37,25 @@ public class ButtonDemoToggle : ButtonToggleBase
 
   private void UpdateGraphics()
   {
-    Vector3 position = GetPosition();
+    Vector3 position = transform.localPosition;
+    position.z = Mathf.Min(position.z, m_localTriggerDistance);
     onGraphics.transform.localPosition = position;
     offGraphics.transform.localPosition = position;
     Vector3 bot_position = position;
-    bot_position.z = Mathf.Max(bot_position.z, onDistance);
+    bot_position.z = Mathf.Max(bot_position.z, m_localTriggerDistance - m_localCushionThickness);
     botGraphics.transform.localPosition = bot_position;
     Vector3 mid_position = position;
     mid_position.z = (position.z + bot_position.z) / 2.0f;
     midGraphics.transform.localPosition = mid_position;
   }
 
-  public override void Awake()
+  protected override void Start()
   {
-    base.Awake();
+    base.Start();
     TurnsOffGraphics();
   }
 
-  public override void FixedUpdate()
+  protected override void FixedUpdate()
   {
     base.FixedUpdate();
     UpdateGraphics();
