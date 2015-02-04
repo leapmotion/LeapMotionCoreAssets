@@ -14,13 +14,15 @@ public class SliderDemo : SliderBase
 
   private List<GameObject> dots = new List<GameObject>();
 
-  public override void SliderPressed()
+  protected override void sliderPressed()
   {
+    base.sliderPressed();
     PressedGraphics();
   }
 
-  public override void SliderReleased()
+  protected override void sliderReleased()
   {
+    base.sliderReleased();
     ReleasedGraphics();
   }
 

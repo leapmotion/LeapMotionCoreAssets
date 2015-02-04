@@ -18,7 +18,6 @@ namespace LMWidgets
     protected float scaled_trigger_distance_;
     protected float scaled_cushion_thickness_;
 
-    protected bool is_pressed_;
     protected float min_distance_;
     protected float max_distance_;
 
@@ -26,27 +25,29 @@ namespace LMWidgets
     protected float m_localCushionThickness;
     protected bool m_isPressed = false;
 
-    public virtual void ButtonReleased ()
+    protected virtual void buttonReleased ()
     {
       FireButtonStart ();
     }
 
-    public virtual void ButtonPressed ()
+    protected virtual void buttonPressed ()
     {
       FireButtonEnd ();
     }
 
     protected void FireButtonStart (bool value = true)
     {
-      if (StartHandler != null) {
-        StartHandler (this, new LMWidgets.EventArg<bool> (value));
+      EventHandler<LMWidgets.EventArg<bool>> handler = StartHandler;
+      if (handler != null) {
+        handler (this, new LMWidgets.EventArg<bool> (value));
       }
     }
 
     protected void FireButtonEnd (bool value = false)
     {
-      if (EndHandler != null) {
-        EndHandler (this, new LMWidgets.EventArg<bool> (value));
+      EventHandler<LMWidgets.EventArg<bool>> handler = EndHandler;
+      if (handler != null) {
+        handler (this, new LMWidgets.EventArg<bool> (value));
       }
     }
 
@@ -92,7 +93,7 @@ namespace LMWidgets
         if (transform.localPosition.z > m_localTriggerDistance)
         {
           m_isPressed = true;
-          ButtonPressed();
+          buttonPressed();
           FireButtonStart();
         }
       }
@@ -101,7 +102,7 @@ namespace LMWidgets
         if (transform.localPosition.z < (m_localTriggerDistance - m_localCushionThickness))
         {
           m_isPressed = false;
-          ButtonReleased();
+          buttonReleased();
           FireButtonEnd();
         }
       }

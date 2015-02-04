@@ -1,22 +1,72 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 
 namespace LMWidgets
 {
-  public abstract class SliderBase : LeapPhysicsSpring
+  public abstract class SliderBase : LeapPhysicsSpring, AnalogInteractionHandler<float>
   {
-    public float triggerDistance = 0.025f;
-    public float cushionThickness = 0.005f;
+    [SerializeField]
+    protected DataBinderFloat m_dataBinder;
+
+    // Binary Interaction Handler - Fires when interaction with the widget starts.
+    public event EventHandler<LMWidgets.EventArg<float>> StartHandler;
+    // Analog Interaction Handler - Fires while widget is being interacted with.
+    public event EventHandler<LMWidgets.EventArg<float>> ChangeHandler;
+    // Binary Interaction Handler - Fires when interaction with the widget ends.
+    public event EventHandler<LMWidgets.EventArg<float>> EndHandler;
 
     public GameObject upperLimit;
     public GameObject lowerLimit;
 
     protected float m_localTriggerDistance;
-    protected float m_localCushionThickness;
-    protected bool m_isPressed = false;
 
-    public abstract void SliderPressed();
-    public abstract void SliderReleased();
+    protected virtual void Start() {
+      base.StateChangeHandler += onStateChanged;
+
+      if ( m_dataBinder != null ) {
+        m_dataBinder.DataChangedHandler += onDataChanged; // Listen to changes in external data
+        SetPositionFromFraction(m_dataBinder.GetCurrentData());
+      }
+    }
+
+    void onDataChanged (object sender, EventArg<float> arg)
+    {
+      if ( State == LeapPhysicsState.Interacting ) { return; } // Don't worry about state changes during interaction.
+      SetPositionFromFraction(arg.CurrentValue);
+    }
+
+    protected virtual void sliderPressed() {
+      fireSliderStart(GetSliderFraction());
+    }
+
+    protected virtual void sliderReleased() {
+      fireSliderEnd(GetSliderFraction());
+      if ( m_dataBinder != null ) {
+        SetPositionFromFraction(m_dataBinder.GetCurrentData()); // Pull latest external data
+      }
+    }
+
+    protected virtual void fireSliderStart(float value) {
+      EventHandler<LMWidgets.EventArg<float>> handler = StartHandler;
+      if (handler != null) {
+        handler (this, new LMWidgets.EventArg<float> (value));
+      }
+    }
+
+    protected virtual void fireSliderChanged(float value) {
+      EventHandler<LMWidgets.EventArg<float>> handler = ChangeHandler;
+      if (handler != null) {
+        handler (this, new LMWidgets.EventArg<float> (value));
+      }
+    }
+
+    protected virtual void fireSliderEnd(float value) {
+      EventHandler<LMWidgets.EventArg<float>> handler = EndHandler;
+      if (handler != null) {
+        handler (this, new LMWidgets.EventArg<float> (value));
+      }
+    }
 
     /// <summary>
     /// Returns the fraction of the slider between lower and upper limit. 0.0 = At Lower. 1.0 = At Upper
@@ -33,6 +83,18 @@ namespace LMWidgets
     }
 
     /// <summary>
+    /// Set the slider from the fraction of the slider between lower and upper limit. 0.0 = At Lower. 1.0 = At Upper
+    /// </summary>
+    /// <returns></returns>
+    public virtual void SetPositionFromFraction (float fraction)
+    {
+      fraction = Mathf.Clamp01 (fraction);
+      float diff = upperLimit.transform.localPosition.x - lowerLimit.transform.localPosition.x;
+      float newOffset = lowerLimit.transform.localPosition.x + (fraction * diff);
+      transform.localPosition = new Vector3 (newOffset, transform.localPosition.y, transform.localPosition.z);
+    }
+
+    /// <summary>
     /// Returns the fraction of how much the handle is pressed down. 0.0 = At Rest. 1.0 = At Triggered Distance
     /// </summary>
     /// <returns></returns>
@@ -42,7 +104,6 @@ namespace LMWidgets
         return 0.0f;
       else
       {
-        float scale = transform.lossyScale.z;
         float fraction = transform.localPosition.z / m_localTriggerDistance;
         return Mathf.Clamp(fraction, 0.0f, 1.0f);
       }
@@ -60,18 +121,25 @@ namespace LMWidgets
       transform.localPosition = localPosition;
     }
 
+    private void onStateChanged(object sender, EventArg<LeapPhysicsState> arg) {
+      if ( arg.CurrentValue == LeapPhysicsState.Interacting ) {
+        sliderPressed();
+      }
+      else if ( arg.CurrentValue == LeapPhysicsState.Reflecting ) {
+        sliderReleased();
+      }
+    }
+
     /// <summary>
     /// Check if the slider is being pressed or not
     /// </summary>
     private void CheckTrigger()
     {
-      if (m_state == LeapPhysicsState.Interacting)
-      {
-        SliderPressed();
-      }
-      else
-      {
-        SliderReleased();
+      if ( State == LeapPhysicsState.Interacting ) { 
+        fireSliderChanged(GetSliderFraction());
+        if ( m_dataBinder != null ) {
+          m_dataBinder.SetCurrentData(GetSliderFraction());
+        }
       }
     }
 

@@ -6,12 +6,14 @@ public class ScrollTextDemo : ScrollTextBase
 {
   public float contentLimit;
 
-  public override void ScrollPressed()
+  protected override void scrollPressed()
   {
+    base.scrollPressed();
   }
 
-  public override void ScrollReleased()
+  protected override void scrollReleased()
   {
+    base.scrollReleased();
     // Don't allow the scroll to move sideways because the content is only 1-dimensional
     m_scrollVelocity.X = 0.0f;
   }
