@@ -27,7 +27,7 @@ namespace LMWidgets {
     void Update() {
       T currentData = GetCurrentData();
 
-      if ( compare (m_lastDataValue, currentData ) ) {
+      if ( !compare (m_lastDataValue, currentData ) ) {
         EventHandler<EventArg<T>> handler = DataChangedHandler;
         if ( handler != null ) { handler(this, new EventArg<T>(currentData)); }
       }
