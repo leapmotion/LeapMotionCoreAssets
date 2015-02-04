@@ -4,7 +4,7 @@
     _MainTex ("Base (A=Opacity)", 2D) = ""
   }
   SubShader {
-    // Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
+    Tags {"Queue"="Background+50" "IgnoreProjector"="True" "RenderType"="Transparent"}
 
     Lighting Off
     Cull Off

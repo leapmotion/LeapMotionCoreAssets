@@ -41,12 +41,17 @@ public class SliderDemo : SliderBase
   // Updates the slider handle graphics
   private void UpdateGraphics()
   {
-    Vector3 position = GetPosition();
-    position.z -= (scaled_trigger_distance_ + 0.01f);
+    float handleFraction = GetHandleFraction();
+    Vector3 topPosition = transform.localPosition;
+    topPosition.z -= (1.0f - handleFraction) * 0.25f;
+    topPosition.z = Mathf.Min(topPosition.z, -0.003f); // -0.003 is so midLayer will never intercept with top or bot layer
+    topLayer.transform.localPosition = topPosition;
 
-    topLayer.transform.localPosition = position - new Vector3(0.0f, 0.0f, 0.01f + 0.25f * (1 - GetFraction()));
-    botLayer.transform.localPosition = position;
-    midLayer.transform.localPosition = (topLayer.transform.localPosition + botLayer.transform.localPosition) / 2.0f;
+    Vector3 botPosition = transform.localPosition;
+    botPosition.z = -0.001f;
+    botLayer.transform.localPosition = botPosition;
+
+    midLayer.transform.localPosition = (topPosition + botPosition) / 2.0f;
 
     if (activeBar)
     {
@@ -73,7 +78,7 @@ public class SliderDemo : SliderBase
       renderer.material.SetFloat("_Gain", 3.0f);
     }
 
-    if (GetFraction() > 99.0f)
+    if (GetSliderFraction() > 99.0f)
     {
       Renderer[] upper_limit_renderers = upperLimit.GetComponentsInChildren<Renderer>();
       foreach (Renderer renderer in upper_limit_renderers)
@@ -117,7 +122,7 @@ public class SliderDemo : SliderBase
     }
   }
 
-  public override void Awake()
+  protected override void Awake()
   {
     base.Awake();
     // Initiate the graphics for the handle
@@ -135,7 +140,8 @@ public class SliderDemo : SliderBase
       {
         GameObject new_dot = Instantiate(dot) as GameObject;
         new_dot.transform.parent = transform;
-        new_dot.transform.localPosition = new Vector3(x, 1.0f, -0.1f);
+        new_dot.transform.localPosition = new Vector3(x, 1.0f, m_localTriggerDistance);
+        new_dot.transform.localRotation = dot.transform.localRotation;
         new_dot.transform.localScale = Vector3.one;
         new_dot.transform.parent = transform.parent;
         dots.Add(new_dot);
@@ -151,7 +157,7 @@ public class SliderDemo : SliderBase
     }
   }
 
-  public override void FixedUpdate()
+  protected override void FixedUpdate()
   {
     base.FixedUpdate();
     UpdateGraphics();
