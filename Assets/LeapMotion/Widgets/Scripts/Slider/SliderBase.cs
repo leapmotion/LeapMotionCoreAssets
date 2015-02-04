@@ -138,7 +138,6 @@ namespace LMWidgets
       if ( State == LeapPhysicsState.Interacting ) { 
         fireSliderChanged(GetSliderFraction());
         if ( m_dataBinder != null ) {
-          Debug.Log("Set current data: "  + GetSliderFraction());
           m_dataBinder.SetCurrentData(GetSliderFraction());
         }
       }

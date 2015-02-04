@@ -36,7 +36,6 @@ namespace LMWidgets
     }
 
     protected virtual void fireScrollStart(float value) {
-      Debug.Log("Scroll Start");
       EventHandler<LMWidgets.EventArg<float>> handler = StartHandler;
       if (handler != null) {
         handler (this, new LMWidgets.EventArg<float> (value));
@@ -44,7 +43,6 @@ namespace LMWidgets
     }
     
     protected virtual void fireScrollChanged(float value) {
-      Debug.Log("Scroll Changed");
       EventHandler<LMWidgets.EventArg<float>> handler = ChangeHandler;
       if (handler != null) {
         handler (this, new LMWidgets.EventArg<float> (value));
@@ -52,7 +50,6 @@ namespace LMWidgets
     }
     
     protected virtual void fireScrollEnd(float value) {
-      Debug.Log("Scroll End");
       EventHandler<LMWidgets.EventArg<float>> handler = EndHandler;
       if (handler != null) {
         handler (this, new LMWidgets.EventArg<float> (value));

@@ -17,7 +17,7 @@ namespace LMWidgets
   {
     protected event EventHandler<LMWidgets.EventArg<LeapPhysicsState>> StateChangeHandler;
 
-    private LeapPhysicsState m_state = LeapPhysicsState.Reflecting;
+    private LeapPhysicsState m_state = LeapPhysicsState.Reflecting; // Don't set this directly. Use accessor.
     protected GameObject m_target = null;
     protected Vector3 m_pivot = Vector3.zero;
     protected Vector3 m_targetPivot = Vector3.zero;
