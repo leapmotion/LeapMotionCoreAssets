@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace LMWidgets
 {
@@ -14,10 +15,23 @@ namespace LMWidgets
   /// </summary>
   public abstract class LeapPhysicsBase : MonoBehaviour
   {
-    protected LeapPhysicsState m_state = LeapPhysicsState.Reflecting;
+    protected event EventHandler<LMWidgets.EventArg<LeapPhysicsState>> StateChangeHandler;
+
+    private LeapPhysicsState m_state = LeapPhysicsState.Reflecting; // Don't set this directly. Use accessor.
     protected GameObject m_target = null;
     protected Vector3 m_pivot = Vector3.zero;
     protected Vector3 m_targetPivot = Vector3.zero;
+
+    protected LeapPhysicsState State { 
+      get {
+        return m_state; 
+      }
+      set {
+        m_state = value;
+        EventHandler<LMWidgets.EventArg<LeapPhysicsState>> handler = StateChangeHandler;
+        if ( handler != null ) { handler(this, new EventArg<LeapPhysicsState>(State)); }
+      }
+    }
 
     // Apply the physics interactions when the hand is no longer interacting with the object
     protected abstract void ApplyPhysics();
@@ -54,7 +68,7 @@ namespace LMWidgets
     {
       if (m_target == null && IsHand(collider))
       {
-        m_state = LeapPhysicsState.Interacting;
+        State = LeapPhysicsState.Interacting;
         m_target = collider.gameObject;
         ResetPivots();
       }
@@ -70,7 +84,7 @@ namespace LMWidgets
       // TODO(cont): It should solve low-FPS or fast hand movement problems
       if (collider.gameObject == m_target)
       {
-        m_state = LeapPhysicsState.Reflecting;
+        State = LeapPhysicsState.Reflecting;
         m_target = null;
       }
     }
@@ -85,12 +99,12 @@ namespace LMWidgets
 
     protected virtual void FixedUpdate() 
     {
-      if (m_target == null && m_state == LeapPhysicsState.Interacting)
+      if (m_target == null && State == LeapPhysicsState.Interacting)
       {
-        m_state = LeapPhysicsState.Reflecting;
+        State = LeapPhysicsState.Reflecting;
       }
 
-      switch (m_state)
+      switch (State)
       {
         case LeapPhysicsState.Interacting:
           ApplyInteractions();

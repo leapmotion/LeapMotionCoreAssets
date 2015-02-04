@@ -1,11 +1,19 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using System;
 using System.Collections;
 
 namespace LMWidgets
 {
-  public abstract class ScrollTextBase : LeapPhysicsSpring
+  public abstract class ScrollTextBase : LeapPhysicsSpring, AnalogInteractionHandler<float>
   {
+    // Binary Interaction Handler - Fires when interaction with the widget starts.
+    public event EventHandler<LMWidgets.EventArg<float>> StartHandler;
+    // Analog Interaction Handler - Fires while widget is being interacted with.
+    public event EventHandler<LMWidgets.EventArg<float>> ChangeHandler;
+    // Binary Interaction Handler - Fires when interaction with the widget ends.
+    public event EventHandler<LMWidgets.EventArg<float>> EndHandler;
+
     public GameObject content;
 
     public float triggerDistance = 0.025f;
@@ -19,8 +27,34 @@ namespace LMWidgets
     protected float m_localCushionThickness;
     protected bool m_isPressed = false;
 
-    public abstract void ScrollPressed();
-    public abstract void ScrollReleased();
+    protected virtual void scrollPressed() {
+      fireScrollStart(content.transform.localPosition.y);
+    }
+
+    protected virtual void scrollReleased() {
+      fireScrollEnd(content.transform.localPosition.y);
+    }
+
+    protected virtual void fireScrollStart(float value) {
+      EventHandler<LMWidgets.EventArg<float>> handler = StartHandler;
+      if (handler != null) {
+        handler (this, new LMWidgets.EventArg<float> (value));
+      }
+    }
+    
+    protected virtual void fireScrollChanged(float value) {
+      EventHandler<LMWidgets.EventArg<float>> handler = ChangeHandler;
+      if (handler != null) {
+        handler (this, new LMWidgets.EventArg<float> (value));
+      }
+    }
+    
+    protected virtual void fireScrollEnd(float value) {
+      EventHandler<LMWidgets.EventArg<float>> handler = EndHandler;
+      if (handler != null) {
+        handler (this, new LMWidgets.EventArg<float> (value));
+      }
+    }
 
     /// <summary>
     /// Update the content position based on how the scroll has moved. Will also save the momentum
@@ -60,7 +94,7 @@ namespace LMWidgets
         if (transform.localPosition.z > m_localTriggerDistance)
         {
           m_isPressed = true;
-          ScrollPressed();
+          scrollPressed();
           m_scrollPivot = transform.localPosition;
           m_contentPivot = content.transform.localPosition;
         }
@@ -70,7 +104,7 @@ namespace LMWidgets
         if (transform.localPosition.z < (m_localTriggerDistance - m_localCushionThickness))
         {
           m_isPressed = false;
-          ScrollReleased();
+          scrollReleased();
           content.rigidbody2D.velocity = new Vector2(m_scrollVelocity.X, m_scrollVelocity.Y);
         }
       }
@@ -87,6 +121,7 @@ namespace LMWidgets
       if (m_isPressed)
       {
         UpdateContentPosition();
+        fireScrollChanged(content.transform.localPosition.y);
       }
 
       // Set content velocity to zero once it's bouncing from the edges (ScrollRect vel > 0)
