@@ -53,7 +53,7 @@ namespace LMWidgets
         ButtonTurnsOff();
       m_toggleState = !m_toggleState;
       base.FireButtonStart(m_toggleState);
-      if ( m_dataBinder != null ) { m_dataBinder.SetCurrentData(!m_toggleState); } // Update externally linked data
+      if ( m_dataBinder != null ) { m_dataBinder.SetCurrentData(m_toggleState); } // Update externally linked data
     }
   }
 }

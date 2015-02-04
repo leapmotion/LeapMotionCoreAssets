@@ -76,10 +76,10 @@ namespace LMWidgets
     {
       float lowerLimitValue = lowerLimit.transform.localPosition.x;
       float upperLimitValue = upperLimit.transform.localPosition.x;
-      if (lowerLimitValue <= upperLimitValue)
+      if (lowerLimitValue >= upperLimitValue)
         return 0.0f;
       else
-        return (transform.localPosition.x + lowerLimitValue) / (upperLimitValue - lowerLimitValue);
+        return (transform.localPosition.x - lowerLimitValue) / (upperLimitValue - lowerLimitValue);
     }
 
     /// <summary>
@@ -138,6 +138,7 @@ namespace LMWidgets
       if ( State == LeapPhysicsState.Interacting ) { 
         fireSliderChanged(GetSliderFraction());
         if ( m_dataBinder != null ) {
+          Debug.Log("Set current data: "  + GetSliderFraction());
           m_dataBinder.SetCurrentData(GetSliderFraction());
         }
       }
