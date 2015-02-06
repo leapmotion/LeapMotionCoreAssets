@@ -43,6 +43,7 @@ namespace VRWidgets
 		public DataBinderInt WidgetController;
 		public string EditorDisplayString;
 		public int EditorDisplayInt;
+		public List<string> GenericLabels;
 		public List<string> DialLabels;
 		public List<string> YearLabels;
 		public List<string> MonthLabels;
@@ -66,12 +67,15 @@ namespace VRWidgets
 		
 		public HilightTextVolume hilightTextVolume;
 		
-		public enum PickerType {Year, Month, Day, Hour};
+		public enum PickerType {Generic, Year, Month, Day, Hour};
 		public PickerType thisPickerType;
 		
 		public Color TextColor;
 		
 		private int ParseDialString (string valueString){
+			if(thisPickerType == PickerType.Generic){
+				return Convert.ToInt32( valueString);
+			}
 			if(thisPickerType == PickerType.Year){
 				return Convert.ToInt32( valueString);
 			}
@@ -88,6 +92,9 @@ namespace VRWidgets
 		}
 		//covert the integer from WidgetController.GetCurrentData() to index integer
 		private int ParseDialInt (int valueInt){
+			if(thisPickerType == PickerType.Generic){
+				return valueInt;
+			}
 			if(thisPickerType == PickerType.Year){
 //				string valueString = Convert.ToString(valueInt);
 //				return YearLabels.IndexOf(valueString);
@@ -112,6 +119,9 @@ namespace VRWidgets
 		
 		void Start () {
 			dialModeBase = DialPhysics.GetComponent<DialModeBase>();
+			if(thisPickerType == PickerType.Generic){
+				DialLabels = GenericLabels;
+			}
 			if(thisPickerType == PickerType.Year){
 				DialLabels = YearLabels;
 			}
