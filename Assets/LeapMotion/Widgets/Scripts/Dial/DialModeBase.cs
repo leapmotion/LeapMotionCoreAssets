@@ -102,7 +102,8 @@ namespace LMWidgets
         return RestrictAngle (transform.localRotation.eulerAngles.y);
       }
       set {
-        Vector3 eulerAngles = transform.localRotation.eulerAngles;
+//		Debug.Log ("DialModeBase.CurrentAngle is being set to: " + value);		
+		Vector3 eulerAngles = transform.localRotation.eulerAngles;
         eulerAngles.x = 0f;
         eulerAngles.y = RestrictAngle (value);
         eulerAngles.z = 0f;
@@ -116,6 +117,7 @@ namespace LMWidgets
         return RestrictStep (transform.localRotation.eulerAngles.y);
       }
       set {
+      	Debug.Log ("DialModeBase.CurrentStep is being set to: " + value);
         if (steps <= 0)
           return;
         CurrentAngle = (value * (maximumAngle - minimumAngle) / steps) + minimumAngle;

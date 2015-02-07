@@ -10,21 +10,21 @@ namespace VRWidgets
 {
 
 	public class DialGraphics : MonoBehaviour, AnalogInteractionHandler<int>{
-//		private string currentDialValue; 
-//		public string CurrentDialValue   
-//		{
-//			get 
-//			{
-//				return currentDialValue; 
-//			}
-//			set
-//			{
-//				Debug.Log ("CurrentDialValue being Set");
-//				currentDialValue = value;
-//				CurrentDialInt = ParseDialString(value);
-//				EditorDisplayString = value;
-//			}
-//		}
+		private string currentDialValue; 
+		public string CurrentDialValue   
+		{
+			get 
+			{
+				return currentDialValue; 
+			}
+			set
+			{
+				Debug.Log ("CurrentDialValue being Set to: " + value);
+				currentDialValue = value;
+				CurrentDialInt = ParseDialString(value);
+				EditorDisplayString = value;
+			}
+		}
 		private int currentDialInt; 
 		public int CurrentDialInt
 		{
@@ -34,7 +34,11 @@ namespace VRWidgets
 			}
 			set
 			{
-				//Debug.Log ("CurrentDialInt being Set to: " + value);
+				Debug.Log ("CurrentDialInt being Set to: " + value);
+				if(currentDialInt != value){
+					SetPhysicsStep(value);
+				}
+				
 				currentDialInt = value;
 				EditorDisplayInt = value;
 				
@@ -43,6 +47,9 @@ namespace VRWidgets
 		public DataBinderInt WidgetController;
 		public string EditorDisplayString;
 		public int EditorDisplayInt;
+		
+		private string currentTestString = "";
+		public string TestString = "";
 		public List<string> GenericLabels;
 		public List<string> DialLabels;
 		public List<string> YearLabels;
@@ -74,13 +81,14 @@ namespace VRWidgets
 		
 		private int ParseDialString (string valueString){
 			if(thisPickerType == PickerType.Generic){
-				return Convert.ToInt32( valueString);
+				Debug.Log ("ParseDialString returns: " + GenericLabels.IndexOf( valueString));
+				return GenericLabels.IndexOf( valueString);
 			}
 			if(thisPickerType == PickerType.Year){
 				return Convert.ToInt32( valueString);
 			}
 			if(thisPickerType == PickerType.Month){
-				return MonthLabels.IndexOf(valueString);
+				return MonthLabels.IndexOf(valueString) + 1;
 			}
 			if(thisPickerType == PickerType.Day){
 				return Convert.ToInt32( valueString);
@@ -118,6 +126,7 @@ namespace VRWidgets
 		public event EventHandler<EventArg<int>> EndHandler;
 		
 		void Start () {
+			currentTestString = TestString;
 			dialModeBase = DialPhysics.GetComponent<DialModeBase>();
 			if(thisPickerType == PickerType.Generic){
 				DialLabels = GenericLabels;
@@ -160,7 +169,7 @@ namespace VRWidgets
 			if(WidgetController != null){
 				//Set the Dial value based on an int
 				CurrentDialInt = WidgetController.GetCurrentData();
-				//Debug.Log (thisPickerType + ": widgetController.GetCurrentData() = " + CurrentDialInt);
+				Debug.Log (thisPickerType + ": widgetController.GetCurrentData() = " + CurrentDialInt);
 				SetPhysicsStep(CurrentDialInt);
 //				WidgetController.DataChangedHandler += OnDataChanged;
 				
@@ -169,7 +178,14 @@ namespace VRWidgets
 		}
 	
 		public bool IsEngaged = false;
+		
 		void Update () {
+			if(Input.GetKeyUp(KeyCode.Space)){
+				if(TestString != currentTestString && TestString != ""){
+					CurrentDialValue = TestString;
+					currentTestString = TestString;
+				}
+			}
 			Vector3 physicsRotation = new Vector3 (DialPhysics.localRotation.eulerAngles.y, 0f, 0f);
 			DialCenter.localEulerAngles = physicsRotation;
 			CurrentDialInt = ParseDialInt (dialModeBase.CurrentStep);
@@ -210,18 +226,19 @@ namespace VRWidgets
 	    }
 		
 		public void SetPhysicsStep(int newInt){
+			
 			int newStep = 0;
-			if(thisPickerType == PickerType.Month){
+			if(thisPickerType == PickerType.Month || thisPickerType == PickerType.Day){
 				newInt = newInt - 1;
 				newStep = newInt;
 			}
-			else if(DialLabels.Contains (Convert.ToString(newInt))){
-				newStep = DialLabels.IndexOf(Convert.ToString(newInt));
-//				Debug.Log (thisPickerType + ": SetPhysicsStep found " + (newInt -1) + "in DialLabeAngles with index of " + newStep);
-			}
-//			Debug.Log (thisPickerType + ": newStep  = " + newStep);
+//			else if(DialLabels.Contains (Convert.ToString(newInt))){
+//				newStep = DialLabels.IndexOf(Convert.ToString(newInt));
+//			}
 
-			dialModeBase.CurrentStep = newStep;
+			dialModeBase.CurrentStep = newInt;
+			Debug.Log("DialGraphics.SetPhysicsStep is attempting to send " + newInt);
+			
 		}
 //		private void OnDataChanged (object sender, VRWidgets.EventArg<int> args){
 //			Debug.Log("OnDateChange: " + args.CurrentValue);
