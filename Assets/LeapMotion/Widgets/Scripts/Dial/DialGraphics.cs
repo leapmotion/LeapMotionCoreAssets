@@ -23,8 +23,18 @@ namespace LMWidgets
 			}
 			set
 			{
-				CurrentDialInt = ParseDialString(value);
+        int dialIndex = 0;
+
+        try { 
+          dialIndex = parseDialString(value); 
+        }
+        catch (ArgumentException e) { // Thrown if 'value' isn't a valid label;
+          Debug.LogException(e);
+          return;
+        }
+
         m_currentDialValue = value;
+        CurrentDialInt = dialIndex;
 				EditorDisplayString = value;
 			}
 		}
@@ -94,24 +104,31 @@ namespace LMWidgets
 		public Color TextColor;
 
     private bool m_dialLabelsInitilized = false;
-		
-		private int ParseDialString (string valueString){
-			if(thisPickerType == PickerType.Generic){
-				return GenericLabels.IndexOf( valueString);
+
+    private int parseDialString (string valueString){
+      int index = -1;
+
+      if(thisPickerType == PickerType.Generic){
+				index = GenericLabels.IndexOf( valueString);
 			}
 			if(thisPickerType == PickerType.Year){
-				return Convert.ToInt32( valueString);
+        index = Convert.ToInt32( valueString);
 			}
 			if(thisPickerType == PickerType.Month){
-				return MonthLabels.IndexOf(valueString) + 1;
+        index = MonthLabels.IndexOf(valueString) + 1;
 			}
 			if(thisPickerType == PickerType.Day){
-				return Convert.ToInt32( valueString);
+        index = Convert.ToInt32( valueString);
 			}
 			if(thisPickerType == PickerType.Hour){
-				return HourLabels.IndexOf(valueString);
+        index = HourLabels.IndexOf(valueString);
 			} 
-			return 0;
+
+      if (index == -1) {
+        throw new System.ArgumentException("valueString \"" + valueString + "\" is not a valid label.");
+      }
+
+      return index;
 		}
 
     public void SetWidgetValue(string value) {
