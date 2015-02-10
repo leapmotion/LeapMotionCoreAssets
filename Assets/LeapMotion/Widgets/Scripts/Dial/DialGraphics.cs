@@ -214,23 +214,7 @@ namespace LMWidgets
 			DialCenter.localPosition = new Vector3(0f, 0f, DialRadius);
 			DialPhysicsOffset.localPosition = new Vector3(-DialRadius * 10f, 0f, 0f);
 			
-			
-			float currentLayoutXAngle = LabelAngleRangeStart;
-
-      for( int i=1; i<=DialLabels.Count; i++ ) {
-				Transform labelPrefab = Instantiate(LabelPrefab, DialCenter.transform.position, transform.rotation) as Transform;
-				labelPrefab.Rotate(currentLayoutXAngle, 0f, 0f);
-				LabelAngles.Add (-currentLayoutXAngle);			
-				labelPrefab.parent = DialCenter;
-				labelPrefab.localScale = new Vector3(1f, 1f, 1f);
-				Text labelText = labelPrefab.GetComponentInChildren<Text>();
-				labelText.text = DialLabels[i - 1];
-				DialLabelAngles.Add(DialLabels[i - 1], -currentLayoutXAngle);
-				labelText.transform.localPosition = new Vector3(0f, 0f, -DialRadius);
-				currentLayoutXAngle = ((Mathf.Abs(LabelAngleRangeStart) + Mathf.Abs(LabelAngleRangeEnd))/(DialLabels.Count)) * -i;
-			}
-
-			LabelPrefab.gameObject.SetActive(false);
+      generateAndLayoutLabels ();
 
 			if( m_dataBinder != null ) {
 				//Set the Dial value based on a string
@@ -238,6 +222,25 @@ namespace LMWidgets
 				SetPhysicsStep(CurrentDialInt);
 			}
 		}
+
+    private void generateAndLayoutLabels() {
+      float currentLayoutXAngle = LabelAngleRangeStart;
+      
+      for( int i=1; i<=DialLabels.Count; i++ ) {
+        Transform labelPrefab = Instantiate(LabelPrefab, DialCenter.transform.position, transform.rotation) as Transform;
+        labelPrefab.Rotate(currentLayoutXAngle, 0f, 0f);
+        LabelAngles.Add (-currentLayoutXAngle);     
+        labelPrefab.parent = DialCenter;
+        labelPrefab.localScale = new Vector3(1f, 1f, 1f);
+        Text labelText = labelPrefab.GetComponentInChildren<Text>();
+        labelText.text = DialLabels[i - 1];
+        DialLabelAngles.Add(DialLabels[i - 1], -currentLayoutXAngle);
+        labelText.transform.localPosition = new Vector3(0f, 0f, -DialRadius);
+        currentLayoutXAngle = ((Mathf.Abs(LabelAngleRangeStart) + Mathf.Abs(LabelAngleRangeEnd))/(DialLabels.Count)) * -i;
+      }
+
+      LabelPrefab.gameObject.SetActive(false); // Turn off the original prefab that was copied.
+    }
 		
 		void Update () {
       updateGraphicsFromPhysicsDial ();
