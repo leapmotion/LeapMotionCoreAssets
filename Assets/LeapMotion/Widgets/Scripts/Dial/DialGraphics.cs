@@ -238,10 +238,7 @@ namespace LMWidgets
 		}
 		
 		void Update () {
-
-			Vector3 physicsRotation = new Vector3 (DialPhysics.localRotation.eulerAngles.y, 0f, 0f);
-			DialCenter.localEulerAngles = physicsRotation;
-			CurrentDialInt = parseDialInt (m_dialModeBase.CurrentStep);
+      updateGraphicsFromPhysicsDial ();
 
 			if(IsEngaged == true){
 				if(m_dataBinder != null){
@@ -253,6 +250,12 @@ namespace LMWidgets
 				}
 			}
 		}
+
+    private void updateGraphicsFromPhysicsDial() {
+      Vector3 physicsRotation = new Vector3 (DialPhysics.localRotation.eulerAngles.y, 0f, 0f);
+      DialCenter.localEulerAngles = physicsRotation;
+      CurrentDialInt = parseDialInt (m_dialModeBase.CurrentStep);
+    }
 
 		public void HilightDial () {
 			IsEngaged = true;
