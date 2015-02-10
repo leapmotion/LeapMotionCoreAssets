@@ -6,8 +6,14 @@ using UnityEngine.UI;
 
 namespace LMWidgets
 {
+	public class DialGraphics : MonoBehaviour, AnalogInteractionHandler<int>, IDataBoundWidget<DialGraphics, string>
+  {
+    public event EventHandler<EventArg<int>> ChangeHandler;
+    public event EventHandler<EventArg<int>> StartHandler;
+    public event EventHandler<EventArg<int>> EndHandler;
 
-	public class DialGraphics : MonoBehaviour, AnalogInteractionHandler<int>{
+    protected DataBinderDial m_dataBinder;
+
 		private string currentDialValue; 
 		public string CurrentDialValue   
 		{
@@ -34,17 +40,27 @@ namespace LMWidgets
 				if(currentDialInt != value){
 					SetPhysicsStep(value);
 				}
-				
 				currentDialInt = value;
 				EditorDisplayInt = value;
-				
+
+        if ( !dialLabelsInitilized ) {
+          initializeDialLabels ();
+        }
+
+        try { 
+          currentDialValue = DialLabels[currentDialInt];
+        }
+        catch (System.ArgumentOutOfRangeException e ){
+          Debug.LogException(e);
+        }
 			}
 		}
-		public DataBinderInt WidgetController;
+		
 		public string EditorDisplayString;
 		public int EditorDisplayInt;
 		
 		private string currentTestString = "";
+    [HideInInspector]
 		public string TestString = "";
 		public List<string> GenericLabels;
 		public List<string> DialLabels;
@@ -58,7 +74,7 @@ namespace LMWidgets
 		public Transform LabelPrefab;
 		public Transform DialPhysicsOffset;
 		public Transform DialPhysics;
-		private DialModeBase dialModeBase;
+		private DialModeBase m_dialModeBase;
 		public Transform DialCenter;
 		public List<float> LabelAngles;
 		public Dictionary<string, float> DialLabelAngles = new Dictionary<string, float>();
@@ -74,6 +90,8 @@ namespace LMWidgets
 		public PickerType thisPickerType;
 		
 		public Color TextColor;
+
+    private bool dialLabelsInitilized = false;
 		
 		private int ParseDialString (string valueString){
 			if(thisPickerType == PickerType.Generic){
@@ -93,14 +111,17 @@ namespace LMWidgets
 			} 
 			return 0;
 		}
+
+    public void SetWidgetValue(string value) {
+      CurrentDialValue = value;
+    }
+
 		//covert the integer from WidgetController.GetCurrentData() to index integer
 		private int ParseDialInt (int valueInt){
 			if(thisPickerType == PickerType.Generic){
 				return valueInt;
 			}
 			if(thisPickerType == PickerType.Year){
-//				string valueString = Convert.ToString(valueInt);
-//				return YearLabels.IndexOf(valueString);
 				return Convert.ToInt32( YearLabels[valueInt]);
 				
 			}
@@ -115,39 +136,73 @@ namespace LMWidgets
 			}
 			return 0;
 		}
-		
-		public event EventHandler<EventArg<int>> ChangeHandler;
-		public event EventHandler<EventArg<int>> StartHandler;
-		public event EventHandler<EventArg<int>> EndHandler;
+
+    // Stop listening to any previous data binder and start listening to the new one.
+    public void RegisterDataBinder(DataBinder<DialGraphics, string> dataBinder) {
+      if (dataBinder == null) {
+        return;
+      }
+      
+      UnregisterDataBinder ();
+      m_dataBinder = dataBinder as DataBinderDial;
+      CurrentDialValue = m_dataBinder.GetCurrentData ();
+    }
+    
+    // Stop listening to any previous data binder.
+    public void UnregisterDataBinder() {
+      m_dataBinder = null;
+    }
+
+    void Awake() {
+      if (m_dialModeBase == null) {
+        m_dialModeBase = DialPhysics.GetComponent<DialModeBase> ();
+      }
+
+      if (m_dialModeBase == null) {
+        throw new System.NullReferenceException("Could not find DialModeBase on DialPhysics Object.");
+      }
+
+      initializeDialLabels ();
+    }
+
+    private void initializeDialLabels() {
+      if (dialLabelsInitilized) {
+        return;
+      }
+
+      if(thisPickerType == PickerType.Generic){
+        DialLabels = GenericLabels;
+      }
+      else if(thisPickerType == PickerType.Year){
+        DialLabels = YearLabels;
+      }
+      else if(thisPickerType == PickerType.Month){
+        DialLabels = MonthLabels;
+        LabelAngleRangeEnd = 180f;
+      }
+      else if(thisPickerType == PickerType.Day){
+        DialLabels = DayLabels;
+      }
+      else if(thisPickerType == PickerType.Hour){
+        DialLabels = HourLabels;
+      }
+
+      dialLabelsInitilized = true;
+    }
+
+
 		
 		void Start () {
 			currentTestString = TestString;
-			dialModeBase = DialPhysics.GetComponent<DialModeBase>();
-			if(thisPickerType == PickerType.Generic){
-				DialLabels = GenericLabels;
-			}
-			if(thisPickerType == PickerType.Year){
-				DialLabels = YearLabels;
-			}
-			if(thisPickerType == PickerType.Month){
-				DialLabels = MonthLabels;
-				LabelAngleRangeEnd = 180f;
-			}
-			if(thisPickerType == PickerType.Day){
-				DialLabels = DayLabels;
-			}
-			if(thisPickerType == PickerType.Hour){
-				DialLabels = HourLabels;
-			}
-				
+      	
 			DialCenter.localPosition = new Vector3(0f, 0f, DialRadius);
 			DialPhysicsOffset.localPosition = new Vector3(-DialRadius * 10f, 0f, 0f);
 			
 			
 			float currentLayoutXAngle = LabelAngleRangeStart;
 			int counter = 1;
-			foreach(string label in DialLabels){
-	//			Vector3 labelLocalRotation = new Vector3(0.0f, 0.0f, 0.0f);
+
+			foreach( string label in DialLabels ) {
 				Transform labelPrefab = Instantiate(LabelPrefab, DialCenter.transform.position, transform.rotation) as Transform;
 				labelPrefab.Rotate(currentLayoutXAngle, 0f, 0f);
 				LabelAngles.Add (-currentLayoutXAngle);			
@@ -160,14 +215,13 @@ namespace LMWidgets
 				currentLayoutXAngle = ((Mathf.Abs(LabelAngleRangeStart) + Mathf.Abs(LabelAngleRangeEnd))/(DialLabels.Count)) * -counter;
 				counter++; 	
 			}
+
 			LabelPrefab.gameObject.SetActive(false);
-			if(WidgetController != null){
-				//Set the Dial value based on an int
-				CurrentDialInt = WidgetController.GetCurrentData();
-				Debug.Log (thisPickerType + ": widgetController.GetCurrentData() = " + CurrentDialInt);
+
+			if( m_dataBinder != null ) {
+				//Set the Dial value based on a string
+        CurrentDialValue = m_dataBinder.GetCurrentData();
 				SetPhysicsStep(CurrentDialInt);
-//				WidgetController.DataChangedHandler += OnDataChanged;
-				
 			}
 			
 		}
@@ -175,71 +229,71 @@ namespace LMWidgets
 		public bool IsEngaged = false;
 		
 		void Update () {
-			if(Input.GetKeyUp(KeyCode.Space)){
-				if(TestString != currentTestString && TestString != ""){
+			
+      if(Input.GetKeyUp(KeyCode.Space)) {
+				if(TestString != currentTestString && TestString != "") {
 					CurrentDialValue = TestString;
 					currentTestString = TestString;
 				}
 			}
+
 			Vector3 physicsRotation = new Vector3 (DialPhysics.localRotation.eulerAngles.y, 0f, 0f);
 			DialCenter.localEulerAngles = physicsRotation;
-			CurrentDialInt = ParseDialInt (dialModeBase.CurrentStep);
-//			CurrentDialValue = hilightTextVolume.CurrentHilightValue;
+			CurrentDialInt = ParseDialInt (m_dialModeBase.CurrentStep);
+
 			if(IsEngaged == true){
-				if(WidgetController != null){
+				if(m_dataBinder != null){
 					//Set the Dial value based on an int
-			        WidgetController.SetCurrentData(CurrentDialInt);
+          m_dataBinder.SetCurrentData(CurrentDialValue);
 				}
+
 				if(ChangeHandler != null){
 					//Debug.Log ("ChangeHandler event firing");
 					ChangeHandler(this, new EventArg<int>( CurrentDialInt));
 				}
 			}
 		}
-		public void HiLightDial (){
+
+		public void HiLightDial () {
 			IsEngaged = true;
-			if(StartHandler != null){	
+			
+      if( StartHandler != null )  {	
 				//Debug.Log ("HiLightDial() event firing");
 				StartHandler(this, new EventArg<int>(CurrentDialInt));
 			}
+
 			PickerBoxImage.color = PickerColorActive;
 		}
 		
 		public void UpdateDial (){
-			CurrentDialInt = ParseDialInt (dialModeBase.CurrentStep);
-			if(WidgetController != null){
-				//Set the Dial value based on an int
+			CurrentDialInt = ParseDialInt (m_dialModeBase.CurrentStep);
+			
+      if(m_dataBinder != null){
+				//Set the Dial value based on a string
 				//make sure we are what the program thinks we are
-				WidgetController.SetCurrentData(CurrentDialInt);
+        m_dataBinder.SetCurrentData(CurrentDialValue);
 			}
+
 			if(EndHandler != null){
 				//Debug.Log ("UpdateDial() event firing");
 				EndHandler(this, new EventArg<int>(CurrentDialInt));
-	      }
+      }
+
 			IsEngaged = false;
 			PickerBoxImage.color = PickerColorInActive;
-	    }
+    }
 		
 		public void SetPhysicsStep(int newInt){
-			
-			int newStep = 0;
+      if (m_dialModeBase == null) {
+        m_dialModeBase = DialPhysics.GetComponent<DialModeBase>();
+      }
+
 			if(thisPickerType == PickerType.Month || thisPickerType == PickerType.Day){
 				newInt = newInt - 1;
-				newStep = newInt;
 			}
-//			else if(DialLabels.Contains (Convert.ToString(newInt))){
-//				newStep = DialLabels.IndexOf(Convert.ToString(newInt));
-//			}
 
-			dialModeBase.CurrentStep = newInt;
-			Debug.Log("DialGraphics.SetPhysicsStep is attempting to send " + newInt);
+			m_dialModeBase.CurrentStep = newInt;
 			
 		}
-//		private void OnDataChanged (object sender, VRWidgets.EventArg<int> args){
-//			Debug.Log("OnDateChange: " + args.CurrentValue);
-//			if(IsEngaged) {return;}
-//			CurrentDialInt = WidgetController.GetCurrentData();
-//			SetDialByInt(CurrentDialInt);
-//		}
 	}
 }
