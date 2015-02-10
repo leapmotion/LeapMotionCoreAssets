@@ -22,6 +22,7 @@ namespace LMWidgets {
     // Set the current system value of the data.
     abstract protected void setDataModel(PayloadType value);
 
+    // Directly set the current value of the data-model and send out the relevant updates.
     public void SetCurrentData(PayloadType value) {
       setDataModel (value);
       updateLinkedWidgets ();
@@ -29,24 +30,28 @@ namespace LMWidgets {
       m_lastDataValue = GetCurrentData ();
     }
 
+    // Itterate through the linked widgets and update their values.
     private void updateLinkedWidgets() {
       foreach(WidgetType widget in m_widgets) {
         widget.SetWidgetValue(GetCurrentData());
       }
     }
 
+    // Register all assigned widgets with the data-binder.
     virtual protected void Awake() {
       foreach (WidgetType widget in m_widgets) {
         widget.RegisterDataBinder(this);
       }
     }
 
-    // Grab the inital value of GetCurrentData
+    // Grab the inital value for GetCurrentData
     virtual protected void Start() {
       m_lastDataValue = GetCurrentData();
     }
 
     // Checks for change in data.
+    // We need this in addition to SetCurrentData as the data we're linked to 
+    // could be modified by an external source.
     void Update() {
       PayloadType currentData = GetCurrentData();
       if (!compare (m_lastDataValue, currentData)) {
@@ -56,6 +61,8 @@ namespace LMWidgets {
       m_lastDataValue = currentData;
     }
 
+    // Fire the data changed event. 
+    // Wrapping this in a function allows child classes to call it and fire the event.
     protected void fireDataChangedEvent(PayloadType currentData) {
       EventHandler<EventArg<PayloadType>> handler = DataChangedHandler;
       if ( handler != null ) { handler(this, new EventArg<PayloadType>(currentData)); }
