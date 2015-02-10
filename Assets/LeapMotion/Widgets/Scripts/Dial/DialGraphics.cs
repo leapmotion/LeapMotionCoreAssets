@@ -179,7 +179,9 @@ namespace LMWidgets
         throw new System.NullReferenceException("Could not find DialModeBase on DialPhysics Object.");
       }
 
-      initializeDialLabels ();
+      if (!m_dialLabelsInitilized) {
+        initializeDialLabels ();
+      }
     }
 
     // Make DialLabels represent the proper list of labels.
