@@ -4,10 +4,9 @@ using System.Collections;
 
 namespace LMWidgets
 {
-  public abstract class SliderBase : LeapPhysicsSpring, AnalogInteractionHandler<float>
+  public abstract class SliderBase : LeapPhysicsSpring, AnalogInteractionHandler<float>, IDataBoundWidget<SliderBase, float>
   {
-    [SerializeField]
-    protected DataBinderFloat m_dataBinder;
+    protected DataBinderSlider m_dataBinder;
 
     // Binary Interaction Handler - Fires when interaction with the widget starts.
     public event EventHandler<LMWidgets.EventArg<float>> StartHandler;
@@ -25,15 +24,27 @@ namespace LMWidgets
       base.StateChangeHandler += onStateChanged;
 
       if ( m_dataBinder != null ) {
-        m_dataBinder.DataChangedHandler += onDataChanged; // Listen to changes in external data
         SetPositionFromFraction(m_dataBinder.GetCurrentData());
       }
     }
 
-    void onDataChanged (object sender, EventArg<float> arg)
-    {
-      if ( State == LeapPhysicsState.Interacting ) { return; } // Don't worry about state changes during interaction.
-      SetPositionFromFraction(arg.CurrentValue);
+    // Stop listening to any previous data binder and start listening to the new one.
+    public void RegisterDataBinder(LMWidgets.DataBinder<LMWidgets.SliderBase, float> dataBinder) {
+      if (dataBinder == null) {
+        return;
+      }
+
+      UnregisterDataBinder ();
+      m_dataBinder = dataBinder as DataBinderSlider;
+      SetPositionFromFraction(m_dataBinder.GetCurrentData());
+    }
+
+    // Stop listening to any previous data binder.
+    public void UnregisterDataBinder() {
+      if (m_dataBinder == null) {
+        return;
+      }
+      m_dataBinder = null;
     }
 
     protected virtual void sliderPressed() {
@@ -92,6 +103,11 @@ namespace LMWidgets
       float diff = upperLimit.transform.localPosition.x - lowerLimit.transform.localPosition.x;
       float newOffset = lowerLimit.transform.localPosition.x + (fraction * diff);
       transform.localPosition = new Vector3 (newOffset, transform.localPosition.y, transform.localPosition.z);
+    }
+
+    public void SetWidgetValue(float value) {
+      if ( State == LeapPhysicsState.Interacting ) { return; } // Don't worry about state changes during interaction.
+      SetPositionFromFraction (value);
     }
 
     /// <summary>
