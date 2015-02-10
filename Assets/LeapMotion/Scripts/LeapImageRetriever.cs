@@ -439,7 +439,6 @@ public class LeapImageRetriever : MonoBehaviour
   }
 
   void OnApplicationFocus(bool focusStatus) {
-    bool paused = focusStatus;
     if (focusStatus) {
             // Ensure reinitialization in Update
             attached_device_.width = 0;
