@@ -57,7 +57,6 @@ public class ButtonDemoToggle : ButtonToggleBase
 
   protected override void Start()
   {
-    TurnsOffGraphics();
     base.Start();
   }
 

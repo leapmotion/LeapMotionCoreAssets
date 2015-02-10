@@ -1,13 +1,14 @@
-﻿using UnityEngine;
+﻿//#define DEBUG_TIMING
+
+using UnityEngine;
 using System;
 using System.Collections;
 
 namespace LMWidgets
 {
-  public abstract class SliderBase : LeapPhysicsSpring, AnalogInteractionHandler<float>
+  public abstract class SliderBase : LeapPhysicsSpring, AnalogInteractionHandler<float>, IDataBoundWidget<SliderBase, float>
   {
-    [SerializeField]
-    protected DataBinderFloat m_dataBinder;
+    protected DataBinderSlider m_dataBinder;
 
     // Binary Interaction Handler - Fires when interaction with the widget starts.
     public event EventHandler<LMWidgets.EventArg<float>> StartHandler;
@@ -25,15 +26,27 @@ namespace LMWidgets
       base.StateChangeHandler += onStateChanged;
 
       if ( m_dataBinder != null ) {
-        m_dataBinder.DataChangedHandler += onDataChanged; // Listen to changes in external data
         SetPositionFromFraction(m_dataBinder.GetCurrentData());
       }
     }
 
-    void onDataChanged (object sender, EventArg<float> arg)
-    {
-      if ( State == LeapPhysicsState.Interacting ) { return; } // Don't worry about state changes during interaction.
-      SetPositionFromFraction(arg.CurrentValue);
+    // Stop listening to any previous data binder and start listening to the new one.
+    public void RegisterDataBinder(LMWidgets.DataBinder<LMWidgets.SliderBase, float> dataBinder) {
+      if (dataBinder == null) {
+        return;
+      }
+
+      UnregisterDataBinder ();
+      m_dataBinder = dataBinder as DataBinderSlider;
+      SetPositionFromFraction(m_dataBinder.GetCurrentData());
+    }
+
+    // Stop listening to any previous data binder.
+    public void UnregisterDataBinder() {
+      if (m_dataBinder == null) {
+        return;
+      }
+      m_dataBinder = null;
     }
 
     protected virtual void sliderPressed() {
@@ -94,6 +107,14 @@ namespace LMWidgets
       transform.localPosition = new Vector3 (newOffset, transform.localPosition.y, transform.localPosition.z);
     }
 
+    public void SetWidgetValue(float value) {
+      if ( State == LeapPhysicsState.Interacting ) { return; } // Don't worry about state changes during interaction.
+#if DEBUG_TIMING
+      Debug.Log (gameObject.name + ": Set Widget Value: " + Time.time);
+#endif
+      SetPositionFromFraction (value);
+    }
+
     /// <summary>
     /// Returns the fraction of how much the handle is pressed down. 0.0 = At Rest. 1.0 = At Triggered Distance
     /// </summary>
@@ -135,18 +156,33 @@ namespace LMWidgets
     /// </summary>
     private void CheckTrigger()
     {
-      if ( State == LeapPhysicsState.Interacting ) { 
-        fireSliderChanged(GetSliderFraction());
-        if ( m_dataBinder != null ) {
-          m_dataBinder.SetCurrentData(GetSliderFraction());
+      if (State == LeapPhysicsState.Interacting) { 
+        fireSliderChanged (GetSliderFraction ());
+        if (m_dataBinder != null) {
+#if DEBUG_TIMING
+          Debug.Log (gameObject.name + ": send interaction update: " + Time.time);
+#endif
+          m_dataBinder.SetCurrentData (GetSliderFraction ());
+
         }
+      } 
+#if DEBUG_TIMING
+      else {
+
+        Debug.Log (gameObject.name + ": is reflecting: " + Time.time);
       }
+#endif
     }
 
-    protected virtual void Update()
-    {
+    protected override void FixedUpdate()  {
+      base.FixedUpdate ();
       CheckTrigger();
     }
+#if DEBUG_TIMING
+    void LateUpdate() {
+      Debug.Log (gameObject.name + ": Late Update | localX: " + gameObject.transform.localPosition.x + " | fraction: " + GetSliderFraction ());
+    }
+#endif
   }
 }
 

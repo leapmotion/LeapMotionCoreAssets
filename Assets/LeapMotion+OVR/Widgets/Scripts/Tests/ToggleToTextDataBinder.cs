@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using LMWidgets;
 
-public class ToggleToTextDataBinder : DataBinderBool {
+public class ToggleToTextDataBinder : DataBinderToggle {
   [SerializeField] 
   Text uiText;
 
@@ -15,9 +15,8 @@ public class ToggleToTextDataBinder : DataBinderBool {
       return false;
     }
   }
-  
-  // Set the current system value of the data.
-  override public void SetCurrentData(bool value) {
+
+  override protected void setDataModel(bool value) { 
     if ( value == true ) { 
       uiText.text = "True";
     }

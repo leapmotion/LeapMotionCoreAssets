@@ -3,12 +3,10 @@ using System.Collections;
 
 namespace LMWidgets
 {
-  public abstract class ButtonToggleBase : ButtonBase
-  {
-    [SerializeField]
-    protected DataBinderBool m_dataBinder;
+  public abstract class ButtonToggleBase : ButtonBase, BinaryInteractionHandler<bool>, IDataBoundWidget<ButtonToggleBase, bool> {
+    protected DataBinderToggle m_dataBinder;
 
-    protected bool m_toggleState;
+    protected bool m_toggleState = true;
 
     public abstract void ButtonTurnsOn();
     public abstract void ButtonTurnsOff();
@@ -16,25 +14,41 @@ namespace LMWidgets
 
     protected override void Start() {
       if ( m_dataBinder != null ) {
-        m_dataBinder.DataChangedHandler += onDataChanged; // Listen for changes in external data
-        setButtonState(m_dataBinder.GetCurrentData()); // Initilize widget value
+        setButtonState(m_dataBinder.GetCurrentData(), true); // Initilize widget value
+      }
+      else {
+        setButtonState(false, true);
       }
     }
 
-    private void onDataChanged(object sender, EventArg<bool> arg) {
-      if ( m_isPressed ) { return; } // Don't worry about change events while being interacted with
-      setButtonState(arg.CurrentValue);
+    public void SetWidgetValue(bool value) {
+      if ( State == LeapPhysicsState.Interacting ) { return; } // Don't worry about state changes during interaction.
+      setButtonState (value);
     }
 
-    protected virtual void setButtonState(bool toggleState) {
-      if ( toggleState == m_toggleState ) { return; } // Don't do anything if there's no change
+    // Stop listening to any previous data binder and start listening to the new one.
+    public void RegisterDataBinder(LMWidgets.DataBinder<LMWidgets.ButtonToggleBase, bool> dataBinder) {
+      if (dataBinder == null) {
+        return;
+      }
+      
+      UnregisterDataBinder ();
+      m_dataBinder = dataBinder as DataBinderToggle;
+      setButtonState(m_dataBinder.GetCurrentData());
+    }
+    
+    // Stop listening to any previous data binder.
+    public void UnregisterDataBinder() {
+      m_dataBinder = null;
+    }
+
+    protected virtual void setButtonState(bool toggleState, bool force = false) {
+      if ( toggleState == m_toggleState && !force ) { return; } // Don't do anything if there's no change
       m_toggleState = toggleState;
-      if ( m_dataBinder != null ) {
-        if (m_toggleState == true)
-          ButtonTurnsOn();
-        else
-          ButtonTurnsOff();
-      }
+      if (m_toggleState == true)
+        ButtonTurnsOn();
+      else
+        ButtonTurnsOff();
     }
 
     protected override void buttonReleased()
