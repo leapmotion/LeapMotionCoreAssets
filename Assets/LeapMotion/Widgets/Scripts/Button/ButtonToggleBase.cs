@@ -40,9 +40,6 @@ namespace LMWidgets
     
     // Stop listening to any previous data binder.
     public void UnregisterDataBinder() {
-      if (m_dataBinder == null) {
-        return;
-      }
       m_dataBinder = null;
     }
 
