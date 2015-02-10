@@ -19,7 +19,6 @@ namespace VRWidgets
 			}
 			set
 			{
-				Debug.Log ("CurrentDialValue being Set to: " + value);
 				currentDialValue = value;
 				CurrentDialInt = ParseDialString(value);
 				EditorDisplayString = value;
@@ -34,7 +33,6 @@ namespace VRWidgets
 			}
 			set
 			{
-				Debug.Log ("CurrentDialInt being Set to: " + value);
 				if(currentDialInt != value){
 					SetPhysicsStep(value);
 				}
@@ -81,7 +79,6 @@ namespace VRWidgets
 		
 		private int ParseDialString (string valueString){
 			if(thisPickerType == PickerType.Generic){
-				Debug.Log ("ParseDialString returns: " + GenericLabels.IndexOf( valueString));
 				return GenericLabels.IndexOf( valueString);
 			}
 			if(thisPickerType == PickerType.Year){

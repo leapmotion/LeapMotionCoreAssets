@@ -53,7 +53,6 @@ namespace LMWidgets
     {
       Vector3 displacement = Vector3.Scale(transform.parent.InverseTransformPoint(m_target.transform.position) - m_targetPivot, m_interactionConstraints);
       transform.localPosition = displacement + m_pivot;
-      Debug.Log (gameObject.name + ": ApplyInteractions: " + Time.time);
     }
 
     protected override void Awake()

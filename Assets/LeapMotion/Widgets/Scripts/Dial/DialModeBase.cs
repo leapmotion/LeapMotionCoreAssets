@@ -117,7 +117,7 @@ namespace LMWidgets
         return RestrictStep (transform.localRotation.eulerAngles.y);
       }
       set {
-      	Debug.Log ("DialModeBase.CurrentStep is being set to: " + value);
+//      	Debug.Log ("DialModeBase.CurrentStep is being set to: " + value);
         if (steps <= 0)
           return;
         CurrentAngle = (value * (maximumAngle - minimumAngle) / steps) + minimumAngle;

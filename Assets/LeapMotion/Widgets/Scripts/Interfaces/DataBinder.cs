@@ -23,7 +23,6 @@ namespace LMWidgets {
     abstract protected void setDataModel(PayloadType value);
 
     public void SetCurrentData(PayloadType value) {
-      Debug.Log ("DataBinder: SetCurrentDate: " + Time.time);
       setDataModel (value);
       updateLinkedWidgets ();
       fireDataChangedEvent (GetCurrentData ());
@@ -31,7 +30,6 @@ namespace LMWidgets {
     }
 
     private void updateLinkedWidgets() {
-      Debug.Log ("Update Linked Widgets: " + Time.time);
       foreach(WidgetType widget in m_widgets) {
         widget.SetWidgetValue(GetCurrentData());
       }
