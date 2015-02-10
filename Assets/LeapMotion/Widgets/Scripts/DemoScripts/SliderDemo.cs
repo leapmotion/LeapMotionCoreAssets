@@ -11,7 +11,12 @@ public class SliderDemo : SliderBase
   public SliderDemoGraphics botLayer = null;
   public GameObject dot = null;
   public int numberOfDots = 0;
-
+  
+  public Color BotLayerPressedColor = new Color(0.0f, 1.0f, 1.0f, 1.0f);
+  public Color BotLayerReleasedColor = new Color(0.0f, 0.25f, 0.25f, 0.5f);
+  public Color DotsOnColor = new Color(0.0f, 1.0f, 1.0f, 1.0f);
+  public Color DotsOffColor = new Color(0.0f, 0.25f, 0.25f, 0.5f);
+	
   private List<GameObject> dots = new List<GameObject>();
 
   protected override void sliderPressed()
@@ -30,14 +35,14 @@ public class SliderDemo : SliderBase
   {
     topLayer.SetBloomGain(5.0f);
     botLayer.SetBloomGain(4.0f);
-    botLayer.SetColor(new Color(0.0f, 1.0f, 1.0f, 1.0f));
+	botLayer.SetColor(BotLayerPressedColor);
   }
 
   private void ReleasedGraphics()
   {
     topLayer.SetBloomGain(2.0f);
     botLayer.SetBloomGain(2.0f);
-    botLayer.SetColor(new Color(0.0f, 0.25f, 0.25f, 0.5f));
+	botLayer.SetColor(BotLayerReleasedColor);
   }
 
   // Updates the slider handle graphics
@@ -108,7 +113,7 @@ public class SliderDemo : SliderBase
         Renderer[] renderers = dots[i].GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in renderers)
         {
-          renderer.material.color = new Color(0.0f, 1.0f, 1.0f, 1.0f);
+		  renderer.material.color = DotsOnColor;
           renderer.material.SetFloat("_Gain", 3.0f);
         }
       }
@@ -117,7 +122,7 @@ public class SliderDemo : SliderBase
         Renderer[] renderers = dots[i].GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in renderers)
         {
-          renderer.material.color = new Color(0.0f, 0.25f, 0.25f, 0.5f);
+          renderer.material.color = DotsOffColor;
           renderer.material.SetFloat("_Gain", 1.0f);
         }
       }
