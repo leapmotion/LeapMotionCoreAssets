@@ -8,6 +8,7 @@ namespace LMWidgets
 {
 	public class DialGraphics : MonoBehaviour, AnalogInteractionHandler<int>, IDataBoundWidget<DialGraphics, string>
   {
+    // Events to implement for AnalogInteraction Handler.
     public event EventHandler<EventArg<int>> ChangeHandler;
     public event EventHandler<EventArg<int>> StartHandler;
     public event EventHandler<EventArg<int>> EndHandler;
@@ -128,6 +129,7 @@ namespace LMWidgets
       return index;
 		}
 
+    // Wrapper on top of setting value for IDataBoundWidget implementation.
     public void SetWidgetValue(string value) {
       CurrentDialValue = value;
     }
@@ -139,7 +141,6 @@ namespace LMWidgets
 			}
 			if(thisPickerType == PickerType.Year){
 				return Convert.ToInt32( YearLabels[valueInt]);
-				
 			}
 			if(thisPickerType == PickerType.Month){
 				return valueInt + 1;
@@ -181,6 +182,7 @@ namespace LMWidgets
       initializeDialLabels ();
     }
 
+    // Make DialLabels represent the proper list of labels.
     private void initializeDialLabels() {
       if (m_dialLabelsInitilized) {
         return;
