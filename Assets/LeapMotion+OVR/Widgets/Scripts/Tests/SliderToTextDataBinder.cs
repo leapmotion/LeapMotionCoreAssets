@@ -14,4 +14,8 @@ public class SliderToTextDataBinder : DataBinderSlider {
   override public float GetCurrentData() {
     return float.Parse(uiText.text);
   }
+
+  void LateUpdate() {
+    Debug.Log ("Late Update: " + Time.time);
+  }
 }

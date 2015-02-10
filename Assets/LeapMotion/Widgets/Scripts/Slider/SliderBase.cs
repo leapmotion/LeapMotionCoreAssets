@@ -107,6 +107,7 @@ namespace LMWidgets
 
     public void SetWidgetValue(float value) {
       if ( State == LeapPhysicsState.Interacting ) { return; } // Don't worry about state changes during interaction.
+      Debug.Log (gameObject.name + ": Set Widget Value: " + Time.time);
       SetPositionFromFraction (value);
     }
 
@@ -151,16 +152,20 @@ namespace LMWidgets
     /// </summary>
     private void CheckTrigger()
     {
-      if ( State == LeapPhysicsState.Interacting ) { 
-        fireSliderChanged(GetSliderFraction());
-        if ( m_dataBinder != null ) {
-          m_dataBinder.SetCurrentData(GetSliderFraction());
+      if (State == LeapPhysicsState.Interacting) { 
+        fireSliderChanged (GetSliderFraction ());
+        if (m_dataBinder != null) {
+          Debug.Log (gameObject.name + ": send interaction update: " + Time.time);
+          m_dataBinder.SetCurrentData (GetSliderFraction ());
+
         }
+      } else {
+        Debug.Log (gameObject.name + ": is reflecting: " + Time.time);
       }
     }
 
-    protected virtual void Update()
-    {
+    protected override void FixedUpdate()  {
+      base.FixedUpdate ();
       CheckTrigger();
     }
   }
