@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿//#define DEBUG_TIMING
+
+using UnityEngine;
 using System;
 using System.Collections;
 
@@ -107,7 +109,9 @@ namespace LMWidgets
 
     public void SetWidgetValue(float value) {
       if ( State == LeapPhysicsState.Interacting ) { return; } // Don't worry about state changes during interaction.
+#if DEBUG_TIMING
       Debug.Log (gameObject.name + ": Set Widget Value: " + Time.time);
+#endif
       SetPositionFromFraction (value);
     }
 
@@ -155,19 +159,30 @@ namespace LMWidgets
       if (State == LeapPhysicsState.Interacting) { 
         fireSliderChanged (GetSliderFraction ());
         if (m_dataBinder != null) {
+#if DEBUG_TIMING
           Debug.Log (gameObject.name + ": send interaction update: " + Time.time);
+#endif
           m_dataBinder.SetCurrentData (GetSliderFraction ());
 
         }
-      } else {
+      } 
+#if DEBUG_TIMING
+      else {
+
         Debug.Log (gameObject.name + ": is reflecting: " + Time.time);
       }
+#endif
     }
 
     protected override void FixedUpdate()  {
       base.FixedUpdate ();
       CheckTrigger();
     }
+#if DEBUG_TIMING
+    void LateUpdate() {
+      Debug.Log (gameObject.name + ": Late Update | localX: " + gameObject.transform.localPosition.x + " | fraction: " + GetSliderFraction ());
+    }
+#endif
   }
 }
 
