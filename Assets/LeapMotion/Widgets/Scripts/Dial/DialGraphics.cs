@@ -217,20 +217,18 @@ namespace LMWidgets
 			
 			
 			float currentLayoutXAngle = LabelAngleRangeStart;
-			int counter = 1;
 
-			foreach( string label in DialLabels ) {
+      for( int i=1; i<=DialLabels.Count; i++ ) {
 				Transform labelPrefab = Instantiate(LabelPrefab, DialCenter.transform.position, transform.rotation) as Transform;
 				labelPrefab.Rotate(currentLayoutXAngle, 0f, 0f);
 				LabelAngles.Add (-currentLayoutXAngle);			
 				labelPrefab.parent = DialCenter;
 				labelPrefab.localScale = new Vector3(1f, 1f, 1f);
 				Text labelText = labelPrefab.GetComponentInChildren<Text>();
-				labelText.text = DialLabels[counter - 1];
-				DialLabelAngles.Add(DialLabels[counter - 1], -currentLayoutXAngle);
+				labelText.text = DialLabels[i - 1];
+				DialLabelAngles.Add(DialLabels[i - 1], -currentLayoutXAngle);
 				labelText.transform.localPosition = new Vector3(0f, 0f, -DialRadius);
-				currentLayoutXAngle = ((Mathf.Abs(LabelAngleRangeStart) + Mathf.Abs(LabelAngleRangeEnd))/(DialLabels.Count)) * -counter;
-				counter++; 	
+				currentLayoutXAngle = ((Mathf.Abs(LabelAngleRangeStart) + Mathf.Abs(LabelAngleRangeEnd))/(DialLabels.Count)) * -i;
 			}
 
 			LabelPrefab.gameObject.SetActive(false);
