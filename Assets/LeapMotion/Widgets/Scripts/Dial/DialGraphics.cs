@@ -131,6 +131,7 @@ namespace LMWidgets
 
     // Wrapper on top of setting value for IDataBoundWidget implementation.
     public void SetWidgetValue(string value) {
+      if ( IsEngaged ) { return; } // Don't update if it's being interacted with.
       CurrentDialValue = value;
     }
 
