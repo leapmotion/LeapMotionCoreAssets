@@ -4,7 +4,6 @@ using System.Collections;
 namespace LMWidgets
 {
   public abstract class ButtonToggleBase : ButtonBase, BinaryInteractionHandler<bool>, IDataBoundWidget<ButtonToggleBase, bool> {
-    [SerializeField]
     protected DataBinderToggle m_dataBinder;
 
     protected bool m_toggleState = true;
