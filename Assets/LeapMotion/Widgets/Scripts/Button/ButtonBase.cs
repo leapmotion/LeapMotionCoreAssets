@@ -62,7 +62,6 @@ namespace LMWidgets
         return 0.0f;
       else
       {
-        float scale = transform.lossyScale.z;
         float fraction = transform.localPosition.z / m_localTriggerDistance;
         return Mathf.Clamp(fraction, 0.0f, 1.0f);
       }
