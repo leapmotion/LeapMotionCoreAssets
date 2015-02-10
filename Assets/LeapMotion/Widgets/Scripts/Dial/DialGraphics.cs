@@ -14,41 +14,42 @@ namespace LMWidgets
 
     protected DataBinderDial m_dataBinder;
 
-		private string currentDialValue; 
+		private string m_currentDialValue; 
 		public string CurrentDialValue   
 		{
 			get 
 			{
-				return currentDialValue; 
+				return m_currentDialValue; 
 			}
 			set
 			{
-				currentDialValue = value;
 				CurrentDialInt = ParseDialString(value);
+        m_currentDialValue = value;
 				EditorDisplayString = value;
 			}
 		}
-		private int currentDialInt; 
-		public int CurrentDialInt
-		{
-			get 
-			{
-				return currentDialInt; 
-			}
+
+    private int m_currentDialInt;
+    public int CurrentDialInt
+    {
+      get 
+      {
+        return m_currentDialInt; 
+      }
 			set
 			{
-				if(currentDialInt != value){
+				if(m_currentDialInt != value){
 					SetPhysicsStep(value);
 				}
-				currentDialInt = value;
+				m_currentDialInt = value;
 				EditorDisplayInt = value;
 
-        if ( !dialLabelsInitilized ) {
+        if ( !m_dialLabelsInitilized ) {
           initializeDialLabels ();
         }
 
         try { 
-          currentDialValue = DialLabels[currentDialInt];
+          m_currentDialValue = DialLabels[m_currentDialInt];
         }
         catch (System.ArgumentOutOfRangeException e ){
           Debug.LogException(e);
@@ -59,7 +60,7 @@ namespace LMWidgets
 		public string EditorDisplayString;
 		public int EditorDisplayInt;
 		
-		private string currentTestString = "";
+		private string m_currentTestString = "";
     [HideInInspector]
 		public string TestString = "";
 		public List<string> GenericLabels;
@@ -78,7 +79,8 @@ namespace LMWidgets
 		public Transform DialCenter;
 		public List<float> LabelAngles;
 		public Dictionary<string, float> DialLabelAngles = new Dictionary<string, float>();
-		
+
+    public bool IsEngaged = false;
 		
 		public Color PickerColorInActive;
 		public Color PickerColorActive;
@@ -91,7 +93,7 @@ namespace LMWidgets
 		
 		public Color TextColor;
 
-    private bool dialLabelsInitilized = false;
+    private bool m_dialLabelsInitilized = false;
 		
 		private int ParseDialString (string valueString){
 			if(thisPickerType == PickerType.Generic){
@@ -117,7 +119,7 @@ namespace LMWidgets
     }
 
 		//covert the integer from WidgetController.GetCurrentData() to index integer
-		private int ParseDialInt (int valueInt){
+		private int parseDialInt (int valueInt){
 			if(thisPickerType == PickerType.Generic){
 				return valueInt;
 			}
@@ -166,7 +168,7 @@ namespace LMWidgets
     }
 
     private void initializeDialLabels() {
-      if (dialLabelsInitilized) {
+      if (m_dialLabelsInitilized) {
         return;
       }
 
@@ -187,13 +189,11 @@ namespace LMWidgets
         DialLabels = HourLabels;
       }
 
-      dialLabelsInitilized = true;
+      m_dialLabelsInitilized = true;
     }
-
-
-		
+    		
 		void Start () {
-			currentTestString = TestString;
+			m_currentTestString = TestString;
       	
 			DialCenter.localPosition = new Vector3(0f, 0f, DialRadius);
 			DialPhysicsOffset.localPosition = new Vector3(-DialRadius * 10f, 0f, 0f);
@@ -223,42 +223,36 @@ namespace LMWidgets
         CurrentDialValue = m_dataBinder.GetCurrentData();
 				SetPhysicsStep(CurrentDialInt);
 			}
-			
 		}
-	
-		public bool IsEngaged = false;
 		
 		void Update () {
 			
       if(Input.GetKeyUp(KeyCode.Space)) {
-				if(TestString != currentTestString && TestString != "") {
+				if(TestString != m_currentTestString && TestString != "") {
 					CurrentDialValue = TestString;
-					currentTestString = TestString;
+					m_currentTestString = TestString;
 				}
 			}
 
 			Vector3 physicsRotation = new Vector3 (DialPhysics.localRotation.eulerAngles.y, 0f, 0f);
 			DialCenter.localEulerAngles = physicsRotation;
-			CurrentDialInt = ParseDialInt (m_dialModeBase.CurrentStep);
+			CurrentDialInt = parseDialInt (m_dialModeBase.CurrentStep);
 
 			if(IsEngaged == true){
 				if(m_dataBinder != null){
-					//Set the Dial value based on an int
-          m_dataBinder.SetCurrentData(CurrentDialValue);
+          m_dataBinder.SetCurrentData(CurrentDialValue); //Set the Dial value based on an int
 				}
 
 				if(ChangeHandler != null){
-					//Debug.Log ("ChangeHandler event firing");
 					ChangeHandler(this, new EventArg<int>( CurrentDialInt));
 				}
 			}
 		}
 
-		public void HiLightDial () {
+		public void HilightDial () {
 			IsEngaged = true;
 			
       if( StartHandler != null )  {	
-				//Debug.Log ("HiLightDial() event firing");
 				StartHandler(this, new EventArg<int>(CurrentDialInt));
 			}
 
@@ -266,7 +260,7 @@ namespace LMWidgets
 		}
 		
 		public void UpdateDial (){
-			CurrentDialInt = ParseDialInt (m_dialModeBase.CurrentStep);
+			CurrentDialInt = parseDialInt (m_dialModeBase.CurrentStep);
 			
       if(m_dataBinder != null){
 				//Set the Dial value based on a string
@@ -275,7 +269,6 @@ namespace LMWidgets
 			}
 
 			if(EndHandler != null){
-				//Debug.Log ("UpdateDial() event firing");
 				EndHandler(this, new EventArg<int>(CurrentDialInt));
       }
 

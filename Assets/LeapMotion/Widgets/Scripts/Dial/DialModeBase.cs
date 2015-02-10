@@ -138,7 +138,7 @@ namespace LMWidgets
           transform.rigidbody.angularVelocity = Vector3.zero;
         interacting_ = true;
         if (dialGraphics)
-          dialGraphics.HiLightDial ();
+          dialGraphics.HilightDial ();
       }
     }
 
