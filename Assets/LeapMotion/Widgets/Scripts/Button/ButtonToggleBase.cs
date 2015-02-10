@@ -15,10 +15,10 @@ namespace LMWidgets
 
     protected override void Start() {
       if ( m_dataBinder != null ) {
-        setButtonState(m_dataBinder.GetCurrentData()); // Initilize widget value
+        setButtonState(m_dataBinder.GetCurrentData(), true); // Initilize widget value
       }
       else {
-        setButtonState(false);
+        setButtonState(false, true);
       }
     }
 
@@ -46,8 +46,8 @@ namespace LMWidgets
       m_dataBinder = null;
     }
 
-    protected virtual void setButtonState(bool toggleState) {
-      if ( toggleState == m_toggleState ) { return; } // Don't do anything if there's no change
+    protected virtual void setButtonState(bool toggleState, bool force = false) {
+      if ( toggleState == m_toggleState && !force ) { return; } // Don't do anything if there's no change
       m_toggleState = toggleState;
       if (m_toggleState == true)
         ButtonTurnsOn();

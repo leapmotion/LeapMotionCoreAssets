@@ -49,15 +49,16 @@ namespace LMWidgets {
     // Checks for change in data.
     void Update() {
       PayloadType currentData = GetCurrentData();
-      fireDataChangedEvent (currentData);
+      if (!compare (m_lastDataValue, currentData)) {
+        updateLinkedWidgets ();
+        fireDataChangedEvent (currentData);
+      }
       m_lastDataValue = currentData;
     }
 
     protected void fireDataChangedEvent(PayloadType currentData) {
-      if ( !compare (m_lastDataValue, currentData ) ) {
-        EventHandler<EventArg<PayloadType>> handler = DataChangedHandler;
-        if ( handler != null ) { handler(this, new EventArg<PayloadType>(currentData)); }
-      }
+      EventHandler<EventArg<PayloadType>> handler = DataChangedHandler;
+      if ( handler != null ) { handler(this, new EventArg<PayloadType>(currentData)); }
     }
 
     // Handles proper comparison of generic types.
