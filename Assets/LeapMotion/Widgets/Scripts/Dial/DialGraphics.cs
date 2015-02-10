@@ -70,9 +70,6 @@ namespace LMWidgets
 		public string EditorDisplayString;
 		public int EditorDisplayInt;
 		
-		private string m_currentTestString = "";
-    [HideInInspector]
-		public string TestString = "";
 		public List<string> GenericLabels;
 		public List<string> DialLabels;
 		public List<string> YearLabels;
@@ -210,8 +207,6 @@ namespace LMWidgets
     }
     		
 		void Start () {
-			m_currentTestString = TestString;
-      	
 			DialCenter.localPosition = new Vector3(0f, 0f, DialRadius);
 			DialPhysicsOffset.localPosition = new Vector3(-DialRadius * 10f, 0f, 0f);
 			
@@ -241,13 +236,6 @@ namespace LMWidgets
 		}
 		
 		void Update () {
-			
-      if(Input.GetKeyUp(KeyCode.Space)) {
-				if(TestString != m_currentTestString && TestString != "") {
-					CurrentDialValue = TestString;
-					m_currentTestString = TestString;
-				}
-			}
 
 			Vector3 physicsRotation = new Vector3 (DialPhysics.localRotation.eulerAngles.y, 0f, 0f);
 			DialCenter.localEulerAngles = physicsRotation;
