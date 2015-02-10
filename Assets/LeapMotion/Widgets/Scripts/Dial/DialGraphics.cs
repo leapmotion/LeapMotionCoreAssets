@@ -3,10 +3,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
-using VRWidgets;
-using LMWidgets;
 
-namespace VRWidgets
+namespace LMWidgets
 {
 
 	public class DialGraphics : MonoBehaviour, AnalogInteractionHandler<int>{
