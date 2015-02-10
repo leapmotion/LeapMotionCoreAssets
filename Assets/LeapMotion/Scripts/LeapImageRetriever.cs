@@ -1,4 +1,6 @@
-﻿/******************************************************************************\
+﻿//#define OVERRIDE_MANTIS
+
+/******************************************************************************\
 * Copyright (C) Leap Motion, Inc. 2011-2014.                                   *
 * Leap Motion proprietary. Licensed under Apache 2.0                           *
 * Available at http://www.apache.org/licenses/LICENSE-2.0.html                 *
@@ -119,12 +121,9 @@ public class LeapImageRetriever : MonoBehaviour
 
   private LM_DEVICE GetDevice(int width)
   {
-    const bool OVERRIDE_MANTIS = false;
-    if (OVERRIDE_MANTIS)
-    {
+#if OVERRIDE_MANTIS
       return LM_DEVICE.MANTIS;
-    }
-
+#endif
     if (width == LMDevice.PERIPERAL_WIDTH)
     {
       return LM_DEVICE.PERIPHERAL;
