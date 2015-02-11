@@ -10,11 +10,15 @@ public class DatePickerHideVolume : MonoBehaviour {
 	}
 	
 	void OnTriggerEnter(Collider other) {
-		other.GetComponentInChildren<Text>().enabled = false;
+    Text text = other.GetComponentInChildren<Text> ();
+    if (text == null) { return; }
+    text.enabled = false;
 	}
 	
 	void OnTriggerExit(Collider other) {
-		other.GetComponentInChildren<Text>().enabled = true;
+    Text text = other.GetComponentInChildren<Text> ();
+    if (text == null) { return; }
+    text.enabled = true;
 	}
 	
 	// Update is called once per frame
