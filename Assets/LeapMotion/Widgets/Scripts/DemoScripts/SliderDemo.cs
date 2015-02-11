@@ -5,7 +5,9 @@ using LMWidgets;
 
 public class SliderDemo : SliderBase 
 {
+  // ASSUME: Active Bar is a transform-sibling of SliderDemo
   public GameObject activeBar = null;
+  // ASSUME: topLayer, midLayer & botLayer are transform-children of SliderDemo
   public SliderDemoGraphics topLayer = null;
   public SliderDemoGraphics midLayer = null;
   public SliderDemoGraphics botLayer = null;
@@ -50,11 +52,15 @@ public class SliderDemo : SliderBase
   {
     float handleFraction = GetHandleFraction();
     Vector3 topPosition = transform.localPosition;
+    topPosition.x = 0f;
+    topPosition.y = 0f;
     topPosition.z -= (1.0f - handleFraction) * 0.25f;
-    topPosition.z = Mathf.Min(topPosition.z, -0.003f); // -0.003 is so midLayer will never intercept with top or bot layer
+    topPosition.z = Mathf.Min(topPosition.z, -0.003f); // -0.003 is so midLayer will never intersect with top or bot layer
     topLayer.transform.localPosition = topPosition;
 
     Vector3 botPosition = transform.localPosition;
+    botPosition.x = 0f;
+    topPosition.y = 0f;
     botPosition.z = -0.001f;
     botLayer.transform.localPosition = botPosition;
 
