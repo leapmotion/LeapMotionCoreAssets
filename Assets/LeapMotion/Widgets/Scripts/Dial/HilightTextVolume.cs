@@ -18,20 +18,21 @@ namespace LMWidgets {
   	
   	void OnTriggerEnter(Collider other) {
   		Text text = other.GetComponentInChildren<Text>();
+      if (text == null) { return; }
   		text.color = Color.white;
-  //		CurrentHilightValue = text.text;
-  		
-  		
   	}
   	
   	void OnTriggerStay(Collider other){
   		Text text = other.GetComponentInChildren<Text>();
+      if (text == null) { return; }
   		text.color = Color.white;
   		CurrentHilightValue = text.text;
   	}
   	
   	void OnTriggerExit(Collider other) {
-  		other.GetComponentInChildren<Text>().color = textColor;
+      Text text = other.GetComponentInChildren<Text> ();
+      if (text == null) { return; }
+      text.color = textColor;
   	}
   	
   	
