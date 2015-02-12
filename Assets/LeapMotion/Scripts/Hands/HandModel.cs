@@ -67,12 +67,12 @@ public abstract class HandModel : MonoBehaviour {
 
   // Returns the length of the forearm
   public float GetArmLength() {
-    return (hand_.Arm.WristPosition + hand_.Arm.ElbowPosition).Magnitude;
+    return (hand_.Arm.WristPosition + hand_.Arm.ElbowPosition).Magnitude * UnityVectorExtension.INPUT_SCALE;
   }
   
   // Returns the width of the forearm
   public float GetArmWidth() {
-    return hand_.Arm.Width;
+    return hand_.Arm.Width * UnityVectorExtension.INPUT_SCALE;
   }
 
   // Returns the lower arm elbow position in relation to the controller.

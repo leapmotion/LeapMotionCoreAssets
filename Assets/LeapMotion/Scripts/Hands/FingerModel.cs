@@ -102,11 +102,11 @@ public abstract class FingerModel : MonoBehaviour {
   
   // Returns the length of the finger bone
   public float GetBoneLength(int bone_type) {
-    return finger_.Bone ((Bone.BoneType)(bone_type)).Length;
+    return finger_.Bone ((Bone.BoneType)(bone_type)).Length * UnityVectorExtension.INPUT_SCALE;
   }
   
   // Returns the width of the finger bone
   public float GetBoneWidth(int bone_type) {
-    return finger_.Bone((Bone.BoneType)(bone_type)).Width;
+    return finger_.Bone((Bone.BoneType)(bone_type)).Width * UnityVectorExtension.INPUT_SCALE;
   }
 }
