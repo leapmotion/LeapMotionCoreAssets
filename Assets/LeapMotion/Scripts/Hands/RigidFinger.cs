@@ -27,6 +27,15 @@ public class RigidFinger : SkeletalFinger {
   public override void UpdateFinger() {
     for (int i = 0; i < bones.Length; ++i) {
       if (bones[i] != null) {
+        // Set bone dimensions.
+        CapsuleCollider capsule = GetComponent<CapsuleCollider>();
+        if (capsule != null)
+        {
+          capsule.direction = 2;
+          capsule.radius = GetBoneWidth(i)/2f;
+          capsule.height = GetBoneLength(i) + GetBoneWidth(i);
+        }
+
         // Set velocity.
         Vector3 target_bone_position = GetBoneCenter(i);
         

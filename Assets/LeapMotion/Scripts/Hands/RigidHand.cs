@@ -54,6 +54,15 @@ public class RigidHand : SkeletalHand {
 
     if (forearm != null)
     {
+      // Set arm dimensions.
+      CapsuleCollider capsule = GetComponent<CapsuleCollider>();
+      if (capsule != null)
+      {
+        capsule.direction = 2;
+        capsule.radius = GetArmWidth()/2f;
+        capsule.height = GetArmLength() + GetArmWidth();
+      }
+
       // Set arm velocity.
       Vector3 target_position = GetArmCenter();
       forearm.rigidbody.velocity = (target_position - forearm.transform.position) *
