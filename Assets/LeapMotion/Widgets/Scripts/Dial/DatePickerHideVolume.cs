@@ -11,15 +11,13 @@ public class DatePickerHideVolume : MonoBehaviour {
 	
 	void OnTriggerEnter(Collider other) {
     Text text = other.GetComponentInChildren<Text> ();
-    if (text == null)
-      return;
+    if (text == null) { return; }
     text.enabled = false;
 	}
 	
 	void OnTriggerExit(Collider other) {
     Text text = other.GetComponentInChildren<Text> ();
-    if (text == null)
-      return;
+    if (text == null) { return; }
     text.enabled = true;
 	}
 	

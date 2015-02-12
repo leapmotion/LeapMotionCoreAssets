@@ -16,29 +16,23 @@ namespace LMWidgets {
   		textColor = dialGraphics.TextColor;
   	}
   	
-  	void OnTriggerEnter(Collider other) {
-      Text text = other.GetComponentInChildren<Text>();
+    void OnTriggerEnter(Collider other) {
       // TODO: There should be no need for a collider on labels to derive a highlight.
-      if (text == null)
-        return;
+  		Text text = other.GetComponentInChildren<Text>();
+      if (text == null) { return; }
   		text.color = Color.white;
-  //		CurrentHilightValue = text.text;
-  		
-  		
   	}
   	
   	void OnTriggerStay(Collider other){
-      Text text = other.GetComponentInChildren<Text>();
-      if (text == null)
-        return;
+  		Text text = other.GetComponentInChildren<Text>();
+      if (text == null) { return; }
   		text.color = Color.white;
   		CurrentHilightValue = text.text;
   	}
   	
   	void OnTriggerExit(Collider other) {
       Text text = other.GetComponentInChildren<Text> ();
-      if (text == null)
-        return;
+      if (text == null) { return; }
       text.color = textColor;
   	}
   	
