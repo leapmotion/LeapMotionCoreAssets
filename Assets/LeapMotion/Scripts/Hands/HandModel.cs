@@ -67,7 +67,7 @@ public abstract class HandModel : MonoBehaviour {
 
   // Returns the length of the forearm
   public float GetArmLength() {
-    return (hand_.Arm.WristPosition + hand_.Arm.ElbowPosition).Magnitude * UnityVectorExtension.INPUT_SCALE;
+    return (hand_.Arm.WristPosition - hand_.Arm.ElbowPosition).Magnitude * UnityVectorExtension.INPUT_SCALE;
   }
   
   // Returns the width of the forearm
