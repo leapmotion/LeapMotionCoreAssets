@@ -28,10 +28,14 @@ public class RigidFinger : SkeletalFinger {
     for (int i = 0; i < bones.Length; ++i) {
       if (bones[i] != null) {
         // Set bone dimensions.
-        CapsuleCollider capsule = GetComponent<CapsuleCollider>();
+        CapsuleCollider capsule = bones[i].GetComponent<CapsuleCollider>();
         if (capsule != null)
         {
+          // Initialization
           capsule.direction = 2;
+          bones[i].transform.localScale = new Vector3(1f, 1f, 1f);
+
+          // Update
           capsule.radius = GetBoneWidth(i)/2f;
           capsule.height = GetBoneLength(i) + GetBoneWidth(i);
         }
