@@ -99,4 +99,14 @@ public abstract class FingerModel : MonoBehaviour {
         finger_.Bone((Bone.BoneType)(bone_type)).Basis.Rotation(mirror_z_axis_);
     return controller_.transform.rotation * local_rotation;
   }
+  
+  // Returns the length of the finger bone
+  public float GetBoneLength(int bone_type) {
+    return finger_.Bone ((Bone.BoneType)(bone_type)).Length * UnityVectorExtension.INPUT_SCALE;
+  }
+  
+  // Returns the width of the finger bone
+  public float GetBoneWidth(int bone_type) {
+    return finger_.Bone((Bone.BoneType)(bone_type)).Width * UnityVectorExtension.INPUT_SCALE;
+  }
 }

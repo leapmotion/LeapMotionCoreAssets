@@ -52,31 +52,42 @@ public class RigidHand : SkeletalHand {
       }
     }
 
-    if (forearm != null)
-    {
-      // Set arm velocity.
-      Vector3 target_position = GetArmCenter();
-      forearm.rigidbody.velocity = (target_position - forearm.transform.position) *
-                                   (1 - filtering) / Time.deltaTime;
+    if (forearm != null) {
+      // Set arm dimensions.
+      CapsuleCollider capsule = forearm.GetComponent<CapsuleCollider> ();
+      if (capsule != null) {
+        // Initialization
+        capsule.direction = 2;
+        forearm.transform.localScale = new Vector3(1f, 1f, 1f);
+        
+        // Update
+        capsule.radius = GetArmWidth () / 2f;
+        capsule.height = GetArmLength () + GetArmWidth ();
+      }
 
       // Set arm velocity.
-      Quaternion target_rotation = GetArmRotation();
+      Vector3 target_position = GetArmCenter ();
+      forearm.rigidbody.velocity = (target_position - forearm.transform.position) *
+        (1 - filtering) / Time.deltaTime;
+
+      // Set arm velocity.
+      Quaternion target_rotation = GetArmRotation ();
       Quaternion delta_rotation = target_rotation *
-                                  Quaternion.Inverse(forearm.transform.rotation);
+        Quaternion.Inverse (forearm.transform.rotation);
       float angle = 0.0f;
       Vector3 axis = Vector3.zero;
-      delta_rotation.ToAngleAxis(out angle, out axis);
+      delta_rotation.ToAngleAxis (out angle, out axis);
 
-      if (angle >= 180)
-      {
+      if (angle >= 180) {
         angle = 360 - angle;
         axis = -axis;
       }
-      if (angle != 0)
-      {
+      if (angle != 0) {
         float delta_radians = (1 - filtering) * angle * Mathf.Deg2Rad;
         forearm.rigidbody.angularVelocity = delta_radians * axis / Time.deltaTime;
       }
+    } else {
+      Debug.Log ("No forearm");
     }
   }
 }
