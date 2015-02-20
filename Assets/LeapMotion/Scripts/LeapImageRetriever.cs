@@ -240,8 +240,8 @@ public class LeapImageRetriever : MonoBehaviour
       dist_pixelsY_ = new Color32[width * height];
       DestroyImmediate(distortionX_);
       DestroyImmediate(distortionY_);
-      distortionX_ = new Texture2D(width, height, TextureFormat.RGBA32, false);
-      distortionY_ = new Texture2D(width, height, TextureFormat.RGBA32, false);
+      distortionX_ = new Texture2D(width, height, TextureFormat.RGBA32, false, true);
+      distortionY_ = new Texture2D(width, height, TextureFormat.RGBA32, false, true);
       distortionX_.wrapMode = TextureWrapMode.Clamp;
       distortionY_.wrapMode = TextureWrapMode.Clamp;
     }
