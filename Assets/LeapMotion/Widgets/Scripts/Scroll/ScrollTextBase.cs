@@ -3,27 +3,6 @@ using UnityEngine.UI;
 using System;
 using System.Collections;
 
-// FIXME: Use a triplet of ExponentialSmoothing
-public class ExponentialSmoothingXYZ
-{
-  private float alpha;
-  public float X = float.MinValue;
-  public float Y = float.MinValue;
-  public float Z = float.MinValue;
-  
-  public ExponentialSmoothingXYZ(float alpha)
-  {
-    this.alpha = alpha;
-  }
-  
-  public void Calculate(float X, float Y, float Z)
-  {
-    this.X = (this.X == float.MinValue) ? X : alpha * X + (1 - alpha) * this.X;
-    this.Y = (this.Y == float.MinValue) ? Y : alpha * Y + (1 - alpha) * this.Y;
-    this.Z = (this.Z == float.MinValue) ? Z : alpha * Z + (1 - alpha) * this.Z;
-  }
-}
-
 namespace LMWidgets
 {
   public abstract class ScrollTextBase : LeapPhysicsSpring, AnalogInteractionHandler<float>
@@ -40,13 +19,23 @@ namespace LMWidgets
     public float triggerDistance = 0.025f;
     public float cushionThickness = 0.005f;
 
-    protected ExponentialSmoothingXYZ m_scrollVelocity = new ExponentialSmoothingXYZ(0.5f);
+    static float alpha = 0.5f; // FIXME: Make this a delay
+    protected ExponentialSmoothing[] m_scrollVelocity;
     private Vector3 m_scrollPivot = Vector3.zero;
     private Vector3 m_contentPivot = Vector3.zero;
 
     protected float m_localTriggerDistance;
     protected float m_localCushionThickness;
     protected bool m_isPressed = false;
+
+    protected override void Awake() {
+      base.Awake ();
+      m_scrollVelocity = new ExponentialSmoothing[2];
+      for (int dim = 0; dim < 2; ++dim) {
+        m_scrollVelocity [dim] = new ExponentialSmoothing();
+        m_scrollVelocity [dim].SetAlpha (alpha);
+      }
+    }
 
     protected virtual void scrollPressed() {
       fireScrollStart(content.transform.localPosition.y);
@@ -89,7 +78,8 @@ namespace LMWidgets
       content.transform.localPosition = contentLocalPosition;
       Vector3 currPosition = content.transform.localPosition;
       Vector3 contentVelocity = (currPosition - prevPosition) / Time.deltaTime;
-      m_scrollVelocity.Calculate(contentVelocity.x, contentVelocity.y, contentVelocity.z);
+      m_scrollVelocity [0].Update (contentVelocity.x);
+      m_scrollVelocity [1].Update (contentVelocity.y);
     }
 
     /// <summary>
@@ -126,7 +116,7 @@ namespace LMWidgets
         {
           m_isPressed = false;
           scrollReleased();
-          content.rigidbody2D.velocity = new Vector2(m_scrollVelocity.X, m_scrollVelocity.Y);
+          content.rigidbody2D.velocity = new Vector2(m_scrollVelocity[0].value, m_scrollVelocity[1].value);
         }
       }
     }
