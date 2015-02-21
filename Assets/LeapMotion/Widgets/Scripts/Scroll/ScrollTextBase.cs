@@ -19,7 +19,7 @@ namespace LMWidgets
     public float triggerDistance = 0.025f;
     public float cushionThickness = 0.005f;
 
-    static float alpha = 0.5f; // FIXME: Make this a delay
+    const float scrollDelay = 0.02f;
     protected ExponentialSmoothing[] m_scrollVelocity;
     private Vector3 m_scrollPivot = Vector3.zero;
     private Vector3 m_contentPivot = Vector3.zero;
@@ -33,7 +33,7 @@ namespace LMWidgets
       m_scrollVelocity = new ExponentialSmoothing[2];
       for (int dim = 0; dim < 2; ++dim) {
         m_scrollVelocity [dim] = new ExponentialSmoothing();
-        m_scrollVelocity [dim].SetAlpha (alpha);
+        m_scrollVelocity [dim].delay = scrollDelay;
       }
     }
 
@@ -78,8 +78,8 @@ namespace LMWidgets
       content.transform.localPosition = contentLocalPosition;
       Vector3 currPosition = content.transform.localPosition;
       Vector3 contentVelocity = (currPosition - prevPosition) / Time.deltaTime;
-      m_scrollVelocity [0].Update (contentVelocity.x);
-      m_scrollVelocity [1].Update (contentVelocity.y);
+      m_scrollVelocity [0].Update (contentVelocity.x, Time.deltaTime);
+      m_scrollVelocity [1].Update (contentVelocity.y, Time.deltaTime);
     }
 
     /// <summary>
