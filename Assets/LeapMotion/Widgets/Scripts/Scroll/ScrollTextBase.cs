@@ -3,6 +3,27 @@ using UnityEngine.UI;
 using System;
 using System.Collections;
 
+// FIXME: Use a triplet of ExponentialSmoothing
+public class ExponentialSmoothingXYZ
+{
+  private float alpha;
+  public float X = float.MinValue;
+  public float Y = float.MinValue;
+  public float Z = float.MinValue;
+  
+  public ExponentialSmoothingXYZ(float alpha)
+  {
+    this.alpha = alpha;
+  }
+  
+  public void Calculate(float X, float Y, float Z)
+  {
+    this.X = (this.X == float.MinValue) ? X : alpha * X + (1 - alpha) * this.X;
+    this.Y = (this.Y == float.MinValue) ? Y : alpha * Y + (1 - alpha) * this.Y;
+    this.Z = (this.Z == float.MinValue) ? Z : alpha * Z + (1 - alpha) * this.Z;
+  }
+}
+
 namespace LMWidgets
 {
   public abstract class ScrollTextBase : LeapPhysicsSpring, AnalogInteractionHandler<float>

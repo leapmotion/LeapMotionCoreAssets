@@ -1,41 +1,34 @@
-﻿public class ExponentialSmoothing
+﻿/// <summary>
+/// Time-step independent exponential smoothing.
+/// </summary>
+/// <remarks>
+/// When moving at a constant speed: speed * delay = Value - ExponentialSmoothing.value.
+/// </remarks>
+public class ExponentialSmoothing
 {
-  private float alpha;
-  private float value = float.MinValue;
+  public float value = 0f; // Filtered value
+  public float delay = 0f; // Mean delay
+  public bool reset = true; // Reset on Next Update
 
-  public ExponentialSmoothing(float alpha)
+  public void SetAlpha(float alpha, float deltaTime = 1f)
   {
-    this.alpha = alpha;
+    this.delay = deltaTime * alpha / (1f - alpha);
   }
 
-  public float Calculate(float value)
+  public float Update(float value, float deltaTime = 1f)
   {
-    this.value = (this.value == float.MinValue) ? value : alpha * value + (1 - alpha) * this.value;
+    if (deltaTime > 0f &&
+        !reset) {
+      float gamma = delay / deltaTime;
+      float alpha = gamma / (1f + gamma);
+      // NOTE: If deltaTime -> 0 then alpha -> 1,
+      // reducing the filter to this.value = value.
+      this.value *= 1f - alpha;
+      this.value += alpha * value;
+    } else {
+      this.value = value;
+      reset = false;
+    }
     return this.value;
-  }
-
-  public float Value()
-  {
-    return this.value;
-  }
-}
-
-public class ExponentialSmoothingXYZ
-{
-  private float alpha;
-  public float X = float.MinValue;
-  public float Y = float.MinValue;
-  public float Z = float.MinValue;
-
-  public ExponentialSmoothingXYZ(float alpha)
-  {
-    this.alpha = alpha;
-  }
-
-  public void Calculate(float X, float Y, float Z)
-  {
-    this.X = (this.X == float.MinValue) ? X : alpha * X + (1 - alpha) * this.X;
-    this.Y = (this.Y == float.MinValue) ? Y : alpha * Y + (1 - alpha) * this.Y;
-    this.Z = (this.Z == float.MinValue) ? Z : alpha * Z + (1 - alpha) * this.Z;
   }
 }
