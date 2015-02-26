@@ -11,6 +11,13 @@ namespace LMWidgets
     public abstract void ButtonTurnsOn();
     public abstract void ButtonTurnsOff();
 
+    public bool ToggleState {
+      get { return m_toggleState; }
+      set {
+        setButtonState(value);
+        if ( m_dataBinder != null ) { m_dataBinder.SetCurrentData(m_toggleState); } // Update externally linked data
+      }
+    }
 
     protected override void Start() {
       if ( m_dataBinder != null ) {
