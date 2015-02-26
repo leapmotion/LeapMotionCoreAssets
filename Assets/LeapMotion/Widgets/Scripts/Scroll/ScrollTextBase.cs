@@ -19,13 +19,23 @@ namespace LMWidgets
     public float triggerDistance = 0.025f;
     public float cushionThickness = 0.005f;
 
-    protected ExponentialSmoothingXYZ m_scrollVelocity = new ExponentialSmoothingXYZ(0.5f);
+    const float scrollDelay = 0.02f;
+    protected ExponentialSmoothing[] m_scrollVelocity;
     private Vector3 m_scrollPivot = Vector3.zero;
     private Vector3 m_contentPivot = Vector3.zero;
 
     protected float m_localTriggerDistance;
     protected float m_localCushionThickness;
     protected bool m_isPressed = false;
+
+    protected override void Awake() {
+      base.Awake ();
+      m_scrollVelocity = new ExponentialSmoothing[2];
+      for (int dim = 0; dim < 2; ++dim) {
+        m_scrollVelocity [dim] = new ExponentialSmoothing();
+        m_scrollVelocity [dim].delay = scrollDelay;
+      }
+    }
 
     protected virtual void scrollPressed() {
       fireScrollStart(content.transform.localPosition.y);
@@ -68,7 +78,8 @@ namespace LMWidgets
       content.transform.localPosition = contentLocalPosition;
       Vector3 currPosition = content.transform.localPosition;
       Vector3 contentVelocity = (currPosition - prevPosition) / Time.deltaTime;
-      m_scrollVelocity.Calculate(contentVelocity.x, contentVelocity.y, contentVelocity.z);
+      m_scrollVelocity [0].Update (contentVelocity.x, Time.deltaTime);
+      m_scrollVelocity [1].Update (contentVelocity.y, Time.deltaTime);
     }
 
     /// <summary>
@@ -105,7 +116,7 @@ namespace LMWidgets
         {
           m_isPressed = false;
           scrollReleased();
-          content.rigidbody2D.velocity = new Vector2(m_scrollVelocity.X, m_scrollVelocity.Y);
+          content.rigidbody2D.velocity = new Vector2(m_scrollVelocity[0].value, m_scrollVelocity[1].value);
         }
       }
     }

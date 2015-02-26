@@ -15,7 +15,7 @@ public class ScrollTextDemo : ScrollTextBase
   {
     base.scrollReleased();
     // Don't allow the scroll to move sideways because the content is only 1-dimensional
-    m_scrollVelocity.X = 0.0f;
+    m_scrollVelocity [0].value = 0.0f;
   }
 
   private void ApplyContentConstraints()

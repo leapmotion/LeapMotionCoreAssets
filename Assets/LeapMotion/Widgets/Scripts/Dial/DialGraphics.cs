@@ -96,8 +96,6 @@ namespace LMWidgets
 		public HilightTextVolume hilightTextVolume;
 		public Color TextColor;
 
-    private bool m_dialLabelsInitilized = false;
-
     private int parseDialString (string valueString){
       int index = -1;
       
