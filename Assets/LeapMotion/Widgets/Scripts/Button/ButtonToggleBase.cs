@@ -11,6 +11,19 @@ namespace LMWidgets
     public abstract void ButtonTurnsOn();
     public abstract void ButtonTurnsOff();
 
+    /// <summary>
+    /// Gets or sets the current state of the toggle button.
+    /// </summary>
+    /// <remarks>
+    /// Setting this property will also update any associated data-binder.
+    /// </remarks>
+    public bool ToggleState {
+      get { return m_toggleState; }
+      set {
+        setButtonState(value);
+        if ( m_dataBinder != null ) { m_dataBinder.SetCurrentData(m_toggleState); } // Update externally linked data
+      }
+    }
 
     protected override void Start() {
       if ( m_dataBinder != null ) {
@@ -42,7 +55,7 @@ namespace LMWidgets
       m_dataBinder = null;
     }
 
-    protected virtual void setButtonState(bool toggleState, bool force = false) {
+    private void setButtonState(bool toggleState, bool force = false) {
       if ( toggleState == m_toggleState && !force ) { return; } // Don't do anything if there's no change
       m_toggleState = toggleState;
       if (m_toggleState == true)
@@ -65,9 +78,8 @@ namespace LMWidgets
         ButtonTurnsOn();
       else
         ButtonTurnsOff();
-      m_toggleState = !m_toggleState;
+      ToggleState = !ToggleState;
       base.FireButtonStart(m_toggleState);
-      if ( m_dataBinder != null ) { m_dataBinder.SetCurrentData(m_toggleState); } // Update externally linked data
     }
   }
 }

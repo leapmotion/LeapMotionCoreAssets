@@ -6,7 +6,8 @@ namespace LMWidgets
   public enum LeapPhysicsState
   {
     Interacting, // Responsible for moving the widgets with the fingers
-    Reflecting // Responsible for reflecting widget information and simulating the physics
+    Reflecting, // Responsible for reflecting widget information and simulating the physics
+    Disabled // State in  which the widget is disabled
   }
 
   /// <summary>
@@ -22,14 +23,49 @@ namespace LMWidgets
     protected Vector3 m_pivot = Vector3.zero;
     protected Vector3 m_targetPivot = Vector3.zero;
 
+    /// <summary>
+    /// Represents the current Physics state.
+    /// </summary>
+    /// <remarks>
+    /// Use this property to set the state rather than the m_state field so that proper events and functions are called on changes.
+    /// Chaning the property will also call onInteractionEnabled and onInteractionDisabled as appropritate.
+    /// </remarks>
     protected LeapPhysicsState State { 
       get {
         return m_state; 
       }
       set {
-        m_state = value;
+
+        // Call enabled and disabled functions as appropriate.
+        if ( m_state != LeapPhysicsState.Disabled && value == LeapPhysicsState.Disabled ) { 
+          onInteractionDisabled();
+        }
+        else if ( m_state == LeapPhysicsState.Disabled && value != LeapPhysicsState.Disabled ) {
+          onInteractionEnabled();
+        }
+
+        m_state = value; // Update underlying value
+
+        // Fire changed event
         EventHandler<LMWidgets.EventArg<LeapPhysicsState>> handler = StateChangeHandler;
         if ( handler != null ) { handler(this, new EventArg<LeapPhysicsState>(State)); }
+      }
+    }
+
+    /// <summary>
+    /// Represents whether the widget is enabled or disabled.
+    /// </summary>
+    public bool Interactable {
+      get { 
+        return !(State == LeapPhysicsState.Disabled);
+      }
+      set {
+        if (State == LeapPhysicsState.Disabled && value == true ) {
+          State = LeapPhysicsState.Reflecting;
+        }
+        else if (State != LeapPhysicsState.Disabled && value == false) {
+          State = LeapPhysicsState.Disabled;
+        }
       }
     }
 
@@ -39,6 +75,21 @@ namespace LMWidgets
     protected abstract void ApplyInteractions();
     // Apply constraints for the object (e.g. Constrain movements along a specific axis)
     protected abstract void ApplyConstraints();
+
+    /// <summary>
+    /// Called when widget becomes interactable.
+    /// </summary>
+    /// <remarks>
+    /// Implement this function to handle changes to the widget when interaction is enabled (ie. starting an enable animation)
+    /// </remarks>
+    protected virtual void onInteractionEnabled() {}
+    /// <summary>
+    /// Called when widget becomes non-interactable.
+    /// </summary>
+    /// <remarks>
+    /// Implement this function to handle changes to the widget when interaction is disabled (ie. starting a disable animation)
+    /// </remarks>
+    protected virtual void onInteractionDisabled() {}
 
     /// <summary>
     /// Resets the pivots
@@ -66,7 +117,7 @@ namespace LMWidgets
     /// <param name="collider"></param>
     protected virtual void OnTriggerEnter(Collider collider)
     {
-      if (m_target == null && IsHand(collider))
+      if (m_target == null && IsHand(collider) && State != LeapPhysicsState.Disabled)
       {
         State = LeapPhysicsState.Interacting;
         m_target = collider.gameObject;
@@ -111,6 +162,8 @@ namespace LMWidgets
           break;
         case LeapPhysicsState.Reflecting:
           ApplyPhysics();
+          break;
+        case LeapPhysicsState.Disabled:
           break;
         default:
           break;

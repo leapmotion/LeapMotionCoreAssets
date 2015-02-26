@@ -47,6 +47,34 @@ public class SliderDemo : SliderBase
 	botLayer.SetColor(BotLayerReleasedColor);
   }
 
+  protected override void onInteractionDisabled ()
+  {
+    base.onInteractionDisabled ();
+    topLayer.SetActive (false);
+    midLayer.SetActive (false);
+
+    // Turn off active bar.
+    Renderer[] renderers = activeBar.GetComponentsInChildren<Renderer> ();
+    foreach (Renderer renderer in renderers)
+    {
+      renderer.enabled = false;
+    }
+  }
+
+  protected override void onInteractionEnabled ()
+  {
+    base.onInteractionEnabled ();
+    topLayer.SetActive (true);
+    midLayer.SetActive (true);
+
+    // Turn on active bar.
+    Renderer[] renderers = activeBar.GetComponentsInChildren<Renderer> ();
+    foreach (Renderer renderer in renderers)
+    {
+      renderer.enabled = true;
+    }
+  }
+
   // Updates the slider handle graphics
   private void UpdateGraphics()
   {
