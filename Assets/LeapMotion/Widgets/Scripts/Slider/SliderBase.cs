@@ -79,6 +79,13 @@ namespace LMWidgets
       }
     }
 
+    protected override void onInteractionEnabled ()
+    {
+      if (m_dataBinder != null) {
+        SetPositionFromFraction (m_dataBinder.GetCurrentData ()); // Pull latest external data
+      }
+    }
+
     /// <summary>
     /// Returns the fraction of the slider between lower and upper limit. 0.0 = At Lower. 1.0 = At Upper
     /// </summary>
@@ -106,7 +113,7 @@ namespace LMWidgets
     }
 
     public void SetWidgetValue(float value) {
-      if ( State == LeapPhysicsState.Interacting ) { return; } // Don't worry about state changes during interaction.
+      if ( State == LeapPhysicsState.Interacting || State == LeapPhysicsState.Disabled ) { return; } // Don't worry about state changes during interaction.
       SetPositionFromFraction (value);
     }
 
