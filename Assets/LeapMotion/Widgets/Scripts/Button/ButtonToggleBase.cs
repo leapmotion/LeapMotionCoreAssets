@@ -19,6 +19,7 @@ namespace LMWidgets
       set {
         if ( m_toggleState == value ) { return; }
         setButtonState(value);
+        if ( m_dataBinder != null ) { m_dataBinder.SetCurrentData(m_toggleState); } // Update externally linked data
       }
     }
 
