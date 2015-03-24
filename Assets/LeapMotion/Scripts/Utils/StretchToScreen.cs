@@ -10,7 +10,7 @@ using System.Collections;
 public class StretchToScreen : MonoBehaviour {
 
   void Awake() {
-    guiTexture.pixelInset = new Rect(0.0f, 0.0f, Screen.width, Screen.height);
+    GetComponent<GUITexture>().pixelInset = new Rect(0.0f, 0.0f, Screen.width, Screen.height);
   }
 }
 

@@ -26,8 +26,8 @@ namespace LMWidgets
     // Standardize Minimum & Maximum
     void Awake ()
     {
-      collider.isTrigger = true;
-      rigidbody.isKinematic = true;
+      GetComponent<Collider>().isTrigger = true;
+      GetComponent<Rigidbody>().isKinematic = true;
       if (minimumAngle == maximumAngle) {
         // Use default ranges
         minimumAngle = 0f;
@@ -134,8 +134,8 @@ namespace LMWidgets
       if (target_ == null && IsHand (other)) {
         target_ = other.gameObject;
         pivot_ = transform.InverseTransformPoint (target_.transform.position) - transform.localPosition;
-        if (rigidbody.isKinematic == false)
-          transform.rigidbody.angularVelocity = Vector3.zero;
+        if (GetComponent<Rigidbody>().isKinematic == false)
+          transform.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
         interacting_ = true;
         if (dialGraphics)
           dialGraphics.HilightDial ();
@@ -157,7 +157,7 @@ namespace LMWidgets
       } else {
         float FPS_INVERSE = 1f / Time.deltaTime;
         float angular_velocity = (curr_angle_ - prev_angle_) * FPS_INVERSE;
-        transform.rigidbody.AddRelativeTorque (new Vector3 (0f, 0f, angular_velocity));
+        transform.GetComponent<Rigidbody>().AddRelativeTorque (new Vector3 (0f, 0f, angular_velocity));
       }
       interacting_ = false;
       // NOTE: External update should following internal state update,

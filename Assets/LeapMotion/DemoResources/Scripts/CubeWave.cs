@@ -61,8 +61,8 @@ public class CubeWave : MonoBehaviour {
                               cube_grid_[r + 1, c].position.y + cube_grid_[r, c + 1].position.y);
 
         float delta_from_rest = 0.25f * neighbor_sum - cube_grid_[r, c].position.y;
-        cube_grid_[r, c].rigidbody.AddForce(springConstant * Vector3.up * delta_from_rest);
-        cube_grid_[r, c].rigidbody.velocity *= (1 - damping);
+        cube_grid_[r, c].GetComponent<Rigidbody>().AddForce(springConstant * Vector3.up * delta_from_rest);
+        cube_grid_[r, c].GetComponent<Rigidbody>().velocity *= (1 - damping);
 
         // Set color of cube and add to glow amount based on current height.
         float delta_zero = transform.position.y - cube_grid_[r, c].position.y;
@@ -70,11 +70,11 @@ public class CubeWave : MonoBehaviour {
                            BRIGHTNESS_SCALE * Mathf.Log(1 + 0.2f * delta_zero);
 
         if (brightness < 0) {
-          cube_grid_[r, c].renderer.material.SetColor("_Color", highColor * (-brightness));
+          cube_grid_[r, c].GetComponent<Renderer>().material.SetColor("_Color", highColor * (-brightness));
           high_total_light -= brightness / (gridHeight * gridWidth);
         }
         else {
-          cube_grid_[r, c].renderer.material.SetColor("_Color", lowColor * brightness);
+          cube_grid_[r, c].GetComponent<Renderer>().material.SetColor("_Color", lowColor * brightness);
           low_total_light += brightness / (gridHeight * gridWidth);
         }
       }

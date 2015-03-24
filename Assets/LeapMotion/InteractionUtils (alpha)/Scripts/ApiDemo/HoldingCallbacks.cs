@@ -30,9 +30,9 @@ public class HoldingCallbacks : MonoBehaviour {
     if (lastHovered != gameObject)
     {
       if (lastHovered)
-        lastHovered.renderer.material = freeMaterial;
+        lastHovered.GetComponent<Renderer>().material = freeMaterial;
       if (gameObject)
-        gameObject.renderer.material = hoverMaterial;
+        gameObject.GetComponent<Renderer>().material = hoverMaterial;
       lastHovered = gameObject;
     }
   }
@@ -44,7 +44,7 @@ public class HoldingCallbacks : MonoBehaviour {
       gameObject = UnityUtil.BodyMapper.FirstOrDefault(x => x.Value.BodyId.ptr == body.BodyId.ptr).Key;
     //Debug.Log("holding started " + gameObject);
     if (gameObject)
-      gameObject.renderer.material = heldMaterial;
+      gameObject.GetComponent<Renderer>().material = heldMaterial;
   }
 
   public void OnHoldingUpdates(Holding holding) {
@@ -56,6 +56,6 @@ public class HoldingCallbacks : MonoBehaviour {
     if (body != null && body.IsValid())
       gameObject = UnityUtil.BodyMapper.FirstOrDefault(x => x.Value.BodyId.ptr == body.BodyId.ptr).Key;
     if (gameObject)
-      gameObject.renderer.material = freeMaterial;
+      gameObject.GetComponent<Renderer>().material = freeMaterial;
   }
 }

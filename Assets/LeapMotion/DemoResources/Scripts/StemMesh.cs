@@ -116,7 +116,7 @@ public class StemMesh : MonoBehaviour {
 
   private void KillStump() {
     for (int i = 0; i < broken.Length && !broken[i]; ++i)
-      segments[i].collider.enabled = false;
+      segments[i].GetComponent<Collider>().enabled = false;
   }
 
   private void UpdateMesh() {

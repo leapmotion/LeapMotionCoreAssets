@@ -12,7 +12,7 @@ public class ParticlesOnCollision : MonoBehaviour {
   public float particlesForVelocity = 3.0f;
 
   void OnCollisionEnter(Collision collision) {
-    if (particleSystem != null)
-      particleSystem.Play();
+    if (GetComponent<ParticleSystem>() != null)
+      GetComponent<ParticleSystem>().Play();
   }
 }

@@ -84,7 +84,7 @@ public class GrabbingHand : MonoBehaviour {
     for (int j = 0; j < close_things.Length; ++j) {
       float sqr_distance = (pinch_position - close_things[j].transform.position).sqrMagnitude;
 
-      if (close_things[j].rigidbody != null && sqr_distance < closest_sqr_distance &&
+      if (close_things[j].GetComponent<Rigidbody>() != null && sqr_distance < closest_sqr_distance &&
           !close_things[j].transform.IsChildOf(transform) &&
           close_things[j].tag != "NotGrabbable") {
 
@@ -155,8 +155,8 @@ public class GrabbingHand : MonoBehaviour {
 
     // If we can rotate the object quickly, increase max angular velocity for now.
     if (grabbable == null || grabbable.rotateQuickly) {
-      last_max_angular_velocity_ = active_object_.rigidbody.maxAngularVelocity;
-      active_object_.rigidbody.maxAngularVelocity = Mathf.Infinity;
+      last_max_angular_velocity_ = active_object_.GetComponent<Rigidbody>().maxAngularVelocity;
+      active_object_.GetComponent<Rigidbody>().maxAngularVelocity = Mathf.Infinity;
     }
 
     if (grabbable != null) {
@@ -188,7 +188,7 @@ public class GrabbingHand : MonoBehaviour {
         grabbable.OnRelease();
 
       if (grabbable == null || grabbable.rotateQuickly)
-        active_object_.rigidbody.maxAngularVelocity = last_max_angular_velocity_;
+        active_object_.GetComponent<Rigidbody>().maxAngularVelocity = last_max_angular_velocity_;
 
       Leap.Utils.IgnoreCollisions(gameObject, active_object_.gameObject, false);
     }
@@ -262,7 +262,7 @@ public class GrabbingHand : MonoBehaviour {
     target_position.y = Mathf.Clamp(target_position.y, minMovement.y, maxMovement.y);
     target_position.z = Mathf.Clamp(target_position.z, minMovement.z, maxMovement.z);
     Vector3 velocity = (target_position - active_object_.transform.position) / Time.deltaTime;
-    active_object_.rigidbody.velocity = velocity;
+    active_object_.GetComponent<Rigidbody>().velocity = velocity;
 
     Quaternion delta_rotation = target_rotation *
                                 Quaternion.Inverse(active_object_.transform.rotation);
@@ -276,7 +276,7 @@ public class GrabbingHand : MonoBehaviour {
       axis = -axis;
     }
     if (angle != 0)
-      active_object_.rigidbody.angularVelocity = angle * axis;
+      active_object_.GetComponent<Rigidbody>().angularVelocity = angle * axis;
   }
 
   // If we are releasing the object only apply a weaker force to the object
@@ -289,7 +289,7 @@ public class GrabbingHand : MonoBehaviour {
 
     float strength = (releaseBreakDistance - delta_position.magnitude) / releaseBreakDistance;
     strength = releaseStrengthCurve.Evaluate(strength);
-    active_object_.rigidbody.AddForce(delta_position.normalized * strength * positionFiltering,
+    active_object_.GetComponent<Rigidbody>().AddForce(delta_position.normalized * strength * positionFiltering,
                                       ForceMode.Acceleration);
 
     Quaternion delta_rotation = target_rotation *
@@ -299,7 +299,7 @@ public class GrabbingHand : MonoBehaviour {
     Vector3 axis = Vector3.zero;
     delta_rotation.ToAngleAxis(out angle, out axis);
 
-    active_object_.rigidbody.AddTorque(strength * rotationFiltering * angle * axis,
+    active_object_.GetComponent<Rigidbody>().AddTorque(strength * rotationFiltering * angle * axis,
                                        ForceMode.Acceleration);
   }
 
