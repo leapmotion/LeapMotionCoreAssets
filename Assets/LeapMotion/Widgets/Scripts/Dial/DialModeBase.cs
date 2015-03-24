@@ -26,7 +26,7 @@ namespace LMWidgets
     // Standardize Minimum & Maximum
     void Awake ()
     {
-      GetComponent<Collider>().isTrigger = true;
+      //GetComponent<Collider>().isTrigger = true;
       GetComponent<Rigidbody>().isKinematic = true;
       if (minimumAngle == maximumAngle) {
         // Use default ranges
