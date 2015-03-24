@@ -86,8 +86,6 @@ public class RigidHand : SkeletalHand {
         float delta_radians = (1 - filtering) * angle * Mathf.Deg2Rad;
         forearm.GetComponent<Rigidbody>().angularVelocity = delta_radians * axis / Time.deltaTime;
       }
-    } else {
-      Debug.Log ("No forearm");
     }
   }
 }
