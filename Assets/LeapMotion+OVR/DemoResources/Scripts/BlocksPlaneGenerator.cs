@@ -68,7 +68,7 @@ public class BlocksPlaneGenerator : MonoBehaviour
       cube.transform.localPosition = position;
       cube.AddComponent<Rigidbody>();
 
-      cube.renderer.material.color = list_of_colors[Random.Range(0, list_of_colors.Length - 1)];
+      cube.GetComponent<Renderer>().material.color = list_of_colors[Random.Range(0, list_of_colors.Length - 1)];
     }
   }
 

@@ -60,7 +60,7 @@ public class RandomBlocksGenerator : MonoBehaviour {
     sphere.GetComponent<SphereCollider>().enabled = false;
     Destroy(sphere.GetComponent<SphereCollider>());
     sphere.AddComponent<MeshCollider>();
-    sphere.renderer.enabled = false;
+    sphere.GetComponent<Renderer>().enabled = false;
 
     for (int i = 0; i < numberOfBlocks; ++i)
     {
@@ -80,9 +80,9 @@ public class RandomBlocksGenerator : MonoBehaviour {
       cube.transform.localScale = Vector3.one * size;
       cube.transform.localPosition = position;
       cube.AddComponent<Rigidbody>();
-      cube.rigidbody.useGravity = false;
+      cube.GetComponent<Rigidbody>().useGravity = false;
 
-      cube.renderer.material.color = list_of_colors[Random.Range(0,list_of_colors.Length - 1)];
+      cube.GetComponent<Renderer>().material.color = list_of_colors[Random.Range(0,list_of_colors.Length - 1)];
     }
   }
 

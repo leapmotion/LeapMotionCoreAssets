@@ -10,10 +10,10 @@ using System.Collections;
 public class FitHeightToScreen : MonoBehaviour {
 
   void Awake() {
-    float width_height_ratio = guiTexture.texture.width / guiTexture.texture.height;
+    float width_height_ratio = GetComponent<GUITexture>().texture.width / GetComponent<GUITexture>().texture.height;
     float width = width_height_ratio * Screen.height;
     float x_offset = (Screen.width - width) / 2.0f;
-    guiTexture.pixelInset = new Rect(x_offset, 0.0f, width, Screen.height);
+    GetComponent<GUITexture>().pixelInset = new Rect(x_offset, 0.0f, width, Screen.height);
   }
 }
 

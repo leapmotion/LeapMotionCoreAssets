@@ -141,19 +141,19 @@ public class LeapImageRetriever : MonoBehaviour
 
   protected void SetShader()
   {
-    DestroyImmediate(renderer.material);
+    DestroyImmediate(GetComponent<Renderer>().material);
     switch (attached_device_.type)
     {
       case LM_DEVICE.PERIPHERAL:
-        renderer.material = (undistortImage) ? new Material((overlayImage) ? IR_UNDISTORT_SHADER_FOREGROUND : IR_UNDISTORT_SHADER) : new Material(IR_NORMAL_SHADER);
+        GetComponent<Renderer>().material = (undistortImage) ? new Material((overlayImage) ? IR_UNDISTORT_SHADER_FOREGROUND : IR_UNDISTORT_SHADER) : new Material(IR_NORMAL_SHADER);
         if ( rescaleController ) { controller_.transform.localScale = Vector3.one * 1.6f; }
         break;
       case LM_DEVICE.DRAGONFLY:
-        renderer.material = (undistortImage) ? new Material(RGB_UNDISTORT_SHADER) : new Material(RGB_NORMAL_SHADER);
+        GetComponent<Renderer>().material = (undistortImage) ? new Material(RGB_UNDISTORT_SHADER) : new Material(RGB_NORMAL_SHADER);
         if ( rescaleController ) { controller_.transform.localScale = Vector3.one; }
         break;
       case LM_DEVICE.MANTIS:
-        renderer.material = (undistortImage) ? new Material((overlayImage) ? IR_UNDISTORT_SHADER_FOREGROUND : IR_UNDISTORT_SHADER) : new Material(IR_NORMAL_SHADER);
+        GetComponent<Renderer>().material = (undistortImage) ? new Material((overlayImage) ? IR_UNDISTORT_SHADER_FOREGROUND : IR_UNDISTORT_SHADER) : new Material(IR_NORMAL_SHADER);
         if ( rescaleController ) { controller_.transform.localScale = Vector3.one; }
         break;
       default:
@@ -165,18 +165,18 @@ public class LeapImageRetriever : MonoBehaviour
 
   protected void SetRenderer(ref Image image)
   {
-    renderer.material.mainTexture = main_texture_;
-    renderer.material.SetColor("_Color", imageColor);
-    renderer.material.SetInt("_DeviceType", Convert.ToInt32(attached_device_.type));
-    renderer.material.SetFloat("_GammaCorrection", gammaCorrection);
-    renderer.material.SetInt("_BlackIsTransparent", blackIsTransparent ? 1 : 0);
+    GetComponent<Renderer>().material.mainTexture = main_texture_;
+    GetComponent<Renderer>().material.SetColor("_Color", imageColor);
+    GetComponent<Renderer>().material.SetInt("_DeviceType", Convert.ToInt32(attached_device_.type));
+    GetComponent<Renderer>().material.SetFloat("_GammaCorrection", gammaCorrection);
+    GetComponent<Renderer>().material.SetInt("_BlackIsTransparent", blackIsTransparent ? 1 : 0);
 
-    renderer.material.SetTexture("_DistortX", distortionX_);
-    renderer.material.SetTexture("_DistortY", distortionY_);
-    renderer.material.SetFloat("_RayOffsetX", image.RayOffsetX);
-    renderer.material.SetFloat("_RayOffsetY", image.RayOffsetY);
-    renderer.material.SetFloat("_RayScaleX", image.RayScaleX);
-    renderer.material.SetFloat("_RayScaleY", image.RayScaleY);
+    GetComponent<Renderer>().material.SetTexture("_DistortX", distortionX_);
+    GetComponent<Renderer>().material.SetTexture("_DistortY", distortionY_);
+    GetComponent<Renderer>().material.SetFloat("_RayOffsetX", image.RayOffsetX);
+    GetComponent<Renderer>().material.SetFloat("_RayOffsetY", image.RayOffsetY);
+    GetComponent<Renderer>().material.SetFloat("_RayScaleX", image.RayScaleX);
+    GetComponent<Renderer>().material.SetFloat("_RayScaleY", image.RayScaleY);
   }
 
   protected void InitiateShaders() 

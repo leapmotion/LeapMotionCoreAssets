@@ -36,55 +36,55 @@ public class AerodynamicLeaf : MonoBehaviour {
   private float drag_torque_;
 
   void Start() {
-    air_drag_ = rigidbody.drag;
-    air_angular_drag_ = rigidbody.angularDrag;
+    air_drag_ = GetComponent<Rigidbody>().drag;
+    air_angular_drag_ = GetComponent<Rigidbody>().angularDrag;
     drag_force_ = airDragForce;
     drag_torque_ = airDragTorque;
   }
 
   void DragUpdate() {
-    Vector3 velocity = rigidbody.velocity;
+    Vector3 velocity = GetComponent<Rigidbody>().velocity;
     Vector3 normal = transform.up;
 
     float dot = Vector3.Dot(velocity, normal);
-    rigidbody.AddForce(-normal * drag_force_ * dot);
+    GetComponent<Rigidbody>().AddForce(-normal * drag_force_ * dot);
 
     Vector3 cross = Vector3.Cross(velocity, normal);
-    rigidbody.AddTorque(-drag_torque_ * cross);
+    GetComponent<Rigidbody>().AddTorque(-drag_torque_ * cross);
   }
 
   void AirUpdate() {
-    rigidbody.drag = air_drag_;
-    rigidbody.angularDrag = air_angular_drag_;
+    GetComponent<Rigidbody>().drag = air_drag_;
+    GetComponent<Rigidbody>().angularDrag = air_angular_drag_;
     drag_force_ = airDragForce;
     drag_torque_ = airDragTorque;
     DragUpdate();
   }
 
   void WaterUpdate(float level) {
-    rigidbody.drag = waterDrag;
-    rigidbody.angularDrag = waterAngularDrag;
+    GetComponent<Rigidbody>().drag = waterDrag;
+    GetComponent<Rigidbody>().angularDrag = waterAngularDrag;
 
     drag_force_ = waterDragForce;
     drag_torque_ = waterDragTorque;
     DragUpdate();
 
     float transition = Mathf.Clamp(-level / transitionWidth, 0.0f, 1.0f);
-    rigidbody.AddForce(new Vector3(0, waterBuoancyForce * transition, 0));
+    GetComponent<Rigidbody>().AddForce(new Vector3(0, waterBuoancyForce * transition, 0));
 
     if (Vector3.Dot(transform.up, Vector3.up) >= 0) {
       Vector3 torque_vector = Vector3.Cross(transform.up, Vector3.up);
-      rigidbody.AddTorque((1 - transition) * waterSurfaceTorque * torque_vector);
+      GetComponent<Rigidbody>().AddTorque((1 - transition) * waterSurfaceTorque * torque_vector);
     }
     else {
       Vector3 torque_vector = Vector3.Cross(-transform.up, Vector3.up);
-      rigidbody.AddTorque((1 - transition) * waterSurfaceTorque * torque_vector);
+      GetComponent<Rigidbody>().AddTorque((1 - transition) * waterSurfaceTorque * torque_vector);
     }
 
     // Running water current.
-    Vector3 delta_current = waterCurrentVelocity - rigidbody.velocity;
+    Vector3 delta_current = waterCurrentVelocity - GetComponent<Rigidbody>().velocity;
     delta_current.y = 0;
-    rigidbody.AddForce(waterCurrentForce * delta_current);
+    GetComponent<Rigidbody>().AddForce(waterCurrentForce * delta_current);
   }
   
   float UnitsAboveWater() {

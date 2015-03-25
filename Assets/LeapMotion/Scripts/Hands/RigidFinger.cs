@@ -16,7 +16,7 @@ public class RigidFinger : SkeletalFinger {
   void Start() {
     for (int i = 0; i < bones.Length; ++i) {
       if (bones[i] != null)
-        bones[i].rigidbody.maxAngularVelocity = Mathf.Infinity;
+        bones[i].GetComponent<Rigidbody>().maxAngularVelocity = Mathf.Infinity;
     }
   }
 
@@ -43,7 +43,7 @@ public class RigidFinger : SkeletalFinger {
         // Set velocity.
         Vector3 target_bone_position = GetBoneCenter(i);
         
-        bones[i].rigidbody.velocity = (target_bone_position - bones[i].transform.position) *
+        bones[i].GetComponent<Rigidbody>().velocity = (target_bone_position - bones[i].transform.position) *
                                       ((1 - filtering) / Time.deltaTime);
 
         // Set angular velocity.
@@ -61,7 +61,7 @@ public class RigidFinger : SkeletalFinger {
 
         if (angle != 0) {
           float delta_radians = (1 - filtering) * angle * Mathf.Deg2Rad;
-          bones[i].rigidbody.angularVelocity = delta_radians * axis / Time.deltaTime;
+          bones[i].GetComponent<Rigidbody>().angularVelocity = delta_radians * axis / Time.deltaTime;
         }
       }
     }

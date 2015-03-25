@@ -183,7 +183,7 @@ namespace Leap.Interact
 
     void Start () {
       InteractionSceneSetup.EnsureInstanceInitialized();
-      AddRemoveBodyUtil.Instance.AddBodyToLeapFromUnity(rigidbody);
+      AddRemoveBodyUtil.Instance.AddBodyToLeapFromUnity(GetComponent<Rigidbody>());
       m_started = true;
     }
     
@@ -195,7 +195,7 @@ namespace Leap.Interact
     
     void OnDisable() {
       if (m_started)
-        AddRemoveBodyUtil.Instance.RemoveBodyFromLeap(rigidbody);
+        AddRemoveBodyUtil.Instance.RemoveBodyFromLeap(GetComponent<Rigidbody>());
     }
   }
 }
