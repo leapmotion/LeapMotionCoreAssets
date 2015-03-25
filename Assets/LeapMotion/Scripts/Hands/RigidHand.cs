@@ -14,7 +14,7 @@ public class RigidHand : SkeletalHand {
   public float filtering = 0.5f;
 
   void Start() {
-    palm.rigidbody.maxAngularVelocity = Mathf.Infinity;
+    palm.GetComponent<Rigidbody>().maxAngularVelocity = Mathf.Infinity;
     Leap.Utils.IgnoreCollisions(gameObject, gameObject);
   }
 
@@ -31,7 +31,7 @@ public class RigidHand : SkeletalHand {
     if (palm != null) {
       // Set palm velocity.
       Vector3 target_position = GetPalmCenter();
-      palm.rigidbody.velocity = (target_position - palm.transform.position) *
+      palm.GetComponent<Rigidbody>().velocity = (target_position - palm.transform.position) *
                                 (1 - filtering) / Time.deltaTime;
 
       // Set palm angular velocity.
@@ -48,7 +48,7 @@ public class RigidHand : SkeletalHand {
       }
       if (angle != 0) {
         float delta_radians = (1 - filtering) * angle * Mathf.Deg2Rad;
-        palm.rigidbody.angularVelocity = delta_radians * axis / Time.deltaTime;
+        palm.GetComponent<Rigidbody>().angularVelocity = delta_radians * axis / Time.deltaTime;
       }
     }
 
@@ -67,7 +67,7 @@ public class RigidHand : SkeletalHand {
 
       // Set arm velocity.
       Vector3 target_position = GetArmCenter ();
-      forearm.rigidbody.velocity = (target_position - forearm.transform.position) *
+      forearm.GetComponent<Rigidbody>().velocity = (target_position - forearm.transform.position) *
         (1 - filtering) / Time.deltaTime;
 
       // Set arm velocity.
@@ -84,10 +84,8 @@ public class RigidHand : SkeletalHand {
       }
       if (angle != 0) {
         float delta_radians = (1 - filtering) * angle * Mathf.Deg2Rad;
-        forearm.rigidbody.angularVelocity = delta_radians * axis / Time.deltaTime;
+        forearm.GetComponent<Rigidbody>().angularVelocity = delta_radians * axis / Time.deltaTime;
       }
-    } else {
-      Debug.Log ("No forearm");
     }
   }
 }

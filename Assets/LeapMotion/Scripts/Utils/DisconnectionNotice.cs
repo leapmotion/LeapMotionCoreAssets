@@ -27,7 +27,7 @@ public class DisconnectionNotice : MonoBehaviour {
   }
 
   void SetAlpha(float alpha) {
-    guiTexture.color = Color.Lerp(Color.clear, onColor, alpha);
+    GetComponent<GUITexture>().color = Color.Lerp(Color.clear, onColor, alpha);
   }
 
   public bool IsConnected() {
@@ -43,7 +43,7 @@ public class DisconnectionNotice : MonoBehaviour {
 
   void Update() {
     if (embeddedReplacementImage != null && IsEmbedded()) {
-      guiTexture.texture = embeddedReplacementImage;
+      GetComponent<GUITexture>().texture = embeddedReplacementImage;
     }
 
     if (IsConnected())

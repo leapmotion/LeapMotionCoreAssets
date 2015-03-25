@@ -86,8 +86,8 @@ namespace Leap.Interact
     static protected void ApplyTargetUnityTransformAsVelocities(LeapTransform targetUnityTransform, GameObject gameObject)
     {
       Vector3 angularVelocity = CalcAngularVelocityToTarget(gameObject, targetUnityTransform.Rotation);
-      gameObject.rigidbody.velocity = CalcLinearVelocityToTarget(gameObject, targetUnityTransform.Position, targetUnityTransform.Rotation, angularVelocity);
-      gameObject.rigidbody.angularVelocity = angularVelocity;
+      gameObject.GetComponent<Rigidbody>().velocity = CalcLinearVelocityToTarget(gameObject, targetUnityTransform.Position, targetUnityTransform.Rotation, angularVelocity);
+      gameObject.GetComponent<Rigidbody>().angularVelocity = angularVelocity;
     }
 
     static protected LeapTransform CalcUnityTransformForNextFrame(GameObject gameObject)
@@ -99,7 +99,7 @@ namespace Leap.Interact
 
       // apply angular velcocit - rotation
       Quaternion extraRotation = Quaternion.identity;
-      Vector3 angularDisplacement = gameObject.rigidbody.angularVelocity * Time.deltaTime;
+      Vector3 angularDisplacement = gameObject.GetComponent<Rigidbody>().angularVelocity * Time.deltaTime;
       float angularMagnitude = angularDisplacement.magnitude;
       if (angularMagnitude > 0.0001f)
       {
@@ -108,9 +108,9 @@ namespace Leap.Interact
       targetTransform.Rotation = extraRotation * unityTransform.rotation;
 
       // apply angular & linear velocities to body
-      Vector3 oldCom = unityTransform.position + unityTransform.rotation * unityTransform.rigidbody.centerOfMass;
-      Vector3 newCom = oldCom + gameObject.rigidbody.velocity * Time.deltaTime;
-      targetTransform.Position = newCom - (Quaternion)targetTransform.Rotation * unityTransform.rigidbody.centerOfMass;
+      Vector3 oldCom = unityTransform.position + unityTransform.rotation * unityTransform.GetComponent<Rigidbody>().centerOfMass;
+      Vector3 newCom = oldCom + gameObject.GetComponent<Rigidbody>().velocity * Time.deltaTime;
+      targetTransform.Position = newCom - (Quaternion)targetTransform.Rotation * unityTransform.GetComponent<Rigidbody>().centerOfMass;
 
       return targetTransform;
     }
@@ -120,8 +120,8 @@ namespace Leap.Interact
     {
       // need to convert from referencePoint target
       // to center-of-mass points
-      Vector3 currentCom = gameObject.transform.position + gameObject.transform.rotation * gameObject.rigidbody.centerOfMass;
-      Vector3 targetCom = targetPosition + targetRotation * gameObject.rigidbody.centerOfMass;
+      Vector3 currentCom = gameObject.transform.position + gameObject.transform.rotation * gameObject.GetComponent<Rigidbody>().centerOfMass;
+      Vector3 targetCom = targetPosition + targetRotation * gameObject.GetComponent<Rigidbody>().centerOfMass;
 
 
       //Vector3 arm = - gameObject.rigidbody.centerOfMass;
@@ -158,8 +158,8 @@ namespace Leap.Interact
       LeapInteraction props = gameObject.GetComponent<LeapInteraction>();
       if (props.velocityToTransfer)
       {
-        gameObject.rigidbody.velocity = props.tmpVelocity;
-        gameObject.rigidbody.angularVelocity = props.tmpAngularVelocity;
+        gameObject.GetComponent<Rigidbody>().velocity = props.tmpVelocity;
+        gameObject.GetComponent<Rigidbody>().angularVelocity = props.tmpAngularVelocity;
         props.velocityToTransfer = false;
       }
 
@@ -180,7 +180,7 @@ namespace Leap.Interact
 
       LeapInteraction leapInteraction = gameObject.GetComponent<LeapInteraction>();
 
-      if (gameObject.rigidbody.isKinematic || !leapInteraction.UseVelocity) {
+      if (gameObject.GetComponent<Rigidbody>().isKinematic || !leapInteraction.UseVelocity) {
 
         ApplyTargetUnityTransformAsVelocities(targetUnityTransform, gameObject);
 
@@ -189,12 +189,12 @@ namespace Leap.Interact
         if (true)
         {
           LeapInteraction props = gameObject.GetComponent<LeapInteraction>();
-          props.tmpVelocity = gameObject.rigidbody.velocity;
-          props.tmpAngularVelocity = gameObject.rigidbody.angularVelocity;
+          props.tmpVelocity = gameObject.GetComponent<Rigidbody>().velocity;
+          props.tmpAngularVelocity = gameObject.GetComponent<Rigidbody>().angularVelocity;
           props.velocityToTransfer = true;
 
-          gameObject.rigidbody.velocity = Vector3.zero;
-          gameObject.rigidbody.angularVelocity = Vector3.zero;
+          gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
+          gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
         }
       } else {
         ApplyTargetUnityTransformAsVelocities(targetUnityTransform, gameObject);
@@ -236,11 +236,11 @@ namespace Leap.Interact
 
       // either do a hard keyframe
       bool useHardKeyframe = false;
-      if (useHardKeyframe || gameObject.rigidbody.isKinematic) {
+      if (useHardKeyframe || gameObject.GetComponent<Rigidbody>().isKinematic) {
         unityTransform.position = targetUnityTransform.Position;
         unityTransform.rotation = targetUnityTransform.Rotation;
-        gameObject.rigidbody.velocity = Vector3.zero;
-        gameObject.rigidbody.angularVelocity = Vector3.zero;
+        gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
       } else {
         // or assigne velocities
         ApplyTargetUnityTransformAsVelocities(targetUnityTransform, gameObject);

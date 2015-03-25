@@ -51,7 +51,7 @@ namespace Leap.Interact
         gameObject.transform.position = t.Position;
         gameObject.transform.rotation = t.Rotation;
 
-        gameObject.rigidbody.maxAngularVelocity = 100.0f;
+        gameObject.GetComponent<Rigidbody>().maxAngularVelocity = 100.0f;
 
         isFinger = true;
         fingerBoneCount++;
@@ -65,7 +65,7 @@ namespace Leap.Interact
         gameObject.transform.position = t.Position;
         gameObject.transform.rotation = t.Rotation;
 
-        gameObject.rigidbody.maxAngularVelocity = 100.0f;
+        gameObject.GetComponent<Rigidbody>().maxAngularVelocity = 100.0f;
 
         latestHandPalmAdded = gameObject;
         fingerBoneCount = 0;
@@ -111,7 +111,7 @@ namespace Leap.Interact
         foreach(Transform child2 in handContainer)
         {
           if (child != child2)
-            Physics.IgnoreCollision(child.collider, child2.collider);
+            Physics.IgnoreCollision(child.GetComponent<Collider>(), child2.GetComponent<Collider>());
         }
       }
     }

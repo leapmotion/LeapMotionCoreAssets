@@ -34,7 +34,7 @@ public class MagneticPinch : MonoBehaviour {
 
     for (int j = 0; j < close_things.Length; ++j) {
       Vector3 new_distance = pinch_position - close_things[j].transform.position;
-      if (close_things[j].rigidbody != null && new_distance.magnitude < distance.magnitude &&
+      if (close_things[j].GetComponent<Rigidbody>() != null && new_distance.magnitude < distance.magnitude &&
           !close_things[j].transform.IsChildOf(transform)) {
         grabbed_ = close_things[j];
         distance = new_distance;
@@ -83,7 +83,7 @@ public class MagneticPinch : MonoBehaviour {
     // Accelerate what we are grabbing toward the pinch.
     if (grabbed_ != null) {
       Vector3 distance = pinch_position - grabbed_.transform.position;
-      grabbed_.rigidbody.AddForce(forceSpringConstant * distance);
+      grabbed_.GetComponent<Rigidbody>().AddForce(forceSpringConstant * distance);
     }
   }
 }

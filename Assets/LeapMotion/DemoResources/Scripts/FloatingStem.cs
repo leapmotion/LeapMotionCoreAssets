@@ -23,23 +23,23 @@ public class FloatingStem : MonoBehaviour {
   private float air_angular_drag_;
 
   void Start() {
-    air_drag_ = rigidbody.drag;
-    air_angular_drag_ = rigidbody.angularDrag;
+    air_drag_ = GetComponent<Rigidbody>().drag;
+    air_angular_drag_ = GetComponent<Rigidbody>().angularDrag;
   }
 
   void FixedUpdate() {
     float distanceFromSurface = transform.position.y - waterHeight;
     if (distanceFromSurface >= 0) {
-      rigidbody.drag = air_drag_;
-      rigidbody.angularDrag = air_angular_drag_;
+      GetComponent<Rigidbody>().drag = air_drag_;
+      GetComponent<Rigidbody>().angularDrag = air_angular_drag_;
       return;
     }
 
-    rigidbody.drag = waterDrag;
-    rigidbody.angularDrag = waterAngularDrag;
+    GetComponent<Rigidbody>().drag = waterDrag;
+    GetComponent<Rigidbody>().angularDrag = waterAngularDrag;
 
     float transition = Mathf.Clamp(-distanceFromSurface / transitionWidth, 0, 1);
-    rigidbody.AddForce(new Vector3(0, waterForce * transition, 0));
+    GetComponent<Rigidbody>().AddForce(new Vector3(0, waterForce * transition, 0));
 
     /*
     float dot = Vector3.Dot(transform.up, Vector3.up);
@@ -48,8 +48,8 @@ public class FloatingStem : MonoBehaviour {
     */
 
     // Current.
-    Vector3 delta_current = waterCurrentVelocity - rigidbody.velocity;
+    Vector3 delta_current = waterCurrentVelocity - GetComponent<Rigidbody>().velocity;
     delta_current.y = 0;
-    rigidbody.AddForce(waterCurrentForce * delta_current);
+    GetComponent<Rigidbody>().AddForce(waterCurrentForce * delta_current);
   }
 }

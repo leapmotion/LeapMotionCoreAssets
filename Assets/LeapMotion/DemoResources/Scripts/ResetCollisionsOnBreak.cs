@@ -13,8 +13,8 @@ public class ResetCollisionsOnBreak : MonoBehaviour {
   
   void OnJointBreak() {
     for (int i = 0; i < collidersToReset.Length; ++i) {
-      collidersToReset[i].collider.enabled = false;
-      collidersToReset[i].collider.enabled = true;
+      collidersToReset[i].GetComponent<Collider>().enabled = false;
+      collidersToReset[i].GetComponent<Collider>().enabled = true;
     }
   }
 }

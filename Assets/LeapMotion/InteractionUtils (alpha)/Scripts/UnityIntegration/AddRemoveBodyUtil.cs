@@ -27,7 +27,7 @@ namespace Leap.Interact
     {
       LeapInteraction properties = rigidbody.GetComponent<LeapInteraction>();
 
-      if (rigidbody.collider && properties)
+      if (rigidbody.GetComponent<Collider>() && properties)
       {
         Collider[] colliders = rigidbody.GetComponents<Collider>();
         
