@@ -1,0 +1,2 @@
+VR Asset Version Version: 2.2.0
+Leap Motion SDK Version at Release Time: 2.2.4+26750
