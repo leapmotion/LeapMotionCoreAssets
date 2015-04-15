@@ -20,6 +20,8 @@ public class HandController : MonoBehaviour {
   public HandModel leftPhysicsModel;
   public HandModel rightGraphicsModel;
   public HandModel rightPhysicsModel;
+  // If this is null hands will have no parent
+  public Transform handParent = null;
 
   public ToolModel toolModel;
 
@@ -98,6 +100,9 @@ public class HandController : MonoBehaviour {
                            as HandModel;
     hand_model.gameObject.SetActive(true);
     Leap.Utils.IgnoreCollisions(hand_model.gameObject, gameObject);
+    if (handParent != null) {
+      hand_model.transform.SetParent(handParent.transform);
+    }
     return hand_model;
   }
 
