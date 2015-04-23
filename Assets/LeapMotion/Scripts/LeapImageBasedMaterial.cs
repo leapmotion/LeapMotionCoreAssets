@@ -11,6 +11,13 @@ public class LeapImageBasedMaterial : MonoBehaviour {
         RIGHT_ONLY
     }
 
+    void Awake() {
+        if (FindObjectOfType<LeapImageRetriever>() == null) {
+            Debug.LogWarning("Place a LeapImageRetriever script on a camera to enable Leap image-based materials");
+            enabled = false;
+        }
+    }
+
     void OnEnable() {
         LeapImageRetriever.registerImageBasedMaterial(this);
     }
