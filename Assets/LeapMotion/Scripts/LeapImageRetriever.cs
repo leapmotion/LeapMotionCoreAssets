@@ -118,7 +118,7 @@ public class LeapImageRetriever : MonoBehaviour {
         imageBasedMaterial.GetComponent<Renderer>().material.SetTexture("_LeapDistortion", distortion_);
     }
 
-    protected TextureFormat getTextureFormat(ref Image image) {
+    private TextureFormat getTextureFormat(ref Image image) {
         switch (image.Format) {
             case Image.FormatType.INFRARED:
                 return TextureFormat.Alpha8;
@@ -129,7 +129,7 @@ public class LeapImageRetriever : MonoBehaviour {
         }
     }
 
-    protected int bytesPerPixel(TextureFormat format) {
+    private int bytesPerPixel(TextureFormat format) {
         switch (format) {
             case TextureFormat.Alpha8: return 1;
             case TextureFormat.RGBA32:
@@ -139,17 +139,17 @@ public class LeapImageRetriever : MonoBehaviour {
         }
     }
 
-    protected int totalBytes(Texture2D texture) {
+    private int totalBytes(Texture2D texture) {
         return texture.width * texture.height * bytesPerPixel(texture.format);
     }
 
-    protected void initTexture(ref Image image, ref Texture2D texture) {
+    private void initTexture(ref Image image, ref Texture2D texture) {
         TextureFormat format = getTextureFormat(ref image);
         texture = new Texture2D(image.Width, image.Height, format, false, true);
         texture.wrapMode = TextureWrapMode.Clamp;
     }
 
-    protected void loadTexture(ref Image sourceImage, ref Texture2D destTexture) {
+    private void loadTexture(ref Image sourceImage, ref Texture2D destTexture) {
         byte[] data = sourceImage.Data;
 
         int epxected = totalBytes(destTexture);
@@ -162,7 +162,7 @@ public class LeapImageRetriever : MonoBehaviour {
         destTexture.Apply();
     }
 
-    protected bool initDistortion(ref Image image) {
+    private bool initDistortion(ref Image image) {
         int width = image.DistortionWidth / 2;
         int height = image.DistortionHeight;
 
@@ -179,7 +179,7 @@ public class LeapImageRetriever : MonoBehaviour {
         return true;
     }
 
-    protected bool loadDistortion(ref Image image) {
+    private bool loadDistortion(ref Image image) {
         if (image.DistortionWidth == 0 || image.DistortionHeight == 0) {
             Debug.LogWarning("No data in the distortion texture.");
             return false;
