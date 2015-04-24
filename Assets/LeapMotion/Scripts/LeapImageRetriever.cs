@@ -98,15 +98,15 @@ public class LeapImageRetriever : MonoBehaviour {
         imageBasedMaterial.GetComponent<Renderer>().material.SetVector("_LeapProjection", projection);
 
         if (_distortion == null) {
-            initDistortion(ref image);
-            loadDistortion(ref image);
+            initDistortion(image);
+            loadDistortion(image);
             _shouldRecalculateDistortion = false;
         }
 
         //Only recalculate distortion if a recalculate is requested AND there is at least one hand in the scene
         //This is to get around the fact that we can't know if a device has been flipped
         if (_shouldRecalculateDistortion && _controller.Frame().Hands.Count != 0) {
-            loadDistortion(ref image);
+            loadDistortion(image);
             _shouldRecalculateDistortion = false;
         }
 
@@ -161,7 +161,7 @@ public class LeapImageRetriever : MonoBehaviour {
         _mainTexture.Apply();
     }
 
-    private void initDistortion(ref Image image) {
+    private void initDistortion(Image image) {
         int width = image.DistortionWidth / 2;
         int height = image.DistortionHeight;
 
@@ -173,47 +173,34 @@ public class LeapImageRetriever : MonoBehaviour {
         _distortion.wrapMode = TextureWrapMode.Clamp;
     }
 
-    private bool loadDistortion(ref Image image) {
-        if (image.DistortionWidth == 0 || image.DistortionHeight == 0) {
-            Debug.LogWarning("No data in the distortion texture.");
-            return false;
-        }
+    private void encodeFloat(float value, out byte byte0, out byte byte1) {
+        // The distortion range is -0.6 to +1.7. Normalize to range [0..1).
+        value = (value + 0.6f) / 2.3f;
+        float enc_0 = value;
+        float enc_1 = value * 255.0f;
 
-        float[] distortion_data = image.Distortion;
-        int num_distortion_floats = 2 * _distortion.width * _distortion.height;
+        enc_0 = enc_0 - (int)enc_0;
+        enc_1 = enc_1 - (int)enc_1;
+
+        enc_0 -= 1.0f / 255.0f * enc_1;
+
+        byte0 = (byte)(enc_0 * 256.0f);
+        byte1 = (byte)(enc_1 * 256.0f);
+    }
+
+    private void loadDistortion(Image image) {
+        float[] distortionData = image.Distortion;
 
         // Move distortion data to distortion texture
-        for (int i = 0; i < num_distortion_floats; i += 2) {
-            // The distortion range is -0.6 to +1.7. Normalize to range [0..1).
-            float dvalX = (distortion_data[i] + 0.6f) / 2.3f;
-            float enc_x = dvalX;
-            float enc_y = dvalX * 255.0f;
-
-            enc_x = enc_x - (int)enc_x;
-            enc_y = enc_y - (int)enc_y;
-
-            enc_x -= 1.0f / 255.0f * enc_y;
-
-            float dvalY = (distortion_data[i + 1] + 0.6f) / 2.3f;
-            float enc_z = dvalY;
-            float enc_w = dvalY * 255.0f;
-
-            enc_z = enc_z - (int)enc_z;
-            enc_w = enc_w - (int)enc_w;
-
-            enc_z -= 1.0f / 255.0f * enc_w;
-
-            int index = i >> 1;
-            Color32 color = new Color32((byte)(enc_x * 256.0f),
-                                        (byte)(enc_y * 256.0f),
-                                        (byte)(enc_z * 256.0f),
-                                        (byte)(enc_w * 256.0f));
-            _distortionPixels[index] = color;
+        for (int i = 0; i < distortionData.Length; i += 2) {
+            byte b0, b1, b2, b3;
+            encodeFloat(distortionData[i], out b0, out b1);
+            encodeFloat(distortionData[i + 1], out b2, out b3);
+            _distortionPixels[i / 2] = new Color32(b0, b1, b2, b3);
         }
+
         _distortion.SetPixels32(_distortionPixels);
         _distortion.Apply();
-
-        return true;
     }
 
     void Start() {
