@@ -17,7 +17,7 @@
 	#include "LeapCG.cginc"
 	#include "UnityCG.cginc"
 
-	#pragma target 2.0
+	#pragma target 3.0
 
 	uniform sampler2D _CameraDepthTexture;
 
@@ -36,8 +36,8 @@
 
 	struct frag_in{
 		float4 vertex : POSITION;
-		float4 projPos  : TEXCOORD0;
-		float4 fragPos  : TEXCOORD1;
+		float4 screenPos  : TEXCOORD0;
+		float4 projPos  : TEXCOORD1;
 	};
 
 	frag_in vert(appdata v){
@@ -48,16 +48,15 @@
 		float2 offset = TransformViewToProjection(norm.xy);
 		o.vertex.xy += offset * _Extrude;
 
-		o.projPos = ComputeScreenPos(o.vertex);
+		o.screenPos = ComputeScreenPos(o.vertex);
+		o.projPos = o.screenPos;
 		COMPUTE_EYEDEPTH(o.projPos.z);
-
-		o.fragPos = o.vertex;
 
 		return o;
 	}
 
-	float4 getHandColor(float4 fragPos){
-		float4 rawColor = LeapRawColorBrightness(fragPos);
+	float4 getHandColor(float4 screenPos){
+		float4 rawColor = LeapRawColorBrightness(screenPos);
 		float3 color = pow(rawColor.rgb, _LeapGammaCorrectionExponent);
 		float brightness = smoothstep(_MinThreshold, _MaxThreshold, rawColor.a);
 		float glow = smoothstep(_GlowThreshold, _MinThreshold, rawColor.a) * brightness;
@@ -65,7 +64,7 @@
 	}
 
 	float4 frag(frag_in i) : COLOR{
-		float4 handColor = getHandColor(i.fragPos);
+		float4 handColor = getHandColor(i.screenPos);
 		float sceneZ = LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.projPos)));
 		float partZ = i.projPos.z;
 		float diff = smoothstep(_Intersection, 0, sceneZ - partZ);
