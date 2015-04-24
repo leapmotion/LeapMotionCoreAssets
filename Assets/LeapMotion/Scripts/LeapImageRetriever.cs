@@ -143,6 +143,14 @@ public class LeapImageRetriever : MonoBehaviour {
         texture = new Texture2D(image.Width, image.Height, format, false, true);
         texture.wrapMode = TextureWrapMode.Clamp;
         intermediateArray = new byte[texture.width * texture.height * bytesPerPixel(format)];
+
+        if (rescaleController) {
+            if (format == TextureFormat.Alpha8) {
+                FindObjectOfType<HandController>().transform.localScale = 1.55f * Vector3.one;
+            } else if (format == TextureFormat.ARGB32) {
+                FindObjectOfType<HandController>().transform.localScale = 1.0f * Vector3.one;
+            }
+        }
     }
 
     private void loadTexture(ref Image sourceImage, ref byte[] intermediateArray, ref Texture2D destTexture) {
