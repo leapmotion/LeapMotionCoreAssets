@@ -60,7 +60,7 @@
 		float3 color = pow(rawColor.rgb, _LeapGammaCorrectionExponent);
 		float brightness = smoothstep(_MinThreshold, _MaxThreshold, rawColor.a);
 		float glow = smoothstep(_GlowThreshold, _MinThreshold, rawColor.a) * brightness;
-		return float4(color + _Color * glow * 10, brightness);
+		return float4(color + _Color * glow, brightness);
 	}
 
 	float4 frag(frag_in i) : COLOR{
@@ -78,7 +78,7 @@
 	ENDCG
 
 	SubShader {
-		Tags {"Queue"="Overlay"}
+		Tags {"Queue"="Overlay+10"}
 
 		Blend SrcAlpha OneMinusSrcAlpha
 

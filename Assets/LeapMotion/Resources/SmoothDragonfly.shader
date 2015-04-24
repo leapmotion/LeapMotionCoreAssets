@@ -1,17 +1,17 @@
-﻿Shader "LeapMotion/Passthrough/ThresholdOverlay" {
+﻿Shader "LeapMotion/Passthrough/SmoothDragonfly" {
 	Properties {
+		_Color ("Color", Color) = (1,1,1,1)
 		_Min ("Min Brightness", Range(0, 1)) = 0.1
 		_Max ("Max Brightness", Range(0, 1)) = 0.3
-		_Fade ("Alpha Fade", Float) = 0.5
+		_Extrude ("Extrude", Range(0, 0.01)) = 0.01
 	}
 
 	SubShader {
-		Tags {"Queue"="Overlay" "IgnoreProjector"="True" "RenderType"="Transparent"}
+		Tags {"Queue"="Overlay+10" "IgnoreProjector"="True" "RenderType"="Transparent"}
 
 		Lighting Off
 		Cull Off
 		Zwrite Off
-		ZTest Off
 
 		Blend SrcAlpha OneMinusSrcAlpha
 
@@ -24,27 +24,39 @@
 		#pragma vertex vert
 		#pragma fragment frag
 
+		struct appdata {
+			float4 vertex : POSITION;
+			float3 normal : NORMAL;
+		};
+
 		struct frag_in{
 			float4 position : SV_POSITION;
 			float4 screenPos  : TEXCOORD1;
 		};
 
-		frag_in vert(appdata_img v){
+		float _Extrude;
+
+		frag_in vert(appdata v){
 			frag_in o;
 			o.position = mul(UNITY_MATRIX_MVP, v.vertex);
+			float3 norm   = mul ((float3x3)UNITY_MATRIX_IT_MV, v.normal);
+			float2 offset = TransformViewToProjection(norm.xy);
+			o.position.xy += offset * _Extrude;
+
 			o.screenPos = ComputeScreenPos(o.position);
 			return o;
 		}
 
+		float4 _Color;
 		float _Min;
 		float _Max;
-		float _Fade;
 
 		float4 frag (frag_in i) : COLOR {
 			float4 colorBrightness = LeapRawColorBrightness(i.screenPos);
-			float alpha = _Fade * smoothstep(_Min, _Max, colorBrightness.a);
+			float alpha = smoothstep(_Min, _Max, colorBrightness.a);
 			return float4(pow(colorBrightness.rgb, _LeapGammaCorrectionExponent), alpha);
-			//return float4(alpha, alpha, alpha, 0);
+			//return float4(alpha, alpha, alpha, alpha);
+			//return float4(0,0,0,0);
 		}
 
 		ENDCG
