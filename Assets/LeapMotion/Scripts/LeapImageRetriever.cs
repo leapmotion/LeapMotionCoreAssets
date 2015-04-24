@@ -144,6 +144,7 @@ public class LeapImageRetriever : MonoBehaviour {
         texture.wrapMode = TextureWrapMode.Clamp;
         intermediateArray = new byte[texture.width * texture.height * bytesPerPixel(format)];
 
+        //Hack, since there is no good way to get device type, or the correct scale to compensate for IPD differencesd
         if (rescaleController) {
             if (format == TextureFormat.Alpha8) {
                 FindObjectOfType<HandController>().transform.localScale = 1.55f * Vector3.one;
