@@ -40,7 +40,6 @@ public class LeapImageRetriever : MonoBehaviour {
     private int _currentWidth = 0;
     private int _currentHeight = 0;
     private Image.FormatType _currentFormat = (Image.FormatType)(-1);
-    private string _enabledMaterialKeyword = null;
 
     //ImageList to use during rendering.  Can either be updated in OnPreRender or in Update
     private ImageList _imageList;
@@ -51,6 +50,7 @@ public class LeapImageRetriever : MonoBehaviour {
 
     // Main texture.
     protected Texture2D _main_texture = null;
+    protected byte[] mainTextureData = null;
 
     // Distortion textures.
     protected bool shouldRecalculateDistortion = false;
@@ -69,25 +69,20 @@ public class LeapImageRetriever : MonoBehaviour {
     private void initImageBasedMaterial(LeapImageBasedMaterial imageBasedMaterial) {
         Material material = imageBasedMaterial.GetComponent<Renderer>().material;
 
-        if (_enabledMaterialKeyword != null) {
-            material.DisableKeyword(_enabledMaterialKeyword);
+        foreach (string keyword in material.shaderKeywords) {
+            material.DisableKeyword(keyword);
         }
 
         switch(_currentFormat){
             case Image.FormatType.INFRARED:
-                _enabledMaterialKeyword = "LEAP_FORMAT_IR";
+                material.EnableKeyword("LEAP_FORMAT_IR");
                 break;
             case (Image.FormatType)4:
-                _enabledMaterialKeyword = "LEAP_FORMAT_RGB";
+                material.EnableKeyword("LEAP_FORMAT_RGB");
                 break;
             default:
-                _enabledMaterialKeyword = null;
                 Debug.LogWarning("Unexpected format type " + _currentFormat);
                 break;
-        }
-
-        if (_enabledMaterialKeyword != null) {
-            material.EnableKeyword(_enabledMaterialKeyword);
         }
 
         imageBasedMaterial.GetComponent<Renderer>().material.SetFloat("_LeapGammaCorrectionExponent", 1.0f / gammaCorrection);
@@ -143,22 +138,16 @@ public class LeapImageRetriever : MonoBehaviour {
         return texture.width * texture.height * bytesPerPixel(texture.format);
     }
 
-    private void initTexture(ref Image image, ref Texture2D texture) {
+    private void initTexture(ref Image image, ref byte[] intermediateArray, ref Texture2D texture) {
         TextureFormat format = getTextureFormat(ref image);
         texture = new Texture2D(image.Width, image.Height, format, false, true);
         texture.wrapMode = TextureWrapMode.Clamp;
+        intermediateArray = new byte[texture.width * texture.height * bytesPerPixel(format)];
     }
 
-    private void loadTexture(ref Image sourceImage, ref Texture2D destTexture) {
-        byte[] data = sourceImage.Data;
-
-        int epxected = totalBytes(destTexture);
-        if (data.Length != epxected) {
-            Debug.LogWarning("Expected " + epxected + " bytes but recieved " + data.Length);
-            return;
-        }
-
-        destTexture.LoadRawTextureData(data);
+    private void loadTexture(ref Image sourceImage, ref byte[] intermediateArray, ref Texture2D destTexture) {
+        System.Runtime.InteropServices.Marshal.Copy(sourceImage.DataPointer(), intermediateArray, 0, intermediateArray.Length);
+        destTexture.LoadRawTextureData(intermediateArray);
         destTexture.Apply();
     }
 
@@ -262,10 +251,11 @@ public class LeapImageRetriever : MonoBehaviour {
                                   "you are on tracking version 2.1+ and " +
                                   "your Leap Motion device is plugged in.");
             }
+            return;
         }
 
         if (referenceImage.Height != _currentHeight || referenceImage.Width != _currentWidth || referenceImage.Format != _currentFormat) {
-            initTexture(ref referenceImage, ref _main_texture);
+            initTexture(ref referenceImage, ref mainTextureData, ref _main_texture);
 
             _currentHeight = referenceImage.Height;
             _currentWidth = referenceImage.Width;
@@ -275,7 +265,7 @@ public class LeapImageRetriever : MonoBehaviour {
             imageBasedMaterialsToInit.AddRange(registeredImageBasedMaterials);
         }
 
-        loadTexture(ref referenceImage, ref _main_texture);
+        loadTexture(ref referenceImage, ref mainTextureData, ref _main_texture);
 
         for (int i = imageBasedMaterialsToInit.Count - 1; i >= 0; i--) {
             LeapImageBasedMaterial material = imageBasedMaterialsToInit[i];
