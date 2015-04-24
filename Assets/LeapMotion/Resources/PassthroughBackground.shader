@@ -20,18 +20,18 @@
 
 		struct frag_in{
 			float4 position : SV_POSITION;
-			float4 fragPos  : TEXCOORD1;
+			float4 screenPos  : TEXCOORD1;
 		};
 
 		frag_in vert(appdata_img v){
 			frag_in o;
 			o.position = mul(UNITY_MATRIX_MVP, v.vertex);
-			o.fragPos = o.position;
+			o.screenPos = ComputeScreenPos(o.position);
 			return o;
 		}
 
 		float4 frag (frag_in i) : COLOR {
-			return float4(LeapColor(i.fragPos), 1);
+			return float4(LeapColor(i.screenPos), 1);
 		}
 
 		ENDCG

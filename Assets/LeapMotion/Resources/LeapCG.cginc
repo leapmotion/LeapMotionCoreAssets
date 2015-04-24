@@ -24,8 +24,7 @@ sampler2D _LeapDistortion;
 float4 _LeapProjection;
 float _LeapGammaCorrectionExponent;
 
-float2 LeapGetScreenSpaceUV(float4 fragPos){
-	float4 screenPos = ComputeScreenPos(fragPos);
+float2 LeapGetUndistortedUV(float4 screenPos){
 	float2 uv = (screenPos.xy / screenPos.w) * 2 - float2(1,1);
 	float2 tangent = (uv + _LeapProjection.xy) / _LeapProjection.zw;
 	float2 distortionUV = 0.125 * tangent + float2(0.5, 0.5);
@@ -90,16 +89,16 @@ float4 LeapRawColorBrightnessUV(float2 uv){
 	#endif
 }
 
-float LeapRawBrightness(float4 fragPos){
-	return LeapRawBrightnessUV(LeapGetScreenSpaceUV(fragPos));
+float LeapRawBrightness(float4 screenPos){
+	return LeapRawBrightnessUV(LeapGetUndistortedUV(screenPos));
 }
 
-float3 LeapRawColor(float4 fragPos){
-	return LeapRawColorUV(LeapGetScreenSpaceUV(fragPos));
+float3 LeapRawColor(float4 screenPos){
+	return LeapRawColorUV(LeapGetUndistortedUV(screenPos));
 }
 
-float4 LeapRawColorBrightness(float4 fragPos){
-	return LeapRawColorBrightnessUV(LeapGetScreenSpaceUV(fragPos));
+float4 LeapRawColorBrightness(float4 screenPos){
+	return LeapRawColorBrightnessUV(LeapGetUndistortedUV(screenPos));
 }
 
 float LeapBrightnessUV(float2 uv){
@@ -114,14 +113,14 @@ float4 LeapColorBrightnessUV(float2 uv){
 	return pow(LeapRawColorBrightnessUV(uv), _LeapGammaCorrectionExponent);
 }
 
-float LeapBrightness(float4 fragPos){
-	return pow(LeapRawBrightness(fragPos), _LeapGammaCorrectionExponent);
+float LeapBrightness(float4 screenPos){
+	return pow(LeapRawBrightness(screenPos), _LeapGammaCorrectionExponent);
 }
 
-float3 LeapColor(float4 fragPos){
-	return pow(LeapRawColor(fragPos), _LeapGammaCorrectionExponent);
+float3 LeapColor(float4 screenPos){
+	return pow(LeapRawColor(screenPos), _LeapGammaCorrectionExponent);
 }
 
-float4 LeapColorBrightness(float4 fragPos){
-	return pow(LeapRawColorBrightness(fragPos), _LeapGammaCorrectionExponent);
+float4 LeapColorBrightness(float4 screenPos){
+	return pow(LeapRawColorBrightness(screenPos), _LeapGammaCorrectionExponent);
 }

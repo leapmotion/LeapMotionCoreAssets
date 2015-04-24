@@ -17,6 +17,8 @@
 	#include "LeapCG.cginc"
 	#include "UnityCG.cginc"
 
+	#pragma target 2.0
+
 	uniform sampler2D _CameraDepthTexture;
 
 	uniform float4    _Color;
@@ -58,7 +60,7 @@
 		float4 rawColor = LeapRawColorBrightness(fragPos);
 		float3 color = pow(rawColor.rgb, _LeapGammaCorrectionExponent);
 		float brightness = smoothstep(_MinThreshold, _MaxThreshold, rawColor.a);
-		float glow = smoothstep(_GlowThreshold, _MinThreshold, rawColor) * brightness;
+		float glow = smoothstep(_GlowThreshold, _MinThreshold, rawColor.a) * brightness;
 		return float4(color + _Color * glow * 10, brightness);
 	}
 
