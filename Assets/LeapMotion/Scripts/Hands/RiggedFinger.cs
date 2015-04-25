@@ -9,6 +9,7 @@ using System.Collections;
 using Leap;
 
 public class RiggedFinger : FingerModel {
+  public bool deformPosition = false; // Set to true when mesh is not visible
 
   public static readonly string[] FINGER_NAMES = {"Thumb", "Index", "Middle", "Ring", "Pinky"};
 
@@ -29,7 +30,9 @@ public class RiggedFinger : FingerModel {
     for (int i = 0; i < bones.Length; ++i) {
         if (bones[i] != null) {
             bones[i].rotation = GetBoneRotation(i) * Reorientation();
-            bones[i].position = GetBoneCenter(i);
+            if (deformPosition) {
+              bones[i].position = GetBoneCenter(i);
+            }
         }
     }
   }
