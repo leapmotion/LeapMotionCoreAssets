@@ -11,9 +11,6 @@ using Leap;
 // The finger model for our skeletal hand made out of various non-deforming models.
 public class SkeletalFinger : FingerModel {
 
-  public Transform[] bones = new Transform[NUM_BONES];
-  public Transform[] joints = new Transform[NUM_BONES - 1];
-
   public override void InitFinger() {
     SetPositions();
   }
