@@ -27,8 +27,10 @@ public class RiggedFinger : FingerModel {
 
   public override void UpdateFinger() {
     for (int i = 0; i < bones.Length; ++i) {
-      if (bones[i] != null)
-        bones[i].rotation = GetBoneRotation(i) * Reorientation();
+        if (bones[i] != null) {
+            bones[i].rotation = GetBoneRotation(i) * Reorientation();
+            bones[i].position = GetBoneCenter(i);
+        }
     }
   }
 }

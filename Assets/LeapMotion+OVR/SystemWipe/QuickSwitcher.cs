@@ -109,7 +109,7 @@ public class QuickSwitcher : MonoBehaviour {
 		m_from = m_wipeOutPosition;
 		m_to = m_startPosition;
     if ( m_imageRetriever != null ) {
-      m_imageRetriever.doUpdate = false;
+      m_imageRetriever.enabled = false;
     }
     else {
       Debug.LogError("No image retreiver on: " + gameObject.name);
@@ -119,7 +119,7 @@ public class QuickSwitcher : MonoBehaviour {
 
 	public void TweenToOnPosition() {
 		//Debug.Log("tweenToOnPosition");
-    m_imageRetriever.doUpdate = true;
+    m_imageRetriever.enabled = true;
 		StopAllCoroutines();
 		StartCoroutine(doPositionTween(0.0f, 0.1f, onOnPosition));
 	}
