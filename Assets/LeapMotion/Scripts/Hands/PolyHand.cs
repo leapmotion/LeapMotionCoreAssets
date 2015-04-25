@@ -11,8 +11,6 @@ using Leap;
 // A deforming, very low poly count hand.
 public class PolyHand : HandModel {
 
-  public Transform palm;
-
   public override void InitHand() {
     SetPalmOrientation();
 

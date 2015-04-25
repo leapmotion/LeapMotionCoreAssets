@@ -10,10 +10,6 @@ using Leap;
 
 public class RiggedFinger : FingerModel {
 
-  public static readonly string[] FINGER_NAMES = {"Thumb", "Index", "Middle", "Ring", "Pinky"};
-
-  public Transform[] bones = new Transform[NUM_BONES];
-
   public Vector3 modelFingerPointing = Vector3.forward;
   public Vector3 modelPalmFacing = -Vector3.up;
   
