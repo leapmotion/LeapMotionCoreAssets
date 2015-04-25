@@ -10,10 +10,7 @@ using Leap;
 
 // Class to setup a rigged hand based on a model.
 public class RiggedHand : HandModel {
-
-  public Transform palm;
-  public Transform foreArm;
-
+	
   public Vector3 modelFingerPointing = Vector3.forward;
   public Vector3 modelPalmFacing = -Vector3.up;
 
@@ -31,12 +28,14 @@ public class RiggedHand : HandModel {
       palm.rotation = GetPalmRotation() * Reorientation();
     }
 
-    if (foreArm != null)
-      foreArm.rotation = GetArmRotation() * Reorientation();
+    if (forearm != null)
+      forearm.rotation = GetArmRotation() * Reorientation();
 
     for (int i = 0; i < fingers.Length; ++i) {
-      if (fingers[i] != null)
+      if (fingers[i] != null) {
+				fingers[i].fingerType = (Finger.FingerType)i;
         fingers[i].UpdateFinger();
-    }
+			}
+		}
   }
 }
