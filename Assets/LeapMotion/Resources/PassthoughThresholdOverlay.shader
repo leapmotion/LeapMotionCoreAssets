@@ -44,7 +44,6 @@
 			float4 colorBrightness = LeapRawColorBrightness(i.screenPos);
 			float alpha = _Fade * smoothstep(_Min, _Max, colorBrightness.a);
 			return float4(pow(colorBrightness.rgb, _LeapGammaCorrectionExponent), alpha);
-			//return float4(alpha, alpha, alpha, 0);
 		}
 
 		ENDCG
