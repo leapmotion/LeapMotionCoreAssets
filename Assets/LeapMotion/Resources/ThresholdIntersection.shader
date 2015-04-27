@@ -1,7 +1,7 @@
 ﻿Shader "LeapMotion/Passthrough/ThresholdIntersection" {
 	Properties {
 		_Color           ("Color", Color)                  = (0.165,0.337,0.578,1.0)
-        _Fade            ("Fade", Range(0, 1))             = 0
+		_Fade            ("Fade", Range(0, 1))             = 0
 		_Extrude         ("Extrude", Float)                = 0.008
 		_Intersection    ("Intersection Threshold", Float) = 0.035
 
