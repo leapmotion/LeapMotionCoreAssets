@@ -1,4 +1,4 @@
-﻿Shader "GVR/Passthrough/ThresholdIntersection" {
+﻿Shader "LeapMotion/Passthrough/ThresholdIntersection" {
 	Properties {
 		_Color           ("Color", Color) = (0,0,0,0)
         _Fade            ("Fade", Range(0, 1))             = 0
@@ -28,6 +28,7 @@
 	uniform float     _MinThreshold;
 	uniform float     _MaxThreshold;
 	uniform float     _GlowThreshold;
+	uniform float     _GlowPower;
 
 	struct appdata {
 		float4 vertex : POSITION;
@@ -60,7 +61,7 @@
 		float3 color = pow(rawColor.rgb, _LeapGammaCorrectionExponent);
 		float brightness = smoothstep(_MinThreshold, _MaxThreshold, rawColor.a);
 		float glow = smoothstep(_GlowThreshold, _MinThreshold, rawColor.a) * brightness;
-		return float4(color + _Color * glow, brightness);
+		return float4(color + _Color * glow * _GlowPower, brightness);
 	}
 
 	float4 frag(frag_in i) : COLOR{
@@ -68,7 +69,7 @@
 		float sceneZ = LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.projPos)));
 		float partZ = i.projPos.z;
 		float diff = smoothstep(_Intersection, 0, sceneZ - partZ);
-		return float4(lerp(handColor.rgb, _Color.rgb * 2500, diff), _Fade * handColor.a * (1 - diff));
+		return float4(lerp(handColor.rgb, _Color.rgb * 20, diff), _Fade * handColor.a * (1 - diff));
 	}
 
 	float4 alphaFrag(frag_in i) : COLOR {
@@ -78,7 +79,7 @@
 	ENDCG
 
 	SubShader {
-		Tags {"Queue"="Overlay+10"}
+		Tags {"Queue"="Overlay"}
 
 		Blend SrcAlpha OneMinusSrcAlpha
 
