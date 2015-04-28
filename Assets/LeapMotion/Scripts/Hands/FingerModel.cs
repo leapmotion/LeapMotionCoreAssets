@@ -54,7 +54,9 @@ public abstract class FingerModel : MonoBehaviour {
   public Hand GetLeapHand() { return hand_; }
   public Finger GetLeapFinger() { return finger_; }
 
-  public abstract void InitFinger();
+  public virtual void InitFinger() {
+    UpdateFinger();
+  }
 
   public abstract void UpdateFinger();
 

@@ -16,10 +16,12 @@ public class SkeletalHand : HandModel {
   void Start() {
     // Ignore collisions with self.
     Leap.Utils.IgnoreCollisions(gameObject, gameObject);
-  }
 
-  public override void InitHand() {
-    SetPositions();
+    for (int i = 0; i < fingers.Length; ++i) {
+      if (fingers[i] != null) {
+        fingers[i].fingerType = (Finger.FingerType)i;
+      }
+    }
   }
 
   public override void UpdateHand() {
@@ -34,7 +36,7 @@ public class SkeletalHand : HandModel {
   protected void SetPositions() {
     for (int f = 0; f < fingers.Length; ++f) {
       if (fingers[f] != null)
-        fingers[f].InitFinger();
+        fingers[f].UpdateFinger();
     }
 
     if (palm != null) {

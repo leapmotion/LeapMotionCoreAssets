@@ -18,18 +18,14 @@ public class RiggedFinger : FingerModel {
     return Quaternion.Inverse(Quaternion.LookRotation(modelFingerPointing, -modelPalmFacing));
   }
 
-  public override void InitFinger() {
-    UpdateFinger();
-  }
-
   public override void UpdateFinger() {
     for (int i = 0; i < bones.Length; ++i) {
-        if (bones[i] != null) {
-            bones[i].rotation = GetBoneRotation(i) * Reorientation();
-            if (deformPosition) {
-              bones[i].position = GetBoneCenter(i);
-            }
+      if (bones[i] != null) {
+        bones[i].rotation = GetBoneRotation(i) * Reorientation();
+        if (deformPosition) {
+          bones[i].position = GetBoneCenter(i);
         }
+      }
     }
   }
 }

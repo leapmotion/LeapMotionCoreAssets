@@ -13,10 +13,6 @@ public class DebugFinger : FingerModel {
 
   protected Color[] colors = {Color.yellow, Color.green, Color.cyan, Color.blue};
 
-  public override void InitFinger() {
-    DrawDebugLines();
-  }
-
   public override void UpdateFinger() {
     DrawDebugLines();
   }

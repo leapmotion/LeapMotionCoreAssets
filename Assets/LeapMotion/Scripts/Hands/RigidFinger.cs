@@ -21,10 +21,6 @@ public class RigidFinger : SkeletalFinger {
     }
   }
 
-  public override void InitFinger() {
-    base.InitFinger();
-  }
-
   public override void UpdateFinger() {
     for (int i = 0; i < bones.Length; ++i) {
       if (bones[i] != null) {

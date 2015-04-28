@@ -191,7 +191,16 @@ public abstract class HandModel : MonoBehaviour {
     }
   }
 
-  public abstract void InitHand();
+  public virtual void InitHand() {
+    for (int f = 0; f < fingers.Length; ++f) {
+      if (fingers[f] != null) {
+        fingers[f].fingerType = (Finger.FingerType)f;
+        fingers[f].InitFinger();
+      }
+    }
+
+    UpdateHand ();
+  }
 
   public abstract void UpdateHand();
 }
