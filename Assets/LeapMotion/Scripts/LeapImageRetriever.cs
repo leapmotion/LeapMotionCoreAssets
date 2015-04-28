@@ -50,8 +50,11 @@ public class LeapImageRetriever : MonoBehaviour {
     private Texture2D _mainTexture = null;
     private byte[] _mainTextureData = null;
 
+    //Used to recalculate the distortion every time a hand enters the frame.  Used because there is no way to tell if the device has flipped (which changes the distortion)
+    private bool _requestDistortionRecalc = false;
+    private bool _forceDistortionRecalc = false;
+    
     // Distortion textures.
-    private bool _shouldRecalculateDistortion = false;
     private Texture2D _distortion = null;
     private Color32[] _distortionPixels = null;
 
@@ -98,14 +101,13 @@ public class LeapImageRetriever : MonoBehaviour {
         if (_distortion == null) {
             initDistortion(image);
             loadDistortion(image);
-            _shouldRecalculateDistortion = false;
+            _forceDistortionRecalc = false;
         }
 
-        //Only recalculate distortion if a recalculate is requested AND there is at least one hand in the scene
-        //This is to get around the fact that we can't know if a device has been flipped
-        if (_shouldRecalculateDistortion && _controller.Frame().Hands.Count != 0) {
+        if (_forceDistortionRecalc || (_requestDistortionRecalc && _controller.Frame().Hands.Count != 0)) {
             loadDistortion(image);
-            _shouldRecalculateDistortion = false;
+            _requestDistortionRecalc = false;
+            _forceDistortionRecalc = false;
         }
 
         imageBasedMaterial.GetComponent<Renderer>().material.SetTexture("_LeapDistortion", _distortion);
@@ -217,7 +219,7 @@ public class LeapImageRetriever : MonoBehaviour {
         Frame frame = _controller.Frame();
 
         if (frame.Hands.Count == 0) {
-            _shouldRecalculateDistortion = true;
+            _requestDistortionRecalc = true;
         }
 
         if (syncMode == SYNC_MODE.SYNC_WITH_HANDS) {
@@ -252,6 +254,8 @@ public class LeapImageRetriever : MonoBehaviour {
 
             _imageBasedMaterialsToInit.Clear();
             _imageBasedMaterialsToInit.AddRange(_registeredImageBasedMaterials);
+
+            _forceDistortionRecalc = true;
         }
 
         loadMainTexture(referenceImage);
