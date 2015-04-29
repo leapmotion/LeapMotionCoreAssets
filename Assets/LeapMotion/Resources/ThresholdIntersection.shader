@@ -58,9 +58,8 @@
 		return float4(color + _Color * glow * _GlowPower, brightness);
 	}
 
-	float4 frag(frag_in i) : COLOR{
 		float4 handColor = getHandColor(i.screenPos);
-		return float4(handColor.rgb, _Fade * handColor.a * (1 - diff));
+		return float4(handColor.rgb, _Fade * handColor.a);
 	}
 
 	float4 alphaFrag(frag_in i) : COLOR {
