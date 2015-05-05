@@ -1,14 +1,11 @@
-﻿Shader "LeapMotion/Passthrough/ThresholdIntersection" {
+﻿Shader "LeapMotion/Passthrough/OutlinePassthrough" {
 	Properties {
 		_Color           ("Color", Color)                  = (0.165,0.337,0.578,1.0)
 		_Fade            ("Fade", Range(0, 1))             = 0
 		_Extrude         ("Extrude", Float)                = 0.008
-		_Intersection    ("Intersection Threshold", Float) = 0.035
 
-		_MinThreshold    ("Min Threshold", Float)     = 0.1
-		_MaxThreshold    ("Max Threshold", Float)     = 0.2
-		_GlowThreshold   ("Glow Threshold", Float)    = 0.5
-		_GlowPower       ("Glow Power", Float)        = 10
+		_Threshold       ("Threshold", Float)     = 0.1
+		_Edge            ("Edge width", Range(0, 0.01))  = 0.002
 	}
 
 
@@ -19,14 +16,12 @@
 
 	#pragma target 3.0
 
+	uniform sampler2D _CameraDepthTexture;
+
 	uniform float4    _Color;
-    uniform float     _Fade;
 	uniform float     _Extrude;
-	uniform float     _Intersection;
-	uniform float     _MinThreshold;
-	uniform float     _MaxThreshold;
-	uniform float     _GlowThreshold;
-	uniform float     _GlowPower;
+	uniform float     _Threshold;
+	uniform float     _Edge;
 
 	struct appdata {
 		float4 vertex : POSITION;
@@ -50,17 +45,28 @@
 		return o;
 	}
 
-	float4 getHandColor(float4 screenPos){
-		float4 rawColor = LeapRawColorBrightness(screenPos);
-		float3 color = pow(rawColor.rgb, _LeapGammaCorrectionExponent);
-		float brightness = smoothstep(_MinThreshold, _MaxThreshold, rawColor.a);
-		float glow = smoothstep(_GlowThreshold, _MinThreshold, rawColor.a) * brightness;
-		return float4(color + _Color * glow * _GlowPower, brightness);
-	}
+	float4 frag(frag_in i) : COLOR{
+		float2 uv = LeapGetUndistortedUV(i.screenPos);
 
-	float4 frag(frag_in i) : COLOR {
-		float4 handColor = getHandColor(i.screenPos);
-		return float4(handColor.rgb, _Fade * handColor.a);
+		float4 colorCenter = LeapRawColorBrightnessUV(uv);
+		float colorRight = LeapRawBrightnessUV(uv + float2(_Edge, 0));
+		float colorLeft = LeapRawBrightnessUV(uv + float2(-_Edge, 0));
+		float colorUp = LeapRawBrightnessUV(uv + float2(0, _Edge));
+		float colorDown = LeapRawBrightnessUV(uv + float2(0, -_Edge));
+
+		float alpha = step(_Threshold, colorCenter.a);
+
+		float edge = alpha;
+		edge *= step(_Threshold, colorRight);
+		edge *= step(_Threshold, colorLeft);
+		edge *= step(_Threshold, colorUp);
+		edge *= step(_Threshold, colorDown);
+
+		float3 finalColor = lerp(_Color,
+		                  pow(colorCenter.rgb, _LeapGammaCorrectionExponent),
+						  edge);
+
+		return float4(finalColor, alpha);
 	}
 
 	float4 alphaFrag(frag_in i) : COLOR {
