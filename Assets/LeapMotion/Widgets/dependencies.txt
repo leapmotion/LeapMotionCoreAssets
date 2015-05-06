@@ -1,0 +1,1 @@
+The Leap Motion Widgets require that your Unity project also contain either our Leap Motion Core Assets OR the Leap Motion VR Assets, both available for free at: https://developer.leapmotion.com/downloads/unity

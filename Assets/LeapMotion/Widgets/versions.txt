@@ -1,0 +1,4 @@
+Widgets Version: 2.2.4
+Leap Motion SDK Version at Release Time: 2.2.4+26750
+Leap Motion Core Asset Version at Release Time: 2.2.4
+Leap Motion VR Asset Version at Release Time: 2.2.4

@@ -127,6 +127,11 @@ public class HandControllerEditor : Editor {
         (ToolModel)EditorGUILayout.ObjectField("Tool Model",
                                                controller.toolModel,
                                                typeof(ToolModel), true);
+    
+    controller.handParent = 
+        (Transform)EditorGUILayout.ObjectField("Hand Parent Transform",
+                                               controller.handParent,
+                                               typeof(Transform), true);
 
     EditorGUILayout.Space();
 
