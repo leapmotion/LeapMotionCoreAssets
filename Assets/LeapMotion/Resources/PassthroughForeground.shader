@@ -3,7 +3,7 @@
 	}
 
 	SubShader {
-		Tags {"Queue"="Geomtry" "IgnoreProjector"="True" "RenderType"="Opaque"}
+		Tags {"Queue"="Geometry" "IgnoreProjector"="True" "RenderType"="Opaque"}
 
 		Cull Off
 		Zwrite Off
