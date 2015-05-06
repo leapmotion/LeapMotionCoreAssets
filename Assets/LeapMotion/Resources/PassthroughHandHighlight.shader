@@ -8,7 +8,7 @@
 		_MinThreshold    ("Min Threshold", Float)     = 0.1
 		_MaxThreshold    ("Max Threshold", Float)     = 0.2
 		_GlowThreshold   ("Glow Threshold", Float)    = 0.5
-		_GlowPower       ("Glow Power", Float)        = 10
+		_GlowPower       ("Glow Power", Float)        = 2.4
 	}
 
 
