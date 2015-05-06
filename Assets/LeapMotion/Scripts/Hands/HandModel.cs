@@ -28,7 +28,7 @@ public abstract class HandModel : MonoBehaviour {
   * of the user's hand to scale the model proportionally.
   */
   public float handModelPalmWidth = 0.085f;
-  /** The array of finger objects for this hand. */
+  /** The array of finger objects for this hand. The array is ordered from thumb (element 0) to pinky (element 4).*/
   public FingerModel[] fingers = new FingerModel[NUM_FINGERS];
 
   /** The Leap Hand object this hand model represents. */
