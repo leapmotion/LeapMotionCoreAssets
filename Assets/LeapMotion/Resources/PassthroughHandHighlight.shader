@@ -3,6 +3,7 @@
 		_Color           ("Color", Color)                  = (0.165,0.337,0.578,1.0)
 		_Fade            ("Fade", Range(0, 1))             = 0
 		_Extrude         ("Extrude", Float)                = 0.008
+		_Intersection    ("Intersection Threshold", Float) = 0.035
 
 		_MinThreshold    ("Min Threshold", Float)     = 0.1
 		_MaxThreshold    ("Max Threshold", Float)     = 0.2
@@ -21,6 +22,7 @@
 	uniform float4    _Color;
     uniform float     _Fade;
 	uniform float     _Extrude;
+	uniform float     _Intersection;
 	uniform float     _MinThreshold;
 	uniform float     _MaxThreshold;
 	uniform float     _GlowThreshold;
