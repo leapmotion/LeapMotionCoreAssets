@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 
 public class QuickSwitcher : MonoBehaviour {
 
@@ -14,7 +15,7 @@ public class QuickSwitcher : MonoBehaviour {
 	[SerializeField]
 	private Vector3 m_wipeOutPosition;
   [SerializeField]
-  private LeapImageRetriever m_imageRetriever;
+  private List<LeapImageRetriever> m_imageRetriever;
 
 	private Vector3 m_startPosition;
 
@@ -32,7 +33,6 @@ public class QuickSwitcher : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		m_startPosition = transform.localPosition;
-		m_wipeOutPosition = m_startPosition + m_wipeOutPosition;
 		m_from = m_startPosition;
 		m_to = m_wipeOutPosition;
 		m_lastLockedState = TransitionState.ON;
@@ -109,7 +109,9 @@ public class QuickSwitcher : MonoBehaviour {
 		m_from = m_wipeOutPosition;
 		m_to = m_startPosition;
     if ( m_imageRetriever != null ) {
-      m_imageRetriever.enabled = false;
+      foreach (LeapImageRetriever image in m_imageRetriever) {
+        image.enabled = false;
+      }
     }
     else {
       Debug.LogError("No image retreiver on: " + gameObject.name);
@@ -119,7 +121,11 @@ public class QuickSwitcher : MonoBehaviour {
 
 	public void TweenToOnPosition() {
 		//Debug.Log("tweenToOnPosition");
-    m_imageRetriever.enabled = true;
+    if ( m_imageRetriever != null ) {
+      foreach (LeapImageRetriever image in m_imageRetriever) {
+        image.enabled = true;
+      }
+    }
 		StopAllCoroutines();
 		StartCoroutine(doPositionTween(0.0f, 0.1f, onOnPosition));
 	}

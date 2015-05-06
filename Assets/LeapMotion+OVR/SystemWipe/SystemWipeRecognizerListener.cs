@@ -25,7 +25,10 @@ public class SystemWipeRecognizerListener : MonoBehaviour {
   private bool m_wipeInfoDirty = false;
   
   private object wipeInfoLock = new object();
-  
+
+  /// <summary>
+  /// Singleton pattern
+  /// </summary>
   void Awake() {
     if ( Instance == null ) {
       Instance = this;
