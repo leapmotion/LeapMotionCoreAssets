@@ -17,9 +17,13 @@
 	#include "LeapCG.cginc"
 	#include "UnityCG.cginc"
 
+	#define USE_DEPTH_TEXTURE
+
 	#pragma target 3.0
 
+	#ifdef USE_DEPTH_TEXTURE
 	uniform sampler2D _CameraDepthTexture;
+	#endif
 
 	uniform float4    _Color;
     uniform float     _Fade;
@@ -38,7 +42,9 @@
 	struct frag_in{
 		float4 vertex : POSITION;
 		float4 screenPos  : TEXCOORD0;
+#ifdef USE_DEPTH_TEXTURE
 		float4 projPos  : TEXCOORD1;
+#endif
 	};
 
 	frag_in vert(appdata v){
@@ -50,8 +56,11 @@
 		o.vertex.xy += offset * _Extrude;
 
 		o.screenPos = ComputeScreenPos(o.vertex);
+
+#ifdef USE_DEPTH_TEXTURE
 		o.projPos = o.screenPos;
 		COMPUTE_EYEDEPTH(o.projPos.z);
+#endif
 
 		return o;
 	}
@@ -66,10 +75,14 @@
 
 	float4 frag(frag_in i) : COLOR{
 		float4 handColor = getHandColor(i.screenPos);
+#ifdef USE_DEPTH_TEXTURE
 		float sceneZ = LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.projPos)));
 		float partZ = i.projPos.z;
 		float diff = smoothstep(_Intersection, 0, sceneZ - partZ);
 		return float4(lerp(handColor.rgb, _Color.rgb * 20, diff), _Fade * handColor.a * (1 - diff));
+#else
+		return float4(handColor.rgb, _Fade * handColor.a);
+#endif
 	}
 
 	float4 alphaFrag(frag_in i) : COLOR {
