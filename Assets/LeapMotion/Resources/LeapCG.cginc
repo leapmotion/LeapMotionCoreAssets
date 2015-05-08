@@ -7,9 +7,9 @@
 
 #define RGB_SCALE     1.5 * float3(1.5, 1.0, 0.5)
 
-#define R_OFFSET      CAMERA_DELTA * float2(0, -0.5)
-#define G_OFFSET      CAMERA_DELTA * float2(0.5, -0.5)
-#define B_OFFSET      CAMERA_DELTA * float2(0.5, 0)
+#define R_OFFSET      CAMERA_DELTA * float2(-0.5, 0.0)
+#define G_OFFSET      CAMERA_DELTA * float2(-0.5, 0.5)
+#define B_OFFSET      CAMERA_DELTA * float2( 0.0, 0.5)
 
 #define TRANSFORMATION  transpose(float4x4(5.0670, -1.2312, 0.8625, -0.0507, -1.5210, 3.1104, -2.0194, 0.0017, -0.8310, -0.3000, 13.1744, -0.1052, -2.4540, -1.3848, -10.9618, 1.0000))
 #define CONSERVATIVE    transpose(float4x4(5.0670, 0.0000, 0.8625, 0.0000, 0.0000, 3.1104, 0.0000, 0.0017, 0.0000, 0.0000, 13.1744, 0.0000, 0.0000, 0.0000, 0.0000, 1.0000))
@@ -48,9 +48,9 @@ float3 LeapRawColorUV(float2 uv){
 	#else
 		float4 input_lf;
 
-		input_lf.a = tex2D(_LeapTexture, uv).r;
+		input_lf.a = tex2D(_LeapTexture, uv).a;
 		input_lf.r = tex2D(_LeapTexture, uv + R_OFFSET).b;
-		input_lf.g = tex2D(_LeapTexture, uv + G_OFFSET).a;
+		input_lf.g = tex2D(_LeapTexture, uv + G_OFFSET).r;
 		input_lf.b = tex2D(_LeapTexture, uv + B_OFFSET).g;
 
 		float4 output_lf       = mul(TRANSFORMATION, input_lf);
