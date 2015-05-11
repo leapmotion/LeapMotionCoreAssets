@@ -8,13 +8,20 @@ using UnityEngine;
 using System.Collections;
 using Leap;
 
-// The model for our skeletal hand made out of various polyhedra.
+/** 
+ * A hand object consisting of discrete, component parts.
+ * 
+ * The hand can have game objects for the palm, wrist and forearm, as well as fingers.
+ */
 public class SkeletalHand : HandModel {
 
   protected const float PALM_CENTER_OFFSET = 0.0150f;
 
+  /** The palm of the hand. */
   public GameObject palm;
+  /** The forearm. */
   public GameObject forearm;
+  /** The base of the hand. */
   public GameObject wristJoint;
 
   void Start() {
@@ -22,10 +29,12 @@ public class SkeletalHand : HandModel {
     Leap.Utils.IgnoreCollisions(gameObject, gameObject);
   }
 
+  /** Initializes the hand and its component parts by setting their positions and rotations. */
   public override void InitHand() {
     SetPositions();
   }
 
+  /** Updates the hand and its component parts by setting their positions and rotations. */
   public override void UpdateHand() {
     SetPositions();
   }

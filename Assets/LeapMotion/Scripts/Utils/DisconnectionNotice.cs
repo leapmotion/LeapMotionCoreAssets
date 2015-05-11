@@ -8,13 +8,24 @@ using UnityEngine;
 using System.Collections;
 using Leap;
 
+/**
+ * Tracks the connection state of the Leap Motion hardware. If the device is unplugged
+ * or otherwise not detected, the script fades in a GUITexture object which should communicate
+ * the problem to the user.
+ */
 public class DisconnectionNotice : MonoBehaviour {
 
+  /** The speed to fade the object alpha from 0 to 1. */
   public float fadeInTime = 1.0f;
+  /** The speed to fade the object alpha from 1 to 0. */
   public float fadeOutTime = 1.0f;
+  /** The easing curve. */
   public AnimationCurve fade;
+  /** A delay before beginning the fade-in effect. */
   public int waitFrames = 10;
+  /** An alternative image to use when the hardware is embedded in a keyboard or laptop. */
   public Texture2D embeddedReplacementImage;
+  /** The fully on texture tint color. */
   public Color onColor = Color.white;
 
   private Controller leap_controller_;
@@ -30,17 +41,19 @@ public class DisconnectionNotice : MonoBehaviour {
     GetComponent<GUITexture>().color = Color.Lerp(Color.clear, onColor, alpha);
   }
 
+  /** The connection state of the controller. */
   public bool IsConnected() {
     return leap_controller_.IsConnected;
   }
 
+  /** Whether the controller is embedded in a keyboard or laptop.*/
   public bool IsEmbedded() {
     DeviceList devices = leap_controller_.Devices;
     if (devices.Count == 0)
       return false;
     return devices[0].IsEmbedded;
   }
-
+        
   void Update() {
     if (embeddedReplacementImage != null && IsEmbedded()) {
       GetComponent<GUITexture>().texture = embeddedReplacementImage;

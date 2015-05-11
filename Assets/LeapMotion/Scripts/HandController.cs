@@ -8,43 +8,80 @@ using UnityEngine;
 using System.Collections.Generic;
 using Leap;
 
-// Overall Controller object that will instantiate hands and tools when they appear.
+/**
+* The Controller object that instantiates hands and tools to represent the hands and tools tracked
+* by the Leap Motion device.
+*
+* HandController is a Unity MonoBehavior instance that serves as the interface between your Unity application
+* and the Leap Motion service.
+*
+* The HandController script is attached to the HandController prefab. Drop a HandController prefab 
+* into a scene to add 3D, motion-controlled hands. The hands are placed above the prefab at their 
+* real-world relationship to the physical Leap device. You can change the transform of the prefab to 
+* adjust the orientation and the size of the hands in the scene. You can change the 
+* HandController.handMovementScale property to change the range
+* of motion of the hands without changing the apparent model size.
+*
+* When the HandController is active in a scene, it adds the specified 3D models for the hands to the
+* scene whenever physical hands are tracked by the Leap Motion hardware. By default, these objects are
+* destroyed when the physical hands are lost and recreated when tracking resumes. The asset package
+* provides a variety of hands that you can use in conjunction with the hand controller. 
+*/
 public class HandController : MonoBehaviour {
 
   // Reference distance from thumb base to pinky base in mm.
   protected const float GIZMO_SCALE = 5.0f;
+  /** Conversion factor for millimeters to meters. */
   protected const float MM_TO_M = 0.001f;
 
+  /** Whether to use a separate model for left and right hands (true); or mirror the same model for both hands (false). */ 
   public bool separateLeftRight = false;
+  /** The GameObject containing graphics to use for the left hand or both hands if separateLeftRight is false. */
   public HandModel leftGraphicsModel;
+  /** The GameObject containing colliders to use for the left hand or both hands if separateLeftRight is false. */
   public HandModel leftPhysicsModel;
+  /** The graphics hand model to use for the right hand. */
   public HandModel rightGraphicsModel;
+  /** The physics hand model to use for the right hand. */
   public HandModel rightPhysicsModel;
   // If this is null hands will have no parent
   public Transform handParent = null;
 
+  /** The GameObject containing both graphics and colliders for tools. */
   public ToolModel toolModel;
 
+  /** Set true if the Leap Motion hardware is mounted on an HMD; otherwise, leave false. */
   public bool isHeadMounted = false;
+  /** Reverses the z axis. */
   public bool mirrorZAxis = false;
 
-  // If hands are in charge of Destroying themselves, make this false.
+  /** If hands are in charge of Destroying themselves, make this false. */
   public bool destroyHands = true;
 
+  /** The scale factors for hand movement. Set greater than 1 to give the hands a greater range of motion. */
   public Vector3 handMovementScale = Vector3.one;
 
   // Recording parameters.
+  /** Set true to enable recording. */
   public bool enableRecordPlayback = false;
+  /** The file to record or playback from. */
   public TextAsset recordingAsset;
+  /** Playback speed. Set to 1.0 for normal speed. */
   public float recorderSpeed = 1.0f;
+  /** Whether to loop the playback. */
   public bool recorderLoop = true;
   
+  /** The object used to control recording and playback.*/
   protected LeapRecorder recorder_ = new LeapRecorder();
   
+  /** The underlying Leap Motion Controller object.*/
   protected Controller leap_controller_;
 
+  /** The list of all hand graphic objects owned by this HandController.*/
   protected Dictionary<int, HandModel> hand_graphics_;
+  /** The list of all hand physics objects owned by this HandController.*/
   protected Dictionary<int, HandModel> hand_physics_;
+  /** The list of all tool objects owned by this HandController.*/
   protected Dictionary<int, ToolModel> tools_;
 
   private bool flag_initialized_ = false;
@@ -52,12 +89,17 @@ public class HandController : MonoBehaviour {
   private long prev_graphics_id_ = 0;
   private long prev_physics_id_ = 0;
   
+  /** Draws the Leap Motion gizmo when in the Unity editor. */
   void OnDrawGizmos() {
     // Draws the little Leap Motion Controller in the Editor view.
     Gizmos.matrix = Matrix4x4.Scale(GIZMO_SCALE * Vector3.one);
     Gizmos.DrawIcon(transform.position, "leap_motion.png");
   }
 
+  /** 
+  * Initializes the Leap Motion policy flags.
+  * The POLICY_OPTIMIZE_HMD flag improves tracking for head-mounted devices.
+  */
   void InitializeFlags()
   {
     // Optimize for top-down tracking if on head mounted display.
@@ -70,10 +112,12 @@ public class HandController : MonoBehaviour {
     leap_controller_.SetPolicyFlags(policy_flags);
   }
 
+  /** Creates a new Leap Controller object. */
   void Awake() {
     leap_controller_ = new Controller();
   }
 
+  /** Initalizes the hand and tool lists and recording, if enabled.*/
   void Start() {
     // Initialize hand lookup tables.
     hand_graphics_ = new Dictionary<int, HandModel>();
@@ -90,11 +134,17 @@ public class HandController : MonoBehaviour {
       recorder_.Load(recordingAsset);
   }
 
+  /**
+  * Turns off collisions between the specified GameObject and all hands.
+  * Subject to the limitations of Unity Physics.IgnoreCollisions(). 
+  * See http://docs.unity3d.com/ScriptReference/Physics.IgnoreCollision.html.
+  */
   public void IgnoreCollisionsWithHands(GameObject to_ignore, bool ignore = true) {
     foreach (HandModel hand in hand_physics_.Values)
       Leap.Utils.IgnoreCollisions(hand.gameObject, to_ignore, ignore);
   }
 
+  /** Creates a new HandModel instance. */
   protected HandModel CreateHand(HandModel model) {
     HandModel hand_model = Instantiate(model, transform.position, transform.rotation)
                            as HandModel;
@@ -106,6 +156,10 @@ public class HandController : MonoBehaviour {
     return hand_model;
   }
 
+  /** 
+  * Destroys a HandModel instance if HandController.destroyHands is true (the default).
+  * If you set destroyHands to false, you must destroy the hand instances elsewhere in your code.
+  */
   protected void DestroyHand(HandModel hand_model) {
     if (destroyHands)
       Destroy(hand_model.gameObject);
@@ -113,7 +167,18 @@ public class HandController : MonoBehaviour {
       hand_model.SetLeapHand(null);
   }
 
-  protected void UpdateHandModels(Dictionary<int, HandModel> all_hands,
+  /** 
+  * Updates hands based on tracking data in the specified Leap HandList object.
+  * Active HandModel instances are updated if the hand they represent is still
+  * present in the Leap HandList; otherwise, the HandModel is removed. If new
+  * Leap Hand objects are present in the Leap HandList, new HandModels are 
+  * created and added to the HandController hand list. 
+  * @param all_hands The dictionary containing the HandModels to update.
+  * @param leap_hands The list of hands from the a Leap Frame instance.
+  * @param left_model The HandModel instance to use for new left hands.
+  * @param right_model The HandModel instance to use for new right hands.
+  */
+	protected void UpdateHandModels(Dictionary<int, HandModel> all_hands,
                                   HandList leap_hands,
                                   HandModel left_model, HandModel right_model) {
     List<int> ids_to_check = new List<int>(all_hands.Keys);
@@ -172,6 +237,7 @@ public class HandController : MonoBehaviour {
     }
   }
 
+  /** Creates a ToolModel instance. */
   protected ToolModel CreateTool(ToolModel model) {
     ToolModel tool_model = Instantiate(model, transform.position, transform.rotation) as ToolModel;
     tool_model.gameObject.SetActive(true);
@@ -179,6 +245,16 @@ public class HandController : MonoBehaviour {
     return tool_model;
   }
 
+  /** 
+  * Updates tools based on tracking data in the specified Leap ToolList object.
+  * Active ToolModel instances are updated if the tool they represent is still
+  * present in the Leap ToolList; otherwise, the ToolModel is removed. If new
+  * Leap Tool objects are present in the Leap ToolList, new ToolModels are 
+  * created and added to the HandController tool list. 
+  * @param all_tools The dictionary containing the ToolModels to update.
+  * @param leap_tools The list of tools from the a Leap Frame instance.
+  * @param model The ToolModel instance to use for new tools.
+  */
   protected void UpdateToolModels(Dictionary<int, ToolModel> all_tools,
                                   ToolList leap_tools, ToolModel model) {
     List<int> ids_to_check = new List<int>(all_tools.Keys);
@@ -221,10 +297,17 @@ public class HandController : MonoBehaviour {
     }
   }
 
+  /** Returns the Leap Controller instance. */
   public Controller GetLeapController() {
     return leap_controller_;
   }
 
+  /**
+  * Returns the latest frame object.
+  *
+  * If the recorder object is playing a recording, then the frame is taken from the recording.
+  * Otherwise, the frame comes from the Leap Motion Controller itself.
+  */
   public Frame GetFrame() {
     if (enableRecordPlayback && recorder_.state == RecorderState.Playing)
       return recorder_.GetCurrentFrame();
@@ -232,6 +315,7 @@ public class HandController : MonoBehaviour {
     return leap_controller_.Frame();
   }
 
+  /** Updates the graphics objects. */
   void Update() {
     if (leap_controller_ == null)
       return;
@@ -269,6 +353,7 @@ public class HandController : MonoBehaviour {
     }
   }
 
+  /** Updates the physics objects */
   void FixedUpdate() {
     if (leap_controller_ == null)
       return;
@@ -283,10 +368,12 @@ public class HandController : MonoBehaviour {
     }
   }
 
+  /** True, if the Leap Motion hardware is plugged in and this application is connected to the Leap Motion service. */
   public bool IsConnected() {
     return leap_controller_.IsConnected;
   }
 
+  /** True, if the active Leap Motion device is embedded in a laptop or keyboard. */
   public bool IsEmbedded() {
     DeviceList devices = leap_controller_.Devices;
     if (devices.Count == 0)
@@ -294,6 +381,7 @@ public class HandController : MonoBehaviour {
     return devices[0].IsEmbedded;
   }
 
+  /** Returns a copy of the hand model list. */
   public HandModel[] GetAllGraphicsHands() {
     if (hand_graphics_ == null)
       return new HandModel[0];
@@ -303,6 +391,7 @@ public class HandController : MonoBehaviour {
     return models;
   }
 
+  /** Returns a copy of the physics model list. */
   public HandModel[] GetAllPhysicsHands() {
     if (hand_physics_ == null)
       return new HandModel[0];
@@ -312,6 +401,7 @@ public class HandController : MonoBehaviour {
     return models;
   }
 
+  /** Destroys all hands owned by this HandController instance. */
   public void DestroyAllHands() {
     if (hand_graphics_ != null) {
       foreach (HandModel model in hand_graphics_.Values)
@@ -326,37 +416,48 @@ public class HandController : MonoBehaviour {
       hand_physics_.Clear();
     }
   }
-
+  
+  /** The current frame position divided by the total number of frames in the recording. */
   public float GetRecordingProgress() {
     return recorder_.GetProgress();
   }
 
+  /** Stops recording or playback and resets the frame counter to the beginning. */
   public void StopRecording() {
     recorder_.Stop();
   }
 
+  /** Start getting frames from the LeapRecorder object rather than the Leap service. */
   public void PlayRecording() {
     recorder_.Play();
   }
 
+  /** Stops playback or recording without resetting the frame counter. */
   public void PauseRecording() {
     recorder_.Pause();
   }
 
+  /** 
+  * Saves the current recording to a new file, returns the path, and starts playback.
+  * @return string The path to the saved recording.
+  */
   public string FinishAndSaveRecording() {
     string path = recorder_.SaveToNewFile();
     recorder_.Play();
     return path;
   }
 
+  /** Discards any frames recorded so far. */
   public void ResetRecording() {
     recorder_.Reset();
   }
 
+  /** Starts saving frames. */
   public void Record() {
     recorder_.Record();
   }
 
+  /** Called in Update() to send frames to the recorder. */
   protected void UpdateRecorder() {
     if (!enableRecordPlayback)
       return;
