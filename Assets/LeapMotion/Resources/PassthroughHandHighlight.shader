@@ -61,12 +61,13 @@
 
 	float4 getHandColor(float4 screenPos) {
     // Map leap image to linear color space
-		float4 rawColor = LeapRawColorBrightness(screenPos);
-		float3 linearColor = pow(rawColor.rgb, _LeapGammaCorrectionExponent);
+		float4 leapRawColor = LeapRawColorBrightness(screenPos);
+		float3 leapLinearColor = pow(leapRawColor.rgb, _LeapGammaCorrectionExponent);
     // Apply edge glow and interior shading
-		float brightness = smoothstep(_MinThreshold, _MaxThreshold, rawColor.a);
-		float glow = smoothstep(_GlowThreshold, _MinThreshold, rawColor.a) * brightness;
-		return float4(linearColor + _Color * glow * _GlowPower, brightness);
+		float brightness = smoothstep(_MinThreshold, _MaxThreshold, leapRawColor.a);
+		float glow = smoothstep(_GlowThreshold, _MinThreshold, leapRawColor.a) * brightness;
+    float4 linearColor = pow(_Color, _ColorSpaceGamma);
+		return float4(leapLinearColor + linearColor * glow * _GlowPower, brightness);
 	}
 
 	float4 frag(frag_in i) : COLOR {
@@ -75,8 +76,8 @@
 		float sceneZ = LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.projPos)));
 		float partZ = i.projPos.z;
 		float diff = smoothstep(_Intersection, 0, sceneZ - partZ);
-    
-    float4 handLinear = float4(lerp(handColor.rgb, _Color.rgb * 20, diff), _Fade * handColor.a * (1 - diff));
+    float4 linearColor = pow(_Color, _ColorSpaceGamma);
+    float4 handLinear = float4(lerp(handColor.rgb, linearColor.rgb * 20, diff), _Fade * handColor.a * (1 - diff));
 		return pow(handLinear, _ColorSpaceGamma);
 	}
 
