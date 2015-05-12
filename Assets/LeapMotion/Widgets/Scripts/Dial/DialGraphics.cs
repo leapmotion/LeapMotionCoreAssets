@@ -78,6 +78,10 @@ namespace LMWidgets
 		private Transform LabelPrefab;
     [SerializeField]
 		private Transform DialPhysicsOffset;
+    /// <summary>
+    /// How far forward should the dial protrude from the panel.
+    /// </summary>
+    public float DialProtrudenceDistance;
     [SerializeField]
 		private Transform DialPhysics;
     [SerializeField]
@@ -143,17 +147,31 @@ namespace LMWidgets
 
     }
 
-
+    /// <summary>
+    /// Move the physics and graphics components into the proper positions.
+    /// </summary>
+    /// <remarks>
+    /// This is a bit hacky, but we're ignoring the positions of the dial elements 
+    /// in the editor and assigning them programatically.
+    /// 
+    /// This is how I found it, but I'm tempted to take a 
+    /// "respect the editor" viewpoint for initial positions
+    /// when it comes to widgets. - @Daniel
+    /// </remarks>
+    private void setInitialPositions() {
+      DialCenter.localPosition = new Vector3(0f, 0f, DialRadius + DialProtrudenceDistance);
+      DialPhysicsOffset.localPosition = new Vector3(-(DialRadius + DialProtrudenceDistance) * 10f, 0f, 0f);
+      hilightTextVolume.transform.localPosition += new Vector3(0, 0, DialProtrudenceDistance);
+    }
     		
 		void Start () {
-			DialCenter.localPosition = new Vector3(0f, 0f, DialRadius);
-			DialPhysicsOffset.localPosition = new Vector3(-DialRadius * 10f, 0f, 0f);
+      setInitialPositions();
 			
 		    generateAndLayoutLabels ();
 
 			if( m_dataBinder != null ) {
 				//Set the Dial value based on a string
-		        CurrentDialValue = m_dataBinder.GetCurrentData();
+        CurrentDialValue = m_dataBinder.GetCurrentData();
 				SetPhysicsStep(CurrentDialInt);
 			}
 		}
