@@ -20,6 +20,15 @@ public class LeapImageBasedMaterial : MonoBehaviour {
 
     void OnEnable() {
         LeapImageRetriever.registerImageBasedMaterial(this);
+        // Make shader consistent with settings
+        
+        if (QualitySettings.activeColorSpace == ColorSpace.Linear) {
+          GetComponent<Renderer> ().material.SetFloat ("_ColorSpaceGamma", 1.0f);
+        } else {
+          float gamma = -Mathf.Log10(Mathf.GammaToLinearSpace(0.1f));
+          GetComponent<Renderer> ().material.SetFloat ("_ColorSpaceGamma", gamma);
+          //Debug.Log ("Derived gamma = " + gamma);
+        }
     }
 
     void OnDisable() {

@@ -1,5 +1,6 @@
 ﻿Shader "LeapMotion/Passthrough/Foreground" {
 	Properties {
+    _ColorSpaceGamma ("Color Space Gamma", Float) = 1.0
 	}
 
 	SubShader {
@@ -17,6 +18,8 @@
 		
 		#pragma vertex vert
 		#pragma fragment frag
+    
+    uniform float _ColorSpaceGamma;
 
 		struct frag_in{
 			float4 position : SV_POSITION;
