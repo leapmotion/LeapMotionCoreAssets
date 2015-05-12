@@ -1,4 +1,4 @@
-﻿Shader "LeapMotion/Passthrough/HandHighlight" {
+Shader "LeapMotion/Passthrough/HandHighlight" {
 	Properties {
 		_Color           ("Color", Color)                  = (0.165,0.337,0.578,1.0)
 		_Fade            ("Fade", Range(0, 1))             = 0.0
@@ -24,7 +24,7 @@
 	uniform sampler2D _CameraDepthTexture;
 
 	uniform float4    _Color;
-    uniform float     _Fade;
+  uniform float     _Fade;
 	uniform float     _Extrude;
 	uniform float     _Intersection;
 	uniform float     _MinThreshold;
@@ -78,7 +78,8 @@
 		float diff = smoothstep(_Intersection, 0, sceneZ - partZ);
     float4 linearColor = pow(_Color, _ColorSpaceGamma);
     float4 handLinear = float4(lerp(handColor.rgb, linearColor.rgb * 20, diff), _Fade * handColor.a * (1 - diff));
-		return pow(handLinear, _ColorSpaceGamma);
+		//return pow(handLinear, _ColorSpaceGamma);
+    return handLinear;
 	}
 
 	float4 alphaFrag(frag_in i) : COLOR {
