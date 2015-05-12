@@ -1,5 +1,6 @@
 ﻿Shader "LeapMotion/Passthrough/Foreground" {
 	Properties {
+    _ColorSpaceGamma ("Color Space Gamma", Float) = 1.0
 	}
 
 	SubShader {
@@ -17,6 +18,8 @@
 		
 		#pragma vertex vert
 		#pragma fragment frag
+    
+    uniform float _ColorSpaceGamma;
 
 		struct frag_in{
 			float4 position : SV_POSITION;
@@ -31,7 +34,7 @@
 		}
 
 		float4 frag (frag_in i) : COLOR {
-			return float4(LeapColor(i.screenPos), 1);
+			return pow(float4(LeapColor(i.screenPos), 1), 1/_ColorSpaceGamma);
 		}
 
 		ENDCG
