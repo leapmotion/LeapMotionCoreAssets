@@ -17,16 +17,17 @@ public class FadeTextByRotation : MonoBehaviour {
   public AnimationCurve FadeCurve;
 
   /// <summary>
-  /// Reference for the "forward direction.
+  /// Reference for the "forward direction. AutoDiscovered.
   /// </summary>
   /// <remarks>
+  /// AutoDiscovery:
   /// Uses the label's parent's parent (label -> dial center -> panel center)
-  /// NOTE: This might deserve an override but erring on the side of 
-  /// fewer editor hookups to have break.
+  /// 
+  /// Autodiscovery can be overrriden by assigning the reference transform in the editor.
   /// 
   /// "Forward" is assumed to be -z.
   /// </remarks>
-  private Transform m_referenceTransform;
+  public Transform ReferenceTransform_AutoDiscovered;
 
   /// <summary>
   /// The starting opacity of the label.
@@ -48,12 +49,16 @@ public class FadeTextByRotation : MonoBehaviour {
   /// Finds and assigns a reference to the reference transform.
   /// </summary>
   /// <returns>
-  /// Returns whether the registration was successful.
+  /// Returns true if the registration was successful or already complete.
+  /// Returns false if the registration failed and the reference transform is still null.
   /// </returns>
   private bool registerReferenceTransform() {
+    if (ReferenceTransform_AutoDiscovered != null) {
+      return true;
+    }
     if (transform.parent == null) { return false; }
-    m_referenceTransform = transform.parent.parent;
-    return m_referenceTransform != null;
+    ReferenceTransform_AutoDiscovered = transform.parent.parent;
+    return ReferenceTransform_AutoDiscovered != null;
   }
 
   void Awake() {
@@ -71,13 +76,15 @@ public class FadeTextByRotation : MonoBehaviour {
   }
 
   void OnEnable() {
-    registerReferenceTransform();
+    if (ReferenceTransform_AutoDiscovered == null) {
+      registerReferenceTransform();
+    }
   }
 	
 	// Update is called once per frame
 	void Update () {
     // Make sure there is a reference transform to reference.
-    if (m_referenceTransform == null) {
+    if (ReferenceTransform_AutoDiscovered == null) {
       bool registered = registerReferenceTransform();
       if (!registered) {
         Debug.LogError("No reference transform. Exiting.");
@@ -90,7 +97,7 @@ public class FadeTextByRotation : MonoBehaviour {
       return;
     }
 
-    float referenceDotDirection = Vector3.Dot(m_referenceTransform.forward, transform.forward);
+    float referenceDotDirection = Vector3.Dot(ReferenceTransform_AutoDiscovered.forward, transform.forward);
     referenceDotDirection = Mathf.Clamp01(referenceDotDirection);
     
     // We say opacity mod because the actual opacity will be 
