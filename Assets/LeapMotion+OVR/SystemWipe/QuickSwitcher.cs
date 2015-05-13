@@ -13,7 +13,7 @@ public class QuickSwitcher : MonoBehaviour {
 	[SerializeField]
 	private float m_minProgressToStartTransition;
 	[SerializeField]
-	private float m_percentageToLockTransition;
+	private float m_fractionToLockTransition;
 	[SerializeField]
 	private Vector3 m_wipeOutPosition;
   [SerializeField]
@@ -41,24 +41,6 @@ public class QuickSwitcher : MonoBehaviour {
 		SystemWipeRecognizerListener.Instance.SystemWipeUpdate += onWipeUpdate;
     TweenToOffPosition();
 	}
-	
-	// Update is called once per frame
-	void Update () {
-    if (m_cameraAlignment == null)
-      return;
-
-    // TODO: Tween camera positions
-    switch (m_currentTransitionState) {
-    case TransitionState.ON:
-      m_cameraAlignment.enabled = true;
-      break;
-    case TransitionState.OFF:
-      m_cameraAlignment.enabled = false;
-      break;
-    default:
-      break;
-    }
-	}
 
 	private void onWipeUpdate(object sender, SystemWipeArgs eventArgs) {
 		if ( !m_enabled ) { return; }
@@ -77,13 +59,13 @@ public class QuickSwitcher : MonoBehaviour {
 
 		if ( m_currentTransitionState == TransitionState.MANUAL ) {
 			debugLine += " | Manual Control";
-			float percentage = Mathf.Clamp01(eventArgs.WipeInfo.Progress);
+			float fraction = Mathf.Clamp01(eventArgs.WipeInfo.Progress);
 
-			debugLine += ": " + percentage;
-			transform.localPosition = Vector3.Lerp(m_from, m_to, percentage);
+			debugLine += ": " + fraction;
+			transform.localPosition = Vector3.Lerp(m_from, m_to, fraction);
 
 			// If we're sure of the gesture, just go make the transition
-			if ( percentage >= m_percentageToLockTransition ) {
+			if ( fraction >= m_fractionToLockTransition ) {
 				debugLine += " | Transition Cofirmed";
 				if ( m_lastLockedState == TransitionState.OFF ) {
 					TweenToOnPosition();
@@ -116,6 +98,8 @@ public class QuickSwitcher : MonoBehaviour {
 		m_from = m_startPosition;
 		m_to = m_wipeOutPosition;
     m_handController.gameObject.SetActive(false);
+    if (m_cameraAlignment != null)
+      m_cameraAlignment.enabled = true;
 	}
 
 	private void onOffPosition() {
@@ -133,6 +117,8 @@ public class QuickSwitcher : MonoBehaviour {
       Debug.LogError("No image retreiver on: " + gameObject.name);
     }
     m_handController.gameObject.SetActive(true);
+    if (m_cameraAlignment != null)
+      m_cameraAlignment.enabled = false;
 	}
 
 	public void TweenToOnPosition() {
@@ -152,10 +138,10 @@ public class QuickSwitcher : MonoBehaviour {
 		StartCoroutine(doPositionTween(1.0f, 0.1f, onOffPosition));
 	}
 
-	public void TweenToPosition(float percentage, float time = 0.4f) {
+	public void TweenToPosition(float fraction, float time = 0.4f) {
 		m_currentTransitionState = TransitionState.TWEENING;
 		StopAllCoroutines();
-		StartCoroutine(doPositionTween(percentage, time));
+		StartCoroutine(doPositionTween(fraction, time));
 	}
 
 	private IEnumerator doPositionTween(float goalPercent, float transitionTime, TweenCompleteDelegate onComplete = null) {
@@ -166,13 +152,15 @@ public class QuickSwitcher : MonoBehaviour {
 		Vector3 to = Vector3.Lerp(m_startPosition, m_wipeOutPosition, goalPercent);
 
 		while ( true ) { 
-			float percentage = Mathf.Clamp01((Time.time - startTime)/transitionTime);
-//			Debug.Log("Tween step: " + percentage);
+			float fraction = Mathf.Clamp01((Time.time - startTime)/transitionTime);
+//			Debug.Log("Tween step: " + fraction);
 
-			transform.localPosition = Vector3.Lerp(from, to, percentage);
+			transform.localPosition = Vector3.Lerp(from, to, fraction);
+      if (m_cameraAlignment != null)
+        m_cameraAlignment.tween = fraction;
 
 			// Kick out of the loop if we're done
-			if ( percentage == 1 ) {
+			if ( fraction == 1 ) {
 				break;
 			} else { // otherwise continue
 				yield return 1;
