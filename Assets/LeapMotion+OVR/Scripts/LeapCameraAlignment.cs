@@ -11,24 +11,31 @@ public class LeapCameraAlignment : MonoBehaviour {
   // OVRManager.LateUpdate
   // Call order is determined by hierarchy,
   // with parents called before children.
-	void LateUpdate () {
-	
-	}
+  void LateUpdate() {
+    if (handController == null ||
+      leftEye == null ||
+      rightEye == null) {
+      Debug.Log ("Hand Controller & Eye references cannot be null");
+      return;
+    }
 
-//  void CameraAlignment() {
-//    Vector3 addIPD = Vector3.zero;
-//    Vector3 toDevice = Vector3.zero;
-//    addIPD = rightEye.position - leftEye.position;
-//    float oculusIPD = addIPD.magnitude;
-//    addIPD = 0.5f * addIPD.normalized * (DeviceIPDValue - oculusIPD);
-//    toDevice = centerEye.forward * DeviceDisplace;
-//    
-//    if ((leftEye.position - addIPD + toDevice).x != float.NaN &&
-//        (rightEye.position + addIPD + toDevice).x != float.NaN) {
-//      
-//      leftEye.localPosition = leftEye.position - addIPD + toDevice;
-//      rightEye.localPosition = rightEye.position + addIPD + toDevice;
-//      centerEye.localPosition = 0.5f * (leftEye.position + rightEye.position);
-//    }
-//  }
+    LeapDeviceInfo device = handController.GetDeviceInfo ();
+    if (device.type == LeapDeviceType.Invalid)
+      return;
+
+    Vector3 addIPD = Vector3.zero;
+    Vector3 toDevice = Vector3.zero;
+    addIPD = rightEye.position - leftEye.position;
+    // ASSUME: Oculus resets camera positions in each frame
+    float oculusIPD = addIPD.magnitude;
+    addIPD = 0.5f * addIPD.normalized * (device.baseline - oculusIPD);
+    toDevice = centerEye.forward * device.focalPlaneOffset;
+    
+    if ((leftEye.position - addIPD + toDevice).x != float.NaN &&
+        (rightEye.position + addIPD + toDevice).x != float.NaN) {
+      
+      leftEye.localPosition = leftEye.position - addIPD + toDevice;
+      rightEye.localPosition = rightEye.position + addIPD + toDevice;
+    }
+  }
 }
