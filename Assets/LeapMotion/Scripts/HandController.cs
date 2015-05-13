@@ -294,6 +294,20 @@ public class HandController : MonoBehaviour {
     return devices[0].IsEmbedded;
   }
 
+  public LeapDeviceInfo GetDeviceInfo() {
+    LeapDeviceInfo info = new LeapDeviceInfo(LeapDeviceType.Peripheral);
+    DeviceList devices = leap_controller_.Devices;
+    if (devices.Count != 1) {
+      return info;
+    }
+    info.isEmbedded = devices [0].IsEmbedded;
+    info.horizontalViewAngle = devices[0].HorizontalViewAngle * Mathf.Rad2Deg;
+    info.verticalViewAngle = devices[0].VerticalViewAngle * Mathf.Rad2Deg;
+    info.trackingRange = devices[0].Range / 1000f;
+    info.serialID = devices[0].SerialNumber;
+    return info;
+  }
+
   public HandModel[] GetAllGraphicsHands() {
     if (hand_graphics_ == null)
       return new HandModel[0];
