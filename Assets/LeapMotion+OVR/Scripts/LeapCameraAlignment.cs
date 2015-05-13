@@ -30,12 +30,9 @@ public class LeapCameraAlignment : MonoBehaviour {
     float oculusIPD = addIPD.magnitude;
     addIPD = 0.5f * addIPD.normalized * (device.baseline - oculusIPD);
     toDevice = centerEye.forward * device.focalPlaneOffset;
-    
-    if ((leftEye.position - addIPD + toDevice).x != float.NaN &&
-        (rightEye.position + addIPD + toDevice).x != float.NaN) {
-      
-      leftEye.localPosition = leftEye.position - addIPD + toDevice;
-      rightEye.localPosition = rightEye.position + addIPD + toDevice;
-    }
+
+    leftEye.position = leftEye.position - addIPD + toDevice;
+    rightEye.position = rightEye.position + addIPD + toDevice;
+    centerEye.position = (leftEye.position + rightEye.localPosition)*0.5f;
   }
 }
