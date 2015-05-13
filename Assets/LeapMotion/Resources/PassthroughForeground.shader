@@ -7,7 +7,7 @@
 		Tags {"Queue"="Geometry" "IgnoreProjector"="True" "RenderType"="Opaque"}
 
 		Cull Off
-		Zwrite Off
+		Zwrite On
 		Blend One Zero
 
 		Pass{
