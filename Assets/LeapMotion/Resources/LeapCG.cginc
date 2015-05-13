@@ -72,9 +72,9 @@ float4 LeapRawColorBrightnessUV(float2 uv){
 	#else
 		float4 input_lf;
 
-		input_lf.a = tex2D(_LeapTexture, uv).r;
+		input_lf.a = tex2D(_LeapTexture, uv).a;
 		input_lf.r = tex2D(_LeapTexture, uv + R_OFFSET).b;
-		input_lf.g = tex2D(_LeapTexture, uv + G_OFFSET).a;
+		input_lf.g = tex2D(_LeapTexture, uv + G_OFFSET).r;
 		input_lf.b = tex2D(_LeapTexture, uv + B_OFFSET).g;
 
 		float4 output_lf       = mul(TRANSFORMATION, input_lf);
