@@ -87,11 +87,6 @@ public class HandController : MonoBehaviour {
 
     if (enableRecordPlayback && recordingAsset != null)
       recorder_.Load(recordingAsset);
-
-    LeapDeviceInfo device = GetDeviceInfo ();
-    if (device.type != LeapDeviceType.Invalid) {
-      transform.localPosition = new Vector3(0f, 0f, device.focalPlaneOffset);
-    }
   }
 
   public void IgnoreCollisionsWithHands(GameObject to_ignore, bool ignore = true) {
