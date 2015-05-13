@@ -88,6 +88,11 @@ public class HandController : MonoBehaviour {
 
     if (enableRecordPlayback && recordingAsset != null)
       recorder_.Load(recordingAsset);
+
+    LeapDeviceInfo device = GetDeviceInfo ();
+    if (device.type != LeapDeviceType.Invalid) {
+      transform.localPosition = new Vector3(0f, 0f, device.focalPlaneOffset);
+    }
   }
 
   public void IgnoreCollisionsWithHands(GameObject to_ignore, bool ignore = true) {
@@ -287,19 +292,14 @@ public class HandController : MonoBehaviour {
     return leap_controller_.IsConnected;
   }
 
-  public bool IsEmbedded() {
-    DeviceList devices = leap_controller_.Devices;
-    if (devices.Count == 0)
-      return false;
-    return devices[0].IsEmbedded;
-  }
-
   public LeapDeviceInfo GetDeviceInfo() {
     LeapDeviceInfo info = new LeapDeviceInfo(LeapDeviceType.Peripheral);
     DeviceList devices = leap_controller_.Devices;
     if (devices.Count != 1) {
       return info;
     }
+    // TODO: Add baseline & offset when included in API
+    // NOTE: Alternative is to use device type since all parameters are invariant
     info.isEmbedded = devices [0].IsEmbedded;
     info.horizontalViewAngle = devices[0].HorizontalViewAngle * Mathf.Rad2Deg;
     info.verticalViewAngle = devices[0].VerticalViewAngle * Mathf.Rad2Deg;
