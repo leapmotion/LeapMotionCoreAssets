@@ -1,0 +1,19 @@
+﻿using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
+/// <summary>
+/// Execution ordering is determined by enable ordering.
+/// Provided that scripts can begin disabled, this will
+/// activate scripts in the desired order.
+/// </summary>
+public class ExecutionOrdering : MonoBehaviour {
+  public List<MonoBehaviour> ordering;
+
+	// Use this for initialization
+	void Start () {
+    foreach (MonoBehaviour script in ordering) {
+      script.enabled = true;
+    }
+	}
+}
