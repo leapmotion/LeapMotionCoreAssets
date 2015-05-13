@@ -8,6 +8,8 @@ public class QuickSwitcher : MonoBehaviour {
 	public bool m_enabled = false;
   [SerializeField]
   private HandController m_handController;
+  [SerializeField]
+  private LeapCameraAlignment m_cameraAlignment;
 	[SerializeField]
 	private float m_minProgressToStartTransition;
 	[SerializeField]
@@ -42,6 +44,20 @@ public class QuickSwitcher : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+    if (m_cameraAlignment == null)
+      return;
+
+    // TODO: Tween camera positions
+    switch (m_currentTransitionState) {
+    case TransitionState.ON:
+      m_cameraAlignment.enabled = true;
+      break;
+    case TransitionState.OFF:
+      m_cameraAlignment.enabled = false;
+      break;
+    default:
+      break;
+    }
 	}
 
 	private void onWipeUpdate(object sender, SystemWipeArgs eventArgs) {
