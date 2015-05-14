@@ -48,7 +48,6 @@ public class HandController : MonoBehaviour {
   protected Dictionary<int, ToolModel> tools_;
 
   private bool flag_initialized_ = false;
-  private bool show_hands_ = true;
   private long prev_graphics_id_ = 0;
   private long prev_physics_id_ = 0;
   
@@ -243,29 +242,10 @@ public class HandController : MonoBehaviour {
     {
       InitializeFlags();
     }
-
-    if (Input.GetKeyDown(KeyCode.H))
+    if (frame.Id != prev_graphics_id_)
     {
-      show_hands_ = !show_hands_;
-    }
-
-    if (show_hands_)
-    {
-      if (frame.Id != prev_graphics_id_)
-      {
-        UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
-        prev_graphics_id_ = frame.Id;
-      }
-    }
-    else
-    {
-      // Destroy all hands with defunct IDs.
-      List<int> hands = new List<int>(hand_graphics_.Keys);
-      for (int i = 0; i < hands.Count; ++i)
-      {
-        DestroyHand(hand_graphics_[hands[i]]);
-        hand_graphics_.Remove(hands[i]);
-      }
+      UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
+      prev_graphics_id_ = frame.Id;
     }
   }
 
@@ -287,11 +267,20 @@ public class HandController : MonoBehaviour {
     return leap_controller_.IsConnected;
   }
 
-  public bool IsEmbedded() {
+  public LeapDeviceInfo GetDeviceInfo() {
+    LeapDeviceInfo info = new LeapDeviceInfo(LeapDeviceType.Peripheral);
     DeviceList devices = leap_controller_.Devices;
-    if (devices.Count == 0)
-      return false;
-    return devices[0].IsEmbedded;
+    if (devices.Count != 1) {
+      return info;
+    }
+    // TODO: Add baseline & offset when included in API
+    // NOTE: Alternative is to use device type since all parameters are invariant
+    info.isEmbedded = devices [0].IsEmbedded;
+    info.horizontalViewAngle = devices[0].HorizontalViewAngle * Mathf.Rad2Deg;
+    info.verticalViewAngle = devices[0].VerticalViewAngle * Mathf.Rad2Deg;
+    info.trackingRange = devices[0].Range / 1000f;
+    info.serialID = devices[0].SerialNumber;
+    return info;
   }
 
   public HandModel[] GetAllGraphicsHands() {
