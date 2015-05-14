@@ -7,7 +7,7 @@ using System.Collections.Generic;
 /// Provided that scripts can begin disabled, this will
 /// activate scripts in the desired order.
 /// </summary>
-public class ExecutionOrdering : MonoBehaviour {
+public class EnableUpdateOrdering : MonoBehaviour {
   public List<MonoBehaviour> ordering;
 
 	// Use this for initialization
