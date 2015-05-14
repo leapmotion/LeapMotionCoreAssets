@@ -42,7 +42,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     Vector3 toDevice = centerEye.forward * device.focalPlaneOffset * tween;
     leftEye.position = leftEye.position - addIPD + toDevice;
     rightEye.position = rightEye.position + addIPD + toDevice;
-    centerEye.position = (leftEye.position + rightEye.localPosition)*0.5f;
+    centerEye.position = 0.5f * (leftEye.position + rightEye.position);
   }
 
   bool HasNaN(Vector3 v) {
