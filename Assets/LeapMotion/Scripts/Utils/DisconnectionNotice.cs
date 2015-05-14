@@ -30,11 +30,11 @@ public class DisconnectionNotice : MonoBehaviour {
     GetComponent<GUITexture>().color = Color.Lerp(Color.clear, onColor, alpha);
   }
 
-  public bool IsConnected() {
+  bool IsConnected() {
     return leap_controller_.IsConnected;
   }
 
-  public bool IsEmbedded() {
+  bool IsEmbedded() {
     DeviceList devices = leap_controller_.Devices;
     if (devices.Count == 0)
       return false;
