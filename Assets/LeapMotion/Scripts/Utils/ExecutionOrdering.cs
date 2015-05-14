@@ -13,6 +13,8 @@ public class ExecutionOrdering : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
     foreach (MonoBehaviour script in ordering) {
+      if (script == null)
+        continue;
       script.enabled = true;
     }
 	}
