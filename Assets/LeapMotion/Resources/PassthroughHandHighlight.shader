@@ -4,6 +4,7 @@ Shader "LeapMotion/Passthrough/HandHighlight" {
 		_Fade            ("Fade", Range(0, 1))             = 0.0
 		_Extrude         ("Extrude", Float)                = 0.008
 		_Intersection    ("Intersection Threshold", Float) = 0.035
+    _IntersectionEffectBrightness ("Intersection Brightness", Range (0, 2000)) = 100
 
 		_MinThreshold    ("Min Threshold", Float)     = 0.1
 		_MaxThreshold    ("Max Threshold", Float)     = 0.2
@@ -27,6 +28,7 @@ Shader "LeapMotion/Passthrough/HandHighlight" {
   uniform float     _Fade;
 	uniform float     _Extrude;
 	uniform float     _Intersection;
+  uniform float     _IntersectionEffectBrightness;
 	uniform float     _MinThreshold;
 	uniform float     _MaxThreshold;
 	uniform float     _GlowThreshold;
@@ -77,7 +79,7 @@ Shader "LeapMotion/Passthrough/HandHighlight" {
 		float partZ = i.projPos.z;
 		float diff = smoothstep(_Intersection, 0, sceneZ - partZ);
     float4 linearColor = pow(_Color, _ColorSpaceGamma);
-    float4 handLinear = float4(lerp(handColor.rgb, linearColor.rgb * 20, diff), _Fade * handColor.a * (1 - diff));
+    float4 handLinear = float4(lerp(handColor.rgb, linearColor.rgb * _IntersectionEffectBrightness, diff), _Fade * handColor.a * (1 - diff));
 		//return pow(handLinear, _ColorSpaceGamma);
     return handLinear;
 	}
