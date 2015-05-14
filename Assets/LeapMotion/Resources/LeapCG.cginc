@@ -61,7 +61,7 @@ float3 LeapRawColorUV(float2 uv){
 
 		float3 color = (output_lf_fudge.rgb - output_lf.rgb) * fudge * fudge + output_lf.rgb;
 
-		return color * RGB_SCALE;
+		return saturate(color * RGB_SCALE);
 	#endif
 }
 
@@ -85,7 +85,7 @@ float4 LeapRawColorBrightnessUV(float2 uv){
 
 		float3 color = (output_lf_fudge.rgb - output_lf.rgb) * fudge * fudge + output_lf.rgb;
 
-		return float4(color * RGB_SCALE, pow(dot(input_lf, float4(-0.051, -0.001, -0.105, 1)), 0.5));
+		return saturate(float4(color * RGB_SCALE, pow(dot(input_lf, float4(-0.051, -0.001, -0.105, 1)), 0.5)));
 	#endif
 }
 
