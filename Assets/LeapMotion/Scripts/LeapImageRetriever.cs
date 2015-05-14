@@ -28,7 +28,6 @@ public class LeapImageRetriever : MonoBehaviour {
     [Tooltip ("Should the image match the tracked hand, or should it be displayed as fast as possible")]
     public SYNC_MODE syncMode = SYNC_MODE.SYNC_WITH_HANDS;
     public float gammaCorrection = 1.0f;
-    public bool rescaleController = true;
 
     public const int IMAGE_WARNING_WAIT = 10;
     private int _missedImages = 0;
@@ -144,15 +143,6 @@ public class LeapImageRetriever : MonoBehaviour {
         _mainTexture.wrapMode = TextureWrapMode.Clamp;
         _mainTexture.filterMode = FilterMode.Bilinear;
         _mainTextureData = new byte[_mainTexture.width * _mainTexture.height * bytesPerPixel(format)];
-
-        //Hack, since there is no good way to get device type, or the correct scale to compensate for IPD differencesd
-        if (rescaleController) {
-            if (format == TextureFormat.Alpha8) {
-                FindObjectOfType<HandController>().transform.localScale = 1.55f * Vector3.one;
-            } else if (format == TextureFormat.ARGB32) {
-                FindObjectOfType<HandController>().transform.localScale = 1.0f * Vector3.one;
-            }
-        }
     }
 
     private void loadMainTexture(Image sourceImage) {
