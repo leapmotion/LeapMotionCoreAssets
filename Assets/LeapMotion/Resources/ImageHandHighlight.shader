@@ -11,7 +11,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 		_GlowThreshold   ("Glow Threshold", Float)    = 0.5
 		_GlowPower       ("Glow Power", Float)        = 10.0
     
-    _ColorSpaceGamma ("Color Space Gamma", Float) = 1.0
+		_ColorSpaceGamma ("Color Space Gamma", Float) = 1.0
 	}
 
 
@@ -20,9 +20,13 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 	#include "LeapCG.cginc"
 	#include "UnityCG.cginc"
 
+	#define USE_DEPTH_TEXTURE
+
 	#pragma target 3.0
 
+	#ifdef USE_DEPTH_TEXTURE
 	uniform sampler2D _CameraDepthTexture;
+	#endif
 
 	uniform float4    _Color;
   uniform float     _Fade;
@@ -43,7 +47,9 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 	struct frag_in {
 		float4 vertex : POSITION;
 		float4 screenPos  : TEXCOORD0;
+#ifdef USE_DEPTH_TEXTURE
 		float4 projPos  : TEXCOORD1;
+#endif
 	};
 
 	frag_in vert(appdata v){
@@ -55,8 +61,11 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 		o.vertex.xy += offset * _Extrude;
 
 		o.screenPos = ComputeScreenPos(o.vertex);
+
+#ifdef USE_DEPTH_TEXTURE
 		o.projPos = o.screenPos;
 		COMPUTE_EYEDEPTH(o.projPos.z);
+#endif
 
 		return o;
 	}
@@ -74,14 +83,18 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 
 	float4 frag(frag_in i) : COLOR {
 		float4 handColor = getHandColor(i.screenPos);
-    // Apply intersection highlight
+		// Apply intersection highlight
+#ifdef USE_DEPTH_TEXTURE
 		float sceneZ = LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.projPos)));
 		float partZ = i.projPos.z;
 		float diff = smoothstep(_Intersection, 0, sceneZ - partZ);
-    float4 linearColor = pow(_Color, _ColorSpaceGamma);
-    float4 handLinear = float4(lerp(handColor.rgb, linearColor.rgb * _IntersectionEffectBrightness, diff), _Fade * handColor.a * (1 - diff));
+		float4 linearColor = pow(_Color, _ColorSpaceGamma);
+		float4 handLinear = float4(lerp(handColor.rgb, linearColor.rgb * _IntersectionEffectBrightness, diff), _Fade * handColor.a * (1 - diff));
+#else
+		float4 handLinear = float4(handColor.rgb, _Fade * handColor.a);
+#endif
 		//return pow(handLinear, _ColorSpaceGamma);
-    return handLinear;
+		return handLinear;
 	}
 
 	float4 alphaFrag(frag_in i) : COLOR {
