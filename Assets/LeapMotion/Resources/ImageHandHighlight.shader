@@ -24,10 +24,6 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 
 	#pragma target 3.0
 
-	#ifdef USE_DEPTH_TEXTURE
-	uniform sampler2D _CameraDepthTexture;
-	#endif
-
 	uniform float4    _Color;
   uniform float     _Fade;
 	uniform float     _Extrude;
@@ -38,6 +34,8 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 	uniform float     _GlowThreshold;
 	uniform float     _GlowPower;
   uniform float     _ColorSpaceGamma;
+  
+  uniform sampler2D _CameraDepthTexture;
 
 	struct appdata {
 		float4 vertex : POSITION;
@@ -52,13 +50,12 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 #endif
 	};
 
-	frag_in vert(appdata v){
+	frag_in vert(appdata v) {
 		frag_in o;
 		o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
 
 		float3 norm   = mul ((float3x3)UNITY_MATRIX_IT_MV, v.normal);
-		float2 offset = TransformViewToProjection(norm.xy);
-		o.vertex.xy += offset * _Extrude;
+		o.vertex.xy += TransformViewToProjection(norm.xy) * _Extrude;
 
 		o.screenPos = ComputeScreenPos(o.vertex);
 
@@ -70,9 +67,10 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 		return o;
 	}
 
-	float4 getHandColor(float4 screenPos) {
+	float4 trackingGlow(float4 screenPos) {
     // Map leap image to linear color space
 		float4 leapRawColor = LeapRawColorBrightness(screenPos);
+    clip(leapRawColor.a - _MinThreshold);
 		float3 leapLinearColor = pow(leapRawColor.rgb, _LeapGammaCorrectionExponent);
     // Apply edge glow and interior shading
 		float brightness = smoothstep(_MinThreshold, _MaxThreshold, leapRawColor.a);
@@ -80,33 +78,36 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
     float4 linearColor = pow(_Color, _ColorSpaceGamma);
 		return float4(leapLinearColor + linearColor * glow * _GlowPower, brightness);
 	}
+  
+  float4 intersectionGlow(float4 handGlow, float4 projPos) {
+    // Apply intersection highlight
+    float sceneZ = LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(projPos)));
+    float partZ = projPos.z;
+    float diff = smoothstep(_Intersection, 0, sceneZ - partZ);
+    float4 linearColor = pow(_Color, _ColorSpaceGamma);
+    return float4(lerp(handGlow.rgb, linearColor.rgb * _IntersectionEffectBrightness, diff), handGlow.a * (1 - diff));
+  }
 
 	float4 frag(frag_in i) : COLOR {
-		float4 handColor = getHandColor(i.screenPos);
-		// Apply intersection highlight
+		float4 handGlow = trackingGlow(i.screenPos);
+    
 #ifdef USE_DEPTH_TEXTURE
-		float sceneZ = LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.projPos)));
-		float partZ = i.projPos.z;
-		float diff = smoothstep(_Intersection, 0, sceneZ - partZ);
-		float4 linearColor = pow(_Color, _ColorSpaceGamma);
-		float4 handLinear = float4(lerp(handColor.rgb, linearColor.rgb * _IntersectionEffectBrightness, diff), _Fade * handColor.a * (1 - diff));
-#else
-		float4 handLinear = float4(handColor.rgb, _Fade * handColor.a);
+    handGlow = intersectionGlow(handGlow, i.projPos);
 #endif
-		//return pow(handLinear, _ColorSpaceGamma);
-		return handLinear;
+
+		return float4(handGlow.rgb, _Fade * handGlow.a);
 	}
 
 	float4 alphaFrag(frag_in i) : COLOR {
+    float4 leapRawColor = LeapRawColorBrightness(i.screenPos);
+    clip(leapRawColor.a - _MinThreshold);
 		return float4(0,0,0,0);
 	}
 
 	ENDCG
 
 	SubShader {
-		Tags {"Queue"="Overlay"}
-
-		Blend SrcAlpha OneMinusSrcAlpha
+    Tags {"Queue"="Opaque"}
 
 		Pass{
 			ZWrite On
@@ -119,6 +120,9 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 		}
 
 		Pass{
+      ZWrite Off
+      Blend SrcAlpha OneMinusSrcAlpha
+    
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
