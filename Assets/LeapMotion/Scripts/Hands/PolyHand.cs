@@ -8,9 +8,15 @@ using UnityEngine;
 using System.Collections;
 using Leap;
 
-// A deforming, very low poly count hand.
+/**
+* A deforming, very low poly count hand.
+*
+* All the graphics for this hand are drawn by the fingers. There is no representation
+* for the palm or the arm.
+*/
 public class PolyHand : HandModel {
 
+  /** Initializes the hand and calls the finger initializers. */
   public override void InitHand() {
     SetPalmOrientation();
 
@@ -22,6 +28,7 @@ public class PolyHand : HandModel {
     }
   }
 
+  /** Updates the hand and calls the finger update functions. */
   public override void UpdateHand() {
     SetPalmOrientation();
 
@@ -32,6 +39,7 @@ public class PolyHand : HandModel {
     }
   }
 
+  /** Sets the palm transform. */
   protected void SetPalmOrientation() {
     if (palm != null) {
       palm.position = GetPalmPosition();
