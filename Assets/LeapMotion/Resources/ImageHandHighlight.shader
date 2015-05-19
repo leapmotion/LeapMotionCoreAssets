@@ -86,7 +86,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
     // Apply intersection highlight
     float sceneZ = LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(projPos)));
     float partZ = projPos.z;
-    float diff = smoothstep(_Intersection, 0, sceneZ - partZ) * _Fade;
+    float diff = smoothstep(_Intersection, 0, sceneZ - partZ);
     float4 linearColor = pow(_Color, _ColorSpaceGamma) * _IntersectionEffectBrightness;
     return float4(lerp(handGlow.rgb, linearColor.rgb, diff), handGlow.a * (1 - diff));
   }
@@ -111,7 +111,9 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 	ENDCG
 
 	SubShader {
-    Tags {"Queue"="Opaque"}
+    Tags {"Queue"="AlphaTest" "IgnoreProjector"="True" "RenderType"="Transparent"}
+    
+    Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass{
 			ZWrite On
@@ -125,7 +127,6 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 
 		Pass{
       ZWrite Off
-      Blend SrcAlpha OneMinusSrcAlpha
     
 			CGPROGRAM
 			#pragma vertex vert
