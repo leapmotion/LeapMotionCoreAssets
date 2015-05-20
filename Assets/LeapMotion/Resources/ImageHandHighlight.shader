@@ -17,7 +17,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 
 	CGINCLUDE
 	#pragma multi_compile LEAP_FORMAT_IR LEAP_FORMAT_RGB
-	#pragma shader_feature USE_DEPTH_EFFECTS
+	#pragma shader_feature USE_DEPTH_TEXTURE
 	#include "LeapCG.cginc"
 	#include "UnityCG.cginc"
 
@@ -34,7 +34,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 	uniform float     _GlowPower;
   uniform float     _ColorSpaceGamma;
   
-  #ifdef USE_DEPTH_EFFECTS
+  #ifdef USE_DEPTH_TEXTURE
   uniform sampler2D _CameraDepthTexture;
   #endif
 
@@ -46,7 +46,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 	struct frag_in {
 		float4 vertex : POSITION;
 		float4 screenPos  : TEXCOORD0;
-#ifdef USE_DEPTH_EFFECTS
+#ifdef USE_DEPTH_TEXTURE
 		float4 projPos  : TEXCOORD1;
 #endif
 	};
@@ -60,7 +60,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 
 		o.screenPos = ComputeScreenPos(o.vertex);
 
-#ifdef USE_DEPTH_EFFECTS
+#ifdef USE_DEPTH_TEXTURE
 		o.projPos = o.screenPos;
 		COMPUTE_EYEDEPTH(o.projPos.z);
 #endif
@@ -80,7 +80,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 		return float4(leapLinearColor + linearColor, brightness);
 	}
   
-  #ifdef USE_DEPTH_EFFECTS
+  #ifdef USE_DEPTH_TEXTURE
   float4 intersectionGlow(float4 handGlow, float4 projPos) {
     // Apply intersection highlight
     float sceneZ = LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(projPos)));
@@ -94,7 +94,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 	float4 frag(frag_in i) : COLOR {
 		float4 handGlow = trackingGlow(i.screenPos);
     
-#ifdef USE_DEPTH_EFFECTS
+#ifdef USE_DEPTH_TEXTURE
     handGlow = intersectionGlow(handGlow, i.projPos);
 #endif
 
