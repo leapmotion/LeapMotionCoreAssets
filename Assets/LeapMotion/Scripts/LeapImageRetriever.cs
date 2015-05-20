@@ -141,6 +141,11 @@ public class LeapImageRetriever : MonoBehaviour {
 
     private void initMainTexture(Image image) {
         TextureFormat format = getTextureFormat(image);
+
+        if (_mainTexture != null) {
+            DestroyImmediate(_mainTexture);
+        }
+
         _mainTexture = new Texture2D(image.Width, image.Height, format, false, true);
         _mainTexture.wrapMode = TextureWrapMode.Clamp;
         _mainTexture.filterMode = FilterMode.Bilinear;
