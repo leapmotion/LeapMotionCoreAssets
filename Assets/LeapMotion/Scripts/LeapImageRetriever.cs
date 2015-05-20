@@ -14,6 +14,10 @@ using Leap;
 // To use the LeapImageRetriever you must be on version 2.1+
 // and enable "Allow Images" in the Leap Motion settings.
 public class LeapImageRetriever : MonoBehaviour {
+    public const string IR_SHADER_VARIANT_NAME = "LEAP_FORMAT_IR";
+    public const string RGB_SHADER_VARIANT_NAME = "LEAP_FORMAT_RGB";
+    public const int IMAGE_WARNING_WAIT = 10;
+
     public enum EYE {
         LEFT = 0,
         RIGHT = 1
@@ -29,7 +33,7 @@ public class LeapImageRetriever : MonoBehaviour {
     public SYNC_MODE syncMode = SYNC_MODE.LOW_LATENCY;
     public float gammaCorrection = 1.0f;
 
-    public const int IMAGE_WARNING_WAIT = 10;
+
     private int _missedImages = 0;
     private Controller _controller;
 
@@ -52,7 +56,7 @@ public class LeapImageRetriever : MonoBehaviour {
     //Used to recalculate the distortion every time a hand enters the frame.  Used because there is no way to tell if the device has flipped (which changes the distortion)
     private bool _requestDistortionRecalc = false;
     private bool _forceDistortionRecalc = false;
-    
+
     // Distortion textures.
     private Texture2D _distortion = null;
     private Color32[] _distortionPixels = null;
@@ -69,16 +73,14 @@ public class LeapImageRetriever : MonoBehaviour {
     private void initImageBasedMaterial(LeapImageBasedMaterial imageBasedMaterial) {
         Material material = imageBasedMaterial.GetComponent<Renderer>().material;
 
-        foreach (string keyword in material.shaderKeywords) {
-            material.DisableKeyword(keyword);
-        }
-
-        switch(_currentFormat){
+        switch (_currentFormat) {
             case Image.FormatType.INFRARED:
-                material.EnableKeyword("LEAP_FORMAT_IR");
+                material.EnableKeyword(IR_SHADER_VARIANT_NAME);
+                material.DisableKeyword(RGB_SHADER_VARIANT_NAME);
                 break;
             case (Image.FormatType)4:
-                material.EnableKeyword("LEAP_FORMAT_RGB");
+                material.EnableKeyword(RGB_SHADER_VARIANT_NAME);
+                material.DisableKeyword(IR_SHADER_VARIANT_NAME);
                 break;
             default:
                 Debug.LogWarning("Unexpected format type " + _currentFormat);
@@ -139,6 +141,11 @@ public class LeapImageRetriever : MonoBehaviour {
 
     private void initMainTexture(Image image) {
         TextureFormat format = getTextureFormat(image);
+
+        if (_mainTexture != null) {
+            DestroyImmediate(_mainTexture);
+        }
+
         _mainTexture = new Texture2D(image.Width, image.Height, format, false, true);
         _mainTexture.wrapMode = TextureWrapMode.Clamp;
         _mainTexture.filterMode = FilterMode.Bilinear;
