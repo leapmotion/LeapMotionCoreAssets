@@ -94,7 +94,7 @@ namespace LMWidgets
     /// <summary>
     /// Resets the pivots
     /// </summary>
-    protected void ResetPivots()
+    protected virtual void ResetPivots()
     {
       m_pivot = transform.localPosition;
       if (m_target != null)
