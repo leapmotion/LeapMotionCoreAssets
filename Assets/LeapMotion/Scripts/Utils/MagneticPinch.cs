@@ -8,13 +8,18 @@ using UnityEngine;
 using System.Collections;
 using Leap;
 
-// Leap Motion hand script that detects pinches and grabs the
-// closest rigidbody with a spring force if it's within a given range.
+/** 
+ * Detects pinches and grabs the closest rigidbody if it's within a given range.
+ * 
+ * Attach this script to the physics hand object assinged to the HandController in a scene.
+ */
 public class MagneticPinch : MonoBehaviour {
 
   public const float TRIGGER_DISTANCE_RATIO = 0.7f;
 
+  /** The stiffness of the spring force used to move the object toward the hand. */
   public float forceSpringConstant = 100.0f;
+  /** The maximum range at which an object can be picked up.*/
   public float magnetDistance = 2.0f;
 
   protected bool pinching_;
@@ -25,6 +30,7 @@ public class MagneticPinch : MonoBehaviour {
     grabbed_ = null;
   }
 
+  /** Finds an object to grab and grabs it. */
   void OnPinch(Vector3 pinch_position) {
     pinching_ = true;
 
@@ -42,11 +48,15 @@ public class MagneticPinch : MonoBehaviour {
     }
   }
 
+  /** Clears the pinch state. */
   void OnRelease() {
     grabbed_ = null;
     pinching_ = false;
   }
 
+  /**
+   * Checks whether the hand is pinching and updates the position of the pinched object.
+   */
   void Update() {
     bool trigger_pinch = false;
     HandModel hand_model = GetComponent<HandModel>();

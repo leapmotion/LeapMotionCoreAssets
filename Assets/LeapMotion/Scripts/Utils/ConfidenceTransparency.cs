@@ -8,8 +8,10 @@ using UnityEngine;
 using System.Collections;
 using Leap;
 
-// A Leap Motion hand script that set's the alpha
-// of the hand based on the hand's self confidence value.
+/** 
+ * Updates the hand's opacity based it's confidence rating. 
+ * Attach to a HandModel object assigned to the HandController in a scene.
+ */
 public class ConfidenceTransparency : MonoBehaviour {
 
   void Update() {

@@ -8,13 +8,19 @@ using UnityEngine;
 using System.Collections;
 using Leap;
 
-// The finger model for our skeletal hand made out of various non-deforming models.
+/** 
+ * A finger object consisting of discrete, component parts for each bone.
+ * 
+ * The graphic objects can include both bones and joints, but both are optional.
+ */
 public class SkeletalFinger : FingerModel {
 
+  /** Initializes the finger bones and joints by setting their positions and rotations. */
   public override void InitFinger() {
     SetPositions();
   }
 
+  /** Updates the finger bones and joints by setting their positions and rotations. */
   public override void UpdateFinger() {
     SetPositions();
   }

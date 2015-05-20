@@ -29,7 +29,7 @@ public class LeapImageRetriever : MonoBehaviour {
     }
 
     public EYE eye = (EYE)(-1);
-    [Tooltip("Should the image match the tracked hand, or should it be displayed as fast as possible")]
+    [Tooltip ("Should the image match the tracked hand, or should it be displayed as fast as possible")]
     public SYNC_MODE syncMode = SYNC_MODE.LOW_LATENCY;
     public float gammaCorrection = 1.0f;
 
