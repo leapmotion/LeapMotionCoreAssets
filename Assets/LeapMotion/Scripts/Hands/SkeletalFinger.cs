@@ -15,11 +15,6 @@ using Leap;
  */
 public class SkeletalFinger : FingerModel {
 
-  /** The objects representing each bone segment of the finger in order from base to tip. */
-  public Transform[] bones = new Transform[NUM_BONES];
-    /** The objects representing the joints of the finger ordered from base to tip. */
-  public Transform[] joints = new Transform[NUM_BONES - 1];
-
   /** Initializes the finger bones and joints by setting their positions and rotations. */
   public override void InitFinger() {
     SetPositions();

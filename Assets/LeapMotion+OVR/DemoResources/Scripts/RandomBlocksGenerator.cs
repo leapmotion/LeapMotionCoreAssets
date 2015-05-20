@@ -3,6 +3,7 @@ using System.Collections;
 using System.Linq;
 
 public class RandomBlocksGenerator : MonoBehaviour {
+  public GameObject CubePrimitive;
   public float minRadius;
   public float maxRadius;
   public int numberOfBlocks;
@@ -74,13 +75,14 @@ public class RandomBlocksGenerator : MonoBehaviour {
         radius * Mathf.Cos(theta)
         );
 
-      GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      GameObject cube = GameObject.Instantiate(CubePrimitive);
       cube.transform.parent = transform;
       cube.transform.rotation = Quaternion.Euler(Random.Range(0.0f, 360.0f), Random.Range(0.0f, 360.0f), Random.Range(0.0f, 360.0f));
       cube.transform.localScale = Vector3.one * size;
       cube.transform.localPosition = position;
       cube.AddComponent<Rigidbody>();
       cube.GetComponent<Rigidbody>().useGravity = false;
+      cube.SetActive(true);
 
       cube.GetComponent<Renderer>().material.color = list_of_colors[Random.Range(0,list_of_colors.Length - 1)];
     }

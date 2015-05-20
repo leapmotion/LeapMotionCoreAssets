@@ -9,11 +9,36 @@ public class HandDetector : MonoBehaviour {
   HandModel GetHand(Collider other)
   {
     HandModel hand_model = null;
-    if (other.transform.parent && other.transform.parent.parent && other.transform.parent.parent.GetComponent<HandModel>())
-    {
-      hand_model = other.transform.parent.parent.GetComponent<HandModel>();
+    // Navigate a maximum of 3 levels to find the HandModel component.
+    int level = 1;
+    Transform parent = other.transform.parent;
+    while (parent != null && level < 3) {
+      hand_model = parent.GetComponent<HandModel>();
+      if (hand_model != null) {
+        break;
+      }
+      parent = parent.parent;
     }
+
     return hand_model;
+  }
+
+  // Finds the first instance (by depth-firstrecursion)
+  // of a child with the specified name
+  Transform FindPart(Transform parent, string name) {
+    if (parent == null) {
+      return parent;
+    }
+    if (parent.name == name) {
+      return parent;
+    }
+    for (int c = 0; c < parent.childCount; c++) {
+      Transform part = FindPart(parent.GetChild(c), name);
+      if (part != null) {
+        return part;
+      }
+    }
+    return null;
   }
 
   void OnTriggerEnter(Collider other)
@@ -27,22 +52,24 @@ public class HandDetector : MonoBehaviour {
       {
         if (hand_models[i].GetLeapHand().Id == handID)
         {
-          GameObject part = hand_models[i].transform.Find(other.transform.parent.name).Find(other.name).gameObject;
-          Renderer[] renderers = part.GetComponentsInChildren<Renderer>();
-          foreach(Renderer renderer in renderers) {
-            renderer.material.color = Color.red;
+          Transform part = null;
+          if (other.transform.parent.GetComponent<HandModel>() != null) {
+            // Palm or Forearm components
+            part = FindPart(hand_models[i].transform, other.name);
+          } else if (other.transform.parent.GetComponent<FingerModel>() != null) {
+            // Bone in a finger
+            part = FindPart(FindPart(hand_models[i].transform, other.transform.parent.name), other.name);
+          }
+          //Debug.Log ("Detected: " + other.transform.parent.name + "/" + other.gameObject.name);
+          if (part != null) {
+            Renderer[] renderers = part.GetComponentsInChildren<Renderer>();
+            foreach(Renderer renderer in renderers) {
+              //Debug.Log ("Marked: " + renderer.gameObject.transform.parent.name + "/" + renderer.gameObject.name);
+              renderer.material.color = Color.red;
+            }
           }
         }
       }
     }
   }
-
-	// Use this for initialization
-	void Start () {
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
 }

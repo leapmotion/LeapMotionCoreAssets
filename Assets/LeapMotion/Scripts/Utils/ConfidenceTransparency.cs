@@ -14,16 +14,6 @@ using Leap;
  */
 public class ConfidenceTransparency : MonoBehaviour {
 
-  private Material material;
-
-  void Start() {
-    material = new Material(Shader.Find("Transparent/Diffuse"));
-    Renderer[] renderers = GetComponentsInChildren<Renderer>();
-    
-    for (int i = 0; i < renderers.Length; ++i)
-      renderers[i].material = material;
-  }
-
   void Update() {
     Hand leap_hand = GetComponent<HandModel>().GetLeapHand();
     float confidence = leap_hand.Confidence;

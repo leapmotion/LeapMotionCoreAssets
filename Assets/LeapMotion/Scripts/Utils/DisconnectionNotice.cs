@@ -42,12 +42,12 @@ public class DisconnectionNotice : MonoBehaviour {
   }
 
   /** The connection state of the controller. */
-  public bool IsConnected() {
+  bool IsConnected() {
     return leap_controller_.IsConnected;
   }
-
+  
   /** Whether the controller is embedded in a keyboard or laptop.*/
-  public bool IsEmbedded() {
+  bool IsEmbedded() {
     DeviceList devices = leap_controller_.Devices;
     if (devices.Count == 0)
       return false;

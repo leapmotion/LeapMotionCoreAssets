@@ -16,16 +16,15 @@ using Leap;
 */
 public class PolyHand : HandModel {
 
-  /** The position and orientation of the palm. (Only fingers are drawn for the PolyHands.)*/
-  public Transform palm;
-
   /** Initializes the hand and calls the finger initializers. */
   public override void InitHand() {
     SetPalmOrientation();
 
     for (int f = 0; f < fingers.Length; ++f) {
-      if (fingers[f] != null)
+      if (fingers[f] != null) {
+        fingers[f].fingerType = (Finger.FingerType)f;
         fingers[f].InitFinger();
+      }
     }
   }
 
@@ -34,8 +33,9 @@ public class PolyHand : HandModel {
     SetPalmOrientation();
 
     for (int f = 0; f < fingers.Length; ++f) {
-      if (fingers[f] != null)
+      if (fingers[f] != null) {
         fingers[f].UpdateFinger();
+      }
     }
   }
 

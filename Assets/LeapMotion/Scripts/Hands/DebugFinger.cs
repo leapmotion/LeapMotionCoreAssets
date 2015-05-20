@@ -16,11 +16,6 @@ public class DebugFinger : FingerModel {
   /** The colors used for each bone. */
   protected Color[] colors = {Color.yellow, Color.green, Color.cyan, Color.blue};
 
-  /** Initializes the finger and calls the line drawing function. */
-  public override void InitFinger() {
-    DrawDebugLines();
-  }
-
   /** Updates the finger and calls the line drawing function. */
   public override void UpdateFinger() {
     DrawDebugLines();

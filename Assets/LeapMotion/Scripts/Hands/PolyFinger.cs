@@ -37,8 +37,8 @@ public class PolyFinger : FingerModel {
     InitJointVertices();
     InitCapsMesh();
     InitMesh();
-
     GetComponent<MeshFilter>().mesh = new Mesh();
+
     UpdateFinger();
   }
 

@@ -4,6 +4,7 @@ using System.Linq;
 
 public class BlocksPlaneGenerator : MonoBehaviour
 {
+  public GameObject CubePrimitive;
   public float minRadius;
   public float maxRadius;
   public int numberOfBlocks;
@@ -61,11 +62,12 @@ public class BlocksPlaneGenerator : MonoBehaviour
         radius * Mathf.Cos(theta)
         );
 
-      GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+      GameObject cube = GameObject.Instantiate(CubePrimitive);
       cube.transform.parent = transform;
       cube.transform.rotation = Quaternion.Euler(Random.Range(0.0f, 360.0f), Random.Range(0.0f, 360.0f), Random.Range(0.0f, 360.0f));
       cube.transform.localScale = Vector3.one * Random.Range(0.1f, size);
       cube.transform.localPosition = position;
+      cube.SetActive(true);
       cube.AddComponent<Rigidbody>();
 
       cube.GetComponent<Renderer>().material.color = list_of_colors[Random.Range(0, list_of_colors.Length - 1)];
