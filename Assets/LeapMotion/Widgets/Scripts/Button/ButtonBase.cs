@@ -27,12 +27,12 @@ namespace LMWidgets
 
     protected virtual void buttonReleased ()
     {
-      FireButtonStart ();
+      FireButtonEnd ();
     }
 
     protected virtual void buttonPressed ()
     {
-      FireButtonEnd ();
+      FireButtonStart ();
     }
 
     protected void FireButtonStart (bool value = true)
@@ -93,7 +93,6 @@ namespace LMWidgets
         {
           m_isPressed = true;
           buttonPressed();
-          FireButtonStart();
         }
       }
       else if (m_isPressed == true)
@@ -102,7 +101,6 @@ namespace LMWidgets
         {
           m_isPressed = false;
           buttonReleased();
-          FireButtonEnd();
         }
       }
     }
