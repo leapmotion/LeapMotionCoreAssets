@@ -73,7 +73,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
     // Map leap image to linear color space
 		float4 leapRawColor = LeapRawColorBrightness(screenPos);
     clip(leapRawColor.a - _MinThreshold);
-		float3 leapLinearColor = pow(leapRawColor.rgb, _LeapGammaCorrectionExponent);
+		float3 leapLinearColor = pow(pow(leapRawColor.rgb, _LeapGammaCorrectionExponent), 1/_ColorSpaceGamma);
     // Apply edge glow and interior shading
 		float brightness = smoothstep(_MinThreshold, _MaxThreshold, leapRawColor.a) * _Fade;
 		float glow = smoothstep(_GlowThreshold, _MinThreshold, leapRawColor.a) * brightness;
