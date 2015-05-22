@@ -1,8 +1,9 @@
-Leap Motion Skeletal Assets (beta)
+Leap Motion Core Assets
 
-These assets go along with our V2 Skeletal Tracking Beta. There are multiple
+These assets go along with our V2 Skeletal Tracking. There are multiple
 customizable hands, a physical "RigidHand" and some useful gestures that
-interact with the physics engine like magnetic pinching.
+interact with the physics engine like magnetic pinching. There are also 
+prefabs and examples to support Oculus VR Head Mounted Display applications.
 
 Before you begin:
   You first need Leap Motion Skeletal V2 Tracking installed from:
@@ -24,9 +25,8 @@ Getting Started:
 Physics and the RigidHand prefab:
   Our current physics model is a Box Collider for each bone and palm. This
   is great for patting, touching, flicking, and scooping objects. If you want
-  to grab objects you can use some of the resources in the Demos or the
-  Interaction Utilities (see below) which give you one handed and two handed
-  grabs.
+  to grab objects you can use some of the resources in the Demos which give 
+  you one handed and two handed grabs.
 
 Customizing Hands:
   There are two HandModel fields in the HandController prefab
@@ -49,21 +49,10 @@ Tools:
   with these assets: a flash light and a low fidelity spatula but there will
   be more in the future. Please send in any requests.
 
-Interaction Utilities:
-  We are developing a more complex system to manipulate objects. It is
-  currently in an alpha state so may be unstable and may not be comptabile
-  with current features.
-
-Head Mounted Displays:
-  If you want to track your hands from a head mounted display, you can place
-  the HandController prefab as a child of the main camera facing forward.
-  Don't forget to also check "Optimize for top-down tracking" in the Leap
-  Motion global settings on your computer.
-
 Examples:
   There are plenty of examples using these assets available at:
   https://github.com/leapmotion-examples/
 
 Questions/Bugs/Feature Requests?
-  Please send an email to mtytel@leapmotion.com
+  Please post on https://community.leapmotion.com/c/development
 

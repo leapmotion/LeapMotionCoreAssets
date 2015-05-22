@@ -34,7 +34,7 @@
     }
 
     float4 frag (frag_in i) : COLOR {
-      return float4(LeapColor(i.screenPos), 1);
+      return float4(pow(LeapColor(i.screenPos), 1/_ColorSpaceGamma), 1);
     }
 
     ENDCG
