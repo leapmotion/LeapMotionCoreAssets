@@ -13,7 +13,8 @@
     Zwrite Off
     ZTest Off
 
-    Blend SrcAlpha OneMinusSrcAlpha
+    Blend SrcColor DstColor
+    BlendOp Max
 
     Pass{
     CGPROGRAM
