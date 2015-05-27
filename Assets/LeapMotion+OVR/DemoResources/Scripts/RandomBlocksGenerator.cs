@@ -75,7 +75,7 @@ public class RandomBlocksGenerator : MonoBehaviour {
         radius * Mathf.Cos(theta)
         );
 
-      GameObject cube = GameObject.Instantiate(CubePrimitive);
+      GameObject cube = GameObject.Instantiate(CubePrimitive) as GameObject;
       cube.transform.parent = transform;
       cube.transform.rotation = Quaternion.Euler(Random.Range(0.0f, 360.0f), Random.Range(0.0f, 360.0f), Random.Range(0.0f, 360.0f));
       cube.transform.localScale = Vector3.one * size;
