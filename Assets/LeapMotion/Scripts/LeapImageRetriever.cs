@@ -16,6 +16,7 @@ using Leap;
 public class LeapImageRetriever : MonoBehaviour {
     public const string IR_SHADER_VARIANT_NAME = "LEAP_FORMAT_IR";
     public const string RGB_SHADER_VARIANT_NAME = "LEAP_FORMAT_RGB";
+	public const string DEPTH_TEXTURE_VARIANT_NAME = "USE_DEPTH_TEXTURE";
     public const int IMAGE_WARNING_WAIT = 10;
 
     public enum EYE {
@@ -86,6 +87,12 @@ public class LeapImageRetriever : MonoBehaviour {
                 Debug.LogWarning("Unexpected format type " + _currentFormat);
                 break;
         }
+
+		if (SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.Depth)) {
+			material.EnableKeyword(DEPTH_TEXTURE_VARIANT_NAME);
+		} else {
+			material.DisableKeyword(DEPTH_TEXTURE_VARIANT_NAME);
+		}
 
         imageBasedMaterial.GetComponent<Renderer>().material.SetFloat("_LeapGammaCorrectionExponent", 1.0f / gammaCorrection);
     }
