@@ -17,7 +17,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
 
   CGINCLUDE
   #pragma multi_compile LEAP_FORMAT_IR LEAP_FORMAT_RGB
-  #pragma shader_feature USE_DEPTH_TEXTURE
+  #pragma multi_compile _ USE_DEPTH_TEXTURE
   #include "LeapCG.cginc"
   #include "UnityCG.cginc"
 
