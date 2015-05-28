@@ -37,14 +37,14 @@
       return o;
     }
 
-    float _Min;
-    float _Max;
-    float _Fade;
+    uniform float _Min;
+    uniform float _Max;
+    uniform float _Fade;
 
     float4 frag (frag_in i) : COLOR {
       float4 colorBrightness = LeapRawColorBrightness(i.screenPos);
       float alpha = _Fade * smoothstep(_Min, _Max, colorBrightness.a);
-      return float4(pow(colorBrightness.rgb, _LeapGammaCorrectionExponent), alpha);
+      return float4(pow(colorBrightness.rgb, _LeapGammaCorrectionExponent)*alpha, alpha);
     }
 
     ENDCG
