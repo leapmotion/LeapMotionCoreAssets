@@ -10,10 +10,12 @@ public class BugReporter : MonoBehaviour {
   public HandController handController;
   public UImage progressStatus;
   public Text progressText;
+  public Text instructionText;
+
+  protected Color colorCharcoal = new Color(0.125f, 0.125f, 0.125f);
 
   protected Controller leap_controller_;
 
-  protected int prev_frame_id_;
   protected float prev_bug_report_progress_;
   protected bool prev_bug_report_state_;
 
@@ -29,7 +31,7 @@ public class BugReporter : MonoBehaviour {
 
   protected BugReportState bug_report_state_ = BugReportState.READY;
 
-  protected void SetText(string text, Color color)
+  protected void SetProgressText(string text, Color color)
   {
     if (progressText == null)
       return;
@@ -38,13 +40,22 @@ public class BugReporter : MonoBehaviour {
     progressText.color = color;
   }
 
+  protected void SetInstructionText(string text, Color color)
+  {
+    if (instructionText == null)
+      return;
+
+    instructionText.text = text;
+    instructionText.color = color;
+  }
+
   private void HandleKeyInputs()
   {
     if (Input.GetKeyDown(KeyCode.Z))
     {
       switch (bug_report_state_)
       {
-        case BugReportState.READY:  
+        case BugReportState.READY:
           RecordingTriggered();
           break;
         case BugReportState.RECORDING:
@@ -52,16 +63,22 @@ public class BugReporter : MonoBehaviour {
           SavingTriggered();
           break;
         case BugReportState.SAVING:
+          ReplayTriggered();
           break;
         case BugReportState.REPLAYING:
-          handController.ResetRecording();
-          handController.StopRecording();
-          bug_report_state_ = BugReportState.READY;
+          ReadyTriggered();
           break;
         default:
           break;
       }
     }
+  }
+
+  private void ReplayTriggered()
+  {
+    SetProgressText("REPLAYING", Color.yellow);
+    SetInstructionText("PRESS 'Z' TO END REPLAY", colorCharcoal);
+    bug_report_state_ = BugReportState.REPLAYING;
   }
 
   private void RecordingTriggered()
@@ -70,7 +87,8 @@ public class BugReporter : MonoBehaviour {
     leap_controller_.BugReport.BeginRecording();
     handController.ResetRecording();
     handController.Record();
-    SetText("RECORDING", Color.yellow);
+    SetProgressText("RECORDING", Color.yellow);
+    SetInstructionText("PRESS 'Z' TO END RECORD", colorCharcoal);
     bug_report_state_ = BugReportState.RECORDING;
   }
 
@@ -81,16 +99,21 @@ public class BugReporter : MonoBehaviour {
 
     handController.StopRecording();
     handController.PlayRecording();
-    SetText("SAVING", Color.red);
+    SetProgressText("REPLAYING", Color.yellow);
+    SetInstructionText("SAVING", Color.red);
     saving_triggered_ = true;
   }
 
-  private void DefaultTriggered()
+  private void ReadyTriggered()
   {
-    bug_report_state_ = BugReportState.REPLAYING;
+    handController.ResetRecording();
+    handController.StopRecording();
     progressStatus.fillAmount = 1.0f;
-    SetText("READY", Color.green);
+    SetProgressText("READY", Color.green);
+    SetInstructionText("PRESS 'Z' TO START RECORD", colorCharcoal);
+    bug_report_state_ = BugReportState.READY;
   }
+  
 
   private void UpdateGUI()
   {
@@ -106,7 +129,7 @@ public class BugReporter : MonoBehaviour {
 
     if (leap_controller_.BugReport.IsActive != prev_bug_report_state_ && leap_controller_.BugReport.IsActive == false)
     {
-      DefaultTriggered();
+      ReplayTriggered();
     }
   }
 
@@ -121,7 +144,8 @@ public class BugReporter : MonoBehaviour {
       leap_controller_ = handController.GetLeapController();
     }
 
-    prev_frame_id_ = (int)leap_controller_.Frame().Id;
+    ReadyTriggered();
+
     prev_bug_report_progress_ = leap_controller_.BugReport.Progress;
     prev_bug_report_state_ = leap_controller_.BugReport.IsActive;
   }
@@ -134,7 +158,6 @@ public class BugReporter : MonoBehaviour {
     HandleKeyInputs();
     UpdateGUI();
 
-    prev_frame_id_ = (int)leap_controller_.Frame().Id;
     prev_bug_report_progress_ = leap_controller_.BugReport.Progress;
     prev_bug_report_state_ = leap_controller_.BugReport.IsActive;
 	}
