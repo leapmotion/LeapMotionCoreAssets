@@ -142,6 +142,7 @@ public class BugReporter : MonoBehaviour {
     else
     {
       leap_controller_ = handController.GetLeapController();
+      handController.enableRecordPlayback = true;
     }
 
     ReadyTriggered();
