@@ -239,7 +239,7 @@ public abstract class FingerModel : MonoBehaviour {
     float spreadAngle = 0f;
     Finger.FingerType fType = fingerType;
     if (finger_ != null) { 
-      fingerType = finger_.Type ();
+      fingerType = finger_.Type;
     }
 
     if (fType == Finger.FingerType.TYPE_INDEX ||
