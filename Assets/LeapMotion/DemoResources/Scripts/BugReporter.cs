@@ -8,7 +8,7 @@ using UImage = UnityEngine.UI.Image;
 public class BugReporter : MonoBehaviour {
 
   public HandController handController;
-  public UImage progress;
+  public UImage progressStatus;
   public Text progressText;
 
   protected Controller leap_controller_;
@@ -16,6 +16,18 @@ public class BugReporter : MonoBehaviour {
   protected int prev_frame_id_;
   protected float prev_bug_report_progress_;
   protected bool prev_bug_report_state_;
+
+  protected bool saving_triggered_ = false;
+
+  protected enum BugReportState
+  {
+    READY,
+    RECORDING,
+    SAVING,
+    REPLAYING,
+  };
+
+  protected BugReportState bug_report_state_ = BugReportState.READY;
 
   protected void SetText(string text, Color color)
   {
@@ -28,52 +40,73 @@ public class BugReporter : MonoBehaviour {
 
   private void HandleKeyInputs()
   {
-    if (Input.GetKeyDown(KeyCode.S))
+    if (Input.GetKeyDown(KeyCode.Z))
     {
-      leap_controller_.BugReport.BeginRecording();
+      switch (bug_report_state_)
+      {
+        case BugReportState.READY:  
+          RecordingTriggered();
+          break;
+        case BugReportState.RECORDING:
+          leap_controller_.BugReport.EndRecording();
+          SavingTriggered();
+          break;
+        case BugReportState.SAVING:
+          break;
+        case BugReportState.REPLAYING:
+          handController.ResetRecording();
+          handController.StopRecording();
+          bug_report_state_ = BugReportState.READY;
+          break;
+        default:
+          break;
+      }
     }
-    else if (Input.GetKeyDown(KeyCode.E))
-    {
-      leap_controller_.BugReport.EndRecording();
-    }
+  }
+
+  private void RecordingTriggered()
+  {
+    saving_triggered_ = false;
+    leap_controller_.BugReport.BeginRecording();
+    handController.ResetRecording();
+    handController.Record();
+    SetText("RECORDING", Color.yellow);
+    bug_report_state_ = BugReportState.RECORDING;
+  }
+
+  private void SavingTriggered()
+  {
+    if (saving_triggered_)
+      return;
+
+    handController.StopRecording();
+    handController.PlayRecording();
+    SetText("SAVING", Color.red);
+    saving_triggered_ = true;
+  }
+
+  private void DefaultTriggered()
+  {
+    bug_report_state_ = BugReportState.REPLAYING;
+    progressStatus.fillAmount = 1.0f;
+    SetText("READY", Color.green);
   }
 
   private void UpdateGUI()
   {
+    float progress = leap_controller_.BugReport.Progress;
     if (leap_controller_.BugReport.IsActive)
     {
-      progress.fillAmount = leap_controller_.BugReport.Progress;
-    }
-
-    // If report is active and frame is changing and progress is constant, then the report is being saved
-    if (prev_frame_id_ != (int)leap_controller_.Frame().Id) {  
-      if (leap_controller_.BugReport.IsActive) {
-        if (prev_bug_report_progress_ == leap_controller_.BugReport.Progress) 
-        {
-          SetText("SAVING", Color.red);
-        } else {
-          SetText("RECORDING", Color.yellow);
-        }
-      }
-      else
+      progressStatus.fillAmount = progress;
+      if (progress == 1.0f)
       {
-        SetText("READY", Color.green);
+        SavingTriggered();
       }
     }
 
-    if (prev_bug_report_state_ != leap_controller_.BugReport.IsActive)
+    if (leap_controller_.BugReport.IsActive != prev_bug_report_state_ && leap_controller_.BugReport.IsActive == false)
     {
-      if (leap_controller_.BugReport.IsActive) // Just turned active
-      {
-        handController.ResetRecording();
-        handController.Record();
-      }
-      else // Just turned inactive
-      {
-        progress.fillAmount = 1.0f;
-        handController.StopRecording();
-        handController.PlayRecording();
-      }
+      DefaultTriggered();
     }
   }
 
