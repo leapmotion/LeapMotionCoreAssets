@@ -12,7 +12,7 @@ public class BugReporter : MonoBehaviour {
   public Text progressText;
   public Text instructionText;
 
-  protected Color colorCharcoal = new Color(0.125f, 0.125f, 0.125f);
+  protected Color instructionColor = new Color(1.0f, 0.5f, 0.0f);
 
   protected Controller leap_controller_;
 
@@ -77,7 +77,7 @@ public class BugReporter : MonoBehaviour {
   private void ReplayTriggered()
   {
     SetProgressText("REPLAYING", Color.yellow);
-    SetInstructionText("PRESS 'Z' TO END REPLAY", colorCharcoal);
+    SetInstructionText("PRESS 'Z' TO END REPLAY", instructionColor);
     bug_report_state_ = BugReportState.REPLAYING;
   }
 
@@ -88,7 +88,7 @@ public class BugReporter : MonoBehaviour {
     handController.ResetRecording();
     handController.Record();
     SetProgressText("RECORDING", Color.yellow);
-    SetInstructionText("PRESS 'Z' TO END RECORD", colorCharcoal);
+    SetInstructionText("PRESS 'Z' TO END RECORD", instructionColor);
     bug_report_state_ = BugReportState.RECORDING;
   }
 
@@ -110,7 +110,7 @@ public class BugReporter : MonoBehaviour {
     handController.StopRecording();
     progressStatus.fillAmount = 1.0f;
     SetProgressText("READY", Color.green);
-    SetInstructionText("PRESS 'Z' TO START RECORD", colorCharcoal);
+    SetInstructionText("PRESS 'Z' TO START RECORD", instructionColor);
     bug_report_state_ = BugReportState.READY;
   }
   
