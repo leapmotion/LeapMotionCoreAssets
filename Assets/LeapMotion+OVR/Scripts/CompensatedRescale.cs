@@ -14,7 +14,7 @@ public class CompensatedRescale : MonoBehaviour {
   public KeyCode increaseScale = KeyCode.Equals;
   public KeyCode decreaseScale = KeyCode.Minus;
   [Range(0,1)]
-  public float increaseFactor = 0.05f;
+  public float decreaseFactor = 0.625f; //40 mm CFS / 64 mm IPD
 
   private Vector3 initialScale;
 
@@ -48,16 +48,16 @@ public class CompensatedRescale : MonoBehaviour {
       (initialScale.x / transform.localScale.x) + 
       (initialScale.y / transform.localScale.y) +
       (initialScale.z / transform.localScale.z)
-      )/3f;
+      ) / 3f;
     ApplyRescale(multiplier);
   }
 
   public void IncreaseScale() {
-    ApplyRescale(1f + increaseFactor);
+    ApplyRescale(1f / decreaseFactor);
   }
   
   public void DecreaseScale() {
-    ApplyRescale(1f / (1f + increaseFactor));
+    ApplyRescale(decreaseFactor);
   }
 
   void ApplyRescale(float multiplier) {

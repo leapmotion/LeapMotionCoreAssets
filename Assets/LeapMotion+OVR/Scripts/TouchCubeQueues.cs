@@ -15,6 +15,7 @@ public class TouchCubeQueues : MonoBehaviour {
   public KeyCode queueKey = KeyCode.Return;
   public LeapCameraAlignment alignment;
   public CompensatedRescale rescale;
+  public HandController handController;
   [Header("Messages")]
   public GameObject noAlignmentCanvas;
   public GameObject playerRescaleCanvas;
@@ -32,11 +33,13 @@ public class TouchCubeQueues : MonoBehaviour {
     case 0:
       helpMenuCanvas.SetActive(false);
       alignment.enabled = false;
+      handController.transform.localScale = Vector3.one / rescale.decreaseFactor;
       noAlignmentCanvas.SetActive(true);
       demoStage++;
       break;
     case 1:
       noAlignmentCanvas.SetActive(false);
+      handController.transform.localScale = Vector3.one;
       rescale.DecreaseScale();
       playerRescaleCanvas.SetActive(true);
       demoStage++;
