@@ -30,23 +30,35 @@ public class CompensatedRescale : MonoBehaviour {
       return;
     }
     if (Input.GetKeyDown (resetScale)) {
-      float multiplier = (
-        (initialScale.x / transform.localScale.x) + 
-        (initialScale.y / transform.localScale.y) +
-        (initialScale.z / transform.localScale.z)
-        )/3f;
-      ApplyRescale(multiplier);
+      ResetScale();
       return;
     }
     if (Input.GetKeyDown (increaseScale)) {
-      ApplyRescale(1f + increaseFactor);
+      IncreaseScale();
       return;
     }
     if (Input.GetKeyDown (decreaseScale)) {
-      ApplyRescale(1f / (1f + increaseFactor));
+      DecreaseScale();
       return;
     }
-	}
+  }
+
+  public void ResetScale() {
+    float multiplier = (
+      (initialScale.x / transform.localScale.x) + 
+      (initialScale.y / transform.localScale.y) +
+      (initialScale.z / transform.localScale.z)
+      )/3f;
+    ApplyRescale(multiplier);
+  }
+
+  public void IncreaseScale() {
+    ApplyRescale(1f + increaseFactor);
+  }
+  
+  public void DecreaseScale() {
+    ApplyRescale(1f / (1f + increaseFactor));
+  }
 
   void ApplyRescale(float multiplier) {
     transform.localScale *= multiplier;

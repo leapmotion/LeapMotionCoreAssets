@@ -5,8 +5,8 @@ using System.Collections.Generic;
 public class KeyEnableMonoBehaviors : MonoBehaviour {
   public List<MonoBehaviour> targets;
   [Header("Controls")]
-  public KeyCode unlockHold = KeyCode.RightShift;
-  public KeyCode toggle = KeyCode.T;
+  public KeyCode unlockHold = KeyCode.None;
+  public KeyCode toggle = KeyCode.Space;
   
   // Update is called once per frame
   void Update () {
