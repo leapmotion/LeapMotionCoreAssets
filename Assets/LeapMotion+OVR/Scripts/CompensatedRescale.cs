@@ -22,7 +22,11 @@ public class CompensatedRescale : MonoBehaviour {
 	void OnEnable () {
     initialScale = transform.localScale;
 	}
-	
+
+  void OnDisable () {
+    ResetScale ();
+  }
+  
 	// Update is called once per frame
 	void Update () {
 	  if (unlockHold != KeyCode.None &&
@@ -49,7 +53,6 @@ public class CompensatedRescale : MonoBehaviour {
       (initialScale.y / transform.localScale.y) +
       (initialScale.z / transform.localScale.z)
       ) / 3f;
-    Debug.Log ("ResetScale multiplier = " + multiplier);
     ApplyRescale(multiplier);
   }
 
