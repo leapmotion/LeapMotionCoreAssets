@@ -19,7 +19,7 @@ public class CompensatedRescale : MonoBehaviour {
   private Vector3 initialScale;
 
 	// Use this for initialization
-	void Start () {
+	void OnEnable () {
     initialScale = transform.localScale;
 	}
 	
@@ -49,6 +49,7 @@ public class CompensatedRescale : MonoBehaviour {
       (initialScale.y / transform.localScale.y) +
       (initialScale.z / transform.localScale.z)
       ) / 3f;
+    Debug.Log ("ResetScale multiplier = " + multiplier);
     ApplyRescale(multiplier);
   }
 

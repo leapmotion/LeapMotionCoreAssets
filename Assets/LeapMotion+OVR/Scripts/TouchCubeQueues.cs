@@ -40,6 +40,7 @@ public class TouchCubeQueues : MonoBehaviour {
     case 1:
       noAlignmentCanvas.SetActive(false);
       handController.transform.localScale = Vector3.one;
+      rescale.enabled = true;
       rescale.DecreaseScale();
       playerRescaleCanvas.SetActive(true);
       demoStage++;
@@ -47,6 +48,7 @@ public class TouchCubeQueues : MonoBehaviour {
     case 2:
       playerRescaleCanvas.SetActive(false);
       rescale.ResetScale();
+      rescale.enabled = false;
       alignment.enabled = true;
       alignedViewsCanvas.SetActive(true);
       demoStage++;
