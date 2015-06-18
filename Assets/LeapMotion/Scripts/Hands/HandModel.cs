@@ -61,7 +61,7 @@ public abstract class HandModel : MonoBehaviour {
            controller_.transform.position;
   }
 
-  /** Calculates the position of the palm relative to the controller.
+  /** Calculates the position of the palm in global coordinates.
   * @returns A Vector3 containing the Unity coordinates of the palm position.
   */
   public Vector3 GetPalmPosition() {
@@ -74,8 +74,8 @@ public abstract class HandModel : MonoBehaviour {
     return Vector3.zero;
   }
 
-  /** Calculates the rotation of the hand relative to the controller.
-  * @returns A Quaternion representing the rotation of the hand relative to the controller. 
+  /** Calculates the rotation of the hand in global coordinates.
+  * @returns A Quaternion representing the rotation of the hand. 
   */
   public Quaternion GetPalmRotation() {
     if (controller_ != null && hand_ != null) {
@@ -87,8 +87,8 @@ public abstract class HandModel : MonoBehaviour {
     return Quaternion.identity;
   }
 
-  /** Calculates the direction vector of the hand relative to the controller.
-  * @returns A Vector3 representing the direction of the hand relative to the controller.
+  /** Calculates the direction vector of the hand in global coordinates.
+  * @returns A Vector3 representing the direction of the hand.
   */
   public Vector3 GetPalmDirection() {
     if (controller_ != null && hand_ != null) {
@@ -100,7 +100,7 @@ public abstract class HandModel : MonoBehaviour {
     return Vector3.forward;
   }
 
-  /** Calculates the normal vector projecting from the hand relative to the controller.
+  /** Calculates the normal vector projecting from the hand in global coordinates.
   * @returns A Vector3 representing the vector perpendicular to the palm.
   */
   public Vector3 GetPalmNormal() {
@@ -113,7 +113,7 @@ public abstract class HandModel : MonoBehaviour {
     return -Vector3.up;
   }
 
-  /** Calculates the direction vector of the forearm relative to the controller.
+  /** Calculates the direction vector of the forearm in global coordinates.
   * @returns A Vector3 representing the direction of the forearm (pointing from elbow to wrist).
   */
   public Vector3 GetArmDirection() {
@@ -126,7 +126,7 @@ public abstract class HandModel : MonoBehaviour {
     return Vector3.forward;
   }
 
-  /** Calculates the center of the forearm relative to the controller.
+  /** Calculates the center of the forearm in global coordinates.
   * @returns A Vector3 containing the Unity coordinates of the center of the forearm.
   */
   public Vector3 GetArmCenter() {
@@ -150,7 +150,7 @@ public abstract class HandModel : MonoBehaviour {
     return hand_.Arm.Width * UnityVectorExtension.INPUT_SCALE;
   }
 
-  /** Calculates the position of the elbow relative to the controller.
+  /** Calculates the position of the elbow in global coordinates.
   * @returns A Vector3 containing the Unity coordinates of the elbow.
   */
   public Vector3 GetElbowPosition() {
@@ -164,7 +164,7 @@ public abstract class HandModel : MonoBehaviour {
     return Vector3.zero;
   }
 
-  /** Calculates the position of the wrist relative to the controller.
+  /** Calculates the position of the wrist in global coordinates.
   * @returns A Vector3 containing the Unity coordinates of the wrist.
   */
   public Vector3 GetWristPosition() {
@@ -178,8 +178,8 @@ public abstract class HandModel : MonoBehaviour {
     return Vector3.zero;
   }
 
-  /** Calculates the rotation of the forearm relative to the controller.
-  * @returns A Quaternion representing the rotation of the arm relative to the controller. 
+  /** Calculates the rotation of the forearm in global coordinates.
+  * @returns A Quaternion representing the rotation of the arm. 
   */
   public Quaternion GetArmRotation() {
     if (controller_ != null && hand_ != null) {
