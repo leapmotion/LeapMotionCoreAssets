@@ -32,9 +32,13 @@ public abstract class HandModel : MonoBehaviour {
   public FingerModel[] fingers = new FingerModel[NUM_FINGERS];
 
   // Unity references
+  /** Transform object for the palm object of this hand. */
   public Transform palm;
+  /** Transform object for the forearm object of this hand. */
   public Transform forearm;
+  /** Transform object for the wrist joint of this hand. */
   public Transform wristJoint;
+  /** Transform object for the elbow joint of this hand. */
   public Transform elbowJoint;
   
   // Leap references

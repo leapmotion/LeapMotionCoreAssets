@@ -44,7 +44,9 @@ public class HandController : MonoBehaviour {
   public HandModel rightGraphicsModel;
   /** The physics hand model to use for the right hand. */
   public HandModel rightPhysicsModel;
-  // If this is null hands will have no parent
+  /** The parent transform to which the hand models are added as children.
+   * If null, the hands have no parent.
+   */
   public Transform handParent = null;
 
   /** The GameObject containing both graphics and colliders for tools. */
