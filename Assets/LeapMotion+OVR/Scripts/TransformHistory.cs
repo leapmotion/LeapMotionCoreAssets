@@ -12,22 +12,17 @@ public class TransformHistory : MonoBehaviour {
     public float dataTime;
     public Vector3 position;
     public Quaternion rotation;
-    public TransformData (float dataTime, Vector3 position, Quaternion rotation) {
-      this.dataTime = dataTime;
-      this.position = position;
-      this.rotation = rotation;
-    }
 
     public static TransformData Lerp(TransformData from, TransformData to, float time) {
       if (from.dataTime == to.dataTime) {
         return from;
       }
       float fraction = (time - from.dataTime) / (to.dataTime - from.dataTime);
-      return new TransformData (
-        time, 
-        Vector3.Lerp (from.position, to.position, fraction), 
-        Quaternion.Slerp (from.rotation, to.rotation, fraction)
-        );
+      return new TransformData () {
+        dataTime = time, 
+        position = Vector3.Lerp (from.position, to.position, fraction), 
+        rotation = Quaternion.Slerp (from.rotation, to.rotation, fraction)
+      };
     }
   }
   
@@ -55,9 +50,17 @@ public class TransformHistory : MonoBehaviour {
 
     // Append latest position & rotation to head
     // FIXME: When leap API is updated replace Time.time with leapController.time
-    // LEAP_EXPORT int64_t now() const;
+    // TODO: Use this to synchronize with the image data.
+    // This requires that the image timestamps are available OR that the time stamps
+    // can be predicted
+    // LEAP_EXPORT int64_t Controller::now() const;
+    // LEAP_EXPORT int64_t Image::timestamp() const;
     float now = Time.time;
-    history.Add (new TransformData (now, transform.position, transform.rotation));
+    history.Add (new TransformData () {
+      dataTime = now,
+      position = transform.position,
+      rotation = transform.rotation
+    });
     //Debug.Log ("Last Index Time = " + history[history.Count-1].dataTime + " =? " + now);
 
     // Reduce history length
