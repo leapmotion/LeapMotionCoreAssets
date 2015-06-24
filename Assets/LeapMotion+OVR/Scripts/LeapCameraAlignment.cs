@@ -7,7 +7,8 @@ public class LeapCameraAlignment : MonoBehaviour {
   public Transform centerEye;
   public Transform rightEye;
 
-  [HideInInspector]
+  //[HideInInspector]
+  [Range(0,1)]
   public float tween = 1f;
 
   // TEST: Virtual Camera Lag
@@ -73,12 +74,13 @@ public class LeapCameraAlignment : MonoBehaviour {
     rightEye.rotation = past.rotation;
     leftEye.position = centerEye.position - 0.5f * oculusIPD;
     leftEye.rotation = past.rotation;
+    Debug.Log ("Now = " + handController.GetLeapController ().Now ().ToString());
 
-    Vector3 addIPD = 0.5f * oculusIPD.normalized * (device.baseline - oculusIPD.magnitude) * tween;
-    Vector3 toDevice = centerEye.forward * device.focalPlaneOffset * tween;
-    leftEye.position = leftEye.position - addIPD + toDevice;
-    rightEye.position = rightEye.position + addIPD + toDevice;
-    centerEye.position = 0.5f * (leftEye.position + rightEye.position);
+    Vector3 addIPD = 0.5f * oculusIPD.normalized * (tween * device.baseline + (1f - tween) * oculusIPD.magnitude);
+    Vector3 toDevice = tween * centerEye.forward * device.focalPlaneOffset;
+    centerEye.position = centerEye.position + toDevice;
+    leftEye.position = centerEye.position - addIPD;
+    rightEye.position = centerEye.position + addIPD;
   }
 
   bool HasNaN(Vector3 v) {
