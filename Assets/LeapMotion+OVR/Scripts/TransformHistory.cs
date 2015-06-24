@@ -66,7 +66,7 @@ public class TransformHistory : MonoBehaviour {
     // Reduce history length
     while (history.Count > 0 &&
       maxTime < now - history [0].dataTime) {
-      Debug.Log ("Removing oldest from history.Count = " + history.Count);
+      //Debug.Log ("Removing oldest from history.Count = " + history.Count);
       history.RemoveAt(0);
     }
 	}

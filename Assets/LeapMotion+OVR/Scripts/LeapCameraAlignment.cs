@@ -8,7 +8,11 @@ public class LeapCameraAlignment : MonoBehaviour {
   public Transform rightEye;
 
   [HideInInspector]
-  public float tween = 1.0f;
+  public float tween = 1f;
+
+  // TEST: Virtual Camera Lag
+  public TransformHistory history;
+  public float lag = 0f;
 	
 	// IMPORTANT: This method MUST be called after
   // OVRManager.LateUpdate
@@ -37,6 +41,15 @@ public class LeapCameraAlignment : MonoBehaviour {
     LeapDeviceInfo device = handController.GetDeviceInfo ();
     if (device.type == LeapDeviceType.Invalid)
       return;
+
+    // TEST: Lag the virtual cameras
+    TransformHistory.TransformData past = history.TransformAtTime(Time.time - lag);
+    centerEye.position = past.position;
+    centerEye.rotation = past.rotation;
+    rightEye.position = centerEye.position + 0.5f * oculusIPD;
+    rightEye.rotation = past.rotation;
+    leftEye.position = centerEye.position - 0.5f * oculusIPD;
+    leftEye.rotation = past.rotation;
 
     Vector3 addIPD = 0.5f * oculusIPD.normalized * (device.baseline - oculusIPD.magnitude) * tween;
     Vector3 toDevice = centerEye.forward * device.focalPlaneOffset * tween;
