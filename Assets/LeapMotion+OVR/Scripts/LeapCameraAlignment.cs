@@ -13,6 +13,29 @@ public class LeapCameraAlignment : MonoBehaviour {
   // TEST: Virtual Camera Lag
   public TransformHistory history;
   public float lag = 0f;
+  public float lagStep = 0.01f;
+  public KeyCode hold = KeyCode.LeftShift;
+  public KeyCode increaseLag = KeyCode.Equals;
+  public KeyCode decreaseLag = KeyCode.Minus;
+  public KeyCode zeroLag = KeyCode.Alpha0;
+
+  void Update() {
+    if (!Input.GetKey (hold)) {
+      return;
+    }
+    if (Input.GetKeyDown (increaseLag)) {
+      lag += lagStep;
+    }
+    if (Input.GetKeyDown (decreaseLag)) {
+      lag -= lagStep;
+      if (lag < 0f) {
+        lag = 0f;
+      }
+    }
+    if (Input.GetKeyDown (zeroLag)) {
+      lag = 0f;
+    }
+  }
 	
 	// IMPORTANT: This method MUST be called after
   // OVRManager.LateUpdate
