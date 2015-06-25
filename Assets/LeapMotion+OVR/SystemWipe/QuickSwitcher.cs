@@ -157,7 +157,7 @@ public class QuickSwitcher : MonoBehaviour {
 
 			transform.localPosition = Vector3.Lerp(from, to, fraction);
       if (m_cameraAlignment != null)
-        m_cameraAlignment.tween = fraction;
+        m_cameraAlignment.tweenPosition = fraction;
 
 			// Kick out of the loop if we're done
 			if ( fraction == 1 ) {
