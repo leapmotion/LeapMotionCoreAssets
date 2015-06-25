@@ -133,6 +133,25 @@ public class BugReporter : MonoBehaviour {
     }
   }
 
+  bool Init()
+  {
+    leap_controller_ = handController.GetLeapController();
+    if (leap_controller_ == null)
+    {
+      Debug.LogWarning("Leap Controller is not found. Bug Reporting will not operate properly");
+      return false;
+    }
+
+    handController.enableRecordPlayback = true;
+
+    ReadyTriggered();
+
+    prev_bug_report_progress_ = leap_controller_.BugReport.Progress;
+    prev_bug_report_state_ = leap_controller_.BugReport.IsActive;
+
+    return true;
+  }
+
   void Start()
   {
     if (handController == null)
@@ -141,20 +160,21 @@ public class BugReporter : MonoBehaviour {
     }
     else
     {
-      leap_controller_ = handController.GetLeapController();
-      handController.enableRecordPlayback = true;
+      Init();
     }
-
-    ReadyTriggered();
-
-    prev_bug_report_progress_ = leap_controller_.BugReport.Progress;
-    prev_bug_report_state_ = leap_controller_.BugReport.IsActive;
   }
 	
 	// Update is called once per frame
 	void Update() {
-    if (handController == null || leap_controller_ == null)
+    if (handController == null)
+    {
       return;
+    }
+    else if (leap_controller_ == null)
+    {
+      if (!Init())
+        return;
+    }
 
     HandleKeyInputs();
     UpdateGUI();
