@@ -10,12 +10,12 @@ public class LeapCameraAlignment : MonoBehaviour {
   public float tweenTimeWarp = 1f;
 
   [Header("Alignment Targets")]
+  public LeapImageRetriever leftImages;
+  public LeapImageRetriever rightImages;
   public HandController handController;
-  public Transform leftEye;
-  public Transform centerEye;
-  public Transform rightEye;
 
-  public long testLag = 20000;
+  // FIXME: This should be determined dynamically
+  // or should be a fixed size to avoid allocation
   public long historyTime = 2000000;
 
   protected struct TransformData {
@@ -84,9 +84,11 @@ public class LeapCameraAlignment : MonoBehaviour {
   // Use EnableUpdateOrdering script to ensure correct call order
   void LateUpdate() {
     if (handController == null ||
-        leftEye == null ||
-        rightEye == null) {
-      Debug.Log ("Hand Controller & Eye references cannot be null");
+        leftImages.transform == null ||
+        rightImages.transform == null ||
+        leftImages == null ||
+        rightImages == null) {
+      Debug.Log ("Hand Controller & ImageRetriever references cannot be null");
       return;
     }
 
@@ -98,7 +100,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   void UpdateHistory () {
     // ASSUME: Oculus resets relative camera positions in each frame
     // Append latest position & rotation to head
-    long now = handController.GetLeapController ().Now ();
+    long now = leftImages.LeapNow ();
     history.Add (new TransformData () {
       leapTime = now,
       position = transform.position,
@@ -115,35 +117,34 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
   
   void UpdateTimeWarp () {
+    Debug.Log ("TimeWarp: now = " + history [history.Count - 1].leapTime + " -> warp = " + (history [history.Count - 1].leapTime - leftImages.ImageNow ()));
+    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(history[history.Count-1].leapTime) - leftImages.ImageNow ());
+    Debug.Log ("tweenAddition = " + tweenAddition);
+    TransformData past = TransformAtTime(leftImages.ImageNow () + tweenAddition);
+
     // ASSUME: Oculus resets relative camera positions in each frame
-    float virtualCameraRadius = 0.5f * (rightEye.position - leftEye.position).magnitude;
+    float virtualCameraRadius = 0.5f * (rightImages.transform.position - leftImages.transform.position).magnitude;
     if (virtualCameraRadius < float.Epsilon)
       // Unmodified camera positions
       return;
-    
-    //TODO : Use timestamp of images
-    // This requires that the image timestamps are available OR that the time stamps
-    // can be predicted
-    // LEAP_EXPORT int64_t Controller::now() const;
-    // LEAP_EXPORT int64_t Image::timestamp() const;
-    //TODO : Apply tweening to virtual camera lag
-    TransformData past = TransformAtTime(handController.GetLeapController ().Now () - testLag);
-    centerEye.position = past.position;
-    centerEye.rotation = past.rotation;
-    rightEye.position = centerEye.position + virtualCameraRadius * centerEye.right;
-    rightEye.rotation = past.rotation;
-    leftEye.position = centerEye.position - virtualCameraRadius * centerEye.right;
-    leftEye.rotation = past.rotation;
+
+    // Move Virtual cameras to synchronize position & orientation
+    handController.transform.position = past.position;
+    handController.transform.rotation = past.rotation;
+    rightImages.transform.position = handController.transform.position + virtualCameraRadius * handController.transform.right;
+    rightImages.transform.rotation = past.rotation;
+    leftImages.transform.position = handController.transform.position - virtualCameraRadius * handController.transform.right;
+    leftImages.transform.rotation = past.rotation;
   }
 
   void UpdateAlignment () {
-    if (HasNaN (leftEye.position) ||
-        HasNaN (centerEye.position) ||
-        HasNaN (rightEye.position))
+    if (HasNaN (leftImages.transform.position) ||
+        HasNaN (handController.transform.position) ||
+        HasNaN (rightImages.transform.position))
       // Uninitialized transforms
       return;
 
-    Vector3 oculusIPD = rightEye.position - leftEye.position;
+    Vector3 oculusIPD = rightImages.transform.position - leftImages.transform.position;
     if (oculusIPD.magnitude < float.Epsilon)
       // Unmodified camera positions
       return;
@@ -153,10 +154,10 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     
     Vector3 addIPD = 0.5f * oculusIPD.normalized * (tweenPosition * device.baseline + (1f - tweenPosition) * oculusIPD.magnitude);
-    Vector3 toDevice = tweenPosition * centerEye.forward * device.focalPlaneOffset;
-    centerEye.position = centerEye.position + toDevice;
-    leftEye.position = centerEye.position - addIPD;
-    rightEye.position = centerEye.position + addIPD;
+    Vector3 toDevice = tweenPosition * handController.transform.forward * device.focalPlaneOffset;
+    handController.transform.position = handController.transform.position + toDevice;
+    leftImages.transform.position = handController.transform.position - addIPD;
+    rightImages.transform.position = handController.transform.position + addIPD;
   }
 
   bool HasNaN(Vector3 v) {

@@ -280,15 +280,17 @@ public class LeapImageRetriever : MonoBehaviour {
     }
 
   /// <returns>The time at which the current image was recorded, in microseconds</returns>
-  public long GetImageNow() {
+  public long ImageNow() {
     if (_imageList.IsEmpty) {
-      return 0;
+      Debug.Log ("ImageNow has no images -> defaulting to LeapNow");
+      return LeapNow();
     }
+    Debug.Log ("ImageNow Timestamp = " + _imageList [0].Timestamp);
     return _imageList [0].Timestamp;
   }
 
   /// <returns>The current time using the same clock as GetImageNow</returns>
-  public long GetLeapNow() {
+  public long LeapNow() {
     return _controller.Now ();
   }
 }
