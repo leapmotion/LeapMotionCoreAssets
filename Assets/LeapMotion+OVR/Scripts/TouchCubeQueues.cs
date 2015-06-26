@@ -17,10 +17,12 @@ public class TouchCubeQueues : MonoBehaviour {
   public CompensatedRescale rescale;
   public HandController handController;
   [Header("Messages")]
+  public GameObject helpMenuCanvas;
   public GameObject noAlignmentCanvas;
   public GameObject playerRescaleCanvas;
   public GameObject alignedViewsCanvas;
-  public GameObject helpMenuCanvas;
+  public GameObject synchronizedCanvas;
+  public GameObject timewarpingCanvas;
 
   private int demoStage = 0;
 	
@@ -32,7 +34,8 @@ public class TouchCubeQueues : MonoBehaviour {
     switch (demoStage) {
     case 0:
       helpMenuCanvas.SetActive(false);
-      alignment.enabled = false;
+      alignment.tweenPosition = 0f;
+      alignment.tweenTimeWarp = 0f;
       handController.transform.localScale = Vector3.one / rescale.decreaseFactor;
       noAlignmentCanvas.SetActive(true);
       demoStage++;
@@ -49,8 +52,14 @@ public class TouchCubeQueues : MonoBehaviour {
       playerRescaleCanvas.SetActive(false);
       rescale.ResetScale();
       rescale.enabled = false;
-      alignment.enabled = true;
+      alignment.tweenPosition = 1f;
       alignedViewsCanvas.SetActive(true);
+      demoStage++;
+      break;
+    case 3:
+      alignedViewsCanvas.SetActive(false);
+      alignment.tweenTimeWarp = 1f;
+      synchronizedCanvas.SetActive(true);
       demoStage++;
       break;
     default:
@@ -61,11 +70,14 @@ public class TouchCubeQueues : MonoBehaviour {
 	}
 
   public void Reset() {
+    helpMenuCanvas.SetActive(true);
     noAlignmentCanvas.SetActive (false);
     playerRescaleCanvas.SetActive (false);
     alignedViewsCanvas.SetActive (false);
-    helpMenuCanvas.SetActive(true);
-    alignment.enabled = true;
+    synchronizedCanvas.SetActive (false);
+    timewarpingCanvas.SetActive (false);
+    alignment.tweenPosition = 1f;
+    alignment.tweenTimeWarp = 1f;
     rescale.ResetScale ();
   }
 }

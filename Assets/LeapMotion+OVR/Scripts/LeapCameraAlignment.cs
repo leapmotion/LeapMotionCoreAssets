@@ -4,10 +4,12 @@ using System.Collections.Generic;
 using Leap;
 
 public class LeapCameraAlignment : MonoBehaviour {
-  [Range(0,1)]
+  [Range(0,2)]
   public float tweenPosition = 1f;
-  [Range(0,1)]
+  [Range(0,2)]
   public float tweenTimeWarp = 1f;
+  [Range(0,2)]
+  public float tweenForward = 1f;
 
   [Header("Alignment Targets")]
   public LeapImageRetriever leftImages;
@@ -92,7 +94,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
 
     if (!(IsFinite (leftImages.transform.position) && IsFinite (leftImages.transform.rotation) &&
-          IsFinite (handController.transform.position) && IsFinite (handController.transform.rotation) &&
+          IsFinite (handController.transform.parent.position) && IsFinite (handController.transform.parent.rotation) &&
           IsFinite (rightImages.transform.position) && IsFinite (rightImages.transform.rotation))) {
       Debug.Log ("Uninitialized transforms -> skip alignment");
       return;
@@ -132,20 +134,19 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
 
     //Debug.Log ("TimeWarp: now = " + history [history.Count - 1].leapTime + " -> warp = " + (history [history.Count - 1].leapTime - leftImages.ImageNow ()));
-    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(history[history.Count-1].leapTime - leftImages.ImageNow ()));
-    //Debug.Log ("tweenAddition = " + tweenAddition);
+//    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(history[history.Count-1].leapTime - leftImages.ImageNow ()));
+//    TransformData past = TransformAtTime(leftImages.ImageNow () + tweenAddition);
 
-    // HACK:
-    tweenAddition = leftImages.LeapNow () - leftImages.ImageNow () - 20000;
-
-    TransformData past = TransformAtTime(leftImages.ImageNow () + tweenAddition);
+    // FIXME: Image timestamps are always zero - revert to estimate
+    long tweenAddition = (long)(-20000f * tweenTimeWarp);
+    TransformData past = TransformAtTime(history[history.Count-1].leapTime + tweenAddition);
 
     // Move Virtual cameras to synchronize position & orientation
-    handController.transform.position = past.position;
-    handController.transform.rotation = past.rotation;
-    rightImages.transform.position = handController.transform.position + virtualCameraRadius * handController.transform.right;
+    handController.transform.parent.position = past.position;
+    handController.transform.parent.rotation = past.rotation;
+    rightImages.transform.position = handController.transform.parent.position + virtualCameraRadius * handController.transform.parent.right;
     rightImages.transform.rotation = past.rotation;
-    leftImages.transform.position = handController.transform.position - virtualCameraRadius * handController.transform.right;
+    leftImages.transform.position = handController.transform.parent.position - virtualCameraRadius * handController.transform.parent.right;
     leftImages.transform.rotation = past.rotation;
   }
 
@@ -165,10 +166,10 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
     
     Vector3 addIPD = 0.5f * virtualCameraStereo.normalized * (tweenPosition * device.baseline + (1f - tweenPosition) * virtualCameraStereo.magnitude);
-    Vector3 toDevice = tweenPosition * handController.transform.forward * device.focalPlaneOffset;
-    handController.transform.position = handController.transform.position + toDevice;
-    leftImages.transform.position = handController.transform.position - addIPD;
-    rightImages.transform.position = handController.transform.position + addIPD;
+    Vector3 toDevice = tweenPosition * handController.transform.parent.forward * device.focalPlaneOffset * tweenForward;
+    handController.transform.parent.position = handController.transform.parent.position + toDevice;
+    leftImages.transform.position = handController.transform.parent.position - addIPD;
+    rightImages.transform.position = handController.transform.parent.position + addIPD;
   }
 
   bool IsFinite(float f) {
