@@ -16,7 +16,7 @@ public class LeapCameraAlignment : MonoBehaviour {
 
   // FIXME: This should be determined dynamically
   // or should be a fixed size to avoid allocation
-  public long historyTime = 2000000;
+  public long historyTime = 1000000; //microseconds
 
   protected struct TransformData {
     public long leapTime; // microseconds
@@ -53,7 +53,7 @@ public class LeapCameraAlignment : MonoBehaviour {
       };
     }
     if (history [0].leapTime > time) {
-      Debug.LogWarning ("NO INTERPOLATION: history.First = " + history [0].leapTime + " > time = " + time);
+      Debug.LogWarning ("NO INTERPOLATION: Using earliest time = " + history [0].leapTime + " > time = " + time);
       return history[0];
     }
     int t = 1;
@@ -62,14 +62,13 @@ public class LeapCameraAlignment : MonoBehaviour {
       t++;
     }
     if (!(t < history.Count)) {
-      Debug.LogWarning ("NO INTERPOLATION: history.Last = " + history[history.Count-1].leapTime + " < time = " + time);
+      Debug.LogWarning ("NO INTERPOLATION: Using most recent time = " + history[history.Count-1].leapTime + " < time = " + time);
       return history[history.Count-1];
     }
     
     return TransformData.Lerp (history[t-1], history[t], time);
   }
 
-  // Use this for initialization
   void Start () {
     if (handController == null) {
       Debug.LogWarning ("TransformHistory REQUIRES a reference to a HandController");
@@ -92,6 +91,13 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
+    if (!(IsFinite (leftImages.transform.position) && IsFinite (leftImages.transform.rotation) &&
+          IsFinite (handController.transform.position) && IsFinite (handController.transform.rotation) &&
+          IsFinite (rightImages.transform.position) && IsFinite (rightImages.transform.rotation))) {
+      Debug.Log ("Uninitialized transforms -> skip alignment");
+      return;
+    }
+
     UpdateHistory ();
     UpdateTimeWarp ();
     UpdateAlignment ();
@@ -99,7 +105,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   
   void UpdateHistory () {
     // ASSUME: Oculus resets relative camera positions in each frame
-    // Append latest position & rotation to head
+    // Append latest position & rotation of stereo camera rig
     long now = leftImages.LeapNow ();
     history.Add (new TransformData () {
       leapTime = now,
@@ -117,16 +123,22 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
   
   void UpdateTimeWarp () {
-    Debug.Log ("TimeWarp: now = " + history [history.Count - 1].leapTime + " -> warp = " + (history [history.Count - 1].leapTime - leftImages.ImageNow ()));
-    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(history[history.Count-1].leapTime) - leftImages.ImageNow ());
-    Debug.Log ("tweenAddition = " + tweenAddition);
-    TransformData past = TransformAtTime(leftImages.ImageNow () + tweenAddition);
-
-    // ASSUME: Oculus resets relative camera positions in each frame
     float virtualCameraRadius = 0.5f * (rightImages.transform.position - leftImages.transform.position).magnitude;
-    if (virtualCameraRadius < float.Epsilon)
+    if (!(IsFinite (virtualCameraRadius) &&
+          virtualCameraRadius > float.Epsilon)) {
       // Unmodified camera positions
+      Debug.LogWarning ("Bad virtualCameraRadius = " + virtualCameraRadius);
       return;
+    }
+
+    //Debug.Log ("TimeWarp: now = " + history [history.Count - 1].leapTime + " -> warp = " + (history [history.Count - 1].leapTime - leftImages.ImageNow ()));
+    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(history[history.Count-1].leapTime - leftImages.ImageNow ()));
+    //Debug.Log ("tweenAddition = " + tweenAddition);
+
+    // HACK:
+    tweenAddition = leftImages.LeapNow () - leftImages.ImageNow () - 20000;
+
+    TransformData past = TransformAtTime(leftImages.ImageNow () + tweenAddition);
 
     // Move Virtual cameras to synchronize position & orientation
     handController.transform.position = past.position;
@@ -138,33 +150,40 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
 
   void UpdateAlignment () {
-    if (HasNaN (leftImages.transform.position) ||
-        HasNaN (handController.transform.position) ||
-        HasNaN (rightImages.transform.position))
-      // Uninitialized transforms
-      return;
-
-    Vector3 oculusIPD = rightImages.transform.position - leftImages.transform.position;
-    if (oculusIPD.magnitude < float.Epsilon)
+    Vector3 virtualCameraStereo = rightImages.transform.position - leftImages.transform.position;
+    if (!(IsFinite (virtualCameraStereo.magnitude) &&
+          virtualCameraStereo.magnitude > float.Epsilon)) {
       // Unmodified camera positions
+      Debug.LogWarning ("Bad virtualCameraStereo = " + virtualCameraStereo);
       return;
+    }
     
     LeapDeviceInfo device = handController.GetDeviceInfo ();
-    if (device.type == LeapDeviceType.Invalid)
+    if (device.type == LeapDeviceType.Invalid) {
+      Debug.LogWarning ("Invalid Leap Device");
       return;
+    }
     
-    Vector3 addIPD = 0.5f * oculusIPD.normalized * (tweenPosition * device.baseline + (1f - tweenPosition) * oculusIPD.magnitude);
+    Vector3 addIPD = 0.5f * virtualCameraStereo.normalized * (tweenPosition * device.baseline + (1f - tweenPosition) * virtualCameraStereo.magnitude);
     Vector3 toDevice = tweenPosition * handController.transform.forward * device.focalPlaneOffset;
     handController.transform.position = handController.transform.position + toDevice;
     leftImages.transform.position = handController.transform.position - addIPD;
     rightImages.transform.position = handController.transform.position + addIPD;
   }
 
-  bool HasNaN(Vector3 v) {
-    return float.IsNaN (v.x) || float.IsNaN (v.y) || float.IsNaN (v.z);
+  bool IsFinite(float f) {
+    return !(float.IsInfinity (f) || float.IsNaN (f));
   }
 
-  bool HasNaN(Quaternion q) {
-    return float.IsNaN (q.w) || float.IsNaN (q.x) || float.IsNaN (q.y) || float.IsNaN (q.z);
+  bool IsFinite(Vector3 v) {
+    return IsFinite (v.x) && IsFinite (v.y) && IsFinite (v.z);
+  }
+
+  bool IsFinite(Quaternion q) {
+    return IsFinite (q.w) && IsFinite (q.x) && IsFinite (q.y) && IsFinite (q.z);
+  }
+
+  bool IsFinite(TransformData t) {
+    return IsFinite (t.position) && IsFinite (t.rotation);
   }
 }

@@ -228,12 +228,18 @@ public class LeapImageRetriever : MonoBehaviour {
 
         if (syncMode == SYNC_MODE.SYNC_WITH_HANDS) {
             _imageList = frame.Images;
+            Debug.Log (name + " frame.Timestamp = " + frame.Timestamp + " ?= imageList.Timestamp = " + _imageList[0].Timestamp);
         }
     }
 
     void OnPreRender() {
         if (syncMode == SYNC_MODE.LOW_LATENCY) {
-            _imageList = _controller.Images;
+          _imageList = _controller.Images;
+          if (_imageList.IsEmpty) {
+            Debug.Log ("NO IMAGES");
+          } else {
+            Debug.Log (name + " controller.Now() = " + _controller.Now() + " ?= imageList.Timestamp = " + _imageList[0].Timestamp);
+          }
         }
 
         Image referenceImage = _imageList[(int)eye];
