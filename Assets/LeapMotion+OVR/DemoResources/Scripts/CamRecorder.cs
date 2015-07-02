@@ -45,25 +45,6 @@ public class TextureRecorder
     m_syncEvents = syncEvents;
   }
 
-  private bool IsFileLocked(string filename)
-  {
-    FileStream file = null;
-    try
-    {
-      file = File.Open(filename, FileMode.Open);
-    }
-    catch (IOException)
-    {
-      return true;
-    }
-    finally
-    {
-      if (file != null)
-        file.Close();
-    }
-    return false;
-  }
-
   public void ThreadRun()
   {
     while (WaitHandle.WaitAny(m_syncEvents.EventArray) != 1)
@@ -71,12 +52,12 @@ public class TextureRecorder
       lock (((ICollection)m_queue).SyncRoot)
       {
         KeyValuePair<string, byte[]> item = m_queue.Peek();
-        try {
+        try
+        {
           System.IO.File.WriteAllBytes(item.Key, item.Value);
           m_queue.Dequeue();
-        } catch (IOException)
-        {
         }
+        catch { }
       }
     }
   }
@@ -112,11 +93,15 @@ public class CamRecorder : MonoBehaviour
   }
   private CamRecorderState m_camRecorderState = CamRecorderState.Idle;
 
-  private void SaveToQueue(string filename, byte[] data)
+  private void AddFilename(string filename)
+  {
+    m_filenames.Enqueue(filename);
+  }
+
+  private void AddToQueue(string filename, byte[] data)
   {
     lock (((ICollection)m_frameQueue).SyncRoot)
     {
-      m_filenames.Enqueue(filename);
       m_frameQueue.Enqueue(new KeyValuePair<string, byte[]>(filename, data));
     }
   }
@@ -127,27 +112,24 @@ public class CamRecorder : MonoBehaviour
     RenderTexture.active = m_cameraTexture;
     m_cameraTextureData.ReadPixels(m_cameraRect, 0, 0, false);
     string filename = m_saveCount.ToString() + ".png";
-    SaveToQueue(filename, m_cameraTextureData.GetRawTextureData());
+    AddFilename(filename);
+    AddToQueue(filename, m_cameraTextureData.GetRawTextureData());
     m_saveCount++;
     RenderTexture.active = currentRenderTexture;
   }
 
-  private bool ConvertRawToImg()
+  private void ConvertRawToImg()
   {
-    if (m_filenames.Count == 0)
-      return false;
-
-    string filename = m_filenames.Peek();
     try
     {
+      string filename = m_filenames.Peek();
       m_cameraTextureData.LoadRawTextureData(System.IO.File.ReadAllBytes(filename));
-      System.IO.File.WriteAllBytes(filename, m_cameraTextureData.EncodeToPNG());
+      AddToQueue(filename, m_cameraTextureData.EncodeToPNG());
       m_filenames.Dequeue();
     }
     catch (IOException)
     {
     }
-    return true;
   }
 
   void OnDestroy()
@@ -225,7 +207,8 @@ public class CamRecorder : MonoBehaviour
         break;
       case CamRecorderState.Saving:
         Debug.Log("Saving");
-        if (!ConvertRawToImg())
+        ConvertRawToImg();
+        if (m_filenames.Count == 0)
         {
           m_camRecorderState = CamRecorderState.PostSaving;
         }
