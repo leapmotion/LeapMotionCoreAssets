@@ -34,35 +34,6 @@ public class SyncEvents
   }
 }
 
-public class TextureRecorder
-{
-  private Queue<KeyValuePair<string, byte[]>> m_queue;
-  private SyncEvents m_syncEvents;
-
-  public TextureRecorder(Queue<KeyValuePair<string, byte[]>> queue, SyncEvents syncEvents) 
-  {
-    m_queue = queue;
-    m_syncEvents = syncEvents;
-  }
-
-  public void ThreadRun()
-  {
-    while (WaitHandle.WaitAny(m_syncEvents.EventArray) != 1)
-    {
-      lock (((ICollection)m_queue).SyncRoot)
-      {
-        KeyValuePair<string, byte[]> item = m_queue.Peek();
-        try
-        {
-          System.IO.File.WriteAllBytes(item.Key, item.Value);
-          m_queue.Dequeue();
-        }
-        catch { }
-      }
-    }
-  }
-}
-
 [RequireComponent (typeof(Camera))]
 public class CamRecorder : MonoBehaviour 
 {
@@ -76,8 +47,7 @@ public class CamRecorder : MonoBehaviour
   private Queue<string> m_filenames;
   private Queue<KeyValuePair<string, byte[]>> m_frameQueue;
   private SyncEvents m_syncEvents;
-  private Thread m_textureRecorderThread;
-  private TextureRecorder m_textureRecorder;
+  private Thread m_QueueThread;
 
   private int m_saveCount = 0;
   private float m_prevTime = 0;
@@ -92,6 +62,27 @@ public class CamRecorder : MonoBehaviour
     PostSaving
   }
   private CamRecorderState m_camRecorderState = CamRecorderState.Idle;
+
+  private void ProcessQueue()
+  {
+    while (WaitHandle.WaitAny(m_syncEvents.EventArray) != 1)
+    {
+      KeyValuePair<string, byte[]> item;
+      lock (((ICollection)m_frameQueue).SyncRoot)
+      {
+        item = m_frameQueue.Peek();
+      }
+      try
+      {
+        System.IO.File.WriteAllBytes(item.Key, item.Value);
+      }
+      catch { }
+      lock (((ICollection)m_frameQueue).SyncRoot)
+      {
+        item = m_frameQueue.Dequeue();
+      }
+    }
+  }
 
   private void AddFilename(string filename)
   {
@@ -135,7 +126,7 @@ public class CamRecorder : MonoBehaviour
   void OnDestroy()
   {
     m_syncEvents.ExitThreadEvent.Set();
-    m_textureRecorderThread.Join();
+    m_QueueThread.Join();
   }
 
   void SetupCamera()
@@ -156,9 +147,8 @@ public class CamRecorder : MonoBehaviour
     m_filenames = new Queue<string>();
     m_frameQueue = new Queue<KeyValuePair<string, byte[]>>();
     m_syncEvents = new SyncEvents();
-    m_textureRecorder = new TextureRecorder(m_frameQueue, m_syncEvents);
-    m_textureRecorderThread = new Thread(m_textureRecorder.ThreadRun);
-    m_textureRecorderThread.Start();
+    m_QueueThread = new Thread(ProcessQueue);
+    m_QueueThread.Start();
   }
 
   private void CheckQueue()
