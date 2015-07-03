@@ -31,7 +31,7 @@ public class CamRecorder : MonoBehaviour
   private Queue<KeyValuePair<string, byte[]>> m_saveQueue;
   private Thread m_QueueThread;
   private EventWaitHandle m_saveQueueEnqueueEvent;
-  private bool m_activeThreads;
+  private bool m_terminateThreads;
   
   private float m_startTime = 0.0f;
   private float m_targetTime = 0.0f;
@@ -51,7 +51,7 @@ public class CamRecorder : MonoBehaviour
   {
     while (m_saveQueueEnqueueEvent.WaitOne())
     {
-      if (!m_activeThreads)
+      if (m_terminateThreads)
         return;
 
       KeyValuePair<string, byte[]> item;
@@ -84,24 +84,27 @@ public class CamRecorder : MonoBehaviour
     m_saveQueueEnqueueEvent.Set(); // If add to list (list is not empty), enable signal
   }
 
-  private void RecordRawData()
+  private void SaveRawData()
   {
+    duration = Time.time - m_startTime;
     if (Time.time > m_targetTime)
     {
       RenderTexture currentRenderTexture = RenderTexture.active;
       RenderTexture.active = m_cameraRenderTexture;
       m_cameraTexture2D.ReadPixels(m_cameraRect, 0, 0, false);
+      RenderTexture.active = currentRenderTexture;
+
       string filename = directory + "/" + frameCount.ToString();
       filename += (m_quality == 1.0f) ? ".png" : ".jpg";
       m_loadQueue.Enqueue(filename);
       AddToSaveQueue(filename, m_cameraTexture2D.GetRawTextureData());
+
       frameCount++;
-      RenderTexture.active = currentRenderTexture;
       m_targetTime += m_targetInterval;
     }
   }
 
-  private void ConvertRawDataToImages()
+  private void ProcessRawData()
   {
     progress = (frameCount > 0) ? ((float)frameCount - (float)m_loadQueue.Count) / (float)frameCount : 0.0f;
     if (m_loadQueue.Count == 0)
@@ -160,12 +163,12 @@ public class CamRecorder : MonoBehaviour
 
   private void SetupMultithread()
   {
+    m_terminateThreads = false;
     m_loadQueue = new Queue<string>();
     m_saveQueue = new Queue<KeyValuePair<string, byte[]>>();
     m_saveQueueEnqueueEvent = new ManualResetEvent(false);
     m_QueueThread = new Thread(ProcessSaveQueue);
     m_QueueThread.Start();
-    m_activeThreads = true;
   }
 
   public bool SetDirectory(string directory)
@@ -243,7 +246,7 @@ public class CamRecorder : MonoBehaviour
   void OnDestroy()
   {
     m_saveQueueEnqueueEvent.Set();
-    m_activeThreads = false;
+    m_terminateThreads = true;
     m_QueueThread.Join();
   }
 
@@ -267,11 +270,10 @@ public class CamRecorder : MonoBehaviour
         progress = 1.0f;
         break;
       case CamRecorderState.Recording:
-        duration = Time.time - m_startTime;
-        RecordRawData();
+        SaveRawData();
         break;
       case CamRecorderState.Processing:
-        ConvertRawDataToImages();
+        ProcessRawData();
         if (m_loadQueue.Count == 0 && m_saveQueue.Count == 0)
         {
           m_camRecorderState = CamRecorderState.Idle;
