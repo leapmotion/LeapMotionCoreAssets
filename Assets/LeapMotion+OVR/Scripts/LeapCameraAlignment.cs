@@ -4,21 +4,32 @@ using System.Collections.Generic;
 using Leap;
 
 public class LeapCameraAlignment : MonoBehaviour {
-  [Range(0,2)]
+  [Range(0,1)]
   public float tweenPosition = 1f;
-  [Range(0,2)]
+  [Range(0,1)]
   public float tweenTimeWarp = 1f;
-  [Range(0,2)]
+  [Range(0,1)]
   public float tweenForward = 1f;
 
   [Header("Alignment Targets")]
   public LeapImageRetriever leftImages;
   public LeapImageRetriever rightImages;
   public HandController handController;
+  
+  //DEBUG
+  public OVRDisplay.LatencyData latency;
+  public long rewind = 0;
+  public KeyCode moreRewind = KeyCode.LeftArrow;
+  public KeyCode lessRewind = KeyCode.RightArrow;
 
   // FIXME: This should be determined dynamically
   // or should be a fixed size to avoid allocation
   public long historyTime = 1000000; //microseconds
+  
+  [HideInInspector]
+  public SmoothedFloat imageLatency;
+  [SerializeField]
+  private float imageLatencyDelay = 1f;
 
   protected struct TransformData {
     public long leapTime; // microseconds
@@ -77,6 +88,9 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
     history = new List<TransformData> ();
+    imageLatency = new SmoothedFloat () {
+      delay = imageLatencyDelay
+    };
   }
 	
 	// IMPORTANT: This method MUST be called after
@@ -89,16 +103,31 @@ public class LeapCameraAlignment : MonoBehaviour {
         rightImages.transform == null ||
         leftImages == null ||
         rightImages == null) {
-      Debug.Log ("Hand Controller & ImageRetriever references cannot be null");
+      Debug.LogWarning ("Hand Controller & ImageRetriever references cannot be null");
       return;
     }
 
     if (!(IsFinite (leftImages.transform.position) && IsFinite (leftImages.transform.rotation) &&
           IsFinite (handController.transform.parent.position) && IsFinite (handController.transform.parent.rotation) &&
           IsFinite (rightImages.transform.position) && IsFinite (rightImages.transform.rotation))) {
-      Debug.Log ("Uninitialized transforms -> skip alignment");
+      Debug.LogWarning ("Uninitialized transforms -> skip alignment");
       return;
     }
+
+    //DEBUG
+    if (Input.GetKeyDown (moreRewind)) {
+      rewind += 1000; //ms
+    }
+    if (Input.GetKeyDown (lessRewind)) {
+      rewind -= 1000; //ms
+    }
+    if (Input.GetKeyDown (KeyCode.Alpha0)) {
+      tweenTimeWarp = 0f;
+    }
+    if (Input.GetKeyDown (KeyCode.Alpha1)) {
+      tweenTimeWarp = 1f;
+    }
+
 
     UpdateHistory ();
     UpdateTimeWarp ();
@@ -115,6 +144,7 @@ public class LeapCameraAlignment : MonoBehaviour {
       rotation = transform.rotation
     });
     //Debug.Log ("Last Index Time = " + history[history.Count-1].leapTime + " =? " + now);
+    //Debug.Log ("LeapNow(micro) = " + now + " - ImageNow(micro) = " + leftImages.ImageNow () + " = Latency(micro) = " + (now - leftImages.ImageNow ()));
     
     // Reduce history length
     while (history.Count > 0 &&
@@ -125,6 +155,14 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
   
   void UpdateTimeWarp () {
+    if (OVRManager.display != null) {
+      latency = OVRManager.display.latency;
+    } else {
+      latency.render = -1f;
+      latency.timeWarp = -1f;
+      latency.postPresent = -1f;
+    }
+    
     float virtualCameraRadius = 0.5f * (rightImages.transform.position - leftImages.transform.position).magnitude;
     if (!(IsFinite (virtualCameraRadius) &&
           virtualCameraRadius > float.Epsilon)) {
@@ -133,13 +171,10 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
-    //Debug.Log ("TimeWarp: now = " + history [history.Count - 1].leapTime + " -> warp = " + (history [history.Count - 1].leapTime - leftImages.ImageNow ()));
-//    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(history[history.Count-1].leapTime - leftImages.ImageNow ()));
-//    TransformData past = TransformAtTime(leftImages.ImageNow () + tweenAddition);
-
-    // FIXME: Image timestamps are always zero - revert to estimate
-    long tweenAddition = (long)(-20000f * tweenTimeWarp);
-    TransformData past = TransformAtTime(history[history.Count-1].leapTime + tweenAddition);
+    imageLatency.Update ((float)(history [history.Count - 1].leapTime - leftImages.ImageNow ()) / 1000f, Time.deltaTime);
+    long imageTime = leftImages.ImageNow () - (long)(latency.render * 1e6) - rewind;
+    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(history[history.Count-1].leapTime - imageTime));
+    TransformData past = TransformAtTime(imageTime + tweenAddition);
 
     // Move Virtual cameras to synchronize position & orientation
     handController.transform.parent.position = past.position;

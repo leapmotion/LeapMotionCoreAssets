@@ -228,18 +228,14 @@ public class LeapImageRetriever : MonoBehaviour {
 
         if (syncMode == SYNC_MODE.SYNC_WITH_HANDS) {
             _imageList = frame.Images;
-            Debug.Log (name + " frame.Timestamp = " + frame.Timestamp + " ?= imageList.Timestamp = " + _imageList[0].Timestamp);
+            //Debug.Log (name + " SYNC_WITH_HANDS: frame.Timestamp: " + frame.Timestamp + " - imageList.Timestamp: " + _imageList[0].Timestamp + " = " + (frame.Timestamp - _imageList[0].Timestamp));
         }
     }
 
     void OnPreRender() {
         if (syncMode == SYNC_MODE.LOW_LATENCY) {
           _imageList = _controller.Images;
-          if (_imageList.IsEmpty) {
-            Debug.Log ("NO IMAGES");
-          } else {
-            Debug.Log (name + " controller.Now() = " + _controller.Now() + " ?= imageList.Timestamp = " + _imageList[0].Timestamp);
-          }
+          //if (!_imageList.IsEmpty) Debug.Log (name + " LOW_LATENCY: controller.Now(): " + _controller.Now() + " - imageList.Timestamp: " + _imageList[0].Timestamp + " = " + (_controller.Now() - _imageList[0].Timestamp));
         }
 
         Image referenceImage = _imageList[(int)eye];
@@ -288,10 +284,9 @@ public class LeapImageRetriever : MonoBehaviour {
   /// <returns>The time at which the current image was recorded, in microseconds</returns>
   public long ImageNow() {
     if (_imageList.IsEmpty) {
-      Debug.Log ("ImageNow has no images -> defaulting to LeapNow");
+      Debug.LogWarning ("ImageNow has no images -> defaulting to LeapNow");
       return LeapNow();
     }
-    Debug.Log ("ImageNow Timestamp = " + _imageList [0].Timestamp);
     return _imageList [0].Timestamp;
   }
 
