@@ -127,25 +127,6 @@ public class CamRecorder : MonoBehaviour
     }
   }
 
-  private void UpdateCameraProperties()
-  {
-    if (syncCamera == null)
-      return;
-
-    if (syncCamera.pixelRect != m_camera.pixelRect)
-    {
-      m_camera.CopyFrom(syncCamera);
-      int width = m_camera.pixelWidth;
-      int height = m_camera.pixelHeight;
-      m_cameraRenderTexture.width = width;
-      m_cameraRenderTexture.height = height;
-      m_cameraTexture2D.Resize(width, height);
-      m_cameraRect.width = width;
-      m_cameraRect.height = height;
-      m_camera.targetTexture = m_cameraRenderTexture;
-    }
-  }
-
   private void SetupCamera()
   {
     m_camera = GetComponent<Camera>();
@@ -215,6 +196,21 @@ public class CamRecorder : MonoBehaviour
     {
       frameCount = 0;
       m_startTime = Time.time;
+
+      if ((syncCamera != null) && (syncCamera.pixelRect != m_camera.pixelRect))
+      {
+        m_camera.CopyFrom(syncCamera);
+        int width = m_camera.pixelWidth;
+        int height = m_camera.pixelHeight;
+        if (m_cameraRenderTexture != null)
+          Destroy(m_cameraRenderTexture);
+        m_cameraRenderTexture = new RenderTexture(width, height, 24);
+        m_cameraTexture2D.Resize(width, height);
+        m_cameraRect.width = width;
+        m_cameraRect.height = height;
+        m_camera.targetTexture = m_cameraRenderTexture;
+      }
+
       m_camRecorderState = CamRecorderState.Recording;
     }
   }
@@ -254,12 +250,6 @@ public class CamRecorder : MonoBehaviour
   {
     SetupCamera();
     SetupMultithread();
-  }
-
-  void Update()
-  {
-    if (m_camRecorderState == CamRecorderState.Idle)
-      UpdateCameraProperties();
   }
 
   void OnPostRender()
