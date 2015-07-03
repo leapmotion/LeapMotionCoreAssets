@@ -39,6 +39,10 @@ public class CamRecorder : MonoBehaviour
 
   private float m_quality = 0.0f;
 
+  private bool m_performance_test = true;
+  private int m_performance_frames = 30;
+  private float m_performance = 0.0f;
+
   private enum CamRecorderState
   {
     Idle,
@@ -94,19 +98,24 @@ public class CamRecorder : MonoBehaviour
       m_cameraTexture2D.ReadPixels(m_cameraRect, 0, 0, false);
       RenderTexture.active = currentRenderTexture;
 
+      frameCount++;
       string filename = directory + "/" + frameCount.ToString();
       filename += (m_quality == 1.0f) ? ".png" : ".jpg";
       m_loadQueue.Enqueue(filename);
       AddToSaveQueue(filename, m_cameraTexture2D.GetRawTextureData());
+      m_targetTime = m_startTime + m_targetInterval * (frameCount + 1);
 
-      frameCount++;
-      m_targetTime += m_targetInterval;
+      if (m_performance_test && frameCount == m_performance_frames)
+      {
+        StopRecording();
+      }
     }
   }
 
   private void ProcessRawData()
   {
     progress = (frameCount > 0) ? ((float)frameCount - (float)m_loadQueue.Count) / (float)frameCount : 0.0f;
+
     if (m_loadQueue.Count == 0)
       return;
 
@@ -196,6 +205,7 @@ public class CamRecorder : MonoBehaviour
     {
       frameCount = 0;
       m_startTime = Time.time;
+      m_targetTime = m_startTime + m_targetInterval * (frameCount + 1);
 
       if ((syncCamera != null) && (syncCamera.pixelRect != m_camera.pixelRect))
       {
@@ -211,6 +221,8 @@ public class CamRecorder : MonoBehaviour
         m_camera.targetTexture = m_cameraRenderTexture;
       }
 
+      if (m_performance_test)
+        m_performance = Time.time;
       m_camRecorderState = CamRecorderState.Recording;
     }
   }
@@ -222,6 +234,13 @@ public class CamRecorder : MonoBehaviour
   {
     if (m_camRecorderState == CamRecorderState.Recording)
     {
+      if (m_performance_test)
+      {
+        Debug.Log(m_targetInterval);
+        Debug.Log(Time.time - m_startTime);
+        Debug.Log((Time.time - m_startTime) / (float)frameRate);
+        Debug.Log(Time.time - m_performance);
+      }
       m_camRecorderState = CamRecorderState.Processing;
     }
   }
