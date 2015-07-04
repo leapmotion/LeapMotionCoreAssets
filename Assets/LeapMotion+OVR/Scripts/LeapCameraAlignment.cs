@@ -10,35 +10,29 @@ public class LeapCameraAlignment : MonoBehaviour {
   public float tweenTimeWarp = 1f;
   [Range(0,1)]
   public float tweenForward = 1f;
+  
+  public float latencySmoothing = 1f; //State delay in seconds
+  public SmoothedFloat leapLatency;
+  public SmoothedFloat imageLatency;
 
   [Header("Alignment Targets")]
   public LeapImageRetriever leftImages;
   public LeapImageRetriever rightImages;
   public HandController handController;
   
+  [Header("Target History (micro-seconds)")]
+  public long maxLatency = 100000; //microseconds
+
+  LeapDeviceInfo deviceInfo;
+  private long timeFrame = 0;
+  private long lastFrame = 0;
+  private Vector3 virtualCameraStereo;
+  
   //DEBUG
   public float ovrLatency = 0;
-  private SmoothedFloat leapLatencySmoothed;
-  public float latencyDelay = 1f;
-  public float leapLatency {
-    get {
-      return leapLatencySmoothed.value;
-    }
-  }
-  private long frameTime = 0;
-  private long lastFrameTime = 0;
   public KeyCode moreRewind = KeyCode.LeftArrow;
   public KeyCode lessRewind = KeyCode.RightArrow;
-  public long rewind = 0;
-
-  // FIXME: This should be determined dynamically
-  // or should be a fixed size to avoid allocation
-  public long historyTime = 1000000; //microseconds
-  
-  [HideInInspector]
-  public SmoothedFloat imageLatency;
-  [SerializeField]
-  private float imageLatencyDelay = 1f;
+  public long rewindAdjust = 0;
 
   protected struct TransformData {
     public long leapTime; // microseconds
@@ -94,15 +88,24 @@ public class LeapCameraAlignment : MonoBehaviour {
   void Start () {
     if (handController == null) {
       Debug.LogWarning ("TransformHistory REQUIRES a reference to a HandController");
+      enabled = false;
       return;
     }
+    
+    deviceInfo = handController.GetDeviceInfo ();
+    if (deviceInfo.type == LeapDeviceType.Invalid) {
+      Debug.LogWarning ("Invalid Leap Device");
+      enabled = false;
+      return;
+    }
+
     history = new List<TransformData> ();
     imageLatency = new SmoothedFloat () {
-      delay = imageLatencyDelay
+      delay = latencySmoothing
     };
-
-    leapLatencySmoothed = new SmoothedFloat ();
-    leapLatencySmoothed.delay = latencyDelay;
+    leapLatency = new SmoothedFloat () {
+      delay = latencySmoothing
+    };
   }
 	
   // FIXME: This should be attached to cameras & use OnPreCull
@@ -127,12 +130,20 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
+    virtualCameraStereo = rightImages.transform.position - leftImages.transform.position;
+    if (!(IsFinite (virtualCameraStereo.magnitude) &&
+          virtualCameraStereo.magnitude > float.Epsilon)) {
+      // Unmodified camera positions
+      Debug.LogWarning ("Bad virtualCameraStereo = " + virtualCameraStereo);
+      return;
+    }
+
     //DEBUG
     if (Input.GetKeyDown (moreRewind)) {
-      rewind += 1000; //ms
+      rewindAdjust += 1000; //ms
     }
     if (Input.GetKeyDown (lessRewind)) {
-      rewind -= 1000; //ms
+      rewindAdjust -= 1000; //ms
     }
     if (Input.GetKeyDown (KeyCode.Alpha0)) {
       tweenTimeWarp = 0f;
@@ -149,53 +160,54 @@ public class LeapCameraAlignment : MonoBehaviour {
   void UpdateHistory () {
     // ASSUME: Oculus resets relative camera positions in each frame
     // Append latest position & rotation of stereo camera rig
-    long now = leftImages.LeapNow ();
+    lastFrame = timeFrame;
+    timeFrame = leftImages.LeapNow ();
     history.Add (new TransformData () {
-      leapTime = now,
+      leapTime = timeFrame,
       position = transform.position,
       rotation = transform.rotation
     });
-    //Debug.Log ("Last Index Time = " + history[history.Count-1].leapTime + " =? " + now);
-    //Debug.Log ("LeapNow(micro) = " + now + " - ImageNow(micro) = " + leftImages.ImageNow () + " = Latency(micro) = " + (now - leftImages.ImageNow ()));
+    //Debug.Log ("Last Index Time = " + history[history.Count-1].leapTime + " =? " + timeFrame);
+    // NOTE: history.Add can be retrieved as history[history.Count-1]
     
     // Reduce history length
     while (history.Count > 0 &&
-           historyTime < now - history [0].leapTime) {
+           maxLatency < timeFrame - history [0].leapTime) {
       //Debug.Log ("Removing oldest from history.Count = " + history.Count);
       history.RemoveAt(0);
     }
   }
   
   void UpdateTimeWarp () {
+    // DEBUG
     if (OVRManager.display != null) {
       ovrLatency = OVRManager.display.latency.render;
     } else {
       ovrLatency = 0f;
     }
-    lastFrameTime = frameTime;
-    frameTime = leftImages.LeapNow ();
-    if (lastFrameTime > 0) {
-      leapLatencySmoothed.Update ((float)(frameTime - lastFrameTime) / 1000f, Time.deltaTime);
-    }
-    
-    float virtualCameraRadius = 0.5f * (rightImages.transform.position - leftImages.transform.position).magnitude;
-    if (!(IsFinite (virtualCameraRadius) &&
-          virtualCameraRadius > float.Epsilon)) {
-      // Unmodified camera positions
-      Debug.LogWarning ("Bad virtualCameraRadius = " + virtualCameraRadius);
-      return;
+
+    long deltaFrame = timeFrame - lastFrame;
+    long deltaImage = timeFrame - leftImages.ImageNow ();
+    if (2 * (deltaFrame + deltaImage) < maxLatency) {
+      imageLatency.Update ((float)deltaImage, Time.deltaTime);
+      leapLatency.Update ((float)(deltaFrame + deltaImage), Time.deltaTime);
+      //Debug.Log ("Leap deltaTime = " + ((float)deltaTime / 1000f) + " ms");
+      //Debug.Log ("Unity deltaTime = " + (Time.deltaTime * 1000f) + " ms");
+      // RESULT: Leap & Unity deltaTime measurements are consistent.
+      // Leap deltaTime will be used, since it references the same clock as images.
+    } else {
+      // High latency during initial frames
+      Debug.LogWarning ("Maximum latency exceeded: " + ((float)deltaFrame / 1000f) + " ms");
+      leapLatency.value = ((float) maxLatency) / 1000f;
+      leapLatency.reset = true;
     }
 
-    long imageDiff = history [history.Count - 1].leapTime - leftImages.ImageNow ();
-    imageLatency.Update ((float)imageDiff / 1000f, Time.deltaTime);
-    Debug.Log ("OVR rewindTime adjust = " + (long)(ovrLatency * 2e6));
-    Debug.Log ("LEAP rewindTime adjust = " + 2 * (imageDiff + (frameTime - lastFrameTime)));
-    long rewindTime = leftImages.ImageNow () - 2 * (imageDiff + (frameTime - lastFrameTime)) - rewind;
-    //long imageTime = leftImages.ImageNow () - (long)(ovrLatency * 2e6) - rewind;
-    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(history[history.Count-1].leapTime - rewindTime));
+    long rewindTime = leftImages.ImageNow () - 2 * (long)(leapLatency.value) - rewindAdjust;
+    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(timeFrame - rewindTime));
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
     // Move Virtual cameras to synchronize position & orientation
+    float virtualCameraRadius = 0.5f * virtualCameraStereo.magnitude;
     handController.transform.parent.position = past.position;
     handController.transform.parent.rotation = past.rotation;
     rightImages.transform.position = handController.transform.parent.position + virtualCameraRadius * handController.transform.parent.right;
@@ -205,22 +217,8 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
 
   void UpdateAlignment () {
-    Vector3 virtualCameraStereo = rightImages.transform.position - leftImages.transform.position;
-    if (!(IsFinite (virtualCameraStereo.magnitude) &&
-          virtualCameraStereo.magnitude > float.Epsilon)) {
-      // Unmodified camera positions
-      Debug.LogWarning ("Bad virtualCameraStereo = " + virtualCameraStereo);
-      return;
-    }
-    
-    LeapDeviceInfo device = handController.GetDeviceInfo ();
-    if (device.type == LeapDeviceType.Invalid) {
-      Debug.LogWarning ("Invalid Leap Device");
-      return;
-    }
-    
-    Vector3 addIPD = 0.5f * virtualCameraStereo.normalized * (tweenPosition * device.baseline + (1f - tweenPosition) * virtualCameraStereo.magnitude);
-    Vector3 toDevice = tweenPosition * handController.transform.parent.forward * device.focalPlaneOffset * tweenForward;
+    Vector3 addIPD = 0.5f * virtualCameraStereo.normalized * (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * virtualCameraStereo.magnitude);
+    Vector3 toDevice = tweenPosition * handController.transform.parent.forward * deviceInfo.focalPlaneOffset * tweenForward;
     handController.transform.parent.position = handController.transform.parent.position + toDevice;
     leftImages.transform.position = handController.transform.parent.position - addIPD;
     rightImages.transform.position = handController.transform.parent.position + addIPD;
