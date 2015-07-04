@@ -42,9 +42,9 @@ public class CamRecorderInterface : MonoBehaviour {
     if (camRecorder.IsIdling() && m_targetTime == 0.0f)
     {
       instructionText.text = "'Enter' to Start Recording";
-      if (camRecorder.frameCount > 0)
+      if (camRecorder.framesRecorded > 0)
       {
-        statusText.text = camRecorder.frameCount.ToString() + " images found at";
+        statusText.text = camRecorder.framesRecorded.ToString() + " images found at";
         valueText.text = camRecorder.directory;
       }
       else
@@ -65,7 +65,7 @@ public class CamRecorderInterface : MonoBehaviour {
       instructionText.text = "";
       statusText.text = "";
       valueText.text = "";
-      camRecorder.StartRecording(quality);
+      camRecorder.StartRecording();
     }
     else if (camRecorder.IsRecording())
     {
@@ -77,7 +77,7 @@ public class CamRecorderInterface : MonoBehaviour {
     {
       instructionText.text = "'Enter' to Abort Processing";
       statusText.text = "Processing Data...";
-      valueText.text = (camRecorder.progress * 100.0f).ToString() + "%";
+      valueText.text = camRecorder.framesProcessed + "/" + camRecorder.framesRecorded;
     }
 	}
 }

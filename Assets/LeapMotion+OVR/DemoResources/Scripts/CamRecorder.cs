@@ -18,7 +18,11 @@ public class CamRecorder : MonoBehaviour
   [HideInInspector]
   public string directory = "";
   [HideInInspector]
-  public int frameCount = 0;
+  public int framesRecorded = 0;
+  [HideInInspector]
+  public int framesProcessed = 0;
+  [HideInInspector]
+  public bool highResolution = false;
 
   // Objects required to record a camera
   private Camera m_camera;
@@ -36,12 +40,6 @@ public class CamRecorder : MonoBehaviour
   private float m_startTime = 0.0f;
   private float m_targetTime = 0.0f;
   private float m_targetInterval = 0.0f;
-
-  private float m_quality = 0.0f;
-
-  private bool m_performance_test = true;
-  private int m_performance_frames = 30;
-  private float m_performance = 0.0f;
 
   private enum CamRecorderState
   {
@@ -61,10 +59,9 @@ public class CamRecorder : MonoBehaviour
       KeyValuePair<string, byte[]> item;
       lock (((ICollection)m_saveQueue).SyncRoot)
       {
-        
-        item = m_saveQueue.Dequeue();
         if (m_saveQueue.Count == 0)
-          m_saveQueueEnqueueEvent.Reset(); // If list is empty, disable signal
+          continue;
+        item = m_saveQueue.Dequeue();
       }
 
       try
@@ -85,7 +82,6 @@ public class CamRecorder : MonoBehaviour
     {
       m_saveQueue.Enqueue(new KeyValuePair<string, byte[]>(filename, data));
     }
-    m_saveQueueEnqueueEvent.Set(); // If add to list (list is not empty), enable signal
   }
 
   private void SaveRawData()
@@ -98,42 +94,36 @@ public class CamRecorder : MonoBehaviour
       m_cameraTexture2D.ReadPixels(m_cameraRect, 0, 0, false);
       RenderTexture.active = currentRenderTexture;
 
-      frameCount++;
-      string filename = directory + "/" + frameCount.ToString();
-      filename += (m_quality == 1.0f) ? ".png" : ".jpg";
+      string filename = directory + "/" + (framesRecorded+1).ToString();
+      filename += (highResolution) ? ".png" : ".jpg";
       m_loadQueue.Enqueue(filename);
       AddToSaveQueue(filename, m_cameraTexture2D.GetRawTextureData());
-      m_targetTime = m_startTime + m_targetInterval * (frameCount + 1);
 
-      if (m_performance_test && frameCount == m_performance_frames)
-      {
-        StopRecording();
-      }
+      framesRecorded++;
+      m_targetTime = m_startTime + m_targetInterval * (framesRecorded + 1);
     }
   }
 
   private void ProcessRawData()
   {
-    progress = (frameCount > 0) ? ((float)frameCount - (float)m_loadQueue.Count) / (float)frameCount : 0.0f;
-
-    if (m_loadQueue.Count == 0)
-      return;
-
     string filename = m_loadQueue.Dequeue();
     try
     {
       byte[] rawData = System.IO.File.ReadAllBytes(filename);
       m_cameraTexture2D.LoadRawTextureData(rawData);
-      if (m_quality == 1.0f)
+      if (highResolution)
         AddToSaveQueue(filename, m_cameraTexture2D.EncodeToPNG());
       else
-        AddToSaveQueue(filename, m_cameraTexture2D.EncodeToJPG((int)(m_quality*100.0f)));
+        AddToSaveQueue(filename, m_cameraTexture2D.EncodeToJPG());
     }
     catch (IOException)
     {
       Debug.LogWarning("ConvertRawToPNG: File cannot be read. Adding data back into queue");
       m_loadQueue.Enqueue(filename);
     }
+
+    framesProcessed++;
+    progress = (framesRecorded > 0) ? (float)framesProcessed / (float)framesRecorded : 0.0f;
   }
 
   private void SetupCamera()
@@ -198,14 +188,14 @@ public class CamRecorder : MonoBehaviour
   /// [1.0f] Generates PNG. [0.0f]...(1.0f) Generates JPG with quality between 0.0 ~ 1.0
   /// </summary>
   /// <param name="quality"></param>
-  public void StartRecording(float quality = 1.0f)
+  public void StartRecording(bool highResolution = false)
   {
-    m_quality = Mathf.Clamp(quality, 0.0f, 1.0f);
     if (m_camRecorderState == CamRecorderState.Idle)
     {
-      frameCount = 0;
+      this.highResolution = highResolution;
+      framesRecorded = 0;
       m_startTime = Time.time;
-      m_targetTime = m_startTime + m_targetInterval * (frameCount + 1);
+      m_targetTime = m_startTime + m_targetInterval * (framesRecorded + 1);
 
       if ((syncCamera != null) && (syncCamera.pixelRect != m_camera.pixelRect))
       {
@@ -221,10 +211,16 @@ public class CamRecorder : MonoBehaviour
         m_camera.targetTexture = m_cameraRenderTexture;
       }
 
-      if (m_performance_test)
-        m_performance = Time.time;
+      m_saveQueueEnqueueEvent.Set(); // Enable thread
       m_camRecorderState = CamRecorderState.Recording;
     }
+  }
+
+  void Reset()
+  {
+    m_loadQueue.Clear();
+    m_saveQueue.Clear();
+    m_saveQueueEnqueueEvent.Reset();
   }
 
   /// <summary>
@@ -234,26 +230,19 @@ public class CamRecorder : MonoBehaviour
   {
     if (m_camRecorderState == CamRecorderState.Recording)
     {
-      if (m_performance_test)
-      {
-        Debug.Log(m_targetInterval);
-        Debug.Log(Time.time - m_startTime);
-        Debug.Log((Time.time - m_startTime) / (float)frameRate);
-        Debug.Log(Time.time - m_performance);
-      }
+      progress = 0.0f;
       m_camRecorderState = CamRecorderState.Processing;
     }
   }
 
   /// <summary>
-  /// Stops Processing (WARNING: May leave corrupt files)
+  /// Stops Processing (WARNING: May leave corrupt files if triggered early)
   /// </summary>
   public void StopProcessing()
   {
     if (m_camRecorderState == CamRecorderState.Processing)
     {
-      m_loadQueue.Clear();
-      m_saveQueue.Clear();
+      Reset();
       m_camRecorderState = CamRecorderState.Idle;
     }
   }
@@ -282,10 +271,13 @@ public class CamRecorder : MonoBehaviour
         SaveRawData();
         break;
       case CamRecorderState.Processing:
-        ProcessRawData();
-        if (m_loadQueue.Count == 0 && m_saveQueue.Count == 0)
+        if (progress == 1.0f && m_saveQueue.Count == 0)
         {
-          m_camRecorderState = CamRecorderState.Idle;
+          StopProcessing();
+        }
+        else
+        {
+          ProcessRawData();
         }
         break;
       default:
