@@ -17,10 +17,19 @@ public class LeapCameraAlignment : MonoBehaviour {
   public HandController handController;
   
   //DEBUG
-  public OVRDisplay.LatencyData latency;
-  public long rewind = 0;
+  public float ovrLatency = 0;
+  private SmoothedFloat leapLatencySmoothed;
+  public float latencyDelay = 1f;
+  public float leapLatency {
+    get {
+      return leapLatencySmoothed.value;
+    }
+  }
+  private long frameTime = 0;
+  private long lastFrameTime = 0;
   public KeyCode moreRewind = KeyCode.LeftArrow;
   public KeyCode lessRewind = KeyCode.RightArrow;
+  public long rewind = 0;
 
   // FIXME: This should be determined dynamically
   // or should be a fixed size to avoid allocation
@@ -91,8 +100,12 @@ public class LeapCameraAlignment : MonoBehaviour {
     imageLatency = new SmoothedFloat () {
       delay = imageLatencyDelay
     };
+
+    leapLatencySmoothed = new SmoothedFloat ();
+    leapLatencySmoothed.delay = latencyDelay;
   }
 	
+  // FIXME: This should be attached to cameras & use OnPreCull
 	// IMPORTANT: This method MUST be called after
   // OVRManager.LateUpdate
   // NOTE: Call order is determined by activation order...
@@ -128,7 +141,6 @@ public class LeapCameraAlignment : MonoBehaviour {
       tweenTimeWarp = 1f;
     }
 
-
     UpdateHistory ();
     UpdateTimeWarp ();
     UpdateAlignment ();
@@ -156,11 +168,14 @@ public class LeapCameraAlignment : MonoBehaviour {
   
   void UpdateTimeWarp () {
     if (OVRManager.display != null) {
-      latency = OVRManager.display.latency;
+      ovrLatency = OVRManager.display.latency.render;
     } else {
-      latency.render = -1f;
-      latency.timeWarp = -1f;
-      latency.postPresent = -1f;
+      ovrLatency = 0f;
+    }
+    lastFrameTime = frameTime;
+    frameTime = leftImages.LeapNow ();
+    if (lastFrameTime > 0) {
+      leapLatencySmoothed.Update ((float)(frameTime - lastFrameTime) / 1000f, Time.deltaTime);
     }
     
     float virtualCameraRadius = 0.5f * (rightImages.transform.position - leftImages.transform.position).magnitude;
@@ -171,10 +186,14 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
-    imageLatency.Update ((float)(history [history.Count - 1].leapTime - leftImages.ImageNow ()) / 1000f, Time.deltaTime);
-    long imageTime = leftImages.ImageNow () - (long)(latency.render * 1e6) - rewind;
-    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(history[history.Count-1].leapTime - imageTime));
-    TransformData past = TransformAtTime(imageTime + tweenAddition);
+    long imageDiff = history [history.Count - 1].leapTime - leftImages.ImageNow ();
+    imageLatency.Update ((float)imageDiff / 1000f, Time.deltaTime);
+    Debug.Log ("OVR rewindTime adjust = " + (long)(ovrLatency * 2e6));
+    Debug.Log ("LEAP rewindTime adjust = " + 2 * (imageDiff + (frameTime - lastFrameTime)));
+    long rewindTime = leftImages.ImageNow () - 2 * (imageDiff + (frameTime - lastFrameTime)) - rewind;
+    //long imageTime = leftImages.ImageNow () - (long)(ovrLatency * 2e6) - rewind;
+    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(history[history.Count-1].leapTime - rewindTime));
+    TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
     // Move Virtual cameras to synchronize position & orientation
     handController.transform.parent.position = past.position;
