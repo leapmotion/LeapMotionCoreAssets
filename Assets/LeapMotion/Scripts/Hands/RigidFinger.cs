@@ -64,6 +64,11 @@ public class RigidFinger : SkeletalFinger {
               float delta_radians = (1 - filtering) * angle * Mathf.Deg2Rad;
               bones[i].GetComponent<Rigidbody>().angularVelocity = delta_radians * axis / Time.deltaTime;
             }
+          } else {
+            useVelocity = true;
+
+            boneBody.MovePosition(GetBoneCenter(i));
+            boneBody.MoveRotation(GetBoneRotation(i));
           }
         }
         if (!useVelocity) {
