@@ -27,6 +27,7 @@ public class CamRecorder : MonoBehaviour
   // Objects required to record a camera
   private Camera m_camera;
   private RenderTexture m_cameraRenderTexture;
+  private RenderTexture m_currentRenderTexture;
   private Texture2D m_cameraTexture2D;
   private Rect m_cameraRect;
 
@@ -51,6 +52,7 @@ public class CamRecorder : MonoBehaviour
 
   private void ProcessSaveQueue()
   {
+    System.IO.FileStream fileStream;
     while (m_saveQueueEnqueueEvent.WaitOne())
     {
       if (m_terminateThreads)
@@ -60,13 +62,17 @@ public class CamRecorder : MonoBehaviour
       lock (((ICollection)m_saveQueue).SyncRoot)
       {
         if (m_saveQueue.Count == 0)
+        {
           continue;
+        }
         item = m_saveQueue.Dequeue();
       }
 
       try
       {
-        System.IO.File.WriteAllBytes(item.Key, item.Value);
+        fileStream = new System.IO.FileStream(item.Key, System.IO.FileMode.Create, System.IO.FileAccess.Write);
+        fileStream.Write(item.Value, 0, item.Value.Length);
+        fileStream.Close();
       }
       catch (IOException)
       {
@@ -89,10 +95,10 @@ public class CamRecorder : MonoBehaviour
     duration = Time.time - m_startTime;
     if (Time.time > m_targetTime)
     {
-      RenderTexture currentRenderTexture = RenderTexture.active;
+      m_currentRenderTexture = RenderTexture.active;
       RenderTexture.active = m_cameraRenderTexture;
       m_cameraTexture2D.ReadPixels(m_cameraRect, 0, 0, false);
-      RenderTexture.active = currentRenderTexture;
+      RenderTexture.active = m_currentRenderTexture;
 
       string filename = directory + "/" + (framesRecorded+1).ToString();
       filename += (highResolution) ? ".png" : ".jpg";
@@ -218,9 +224,9 @@ public class CamRecorder : MonoBehaviour
 
   void Reset()
   {
+    m_saveQueueEnqueueEvent.Reset();
     m_loadQueue.Clear();
     m_saveQueue.Clear();
-    m_saveQueueEnqueueEvent.Reset();
   }
 
   /// <summary>
