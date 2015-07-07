@@ -6,8 +6,7 @@
 /// <remarks>
 /// When moving at a constant speed: speed * delay = Value - SmoothedFloat.value.
 /// </remarks>
-public class SmoothedFloat
-{
+public class SmoothedFloat {
   public float value = 0f; // Filtered value
   public float delay = 0f; // Mean delay
   public bool reset = true; // Reset on Next Update

@@ -6,8 +6,7 @@
 /// <remarks>
 /// When moving at a constant speed: speed * delay = Value - SmoothedVector3.value.
 /// </remarks>
-public class SmoothedVector3
-{
+public class SmoothedVector3 {
   public Vector3 value = Vector3.zero; // Filtered value
   public float delay = 0f; // Mean delay
   public bool reset = true; // Reset on Next Update
