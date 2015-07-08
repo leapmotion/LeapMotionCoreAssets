@@ -22,12 +22,10 @@ public class CamRecorderInterface : MonoBehaviour {
     {
       if (camRecorder.IsIdling())
       {
-        if (camRecorder.SetDirectory(Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss")))
-        {
-          camRecorder.SetCountdown(countdown);
-          camRecorder.AddLayerToIgnore(gameObject.layer);
-          camRecorder.StartRecording();
-        }
+        camRecorder.directory = Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+        camRecorder.SetCountdown(countdown);
+        camRecorder.AddLayerToIgnore(gameObject.layer);
+        camRecorder.StartRecording();
       }
       else if (camRecorder.IsRecording() || camRecorder.IsCountingDown())
       {

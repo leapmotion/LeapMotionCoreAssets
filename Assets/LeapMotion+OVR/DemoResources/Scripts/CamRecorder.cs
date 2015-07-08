@@ -30,8 +30,6 @@ public class CamRecorder : MonoBehaviour
 
   // Objects required to record a camera
   private Camera m_camera;
-  private int m_width;
-  private int m_height;
   private RenderTexture m_cameraRenderTexture;
   private RenderTexture m_currentRenderTexture;
   private Texture2D m_cameraTexture2D;
@@ -40,13 +38,15 @@ public class CamRecorder : MonoBehaviour
   private float m_countdownTimer;
 
   // Queue and Thread required to optimize camera recorder
-  private const int QUEUE_LIMIT = 3;
-  private BackgroundWorker m_saveRawWorker;
-  private BackgroundWorker m_loadRawWorker;
-  private BackgroundWorker m_saveImgWorker;
-  private Queue<KeyValuePair<int, byte[]>> m_rawQueue;
-  private Queue<KeyValuePair<string, byte[]>> m_imgQueue;
+  private const int QUEUE_LIMIT = 4;
+  private BackgroundWorker m_saveRawWorker; // Responsible for saving raw files
+  private BackgroundWorker m_loadRawWorker; // Responsible for loading raw files
+  private BackgroundWorker m_saveImgWorker; // Responsible for saving processed files
+  private Stack<string> m_rawFilesStack; // We'll write to most recent rawFile
+  private Queue<KeyValuePair<int, byte[]>> m_rawQueue; // We'll process oldest raw data
+  private Queue<KeyValuePair<string, byte[]>> m_imgQueue; // We'll process oldest img data
   
+  // Time objects used for countdown and maintaining frames-per-second
   private float m_startTime = 0.0f;
   private float m_targetTime = 0.0f;
   private float m_targetInterval = 0.0f;
@@ -77,7 +77,8 @@ public class CamRecorder : MonoBehaviour
         m_targetTime = m_startTime + m_countdownTimer;
         break;
       case CamRecorderState.Recording:
-        SyncCameras();
+
+        PrepareCamRecorder();
         countdownRemaining = 0.0f;
         framesRecorded = 0;
         passedFrames = 0;
@@ -175,26 +176,6 @@ public class CamRecorder : MonoBehaviour
   public void SetCountdown(float seconds)
   {
     m_countdownTimer = seconds;
-  }
-
-  public bool SetDirectory(string directory)
-  {
-    if (directory == "")
-      directory = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-
-    try
-    {
-      if (!System.IO.Directory.Exists(directory))
-        System.IO.Directory.CreateDirectory(directory);
-    }
-    catch (IOException)
-    {
-      Debug.LogWarning("Unable to create directory: " + directory);
-      return false;
-    }
-
-    this.directory = directory;
-    return true;
   }
 
   private void SaveRawQueue(object sender, DoWorkEventArgs e)
@@ -340,21 +321,31 @@ public class CamRecorder : MonoBehaviour
     }
   }
 
-  private void SyncCameras()
+  private void PrepareCamRecorder()
   {
     if ((syncCamera != null) && (syncCamera.pixelRect != m_camera.pixelRect))
     {
       m_camera.CopyFrom(syncCamera);
-      m_width = m_camera.pixelWidth;
-      m_height = m_camera.pixelHeight;
+      int width = m_camera.pixelWidth;
+      int height = m_camera.pixelHeight;
       if (m_cameraRenderTexture != null)
         Destroy(m_cameraRenderTexture);
-      m_cameraRenderTexture = new RenderTexture(m_width, m_height, 24);
-      m_cameraTexture2D.Resize(m_width, m_height);
-      m_cameraRect.width = m_width;
-      m_cameraRect.height = m_height;
-      m_camera.targetTexture = m_cameraRenderTexture;
-      m_camera.cullingMask &= ~(m_layersToIgnore);
+      m_cameraRenderTexture = new RenderTexture(width, height, 24);
+      m_cameraTexture2D.Resize(width, height);
+      m_cameraRect.width = width;
+      m_cameraRect.height = height;
+    }
+    m_camera.cullingMask &= ~(m_layersToIgnore);
+    m_camera.targetTexture = m_cameraRenderTexture;
+    
+    try
+    {
+      if (!System.IO.Directory.Exists(directory))
+        System.IO.Directory.CreateDirectory(directory);
+    }
+    catch (IOException)
+    {
+      Debug.LogWarning("Unable to create directory: " + directory);
     }
   }
 
@@ -365,18 +356,20 @@ public class CamRecorder : MonoBehaviour
       frameRate = 30;
     m_targetInterval = 1.0f / (float)frameRate;
 
-    m_width = m_camera.pixelWidth;
-    m_height = m_camera.pixelHeight;
-    m_cameraRenderTexture = new RenderTexture(m_width, m_height, 24);
-    m_cameraTexture2D = new Texture2D(m_width, m_height, TextureFormat.RGB24, false);
-    m_cameraRect = new Rect(0, 0, m_width, m_height);
+    int width = m_camera.pixelWidth;
+    int height = m_camera.pixelHeight;
+    m_cameraRenderTexture = new RenderTexture(width, height, 24);
+    m_cameraTexture2D = new Texture2D(width, height, TextureFormat.RGB24, false);
+    m_cameraRect = new Rect(0, 0, width, height);
     m_camera.targetTexture = m_cameraRenderTexture;
-    m_countdownTimer = 0.0f;
+    directory = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+    SetCountdown(0.0f);
     ResetLayerToIgnore();
   }
 
   private void SetupMultithread()
   {
+    m_rawFilesStack = new Stack<string>();
     m_rawQueue = new Queue<KeyValuePair<int, byte[]>>();
     m_imgQueue = new Queue<KeyValuePair<string, byte[]>>();
 
