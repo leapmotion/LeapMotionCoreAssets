@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 [RequireComponent (typeof(Canvas))]
 public class CamRecorderInterface : MonoBehaviour {
@@ -11,10 +12,7 @@ public class CamRecorderInterface : MonoBehaviour {
   public Text statusText;
   public Text valueText;
   public float countdown = 5.0f;
-  public float quality = 1.0f;
-
-  private float m_targetTime = 0.0f;
-  private bool m_idling = true;
+  public bool highResolution = false;
 
 	void Update () {
     if (
@@ -24,12 +22,14 @@ public class CamRecorderInterface : MonoBehaviour {
     {
       if (camRecorder.IsIdling())
       {
-        if (camRecorder.SetDirectory(DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss")))
+        if (camRecorder.SetDirectory(Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss")))
         {
-          m_targetTime = Time.time + countdown;
+          camRecorder.SetCountdown(countdown);
+          camRecorder.AddLayerToIgnore(gameObject.layer);
+          camRecorder.StartRecording();
         }
       }
-      else if (camRecorder.IsRecording())
+      else if (camRecorder.IsRecording() || camRecorder.IsCountingDown())
       {
         camRecorder.StopRecording();
       }
@@ -39,12 +39,12 @@ public class CamRecorderInterface : MonoBehaviour {
       }
     }
 
-    if (camRecorder.IsIdling() && m_targetTime == 0.0f)
+    if (camRecorder.IsIdling())
     {
       instructionText.text = "'Enter' to Start Recording";
       if (camRecorder.framesRecorded > 0)
       {
-        statusText.text = camRecorder.framesRecorded.ToString() + " images found at";
+        statusText.text = camRecorder.successfulFrames.ToString() + " successful and " + camRecorder.failedFrames.Count.ToString() + " failed images at";
         valueText.text = camRecorder.directory;
       }
       else
@@ -53,25 +53,17 @@ public class CamRecorderInterface : MonoBehaviour {
         valueText.text = "";
       }
     }
-    else if (camRecorder.IsIdling() && (Time.time < m_targetTime))
+    else if (camRecorder.IsCountingDown())
     {
       instructionText.text = "'Enter' to End Recording";
       statusText.text = "Recording in...";
-      valueText.text = ((int)(m_targetTime - Time.time) + 1).ToString();
-    }
-    else if (camRecorder.IsIdling() && (Time.time >= m_targetTime))
-    {
-      m_targetTime = 0.0f;
-      instructionText.text = "";
-      statusText.text = "";
-      valueText.text = "";
-      camRecorder.StartRecording();
+      valueText.text = ((int)camRecorder.countdownRemaining).ToString();
     }
     else if (camRecorder.IsRecording())
     {
-      instructionText.text = "";
-      statusText.text = "";
-      valueText.text = "";
+      instructionText.text = "Frames-Per-Second: " + camRecorder.frameRate.ToString();
+      statusText.text = "Duration: " + camRecorder.duration.ToString();
+      valueText.text = "Frames Recorded: " + camRecorder.framesRecorded.ToString();
     }
     else if (camRecorder.IsProcessing())
     {
