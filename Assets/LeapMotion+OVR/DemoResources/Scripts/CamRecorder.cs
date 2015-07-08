@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using System.Linq;
 using System.IO;
 using System.ComponentModel;
 using System.Threading;
@@ -42,14 +43,11 @@ public class CamRecorder : MonoBehaviour
 
   // Queue and Thread required to optimize camera recorder
   private Queue<string> m_loadQueue;
-  private Queue<KeyValuePair<string, byte[]>> m_rawQueue;
+  private Queue<KeyValuePair<int, byte[]>> m_rawQueue;
+  private Queue<KeyValuePair<int, byte[]>> m_imgQueue;
   private const int SAVE_QUEUE_LIMIT = 3;
-  private Thread m_QueueThread;
-  private EventWaitHandle m_saveQueueEnable;
-  private bool m_terminateThreads;
 
   private BackgroundWorker m_rawQueueWorker;
-  private BinaryWriter m_rawWriter;
   private BackgroundWorker m_loadQueueWorker;
   private BackgroundWorker m_saveQueueWorker;
   
@@ -83,7 +81,6 @@ public class CamRecorder : MonoBehaviour
       case CamRecorderState.Recording:
         if (!m_rawQueueWorker.IsBusy)
         {
-          Debug.Log("START");
           m_rawQueueWorker.RunWorkerAsync(directory + "/test.txt");
         }
 
@@ -98,7 +95,6 @@ public class CamRecorder : MonoBehaviour
       case CamRecorderState.Processing:
         if (m_rawQueueWorker.IsBusy)
         {
-          Debug.Log("CANCEL");
           m_rawQueueWorker.CancelAsync();
         }
         framesProcessed = 0;
@@ -209,57 +205,67 @@ public class CamRecorder : MonoBehaviour
     return true;
   }
 
-  private void RawQueue_DoWork(object sender, DoWorkEventArgs e)
+  private void SaveRawQueue(object sender, DoWorkEventArgs e)
   {
     BackgroundWorker worker = (BackgroundWorker)sender;
+
     string filename = (string)e.Argument;
-    m_rawWriter = new BinaryWriter(new FileStream(filename, FileMode.Create));
-    KeyValuePair<string, byte[]> item;
+    BinaryWriter rawWriter = new BinaryWriter(new FileStream(filename, FileMode.Create));
+
+    KeyValuePair<int, byte[]> rawData;
+
     while (!worker.CancellationPending)
     {
       lock (((ICollection)m_rawQueue).SyncRoot)
       {
-        if (m_rawQueue.Count == 0)
+        int count = m_rawQueue.Count;
+        if (count == 0)
         {
           continue;
         }
-        item = m_rawQueue.Dequeue();
+        else if (count >= SAVE_QUEUE_LIMIT) 
+        {
+          m_rawQueue.Dequeue();
+          failedFrames++;
+          continue;
+        }
+        rawData = m_rawQueue.Dequeue();
       }
+
+      byte[] imgIndex = BitConverter.GetBytes(rawData.Key);
+      byte[] imgSize = BitConverter.GetBytes(rawData.Value.Length);
 
       try
       {
-        m_rawWriter.Write(item.Value);
-        if (m_state == CamRecorderState.Recording)
-          passedFrames++;
+        rawWriter.Write(imgIndex);
+        rawWriter.Write(imgSize);
+        rawWriter.Write(rawData.Value);
+        passedFrames++;
       }
       catch (IOException)
       {
-        Debug.LogWarning("ProcessQueue: File cannot be saved. Adding data back into queue");
-        if (m_state == CamRecorderState.Recording)
-          failedFrames++;
+        failedFrames++;
       }
     }
-    m_rawWriter.Close();
+    rawWriter.Close();
+  }
+
+  private void LoadRawQueue(object sender, DoWorkEventArgs e)
+  {
+
+  }
+
+  private void SaveImgQueue(object sender, DoWorkEventArgs e)
+  {
+
   }
 
   private void AddToSaveQueue(string filename, byte[] data)
   {
-    lock (((ICollection)m_rawQueue).SyncRoot)
-    {
-      if (m_rawQueue.Count >= SAVE_QUEUE_LIMIT)
-      {
-        Debug.LogWarning("Dropping " + filename);
-        if (m_state == CamRecorderState.Recording)
-          failedFrames++;
-      }
-      else
-      {
-        m_rawQueue.Enqueue(new KeyValuePair<string, byte[]>(filename, data));
-      }
-    }
+
   }
 
-  private void SaveRawData()
+  private void SaveRawTexture()
   {
     duration = Time.time - m_startTime;
     if (Time.time > m_targetTime)
@@ -269,16 +275,16 @@ public class CamRecorder : MonoBehaviour
       m_cameraTexture2D.ReadPixels(m_cameraRect, 0, 0, false);
       RenderTexture.active = m_currentRenderTexture;
 
-      string filename = directory + "/" + (framesRecorded + 1).ToString();
-      filename += (highResolution) ? ".png" : ".jpg";
-      m_loadQueue.Enqueue(filename);
-      AddToSaveQueue(filename, m_cameraTexture2D.GetRawTextureData());
       framesRecorded++;
+      lock (((ICollection)m_rawQueue).SyncRoot)
+      {
+        m_rawQueue.Enqueue(new KeyValuePair<int, byte[]>(framesRecorded, m_cameraTexture2D.GetRawTextureData()));
+      }
       m_targetTime = m_startTime + m_targetInterval * (framesRecorded + 1);
     }
   }
 
-  private void ProcessRawData()
+  private void ProcessRawTexture()
   {
     string filename = m_loadQueue.Dequeue();
     try
@@ -299,7 +305,7 @@ public class CamRecorder : MonoBehaviour
     {
       Debug.LogWarning("ConvertRawToPNG: File cannot be read. Adding data back into queue");
       m_loadQueue.Enqueue(filename);
-      ProcessRawData();
+      ProcessRawTexture();
     }
   }
 
@@ -340,26 +346,19 @@ public class CamRecorder : MonoBehaviour
 
   private void SetupMultithread()
   {
-    m_terminateThreads = false;
     m_loadQueue = new Queue<string>();
-    m_rawQueue = new Queue<KeyValuePair<string, byte[]>>();
-    m_saveQueueEnable = new ManualResetEvent(false); 
-    //m_QueueThread = new Thread(ProcessSaveQueue);
-    //m_QueueThread.Start();
+    m_rawQueue = new Queue<KeyValuePair<int, byte[]>>();
 
     m_rawQueueWorker = new BackgroundWorker();
     m_rawQueueWorker.WorkerSupportsCancellation = true;
-    m_rawQueueWorker.DoWork += RawQueue_DoWork;
+    m_rawQueueWorker.DoWork += SaveRawQueue;
   }
 
   void OnDestroy()
   {
     if (m_rawQueueWorker.IsBusy)
       m_rawQueueWorker.CancelAsync();
-    //m_cameraRenderTexture.Release();
-    //m_saveQueueEnable.Set();
-    //m_terminateThreads = true;
-    //m_QueueThread.Join();
+    m_cameraRenderTexture.Release();
   }
 
   void Start()
@@ -383,7 +382,7 @@ public class CamRecorder : MonoBehaviour
         }
         break;
       case CamRecorderState.Recording:
-        SaveRawData();
+        SaveRawTexture();
         break;
       case CamRecorderState.Processing:
         if (m_loadQueue.Count == 0 && m_rawQueue.Count == 0)
@@ -392,7 +391,7 @@ public class CamRecorder : MonoBehaviour
         }
         else if (m_loadQueue.Count != 0)
         {
-          ProcessRawData();
+          ProcessRawTexture();
         }
         break;
       default:
