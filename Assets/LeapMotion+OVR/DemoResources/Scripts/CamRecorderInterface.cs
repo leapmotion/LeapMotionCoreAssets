@@ -44,7 +44,7 @@ public class CamRecorderInterface : MonoBehaviour {
       instructionText.text = "'Enter' to Start Recording";
       if (camRecorder.framesRecorded > 0)
       {
-        statusText.text = camRecorder.successfulFrames.ToString() + " successful and " + camRecorder.failedFrames.Count.ToString() + " failed images at";
+        statusText.text = camRecorder.passedFrames.ToString() + " successful and " + camRecorder.failedFrames.ToString() + " failed images at";
         valueText.text = camRecorder.directory;
       }
       else
@@ -57,13 +57,13 @@ public class CamRecorderInterface : MonoBehaviour {
     {
       instructionText.text = "'Enter' to End Recording";
       statusText.text = "Recording in...";
-      valueText.text = ((int)camRecorder.countdownRemaining).ToString();
+      valueText.text = ((int)camRecorder.countdownRemaining + 1).ToString();
     }
     else if (camRecorder.IsRecording())
     {
       instructionText.text = "Frames-Per-Second: " + camRecorder.frameRate.ToString();
       statusText.text = "Duration: " + camRecorder.duration.ToString();
-      valueText.text = "Frames Recorded: " + camRecorder.framesRecorded.ToString();
+      valueText.text = "Frames Recorded (Pass/Fail): " + camRecorder.passedFrames.ToString() + "/" + camRecorder.failedFrames.ToString();
     }
     else if (camRecorder.IsProcessing())
     {
