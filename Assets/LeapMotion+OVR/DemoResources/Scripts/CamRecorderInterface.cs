@@ -44,7 +44,8 @@ public class CamRecorderInterface : MonoBehaviour {
       instructionText.text = "'Enter' to Start Recording";
       if (camRecorder.framesRecorded > 0)
       {
-        statusText.text = camRecorder.passedFrames.ToString() + " successful and " + camRecorder.failedFrames.ToString() + " failed images at";
+        statusText.text = camRecorder.framesRecorded.ToString();
+        //statusText.text = camRecorder.passedFrames.ToString() + " successful and " + camRecorder.failedFrames.ToString() + " failed images at";
         valueText.text = camRecorder.directory;
       }
       else
@@ -69,7 +70,7 @@ public class CamRecorderInterface : MonoBehaviour {
     {
       instructionText.text = "'Enter' to Abort Processing";
       statusText.text = "Processing Data...";
-      valueText.text = camRecorder.framesProcessed + "/" + camRecorder.framesRecorded;
+      valueText.text = camRecorder.framesProcessed.ToString() + "/" + camRecorder.framesRecorded.ToString();
     }
 	}
 }
