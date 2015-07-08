@@ -39,6 +39,7 @@ public class CamRecorder : MonoBehaviour
 
   // Queue and Thread required to optimize camera recorder
   private const int QUEUE_LIMIT = 4;
+  private const int BYTE_LIMIT = 2000000000; // 2GB because FAT32 limit is 4GB
   private BackgroundWorker m_saveRawWorker; // Responsible for saving raw files
   private BackgroundWorker m_loadRawWorker; // Responsible for loading raw files to process
   private BackgroundWorker m_saveImgWorker; // Responsible for saving processed files
@@ -86,12 +87,12 @@ public class CamRecorder : MonoBehaviour
         duration = 0.0f;
         m_startTime = Time.time;
         m_targetTime = m_startTime + m_targetInterval;
-        m_saveRawWorker.RunWorkerAsync(directory + "/test.txt");
+        m_saveRawWorker.RunWorkerAsync();
         break;
       case CamRecorderState.Processing:
         framesProcessed = 0;
         m_saveRawWorker.CancelAsync();
-        m_loadRawWorker.RunWorkerAsync(directory + "/test.txt");
+        m_loadRawWorker.RunWorkerAsync();
         m_saveImgWorker.RunWorkerAsync();
         break;
       default:
@@ -166,61 +167,78 @@ public class CamRecorder : MonoBehaviour
   private void SaveRawQueue(object sender, DoWorkEventArgs e)
   {
     BackgroundWorker worker = (BackgroundWorker)sender;
-    string filename = (string)e.Argument;
-    BinaryWriter writer = new BinaryWriter(File.Open(filename, FileMode.Create));
+    BinaryWriter writer;
     KeyValuePair<int, byte[]> rawData;
     while (!worker.CancellationPending)
     {
-      try
+      writer = new BinaryWriter(File.Open(m_rawFilesStack.Peek(), FileMode.Create));
+      while (!worker.CancellationPending)
       {
-        lock (((ICollection)m_rawQueue).SyncRoot)
+        try
         {
-          if (m_rawQueue.Count == 0)
-            continue;
-          rawData = m_rawQueue.Dequeue();
-        }
+          lock (((ICollection)m_rawQueue).SyncRoot)
+          {
+            if (m_rawQueue.Count == 0)
+              continue;
+            rawData = m_rawQueue.Dequeue();
+          }
 
-        writer.Write(BitConverter.GetBytes(rawData.Key)); // Raw Data Index
-        writer.Write(BitConverter.GetBytes(rawData.Value.Length)); // Raw Data Length
-        writer.Write(rawData.Value); // Raw Data
-        passedFrames++;
+          writer.Write(BitConverter.GetBytes(rawData.Key)); // Raw Data Index
+          writer.Write(BitConverter.GetBytes(rawData.Value.Length)); // Raw Data Length
+          writer.Write(rawData.Value); // Raw Data
+          passedFrames++;
+        }
+        catch (IOException)
+        {
+          failedFrames++;
+        }
+        if (writer.BaseStream.Length > BYTE_LIMIT)
+        {
+          m_rawFilesStack.Push(directory + "/raw" + (m_rawFilesStack.Count + 1) + ".tmp");
+          break;
+        }
       }
-      catch (IOException)
-      {
-        failedFrames++;
-      }
+      writer.Close();
     }
-    writer.Close();
   }
 
   private void LoadRawQueue(object sender, DoWorkEventArgs e)
   {
     BackgroundWorker worker = (BackgroundWorker)sender;
-    string filename = (string)e.Argument;
-    BinaryReader reader = new BinaryReader(File.Open(filename, FileMode.Open));
-    while (!worker.CancellationPending && reader.BaseStream.Position < reader.BaseStream.Length)
+    BinaryReader reader;
+    while (!worker.CancellationPending)
     {
-      try
+      reader = new BinaryReader(File.Open(m_rawFilesStack.Peek(), FileMode.Open));
+      while (!worker.CancellationPending)
       {
-        int rawIndex = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
-        int rawDataSize = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
-        byte[] rawData = reader.ReadBytes(rawDataSize);
-
-        while (!worker.CancellationPending)
+        try
         {
-          lock (((ICollection)m_rawQueue).SyncRoot)
+          int rawIndex = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
+          int rawDataSize = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
+          byte[] rawData = reader.ReadBytes(rawDataSize);
+
+          while (!worker.CancellationPending)
           {
-            if (m_rawQueue.Count < QUEUE_LIMIT)
+            lock (((ICollection)m_rawQueue).SyncRoot)
             {
-              m_rawQueue.Enqueue(new KeyValuePair<int, byte[]>(rawIndex, rawData));
-              break;  
+              if (m_rawQueue.Count < QUEUE_LIMIT)
+              {
+                m_rawQueue.Enqueue(new KeyValuePair<int, byte[]>(rawIndex, rawData));
+                break;
+              }
             }
           }
         }
+        catch (IOException) { }
+        if (reader.BaseStream.Position >= reader.BaseStream.Length)
+        {
+          reader.Close();
+          File.Delete(m_rawFilesStack.Pop());
+          break;
+        }
       }
-      catch (IOException) { }
+      reader.Close();
     }
-    reader.Close();
   }
 
   private void SaveImgQueue(object sender, DoWorkEventArgs e)
@@ -327,8 +345,7 @@ public class CamRecorder : MonoBehaviour
     {
       if (!System.IO.Directory.Exists(directory))
         System.IO.Directory.CreateDirectory(directory);
-
-      
+      m_rawFilesStack.Push(directory + "/raw" + (m_rawFilesStack.Count + 1) + ".tmp");
     }
     catch (IOException)
     {
