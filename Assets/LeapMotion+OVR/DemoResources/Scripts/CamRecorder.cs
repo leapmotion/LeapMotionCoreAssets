@@ -40,7 +40,7 @@ public class CamRecorder : MonoBehaviour
   // Queue and Thread required to optimize camera recorder
   private const int QUEUE_LIMIT = 4;
   private BackgroundWorker m_saveRawWorker; // Responsible for saving raw files
-  private BackgroundWorker m_loadRawWorker; // Responsible for loading raw files
+  private BackgroundWorker m_loadRawWorker; // Responsible for loading raw files to process
   private BackgroundWorker m_saveImgWorker; // Responsible for saving processed files
   private Stack<string> m_rawFilesStack; // We'll write to most recent rawFile
   private Queue<KeyValuePair<int, byte[]>> m_rawQueue; // We'll process oldest raw data
@@ -68,6 +68,7 @@ public class CamRecorder : MonoBehaviour
         m_saveRawWorker.CancelAsync();
         m_loadRawWorker.CancelAsync();
         m_saveImgWorker.CancelAsync();
+        m_rawFilesStack.Clear();
         m_rawQueue.Clear();
         m_imgQueue.Clear();
         break;
@@ -77,7 +78,6 @@ public class CamRecorder : MonoBehaviour
         m_targetTime = m_startTime + m_countdownTimer;
         break;
       case CamRecorderState.Recording:
-
         PrepareCamRecorder();
         countdownRemaining = 0.0f;
         framesRecorded = 0;
@@ -128,7 +128,7 @@ public class CamRecorder : MonoBehaviour
   }
 
   /// <summary>
-  /// Stops Processing (WARNING: May leave corrupt files if triggered early)
+  /// Stops Processing (WARNING: May leave corrupt files if triggered before processing is complete)
   /// </summary>
   public void StopProcessing()
   {
@@ -138,25 +138,10 @@ public class CamRecorder : MonoBehaviour
     }
   }
 
-  public bool IsIdling()
-  {
-    return (m_state == CamRecorderState.Idle);
-  }
-
-  public bool IsCountingDown()
-  {
-    return (m_state == CamRecorderState.Countdown);
-  }
-
-  public bool IsRecording()
-  {
-    return (m_state == CamRecorderState.Recording);
-  }
-
-  public bool IsProcessing()
-  {
-    return (m_state == CamRecorderState.Processing);
-  }
+  public bool IsIdling() { return (m_state == CamRecorderState.Idle); }
+  public bool IsCountingDown() { return (m_state == CamRecorderState.Countdown); }
+  public bool IsRecording() { return (m_state == CamRecorderState.Recording); }
+  public bool IsProcessing() { return (m_state == CamRecorderState.Processing); }
 
   public void AddLayerToIgnore(int layer)
   {
@@ -342,6 +327,8 @@ public class CamRecorder : MonoBehaviour
     {
       if (!System.IO.Directory.Exists(directory))
         System.IO.Directory.CreateDirectory(directory);
+
+      
     }
     catch (IOException)
     {
@@ -388,9 +375,7 @@ public class CamRecorder : MonoBehaviour
 
   void OnDestroy()
   {
-    m_saveRawWorker.CancelAsync();
-    m_loadRawWorker.CancelAsync();
-    m_saveImgWorker.CancelAsync();
+    SetState(CamRecorderState.Idle);
     m_cameraRenderTexture.Release();
   }
 
@@ -398,6 +383,7 @@ public class CamRecorder : MonoBehaviour
   {
     SetupCamera();
     SetupMultithread();
+    SetState(CamRecorderState.Idle);
   }
 
   void OnPostRender()
