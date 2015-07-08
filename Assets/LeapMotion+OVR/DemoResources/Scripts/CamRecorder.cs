@@ -194,6 +194,7 @@ public class CamRecorder : MonoBehaviour
 
   private void ProcessSaveQueue()
   {
+    BinaryWriter writer;
     KeyValuePair<string, byte[]> item;
     while (m_saveQueueEnable.WaitOne())
     {
@@ -211,7 +212,9 @@ public class CamRecorder : MonoBehaviour
 
       try
       {
-        System.IO.File.WriteAllBytes(item.Key, item.Value);
+        writer = new BinaryWriter(new FileStream(item.Key, FileMode.Create));
+        writer.Write(item.Value);
+        writer.Close();
         if (m_state == CamRecorderState.Recording)
           passedFrames++;
       }
@@ -224,11 +227,11 @@ public class CamRecorder : MonoBehaviour
     }
   }
 
-  private void AddToSaveQueue(string filename, byte[] data, bool dropIfSizeTooLarge = false)
+  private void AddToSaveQueue(string filename, byte[] data)
   {
     lock (((ICollection)m_saveQueue).SyncRoot)
     {
-      if (dropIfSizeTooLarge && m_saveQueue.Count >= SAVE_QUEUE_LIMIT)
+      if (m_saveQueue.Count >= SAVE_QUEUE_LIMIT)
       {
         Debug.LogWarning("Dropping " + filename);
         failedFrames++;
@@ -253,7 +256,7 @@ public class CamRecorder : MonoBehaviour
       string filename = directory + "/" + (framesRecorded + 1).ToString();
       filename += (highResolution) ? ".png" : ".jpg";
       m_loadQueue.Enqueue(filename);
-      AddToSaveQueue(filename, m_cameraTexture2D.GetRawTextureData(), true);
+      AddToSaveQueue(filename, m_cameraTexture2D.GetRawTextureData());
       framesRecorded++;
       m_targetTime = m_startTime + m_targetInterval * (framesRecorded + 1);
     }
