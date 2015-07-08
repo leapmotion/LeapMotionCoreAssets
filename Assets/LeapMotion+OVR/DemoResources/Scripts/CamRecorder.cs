@@ -427,7 +427,7 @@ public class CamRecorder : MonoBehaviour
       case CamRecorderState.Countdown:
         SaveRawTexture();
         countdownRemaining = Mathf.Max(m_countdownTarget - Time.time, 0.0f);
-        if (countdownRemaining == 0.0f);
+        if (countdownRemaining == 0.0f)
           SetState(CamRecorderState.Recording);
         break;
       case CamRecorderState.Recording:
