@@ -35,8 +35,8 @@ public class CamRecorderInterface : MonoBehaviour {
       {
         camRecorder.StopProcessing();
       }
-    }
-
+    } 
+    
     if (camRecorder.IsIdling())
     {
       instructionText.text = "'Enter' to Start Recording";

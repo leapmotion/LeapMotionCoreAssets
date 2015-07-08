@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System;
 using System.IO;
 using System.ComponentModel;
@@ -10,6 +11,7 @@ public class CamRecorder : MonoBehaviour
 {
   public Camera syncCamera;
   public int frameRate = 30;
+  public GameObject startingIndicators;
 
   [HideInInspector]
   public float duration = 0.0f;
@@ -51,6 +53,7 @@ public class CamRecorder : MonoBehaviour
   private float m_startTime = 0.0f;
   private float m_targetTime = 0.0f;
   private float m_targetInterval = 0.0f;
+  private float m_countdownTarget = 0.0f;
 
   private enum CamRecorderState
   {
@@ -72,22 +75,25 @@ public class CamRecorder : MonoBehaviour
         m_rawFilesStack.Clear();
         m_rawQueue.Clear();
         m_imgQueue.Clear();
+        if (startingIndicators != null)
+          startingIndicators.gameObject.SetActive(false);
         break;
       case CamRecorderState.Countdown:
+        PrepareCamRecorder();
         countdownRemaining = m_countdownTimer;
         m_startTime = Time.time;
-        m_targetTime = m_startTime + m_countdownTimer;
-        break;
-      case CamRecorderState.Recording:
-        PrepareCamRecorder();
-        countdownRemaining = 0.0f;
+        m_countdownTarget = m_startTime + m_countdownTimer;
+        m_targetTime = m_startTime + m_targetInterval;
         framesRecorded = 0;
         passedFrames = 0;
         failedFrames = 0;
-        duration = 0.0f;
-        m_startTime = Time.time;
-        m_targetTime = m_startTime + m_targetInterval;
         m_saveRawWorker.RunWorkerAsync();
+        break;
+      case CamRecorderState.Recording:
+        if (startingIndicators != null)
+          startingIndicators.gameObject.SetActive(true); // Enable indicators for first frame
+        countdownRemaining = 0.0f;
+        duration = 0.0f;
         break;
       case CamRecorderState.Processing:
         framesProcessed = 0;
@@ -162,6 +168,11 @@ public class CamRecorder : MonoBehaviour
   public void SetCountdown(float seconds)
   {
     m_countdownTimer = seconds;
+  }
+
+  public void EnableCountdownFlash(bool enable)
+  {
+
   }
 
   private void SaveRawQueue(object sender, DoWorkEventArgs e)
@@ -267,7 +278,7 @@ public class CamRecorder : MonoBehaviour
 
   private void SaveRawTexture()
   {
-    duration = Time.time - m_startTime;
+    duration = Time.time - m_countdownTarget;
     if (Time.time > m_targetTime)
     {
       m_currentRenderTexture = RenderTexture.active;
@@ -284,6 +295,9 @@ public class CamRecorder : MonoBehaviour
           failedFrames++;
       }
       m_targetTime = m_startTime + m_targetInterval * (framesRecorded + 1);
+
+      if (startingIndicators != null)
+        startingIndicators.gameObject.SetActive(false);
     }
   }
 
@@ -340,7 +354,10 @@ public class CamRecorder : MonoBehaviour
     }
     m_camera.cullingMask &= ~(m_layersToIgnore);
     m_camera.targetTexture = m_cameraRenderTexture;
-    
+
+    if (startingIndicators != null)
+      startingIndicators.transform.localPosition = transform.localPosition + new Vector3(0.0f, 0.0f, m_camera.nearClipPlane + 0.001f);
+
     try
     {
       if (!System.IO.Directory.Exists(directory))
@@ -408,14 +425,10 @@ public class CamRecorder : MonoBehaviour
     switch (m_state)
     {
       case CamRecorderState.Countdown:
-        if (m_targetTime - Time.time > 0)
-        {
-          countdownRemaining = m_targetTime - Time.time;
-        }
-        else
-        {
+        SaveRawTexture();
+        countdownRemaining = Mathf.Max(m_countdownTarget - Time.time, 0.0f);
+        if (countdownRemaining == 0.0f);
           SetState(CamRecorderState.Recording);
-        }
         break;
       case CamRecorderState.Recording:
         SaveRawTexture();
