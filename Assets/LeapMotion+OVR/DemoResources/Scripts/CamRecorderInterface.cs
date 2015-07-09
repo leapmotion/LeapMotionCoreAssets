@@ -41,16 +41,16 @@ public class CamRecorderInterface : MonoBehaviour {
     if (camRecorder.IsIdling())
     {
       instructionText.text = "'Enter' to Start Recording";
-      if (camRecorder.rawFramesCount > 0)
-      {
-        statusText.text = camRecorder.imgFramesPassed.ToString() + " successful and " + camRecorder.imgFramesFailed.ToString() + " failed images at";
-        valueText.text = camRecorder.directory;
-      }
-      else
-      {
-        statusText.text = "";
-        valueText.text = "";
-      }
+      //if (camRecorder.rawFramesCount > 0)
+      //{
+      //  statusText.text = camRecorder.imgFramesPassed.ToString() + " successful and " + camRecorder.imgFramesFailed.ToString() + " failed images at";
+      //  valueText.text = camRecorder.directory;
+      //}
+      //else
+      //{
+      //  statusText.text = "";
+      //  valueText.text = "";
+      //}
     }
     else if (camRecorder.IsCountingDown())
     {
@@ -62,13 +62,13 @@ public class CamRecorderInterface : MonoBehaviour {
     {
       instructionText.text = "Frames-Per-Second: " + camRecorder.frameRate.ToString();
       statusText.text = "Duration: " + camRecorder.duration.ToString();
-      valueText.text = "Frames Recorded (Pass/Fail): " + camRecorder.rawFramesPassed.ToString() + "/" + camRecorder.rawFramesFailed.ToString();
+      //valueText.text = "Frames Recorded (Pass/Fail): " + camRecorder.rawFramesPassed.ToString() + "/" + camRecorder.rawFramesFailed.ToString();
     }
     else if (camRecorder.IsProcessing())
     {
       instructionText.text = "'Enter' to Abort Processing";
       statusText.text = "Processing Data...";
-      valueText.text = camRecorder.imgFramesCount.ToString() + "/" + camRecorder.rawFramesCount.ToString();
+      //valueText.text = camRecorder.imgFramesCount.ToString() + "/" + camRecorder.rawFramesCount.ToString();
     }
 	}
 }
