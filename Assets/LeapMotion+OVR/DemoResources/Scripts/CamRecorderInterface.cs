@@ -22,7 +22,7 @@ public class CamRecorderInterface : MonoBehaviour {
     {
       if (camRecorder.IsIdling())
       {
-        camRecorder.highResolution = highResolution;
+        camRecorder.useHighResolution = highResolution;
         camRecorder.directory = Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         camRecorder.SetCountdown(countdown);
         camRecorder.AddLayerToIgnore(gameObject.layer);
