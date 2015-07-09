@@ -112,18 +112,18 @@ public class CamRecorder : MonoBehaviour
         m_tempWorker.RunWorkerAsync(TempWorkerState.Save);
         break;
       case CamRecorderState.Recording:
-        if (startingIndicators != null)
-          startingIndicators.gameObject.SetActive(true); // Enable indicators for first frame
         m_startRecordTime = Time.time;
         m_targetTime = Time.time + m_targetInterval;
         rawFramesCount = 0;
         rawFramesPassed = 0;
         rawFramesFailed = 0;
+        if (startingIndicators != null)
+          startingIndicators.gameObject.SetActive(true); // Enable indicators for first frame
         break;
       case CamRecorderState.Processing:
         imgFramesCount = 0;
         imgFramesPassed = 0;
-        imgFramesFailed = 0;
+        imgFramesFailed = rawFramesFailed;
         StopWorker(m_tempWorker);
         m_tempWorker.RunWorkerAsync(TempWorkerState.Load);
         m_processWorker.RunWorkerAsync();
@@ -211,10 +211,10 @@ public class CamRecorder : MonoBehaviour
   {
     BackgroundWorker worker = (BackgroundWorker)sender;
     TempWorkerState state = (TempWorkerState)e.Argument;
+    KeyValuePair<int, byte[]> data = new KeyValuePair<int, byte[]>();
     if (state == TempWorkerState.Save)
     {
       BinaryWriter writer;
-      KeyValuePair<int, byte[]> data = new KeyValuePair<int, byte[]>();
       while (!worker.CancellationPending)
       {
         writer = new BinaryWriter(File.Open(GetFullPath(m_tempFilesStack.Peek()), FileMode.Create));
@@ -262,7 +262,7 @@ public class CamRecorder : MonoBehaviour
           {
             int dataIndex = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
             int dataSize = BitConverter.ToInt32(reader.ReadBytes(sizeof(int)), 0);
-            byte[] data = reader.ReadBytes(dataSize);
+            data = new KeyValuePair<int, byte[]>(dataIndex, reader.ReadBytes(dataSize));
 
             while (!worker.CancellationPending)
             {
@@ -270,13 +270,17 @@ public class CamRecorder : MonoBehaviour
               {
                 if (m_tempQueue.Count < QUEUE_LIMIT)
                 {
-                  m_tempQueue.Enqueue(new KeyValuePair<int, byte[]>(dataIndex, data));
+                  m_tempQueue.Enqueue(data);
                   break;
                 }
               }
             }
           }
-          catch (IOException) { }
+          catch (IOException) 
+          {
+            if (!IsBufFrame(data.Key))
+              imgFramesFailed++;
+          }
           if (reader.BaseStream.Position >= reader.BaseStream.Length)
           {
             reader.Close();
@@ -367,7 +371,7 @@ public class CamRecorder : MonoBehaviour
     }
   }
 
-  private void ProcessTexture()
+  private void ProcessTextures()
   {
     KeyValuePair<int, byte[]> data;
     try
@@ -400,6 +404,16 @@ public class CamRecorder : MonoBehaviour
     {
       Debug.LogWarning("ProcessTexture: File cannot be read. Adding data back into queue");
     }
+  }
+
+  private void InterpolateMissingTextures()
+  {
+    //string[] files = Directory.GetFiles(directory);
+    //for (int i = 0; i < files.Length; ++i)
+    //{
+    //  Debug.Log(files[i]);
+    //}
+    //imgFramesCount = rawFramesCount;
   }
 
   private void PrepareCamRecorder()
@@ -494,13 +508,18 @@ public class CamRecorder : MonoBehaviour
         SaveRawTexture();
         break;
       case CamRecorderState.Processing:
-        if (framesProcessed == framesRecorded)
+        if (imgFramesCount == rawFramesCount)
         {
           StopProcessing();
         }
+        else if (imgFramesPassed != rawFramesPassed)
+        {
+          ProcessTextures();
+        }
         else
         {
-          ProcessTexture();
+          StopProcessing();
+          //InterpolateMissingTextures(); 
         }
         break;
       default:
