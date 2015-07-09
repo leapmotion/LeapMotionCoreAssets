@@ -14,6 +14,16 @@ public class CamRecorderInterface : MonoBehaviour {
   public float countdown = 5.0f;
   public bool highResolution = false;
 
+  private string GetStatus()
+  {
+    return
+      "[" +
+      camRecorder.framesSucceeded.ToString() + " | " +
+      camRecorder.framesCountdown.ToString() + " | " +
+      camRecorder.framesDropped.ToString() + "] / " +
+      camRecorder.framesExpect.ToString();
+  }
+
 	void Update () {
     if (
       Input.GetKeyDown(KeyCode.Return) ||
@@ -43,35 +53,32 @@ public class CamRecorderInterface : MonoBehaviour {
       instructionText.text = "'Enter' to Start Recording";
       if (camRecorder.framesExpect > 0)
       {
-        statusText.text = 
-          camRecorder.framesSucceeded.ToString() + " success, " + 
-          camRecorder.framesCorrupted.ToString() + " corrupt, " +  
-          camRecorder.framesCountdown.ToString() + " buffer images at";
+        statusText.text = GetStatus();
         valueText.text = camRecorder.directory;
       }
       else
       {
-        statusText.text = "";
-        valueText.text = "";
+        statusText.text = GetStatus();
+        valueText.text = "[ Success | Buffer | Dropped ] / Total";
       }
     }
     else if (camRecorder.IsCountingDown())
     {
       instructionText.text = "'Enter' to End Recording";
-      statusText.text = "Recording in...";
-      valueText.text = ((int)camRecorder.countdownRemaining + 1).ToString();
+      statusText.text = GetStatus();
+      valueText.text = "Recording in..." + ((int)camRecorder.countdownRemaining + 1).ToString();
     }
     else if (camRecorder.IsRecording())
     {
-      instructionText.text = "Frames-Per-Second: " + camRecorder.frameRate.ToString();
-      statusText.text = "Duration: " + camRecorder.duration.ToString();
-      valueText.text = "Frames Recorded (Actual/Expect): " + camRecorder.framesActual.ToString() + "/" + camRecorder.framesExpect.ToString();
+      instructionText.text = "'Enter' to End Recording";
+      statusText.text = GetStatus();
+      valueText.text = "Recording..." + camRecorder.duration.ToString();
     }
     else if (camRecorder.IsProcessing())
     {
       instructionText.text = "'Enter' to Abort Processing";
-      statusText.text = "Processing Data...";
-      valueText.text = camRecorder.framesSucceeded.ToString() + "/" + camRecorder.framesCorrupted.ToString() + "/" + camRecorder.framesCountdown.ToString();
+      statusText.text = GetStatus();
+      valueText.text = "Processing..." + camRecorder.framesActual.ToString() + "/" + camRecorder.framesExpect.ToString();
     }
 	}
 }

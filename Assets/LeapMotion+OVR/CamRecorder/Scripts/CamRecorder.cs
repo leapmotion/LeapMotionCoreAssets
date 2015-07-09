@@ -11,7 +11,6 @@ public class CamRecorder : MonoBehaviour
 {
   public int frameRate = 30;
   public GameObject startingIndicators;
-  public float aspectRatio = 16.0f / 9.0f;
   public Camera syncCamera;
 
   [HideInInspector]
@@ -23,11 +22,11 @@ public class CamRecorder : MonoBehaviour
   [HideInInspector]
   public int framesActual = 0; // Number of all frames actually recorded
   [HideInInspector]
+  public int framesDropped = 0; // Number of frames not recorded after countdown but expected
+  [HideInInspector]
   public int framesCountdown = 0; // Number of frames recorded during countdown
   [HideInInspector]
   public int framesSucceeded = 0; // Number of frames recorded after countdown
-  [HideInInspector]
-  public int framesCorrupted = 0; // Number of frames not recorded after countdown but expected
   [HideInInspector]
   public float countdownRemaining = 0.0f;
   [HideInInspector]
@@ -104,6 +103,7 @@ public class CamRecorder : MonoBehaviour
         m_targetTime = Time.time + m_targetInterval;
         framesExpect = 0;
         framesActual = 0;
+        framesDropped = 0;
         m_frameIndex = -1; // Countdown Frames have negative frame index
         m_tempWorker.RunWorkerAsync(TempWorkerState.Save);
         break;
@@ -117,7 +117,6 @@ public class CamRecorder : MonoBehaviour
       case CamRecorderState.Processing:
         framesCountdown = 0;
         framesSucceeded = 0;
-        framesCorrupted = 0;
         StopWorker(m_tempWorker);
         m_tempWorker.RunWorkerAsync(TempWorkerState.Load);
         m_processWorker.RunWorkerAsync();
@@ -192,7 +191,7 @@ public class CamRecorder : MonoBehaviour
   }
 
   // Buff images would have non-positive index
-  private bool IsCountdownFrame(int index) { return (index < 0); }
+  private bool IsCountdownFrame(int index) { return (index <= 0); }
   private string GetFullPath(string filename) { return directory + "/" + filename; }
 
   private void StopWorker(BackgroundWorker worker)
@@ -258,10 +257,10 @@ public class CamRecorder : MonoBehaviour
             writer.Write(BitConverter.GetBytes(data.Key)); // Data Index
             writer.Write(BitConverter.GetBytes(data.Value.Length)); // Data Length
             writer.Write(data.Value); // Data (Byte array)
-            framesActual++;
           }
           catch (IOException)
           {
+            framesDropped++;
           }
           if (writer.BaseStream.Length > TEMP_BYTE_LIMIT)
           {
@@ -290,6 +289,7 @@ public class CamRecorder : MonoBehaviour
           }
           catch (IOException) 
           {
+            framesDropped++;
           }
           if (reader.BaseStream.Position >= reader.BaseStream.Length)
           {
@@ -299,6 +299,8 @@ public class CamRecorder : MonoBehaviour
           }
         }
         reader.Close();
+        if (m_tempFilesStack.Count == 0)
+          break;
       }
     }
   }
@@ -315,22 +317,20 @@ public class CamRecorder : MonoBehaviour
         if (QueueIsEmpty(m_processQueue))
           continue;
         data = QueueDequeue(m_processQueue);
-
         string filename = !IsCountdownFrame(data.Key) ? (data.Key).ToString() : "." + (-data.Key).ToString();
         filename += (useHighResolution) ? ".png" : ".jpg";
         writer = new BinaryWriter(File.Open(GetFullPath(filename), FileMode.Create));
         writer.Write(data.Value);
         writer.Close();
-        // Ignore frame 0. Frame 0 is flash screen
-        if (data.Key > 0)
+        framesActual++;
+        if (!(IsCountdownFrame(data.Key)))
           framesSucceeded++;
-        else if (data.Key < 0)
+        else
           framesCountdown++;
       }
       catch (IOException) 
       {
-        if (!IsCountdownFrame(data.Key))
-          framesCorrupted++;
+        framesDropped++;
       }
     }
   }
@@ -342,8 +342,9 @@ public class CamRecorder : MonoBehaviour
     m_cameraTexture2D.ReadPixels(m_cameraRect, 0, 0, false);
     RenderTexture.active = m_currentRenderTexture;
     KeyValuePair<int, byte[]> data = new KeyValuePair<int, byte[]>(frameIndex, m_cameraTexture2D.GetRawTextureData());
-    QueueEnqueue(m_tempQueue, data);
     framesExpect++;
+    if (!QueueEnqueue(m_tempQueue, data))
+      framesDropped++;
   }
 
   private void SaveBufTexture()
@@ -372,11 +373,12 @@ public class CamRecorder : MonoBehaviour
 
   private void ProcessTextures()
   {
+    KeyValuePair<int, byte[]> data = new KeyValuePair<int, byte[]>();
     try
     {
       if (QueueIsEmpty(m_tempQueue))
         return;
-      KeyValuePair<int, byte[]> data = QueueDequeue(m_tempQueue);
+      data = QueueDequeue(m_tempQueue);
       m_cameraTexture2D.LoadRawTextureData(data.Value);
       if (useHighResolution)
         data = new KeyValuePair<int, byte[]>(data.Key, m_cameraTexture2D.EncodeToPNG());
@@ -387,12 +389,13 @@ public class CamRecorder : MonoBehaviour
     catch (IOException)
     {
       Debug.LogWarning("ProcessTexture: File cannot be read. Adding data back into queue");
+      QueueEnqueue(m_tempQueue, data);
     }
   }
 
-  private void InterpolateMissingTextures()
+  private void ProcessMissingTextures()
   {
-    
+    framesActual++;
   }
 
   private void PrepareCamRecorder()
@@ -488,14 +491,17 @@ public class CamRecorder : MonoBehaviour
         SaveRawTexture();
         break;
       case CamRecorderState.Processing:
-        // +1 to compensate for the extra flash frame
-        if ((framesCountdown + framesSucceeded + framesCorrupted + 1) == framesExpect)
+        if (framesActual == framesExpect)
         {
           StopProcessing();
         }
-        else
+        else if (m_tempWorker.IsBusy || !QueueIsEmpty(m_tempQueue) || !QueueIsEmpty(m_processQueue))
         {
           ProcessTextures();
+        }
+        else
+        {
+          ProcessMissingTextures();
         }
         break;
       default:
