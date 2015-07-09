@@ -18,6 +18,10 @@ public class CamRecorder : MonoBehaviour
   [HideInInspector]
   public string directory = "";
   [HideInInspector]
+  public int framesExpect = 0; // Number of all frames expected to record
+  [HideInInspector]
+  public int framesActual = 0; // Number of all frames actually recorded
+  [HideInInspector]
   public int framesCountdown = 0; // Number of frames recorded during countdown
   [HideInInspector]
   public int framesSucceeded = 0; // Number of frames recorded after countdown
@@ -27,8 +31,6 @@ public class CamRecorder : MonoBehaviour
   public float countdownRemaining = 0.0f;
   [HideInInspector]
   public bool useHighResolution = false;
-  private int m_framesExpect = 0; // Number of frames expected to record
-  private int m_framesActual = 0; // Number of frames actually recorded
   private int m_frameIndex = 0;
 
   // Objects required to record a camera
@@ -99,8 +101,8 @@ public class CamRecorder : MonoBehaviour
         m_startCountdownTime = Time.time;
         m_endCountdownTime = m_startCountdownTime + countdownRemaining;
         m_targetTime = Time.time + m_targetInterval;
-        m_framesExpect = 0;
-        m_framesActual = 0;
+        framesExpect = 0;
+        framesActual = 0;
         m_frameIndex = -1; // Countdown Frames have negative frame index
         m_tempWorker.RunWorkerAsync(TempWorkerState.Save);
         break;
@@ -255,6 +257,7 @@ public class CamRecorder : MonoBehaviour
             writer.Write(BitConverter.GetBytes(data.Key)); // Data Index
             writer.Write(BitConverter.GetBytes(data.Value.Length)); // Data Length
             writer.Write(data.Value); // Data (Byte array)
+            framesActual++;
           }
           catch (IOException)
           {
@@ -317,6 +320,11 @@ public class CamRecorder : MonoBehaviour
         writer = new BinaryWriter(File.Open(GetFullPath(filename), FileMode.Create));
         writer.Write(data.Value);
         writer.Close();
+        // Ignore frame 0. Frame 0 is flash screen
+        if (data.Key > 0)
+          framesSucceeded++;
+        else if (data.Key < 0)
+          framesCountdown++;
       }
       catch (IOException) 
       {
@@ -332,9 +340,9 @@ public class CamRecorder : MonoBehaviour
     RenderTexture.active = m_cameraRenderTexture;
     m_cameraTexture2D.ReadPixels(m_cameraRect, 0, 0, false);
     RenderTexture.active = m_currentRenderTexture;
-    m_framesExpect++;
     KeyValuePair<int, byte[]> data = new KeyValuePair<int, byte[]>(frameIndex, m_cameraTexture2D.GetRawTextureData());
     QueueEnqueue(m_tempQueue, data);
+    framesExpect++;
   }
 
   private void SaveBufTexture()
@@ -478,20 +486,15 @@ public class CamRecorder : MonoBehaviour
         SaveRawTexture();
         break;
       case CamRecorderState.Processing:
-        ProcessTextures();
-        //if (imgFramesCount == rawFramesCount)
-        //{
-        //  StopProcessing();
-        //}
-        //else if (imgFramesPassed != rawFramesPassed)
-        //{
-        //  ProcessTextures();
-        //}
-        //else
-        //{
-        //  StopProcessing();
-        //  //InterpolateMissingTextures(); 
-        //}
+        // +1 to compensate for the extra flash frame
+        if ((framesCountdown + framesSucceeded + framesCorrupted + 1) == framesExpect)
+        {
+          StopProcessing();
+        }
+        else
+        {
+          ProcessTextures();
+        }
         break;
       default:
         break;
