@@ -190,8 +190,6 @@ public class CamRecorder : MonoBehaviour
     countdownRemaining = seconds;
   }
 
-  // Buff images would have non-positive index
-  private bool IsCountdownFrame(int index) { return (index <= 0); }
   private string GetFullPath(string filename) { return directory + "/" + filename; }
 
   private void StopWorker(BackgroundWorker worker)
@@ -317,13 +315,13 @@ public class CamRecorder : MonoBehaviour
         if (QueueIsEmpty(m_processQueue))
           continue;
         data = QueueDequeue(m_processQueue);
-        string filename = !IsCountdownFrame(data.Key) ? (data.Key).ToString() : "." + (-data.Key).ToString();
+        string filename = (data.Key >= 0) ? (data.Key).ToString() : "." + (-data.Key).ToString();
         filename += (useHighResolution) ? ".png" : ".jpg";
         writer = new BinaryWriter(File.Open(GetFullPath(filename), FileMode.Create));
         writer.Write(data.Value);
         writer.Close();
         framesActual++;
-        if (!(IsCountdownFrame(data.Key)))
+        if (data.Key > 0)
           framesSucceeded++;
         else
           framesCountdown++;
@@ -395,7 +393,12 @@ public class CamRecorder : MonoBehaviour
 
   private void ProcessMissingTextures()
   {
-    framesActual++;
+    string[] files = Directory.GetFiles(directory);
+    for (int i = 0; i < files.Length; ++i)
+    {
+      Debug.Log(Path.GetFileNameWithoutExtension(files[i]));
+    }
+    framesActual = framesExpect;
   }
 
   private void PrepareCamRecorder()
