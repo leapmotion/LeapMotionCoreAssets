@@ -22,6 +22,7 @@ public class CamRecorderInterface : MonoBehaviour {
     {
       if (camRecorder.IsIdling())
       {
+        camRecorder.highResolution = highResolution;
         camRecorder.directory = Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         camRecorder.SetCountdown(countdown);
         camRecorder.AddLayerToIgnore(gameObject.layer);
@@ -40,9 +41,9 @@ public class CamRecorderInterface : MonoBehaviour {
     if (camRecorder.IsIdling())
     {
       instructionText.text = "'Enter' to Start Recording";
-      if (camRecorder.framesRecorded > 0)
+      if (camRecorder.rawFramesCount > 0)
       {
-        statusText.text = camRecorder.passedFrames.ToString() + " successful and " + camRecorder.failedFrames.ToString() + " failed images at";
+        statusText.text = camRecorder.imgFramesPassed.ToString() + " successful and " + camRecorder.imgFramesFailed.ToString() + " failed images at";
         valueText.text = camRecorder.directory;
       }
       else
@@ -61,13 +62,13 @@ public class CamRecorderInterface : MonoBehaviour {
     {
       instructionText.text = "Frames-Per-Second: " + camRecorder.frameRate.ToString();
       statusText.text = "Duration: " + camRecorder.duration.ToString();
-      valueText.text = "Frames Recorded (Pass/Fail): " + camRecorder.passedFrames.ToString() + "/" + camRecorder.failedFrames.ToString();
+      valueText.text = "Frames Recorded (Pass/Fail): " + camRecorder.rawFramesPassed.ToString() + "/" + camRecorder.rawFramesFailed.ToString();
     }
     else if (camRecorder.IsProcessing())
     {
       instructionText.text = "'Enter' to Abort Processing";
       statusText.text = "Processing Data...";
-      valueText.text = camRecorder.framesProcessed.ToString() + "/" + camRecorder.framesRecorded.ToString();
+      valueText.text = camRecorder.imgFramesCount.ToString() + "/" + camRecorder.rawFramesCount.ToString();
     }
 	}
 }
