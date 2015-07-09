@@ -9,9 +9,10 @@ using System.Collections.Generic;
 [RequireComponent (typeof(Camera))]
 public class CamRecorder : MonoBehaviour 
 {
-  public Camera syncCamera;
   public int frameRate = 30;
   public GameObject startingIndicators;
+  public float aspectRatio = 16.0f / 9.0f;
+  public Camera syncCamera;
 
   [HideInInspector]
   public float duration = 0.0f;
@@ -399,6 +400,7 @@ public class CamRecorder : MonoBehaviour
     if ((syncCamera != null) && (syncCamera.pixelRect != m_camera.pixelRect))
     {
       m_camera.CopyFrom(syncCamera);
+
       int width = m_camera.pixelWidth;
       int height = m_camera.pixelHeight;
       if (m_cameraRenderTexture != null)
