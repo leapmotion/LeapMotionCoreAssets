@@ -51,10 +51,9 @@ public class CamRecorder : MonoBehaviour
   // Queue and Thread required to optimize camera recorder
   private const int QUEUE_LIMIT = 4;
   private const int TEMP_BYTE_LIMIT = 2000000000; // 2GB because FAT32 limit is 4GB
-  //private BackgroundWorker m_saveTempWorker; // Responsible for saving temp (raw/buf) data
-  private BackgroundWorker m_tempWorker; // Responsible for loading temp (raw/buf) data for processing
-  private BackgroundWorker m_processWorker; // Responsible for saving processed files
   private Stack<string> m_tempFilesStack; // We'll write to most recent temp file
+  private BackgroundWorker m_tempWorker; // Responsible for save/load temp (raw/buf) data for processing
+  private BackgroundWorker m_processWorker; // Responsible for saving processed files
   private Queue<KeyValuePair<int, byte[]>> m_tempQueue; // We'll process oldest temp (raw/buf) data
   private Queue<KeyValuePair<int, byte[]>> m_processQueue; // We'll process oldest img data
   private enum TempWorkerState
@@ -84,13 +83,8 @@ public class CamRecorder : MonoBehaviour
     switch (m_state)
     {
       case CamRecorderState.Idle:
-        Debug.Log("BUF: " + bufFramesCount);
-        Debug.Log("RAW: " + rawFramesCount);
-        Debug.Log("IMG: " + imgFramesCount);
-        m_tempWorker.CancelAsync();
-        while (m_tempWorker.IsBusy) ;
-        m_processWorker.CancelAsync();
-        while (m_processWorker.IsBusy) ;
+        StopWorker(m_tempWorker);
+        StopWorker(m_processWorker);
         while (m_tempFilesStack.Count > 0)
         {
           File.Delete(GetFullPath(m_tempFilesStack.Pop()));
@@ -118,7 +112,6 @@ public class CamRecorder : MonoBehaviour
         m_tempWorker.RunWorkerAsync(TempWorkerState.Save);
         break;
       case CamRecorderState.Recording:
-        Debug.Log(bufFramesCount);
         if (startingIndicators != null)
           startingIndicators.gameObject.SetActive(true); // Enable indicators for first frame
         m_startRecordTime = Time.time;
@@ -131,8 +124,7 @@ public class CamRecorder : MonoBehaviour
         imgFramesCount = 0;
         imgFramesPassed = 0;
         imgFramesFailed = 0;
-        m_tempWorker.CancelAsync();
-        while (m_tempWorker.IsBusy) ;
+        StopWorker(m_tempWorker);
         m_tempWorker.RunWorkerAsync(TempWorkerState.Load);
         m_processWorker.RunWorkerAsync();
         break;
@@ -208,6 +200,12 @@ public class CamRecorder : MonoBehaviour
   // Buff images would have non-positive index
   private bool IsBufFrame(int index) { return (index < 0); }
   private string GetFullPath(string filename) { return directory + "/" + filename; }
+
+  private void StopWorker(BackgroundWorker worker)
+  {
+    worker.CancelAsync();
+    while (worker.IsBusy) ;
+  }
 
   private void TempQueueWork(object sender, DoWorkEventArgs e)
   {
