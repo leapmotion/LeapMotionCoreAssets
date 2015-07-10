@@ -415,6 +415,10 @@ public class CamRecorder : MonoBehaviour
       m_camera.rect = optionalSyncCamera.rect;
       m_originalCullingMask = optionalSyncCamera.cullingMask;
     }
+    else
+    {
+      m_originalCullingMask = m_camera.cullingMask;
+    }
 
     framesExpect = 0;
     framesActual = 0;
@@ -445,7 +449,6 @@ public class CamRecorder : MonoBehaviour
     m_cameraTexture2D = new Texture2D(imageWidth, imageHeight, TextureFormat.RGB24, false);
     m_cameraRect = new Rect(0, 0, imageWidth, imageHeight);
     m_camera.targetTexture = m_cameraRenderTexture;
-    m_originalCullingMask = m_camera.cullingMask;
     directory = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
     SetCountdown(0.0f);
     ResetLayerToIgnore();
