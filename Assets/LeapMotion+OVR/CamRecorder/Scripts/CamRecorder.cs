@@ -43,10 +43,13 @@ public class CamRecorder : MonoBehaviour
   private Rect m_cameraRect;
   private int m_layersToIgnore; // Bit-array represented in int32. 1 = Ignore. 0 = Do not ignore
   private int m_originalCullingMask;
+  private string m_fileExtension;
 
   // Queue and Thread required to optimize camera recorder
   private const int QUEUE_LIMIT = 4;
   private const int TEMP_BYTE_LIMIT = 2000000000; // 2GB because FAT32 limit is 4GB
+  private const string COUNTDOWN_PREFIX = ".";
+  private const string CORRUPTED_SUFFIX = "-";
   private List<int> m_framesDroppedList;
   private Stack<string> m_tempFilesStack; // We'll write to most recent temp file
   private BackgroundWorker m_tempWorker; // Responsible for save/load temp (raw/buf) data for processing
@@ -186,6 +189,16 @@ public class CamRecorder : MonoBehaviour
     countdownRemaining = seconds;
   }
 
+  private string GetDataPath(int index, bool isCorrupt = false)
+  {
+    string filename = (index >= 0) ? (index).ToString() : COUNTDOWN_PREFIX + (-index).ToString();
+    if (isCorrupt)
+      filename += CORRUPTED_SUFFIX;
+    if (index >= 0)
+      return GetFullPath(filename + m_fileExtension);
+    else
+      return GetFullPath(filename + m_fileExtension);
+  }
   private string GetFullPath(string filename) { return directory + "/" + filename; }
   private void DropFrame(int frameIndex)
   {
@@ -307,7 +320,7 @@ public class CamRecorder : MonoBehaviour
   private void ProcessQueueWork(object sender, DoWorkEventArgs e)
   {
     BackgroundWorker worker = (BackgroundWorker)sender;
-    BinaryWriter writer;
+    BinaryWriter GetFullPath;
     KeyValuePair<int, byte[]> data = new KeyValuePair<int, byte[]>();
     while (!worker.CancellationPending)
     {
@@ -316,11 +329,9 @@ public class CamRecorder : MonoBehaviour
         if (QueueIsEmpty(m_processQueue))
           continue;
         data = QueueDequeue(m_processQueue);
-        string filename = (data.Key >= 0) ? (data.Key).ToString() : "." + (-data.Key).ToString();
-        filename += (useHighResolution) ? ".png" : ".jpg";
-        writer = new BinaryWriter(File.Open(GetFullPath(filename), FileMode.Create));
-        writer.Write(data.Value);
-        writer.Close();
+        GetFullPath = new BinaryWriter(File.Open(GetDataPath(data.Key), FileMode.Create));
+        GetFullPath.Write(data.Value);
+        GetFullPath.Close();
         framesActual++;
         if (data.Key > 0)
           framesSucceeded++;
@@ -384,7 +395,7 @@ public class CamRecorder : MonoBehaviour
     }
     catch (IOException)
     {
-      Debug.LogWarning("ProcessTexture: File cannot be read. Adding data back into queue");
+      Debug.LogError("ProcessTexture: File cannot be read. Adding data back into queue");
       while (!QueueEnqueue(m_tempQueue, data)) ;
     }
   }
@@ -393,18 +404,54 @@ public class CamRecorder : MonoBehaviour
   {
     int[] framesDroppedArray = m_framesDroppedList.ToArray();
     Array.Sort(framesDroppedArray);
+
+    // Initialize the index for countdown and expected frames
+    int expectedFrameIndex = 0;
+    int prevFrameIndex = 0;
     for (int i = 0; i < framesDroppedArray.Length; ++i)
     {
-      if (i < 0) // Countdown frame dropped
+      if (framesDroppedArray[i] > 0)
       {
-
-      }
-      else if (i > 0) // Expected frame dropped
-      {
-
+        expectedFrameIndex = i;
+        break;
       }
     }
-    framesActual = framesExpect;
+
+    // Fill in countdown frames
+    for (int i = expectedFrameIndex - 1; i >= 0; --i)
+    {
+      int index = framesDroppedArray[i];
+      try
+      {
+        if (prevFrameIndex == index + 1)
+          File.Copy(GetDataPath(index + 1, true), GetDataPath(index, true));
+        else
+          File.Copy(GetDataPath(index + 1), GetDataPath(index, true));
+      }
+      catch (IOException)
+      {
+        Debug.LogError("Failed to copy to fill in for missing texture " + index);
+      }
+      prevFrameIndex = index;
+    }
+    
+    // Fill in expected frames
+    for (int i = expectedFrameIndex; i < framesDroppedArray.Length; ++i)
+    {
+      int index = framesDroppedArray[i];
+      try
+      {
+        if (prevFrameIndex == index - 1)
+          File.Copy(GetDataPath(index - 1, true), GetDataPath(index, true));
+        else
+          File.Copy(GetDataPath(index - 1), GetDataPath(index, true));
+      }
+      catch (IOException)
+      {
+        Debug.LogError("Failed to copy to fill in for missing texture " + index);
+      }
+      prevFrameIndex = index;
+    }
   }
 
   private void PrepareCamRecorder()
@@ -425,6 +472,7 @@ public class CamRecorder : MonoBehaviour
     framesDropped = 0;
     framesCountdown = 0;
     framesSucceeded = 0;
+    m_fileExtension = (useHighResolution) ? ".png" : ".jpg";
 
     try
     {
@@ -434,7 +482,7 @@ public class CamRecorder : MonoBehaviour
     }
     catch (IOException)
     {
-      Debug.LogWarning("Unable to create directory: " + directory);
+      Debug.LogError("Unable to create directory: " + directory);
     }
   }
 
@@ -498,18 +546,15 @@ public class CamRecorder : MonoBehaviour
         SaveRawTexture();
         break;
       case CamRecorderState.Processing:
-        if (framesActual == framesExpect)
-        {
-          StopProcessing();
-        }
-        //else if (m_tempWorker.IsBusy || !QueueIsEmpty(m_tempQueue) || !QueueIsEmpty(m_processQueue))
+        if (m_tempWorker.IsBusy || !QueueIsEmpty(m_tempQueue) || !QueueIsEmpty(m_processQueue))
         {
           ProcessTextures();
         }
-        //else
-        //{
-        //  ProcessMissingTextures();
-        //}
+        else
+        {
+          ProcessMissingTextures();
+          StopProcessing();
+        }
         break;
       default:
         break;
