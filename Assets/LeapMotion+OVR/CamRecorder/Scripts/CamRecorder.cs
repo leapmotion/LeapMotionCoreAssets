@@ -10,8 +10,9 @@ using System.Collections.Generic;
 public class CamRecorder : MonoBehaviour 
 {
   public int frameRate = 30;
-  public GameObject startingIndicators;
-  public Camera syncCamera;
+  public int imageWidth = 1920;
+  public int imageHeight = 1080;
+  public Camera optionalSyncCamera;
 
   [HideInInspector]
   public float duration = 0.0f;
@@ -40,10 +41,12 @@ public class CamRecorder : MonoBehaviour
   private Texture2D m_cameraTexture2D;
   private Rect m_cameraRect;
   private int m_layersToIgnore; // Bit-array represented in int32. 1 = Ignore. 0 = Do not ignore
+  private int m_originalCullingMask;
 
   // Queue and Thread required to optimize camera recorder
   private const int QUEUE_LIMIT = 4;
   private const int TEMP_BYTE_LIMIT = 2000000000; // 2GB because FAT32 limit is 4GB
+  private List<int> m_framesDroppedList;
   private Stack<string> m_tempFilesStack; // We'll write to most recent temp file
   private BackgroundWorker m_tempWorker; // Responsible for save/load temp (raw/buf) data for processing
   private BackgroundWorker m_processWorker; // Responsible for saving processed files
@@ -57,7 +60,6 @@ public class CamRecorder : MonoBehaviour
 
   // Time objects used for countdown and maintaining frames-per-second
   private float m_startCountdownTime = 0.0f;
-  private float m_endCountdownTime = 0.0f;
   private float m_startRecordTime = 0.0f;
   private float m_targetTime = 0.0f;
   private float m_targetInterval = 0.0f;
@@ -85,38 +87,31 @@ public class CamRecorder : MonoBehaviour
         m_tempFilesStack.Clear();
         if (
           System.IO.Directory.Exists(directory) &&
-          Directory.GetFileSystemEntries(directory).Length == 0
+          Directory.GetFiles(directory).Length == 0
           )
         {
           Directory.Delete(directory);
         }
         m_tempQueue.Clear();
         m_processQueue.Clear();
-        if (startingIndicators != null)
-          startingIndicators.gameObject.SetActive(false);
+        m_framesDroppedList.Clear();
         break;
       case CamRecorderState.Countdown:
         PrepareCamRecorder();
         countdownRemaining = Mathf.Max(countdownRemaining, 0.0f);
         m_startCountdownTime = Time.time;
-        m_endCountdownTime = m_startCountdownTime + countdownRemaining;
-        m_targetTime = Time.time + m_targetInterval;
-        framesExpect = 0;
-        framesActual = 0;
-        framesDropped = 0;
+        m_targetTime = m_startCountdownTime + m_targetInterval;
+        m_startRecordTime = m_startCountdownTime + countdownRemaining;
         m_frameIndex = -1; // Countdown Frames have negative frame index
         m_tempWorker.RunWorkerAsync(TempWorkerState.Save);
         break;
       case CamRecorderState.Recording:
-        m_startRecordTime = Time.time;
-        m_targetTime = Time.time + m_targetInterval;
+        m_camera.cullingMask = m_originalCullingMask & ~(m_layersToIgnore);
+        m_targetTime = m_startRecordTime + m_targetInterval;
         m_frameIndex = 0;
-        if (startingIndicators != null)
-          startingIndicators.gameObject.SetActive(true); // Enable indicators for first frame
         break;
       case CamRecorderState.Processing:
-        framesCountdown = 0;
-        framesSucceeded = 0;
+        m_camera.cullingMask = m_originalCullingMask;
         StopWorker(m_tempWorker);
         m_tempWorker.RunWorkerAsync(TempWorkerState.Load);
         m_processWorker.RunWorkerAsync();
@@ -191,6 +186,11 @@ public class CamRecorder : MonoBehaviour
   }
 
   private string GetFullPath(string filename) { return directory + "/" + filename; }
+  private void DropFrame(int frameIndex)
+  {
+    framesDropped++;
+    m_framesDroppedList.Add(frameIndex);
+  }
 
   private void StopWorker(BackgroundWorker worker)
   {
@@ -258,7 +258,7 @@ public class CamRecorder : MonoBehaviour
           }
           catch (IOException)
           {
-            framesDropped++;
+            DropFrame(data.Key);
           }
           if (writer.BaseStream.Length > TEMP_BYTE_LIMIT)
           {
@@ -287,7 +287,7 @@ public class CamRecorder : MonoBehaviour
           }
           catch (IOException) 
           {
-            framesDropped++;
+            DropFrame(data.Key);
           }
           if (reader.BaseStream.Position >= reader.BaseStream.Length)
           {
@@ -328,7 +328,7 @@ public class CamRecorder : MonoBehaviour
       }
       catch (IOException) 
       {
-        framesDropped++;
+        DropFrame(data.Key);
       }
     }
   }
@@ -342,7 +342,7 @@ public class CamRecorder : MonoBehaviour
     KeyValuePair<int, byte[]> data = new KeyValuePair<int, byte[]>(frameIndex, m_cameraTexture2D.GetRawTextureData());
     framesExpect++;
     if (!QueueEnqueue(m_tempQueue, data))
-      framesDropped++;
+      DropFrame(frameIndex);
   }
 
   private void SaveBufTexture()
@@ -360,9 +360,6 @@ public class CamRecorder : MonoBehaviour
     duration = Mathf.Max(Time.time - m_startRecordTime, 0.0f);
     if (Time.time > m_targetTime)
     {
-      if (m_frameIndex == 0)
-        startingIndicators.gameObject.SetActive(false);
-
       SaveCameraTexture(m_frameIndex);
       m_frameIndex++;
       m_targetTime = m_startRecordTime + m_targetInterval * (Mathf.Abs(m_frameIndex) + 1);
@@ -387,40 +384,42 @@ public class CamRecorder : MonoBehaviour
     catch (IOException)
     {
       Debug.LogWarning("ProcessTexture: File cannot be read. Adding data back into queue");
-      QueueEnqueue(m_tempQueue, data);
+      while (!QueueEnqueue(m_tempQueue, data)) ;
     }
   }
 
   private void ProcessMissingTextures()
   {
-    string[] files = Directory.GetFiles(directory);
-    for (int i = 0; i < files.Length; ++i)
+    int[] framesDroppedArray = m_framesDroppedList.ToArray();
+    Array.Sort(framesDroppedArray);
+    for (int i = 0; i < framesDroppedArray.Length; ++i)
     {
-      Debug.Log(Path.GetFileNameWithoutExtension(files[i]));
+      if (i < 0) // Countdown frame dropped
+      {
+
+      }
+      else if (i > 0) // Expected frame dropped
+      {
+
+      }
     }
     framesActual = framesExpect;
   }
 
   private void PrepareCamRecorder()
   {
-    if ((syncCamera != null) && (syncCamera.pixelRect != m_camera.pixelRect))
+    if (optionalSyncCamera != null)
     {
-      m_camera.CopyFrom(syncCamera);
-
-      int width = m_camera.pixelWidth;
-      int height = m_camera.pixelHeight;
-      if (m_cameraRenderTexture != null)
-        Destroy(m_cameraRenderTexture);
-      m_cameraRenderTexture = new RenderTexture(width, height, 24);
-      m_cameraTexture2D.Resize(width, height);
-      m_cameraRect.width = width;
-      m_cameraRect.height = height;
+      m_camera.fieldOfView = optionalSyncCamera.fieldOfView;
+      m_camera.rect = optionalSyncCamera.rect;
+      m_originalCullingMask = optionalSyncCamera.cullingMask;
     }
-    m_camera.cullingMask &= ~(m_layersToIgnore);
-    m_camera.targetTexture = m_cameraRenderTexture;
 
-    if (startingIndicators != null)
-      startingIndicators.transform.localPosition = transform.localPosition + new Vector3(0.0f, 0.0f, m_camera.nearClipPlane + 0.001f);
+    framesExpect = 0;
+    framesActual = 0;
+    framesDropped = 0;
+    framesCountdown = 0;
+    framesSucceeded = 0;
 
     try
     {
@@ -441,11 +440,9 @@ public class CamRecorder : MonoBehaviour
       frameRate = 30;
     m_targetInterval = 1.0f / (float)frameRate;
 
-    int width = m_camera.pixelWidth;
-    int height = m_camera.pixelHeight;
-    m_cameraRenderTexture = new RenderTexture(width, height, 24);
-    m_cameraTexture2D = new Texture2D(width, height, TextureFormat.RGB24, false);
-    m_cameraRect = new Rect(0, 0, width, height);
+    m_cameraRenderTexture = new RenderTexture(imageWidth, imageHeight, 24);
+    m_cameraTexture2D = new Texture2D(imageWidth, imageHeight, TextureFormat.RGB24, false);
+    m_cameraRect = new Rect(0, 0, imageWidth, imageHeight);
     m_camera.targetTexture = m_cameraRenderTexture;
     directory = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
     SetCountdown(0.0f);
@@ -454,6 +451,7 @@ public class CamRecorder : MonoBehaviour
 
   private void SetupMultithread()
   {
+    m_framesDroppedList = new List<int>();
     m_tempFilesStack = new Stack<string>();
     m_tempQueue = new Queue<KeyValuePair<int, byte[]>>();
     m_processQueue = new Queue<KeyValuePair<int, byte[]>>();
@@ -485,10 +483,11 @@ public class CamRecorder : MonoBehaviour
     switch (m_state)
     {
       case CamRecorderState.Countdown:
-        SaveBufTexture();
-        countdownRemaining = Mathf.Max(m_endCountdownTime - Time.time, 0.0f);
+        countdownRemaining = Mathf.Max(m_startRecordTime - Time.time, 0.0f);
         if (countdownRemaining == 0.0f)
           SetState(CamRecorderState.Recording);
+        else
+          SaveBufTexture();
         break;
       case CamRecorderState.Recording:
         SaveRawTexture();
@@ -498,14 +497,14 @@ public class CamRecorder : MonoBehaviour
         {
           StopProcessing();
         }
-        else if (m_tempWorker.IsBusy || !QueueIsEmpty(m_tempQueue) || !QueueIsEmpty(m_processQueue))
+        //else if (m_tempWorker.IsBusy || !QueueIsEmpty(m_tempQueue) || !QueueIsEmpty(m_processQueue))
         {
           ProcessTextures();
         }
-        else
-        {
-          ProcessMissingTextures();
-        }
+        //else
+        //{
+        //  ProcessMissingTextures();
+        //}
         break;
       default:
         break;

@@ -11,6 +11,8 @@ public class CamRecorderInterface : MonoBehaviour {
   public Text instructionText;
   public Text statusText;
   public Text valueText;
+  public RawImage startScreen;
+  public AudioSource startSound;
   public float countdown = 5.0f;
   public bool highResolution = false;
 
@@ -51,16 +53,8 @@ public class CamRecorderInterface : MonoBehaviour {
     if (camRecorder.IsIdling())
     {
       instructionText.text = "'Enter' to Start Recording";
-      if (camRecorder.framesExpect > 0)
-      {
-        statusText.text = GetStatus();
-        valueText.text = camRecorder.directory;
-      }
-      else
-      {
-        statusText.text = GetStatus();
-        valueText.text = "[ Success | Buffer | Dropped ] / Total";
-      }
+      statusText.text = GetStatus();
+      valueText.text = (camRecorder.framesExpect > 0) ? camRecorder.directory : "[ Success | Buffer | Dropped ] / Total";
     }
     else if (camRecorder.IsCountingDown())
     {
@@ -70,6 +64,9 @@ public class CamRecorderInterface : MonoBehaviour {
     }
     else if (camRecorder.IsRecording())
     {
+      startScreen.gameObject.SetActive((camRecorder.duration == 0.0f));
+      startSound.gameObject.SetActive((camRecorder.duration == 0.0f));
+      
       instructionText.text = "'Enter' to End Recording";
       statusText.text = GetStatus();
       valueText.text = "Recording..." + camRecorder.duration.ToString();
