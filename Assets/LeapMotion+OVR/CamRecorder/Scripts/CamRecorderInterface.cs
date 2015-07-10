@@ -21,7 +21,8 @@ public class CamRecorderInterface : MonoBehaviour {
       "[ " +
       camRecorder.framesSucceeded.ToString() + " | " +
       camRecorder.framesCountdown.ToString() + " | " +
-      camRecorder.framesDropped.ToString() + " ] / " +
+      camRecorder.framesDropped.ToString() + " ] " +
+      camRecorder.framesActual.ToString() + "/" +
       camRecorder.framesExpect.ToString();
   }
 
