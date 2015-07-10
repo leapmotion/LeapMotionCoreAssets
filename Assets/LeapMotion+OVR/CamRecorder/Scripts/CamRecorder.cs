@@ -82,9 +82,11 @@ public class CamRecorder : MonoBehaviour
     switch (m_state)
     {
       case CamRecorderState.Idle:
+        m_camera.enabled = false;
         ClearAll();
         break;
       case CamRecorderState.Countdown:
+        m_camera.enabled = true;
         PrepareCamRecorder();
         countdownRemaining = Mathf.Max(countdownRemaining, 0.0f);
         m_startCountdownTime = Time.time;
@@ -514,6 +516,7 @@ public class CamRecorder : MonoBehaviour
     directory = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
     SetCountdown(0.0f);
     ResetLayerToIgnore();
+    m_camera.enabled = false;
   }
 
   private void SetupMultithread()
