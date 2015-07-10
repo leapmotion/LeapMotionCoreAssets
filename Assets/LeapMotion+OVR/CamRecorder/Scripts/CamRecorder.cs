@@ -107,6 +107,7 @@ public class CamRecorder : MonoBehaviour
         m_tempWorker.RunWorkerAsync(TempWorkerState.Save);
         break;
       case CamRecorderState.Recording:
+        m_camera.cullingMask = m_originalCullingMask & ~(m_layersToIgnore);
         m_targetTime = m_startRecordTime + m_targetInterval;
         currFrameIndex = 0;
         break;
@@ -444,6 +445,7 @@ public class CamRecorder : MonoBehaviour
     m_cameraTexture2D = new Texture2D(imageWidth, imageHeight, TextureFormat.RGB24, false);
     m_cameraRect = new Rect(0, 0, imageWidth, imageHeight);
     m_camera.targetTexture = m_cameraRenderTexture;
+    m_originalCullingMask = m_camera.cullingMask;
     directory = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
     SetCountdown(0.0f);
     ResetLayerToIgnore();
