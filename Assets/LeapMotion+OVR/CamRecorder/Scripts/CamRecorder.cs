@@ -32,7 +32,8 @@ public class CamRecorder : MonoBehaviour
   public float countdownRemaining = 0.0f;
   [HideInInspector]
   public bool useHighResolution = false;
-  private int m_frameIndex = 0;
+  [HideInInspector]
+  public int currFrameIndex = 0;
 
   // Objects required to record a camera
   private Camera m_camera;
@@ -102,13 +103,12 @@ public class CamRecorder : MonoBehaviour
         m_startCountdownTime = Time.time;
         m_targetTime = m_startCountdownTime + m_targetInterval;
         m_startRecordTime = m_startCountdownTime + countdownRemaining;
-        m_frameIndex = -1; // Countdown Frames have negative frame index
+        currFrameIndex = -1; // Countdown Frames have negative frame index
         m_tempWorker.RunWorkerAsync(TempWorkerState.Save);
         break;
       case CamRecorderState.Recording:
-        m_camera.cullingMask = m_originalCullingMask & ~(m_layersToIgnore);
         m_targetTime = m_startRecordTime + m_targetInterval;
-        m_frameIndex = 0;
+        currFrameIndex = 0;
         break;
       case CamRecorderState.Processing:
         m_camera.cullingMask = m_originalCullingMask;
@@ -349,9 +349,9 @@ public class CamRecorder : MonoBehaviour
   {
     if (Time.time > m_targetTime)
     {
-      SaveCameraTexture(m_frameIndex);
-      m_frameIndex--;
-      m_targetTime = m_startCountdownTime + m_targetInterval * (Mathf.Abs(m_frameIndex) + 1);
+      SaveCameraTexture(currFrameIndex);
+      currFrameIndex--;
+      m_targetTime = m_startCountdownTime + m_targetInterval * (Mathf.Abs(currFrameIndex) + 1);
     }
   }
 
@@ -360,9 +360,9 @@ public class CamRecorder : MonoBehaviour
     duration = Mathf.Max(Time.time - m_startRecordTime, 0.0f);
     if (Time.time > m_targetTime)
     {
-      SaveCameraTexture(m_frameIndex);
-      m_frameIndex++;
-      m_targetTime = m_startRecordTime + m_targetInterval * (Mathf.Abs(m_frameIndex) + 1);
+      SaveCameraTexture(currFrameIndex);
+      currFrameIndex++;
+      m_targetTime = m_startRecordTime + m_targetInterval * (Mathf.Abs(currFrameIndex) + 1);
     }
   }
 

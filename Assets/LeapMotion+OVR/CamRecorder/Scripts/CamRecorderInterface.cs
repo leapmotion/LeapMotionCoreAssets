@@ -64,8 +64,8 @@ public class CamRecorderInterface : MonoBehaviour {
     }
     else if (camRecorder.IsRecording())
     {
-      startScreen.gameObject.SetActive((camRecorder.duration == 0.0f));
-      startSound.gameObject.SetActive((camRecorder.duration == 0.0f));
+      startScreen.gameObject.SetActive((camRecorder.currFrameIndex == 0));
+      startSound.gameObject.SetActive((camRecorder.currFrameIndex == 0));
       
       instructionText.text = "'Enter' to End Recording";
       statusText.text = GetStatus();
