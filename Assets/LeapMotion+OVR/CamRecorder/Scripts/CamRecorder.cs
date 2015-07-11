@@ -48,7 +48,6 @@ public class CamRecorder : MonoBehaviour
   private const int QUEUE_LIMIT = 4;
   private const int TEMP_BYTE_LIMIT = 2000000000; // 2GB because FAT32 limit is 4GB
   private const string COUNTDOWN_PREFIX = ".";
-  private const string CORRUPTED_SUFFIX = "-";
   private List<int> m_framesDroppedList;
   private Stack<string> m_tempFilesStack; // We'll write to most recent temp file
   private BackgroundWorker m_logWorker;
@@ -83,12 +82,14 @@ public class CamRecorder : MonoBehaviour
     switch (m_state)
     {
       case CamRecorderState.Idle:
+        LogComment("CamRecorderState.Idle");
         m_camera.enabled = false;
         ClearAndStopAll();
         break;
       case CamRecorderState.Countdown:
         m_camera.enabled = true;
         PrepareCamRecorder();
+        LogComment("CamRecorderState.Countdown");
         countdownRemaining = Mathf.Max(countdownRemaining, 0.0f);
         m_startCountdownTime = Time.time;
         m_targetTime = m_startCountdownTime + m_targetInterval;
@@ -97,10 +98,12 @@ public class CamRecorder : MonoBehaviour
         StartWorker(m_tempWorker, m_tempQueue, TempWorkerState.Save);
         break;
       case CamRecorderState.Recording:
+        LogComment("CamRecorderState.Recording");
         m_targetTime = m_startRecordTime + m_targetInterval;
         currFrameIndex = 0; // Expect Frames have positive frame index
         break;
       case CamRecorderState.Processing:
+        LogComment("CamRecorderState.Processing");
         StopWorker(m_tempWorker);
         StartWorker(m_tempWorker, m_tempQueue, TempWorkerState.Load);
         StartWorker(m_processWorker, m_processQueue);
@@ -117,6 +120,7 @@ public class CamRecorder : MonoBehaviour
   /// <param name="quality"></param>
   public void StartRecording()
   {
+    LogComment("StartRecording Triggered");
     if (m_state == CamRecorderState.Idle)
     {
       SetState(CamRecorderState.Countdown);
@@ -128,6 +132,7 @@ public class CamRecorder : MonoBehaviour
   /// </summary>
   public void StopRecording()
   {
+    LogComment("StopRecording Triggered");
     if (m_state == CamRecorderState.Recording)
     {
       SetState(CamRecorderState.Processing);
@@ -143,8 +148,14 @@ public class CamRecorder : MonoBehaviour
   /// </summary>
   public void StopProcessing()
   {
+    LogComment("StopProcessing Triggered");
     if (m_state == CamRecorderState.Processing)
     {
+      LogComment("Frames recorded after countdown: " + framesSucceeded.ToString());
+      LogComment("Frames recorded during countdown: " + framesCountdown.ToString());
+      LogComment("Frames dropped: " + framesDropped.ToString());
+      LogComment("Frames actually recorded: " + framesActual.ToString());
+      LogComment("Frames expected to record: " + framesExpect.ToString());
       SetState(CamRecorderState.Idle);
     }
   }
@@ -161,19 +172,18 @@ public class CamRecorder : MonoBehaviour
   public void SetCountdown(float seconds) { countdownRemaining = seconds; }
 
   private string GetFullPath(string filename) { return directory + "/" + filename; }
-  private string GetDataPath(int index, bool isCorrupt = false)
+  private string GetDataPath(int index)
   {
     string filename = (index >= 0) ? (index).ToString() : COUNTDOWN_PREFIX + (-index).ToString();
-    if (isCorrupt)
-      filename += CORRUPTED_SUFFIX;
-    if (index >= 0)
-      return GetFullPath(filename + m_fileExtension);
-    else
-      return GetFullPath(filename + m_fileExtension);
+    return GetFullPath(filename + m_fileExtension);
   }
+
+  private void LogComment(string log) { QueueEnqueue(m_logQueue, GetCurrentTime() + " : " + log); }
+  private void LogError(string log) { QueueEnqueue(m_logQueue, GetCurrentTime() + " [ERR] : " + log); }
   
   private void DropFrame(int frameIndex)
   {
+    LogError("Frame#" + frameIndex.ToString() + " dropped");
     framesDropped++;
     m_framesDroppedList.Add(frameIndex);
   }
@@ -231,9 +241,23 @@ public class CamRecorder : MonoBehaviour
     }
   }
 
+  private string GetCurrentTime() { return DateTime.Now.ToString("yyyy.MM.dd HH:mm:ss.fff"); }
   private void LogQueueWork(object sender, DoWorkEventArgs e)
   {
-
+    BackgroundWorker worker = (BackgroundWorker)sender;
+    StreamWriter writer = new StreamWriter(GetFullPath("log.txt"));
+    string log = "";
+    while (!worker.CancellationPending)
+    {
+      try
+      {
+        if (!QueueDequeue(m_logQueue, out log))
+          continue;
+        writer.WriteLine(log);
+      }
+      catch { }
+    }
+    writer.Close();
   }
 
   private void TempQueueWork(object sender, DoWorkEventArgs e)
@@ -392,8 +416,22 @@ public class CamRecorder : MonoBehaviour
     }
     catch (IOException)
     {
-      Debug.LogError("ProcessTexture: File cannot be read. Adding data back into queue");
+      LogError("ProcessTexture: File cannot be read. Adding data back into queue");
       while (!QueueEnqueue(m_tempQueue, data)) ;
+    }
+  }
+
+  private void ReplaceFrame(int currIndex, int replaceIndex)
+  {
+    try
+    {
+      File.Copy(GetDataPath(replaceIndex), GetDataPath(currIndex));
+      LogComment("Detected Frame#" + currIndex.ToString() + " dropped. Replaced with Frame#" + replaceIndex.ToString());
+      framesActual++;
+    }
+    catch (IOException)
+    {
+      LogError("Failed to copy to fill in for missing texture " + currIndex);
     }
   }
 
@@ -404,7 +442,6 @@ public class CamRecorder : MonoBehaviour
 
     // Initialize the index for countdown and expected frames
     int expectedFrameIndex = 0;
-    int prevFrameIndex = 0;
     for (int i = 0; i < framesDroppedArray.Length; ++i)
     {
       if (framesDroppedArray[i] > 0)
@@ -417,37 +454,15 @@ public class CamRecorder : MonoBehaviour
     // Fill in countdown frames
     for (int i = expectedFrameIndex - 1; i >= 0; --i)
     {
-      int index = framesDroppedArray[i];
-      try
-      {
-        if (prevFrameIndex == index + 1)
-          File.Copy(GetDataPath(index + 1, true), GetDataPath(index, true));
-        else
-          File.Copy(GetDataPath(index + 1), GetDataPath(index, true));
-      }
-      catch (IOException)
-      {
-        Debug.LogError("Failed to copy to fill in for missing texture " + index);
-      }
-      prevFrameIndex = index;
+      int frameIndex = framesDroppedArray[i];
+      ReplaceFrame(frameIndex, frameIndex + 1);
     }
     
     // Fill in expected frames
     for (int i = expectedFrameIndex; i < framesDroppedArray.Length; ++i)
     {
-      int index = framesDroppedArray[i];
-      try
-      {
-        if (prevFrameIndex == index - 1)
-          File.Copy(GetDataPath(index - 1, true), GetDataPath(index, true));
-        else
-          File.Copy(GetDataPath(index - 1), GetDataPath(index, true));
-      }
-      catch (IOException)
-      {
-        Debug.LogError("Failed to copy to fill in for missing texture " + index);
-      }
-      prevFrameIndex = index;
+      int frameIndex = framesDroppedArray[i];
+      ReplaceFrame(frameIndex, frameIndex - 1);
     }
   }
 
@@ -476,8 +491,14 @@ public class CamRecorder : MonoBehaviour
     }
     catch (IOException)
     {
-      Debug.LogError("Unable to create directory: " + directory);
+      LogError("Unable to create directory: " + directory + ". Recording aborted");
+      SetState(CamRecorderState.Idle);
+      return;
     }
+
+    StartWorker(m_logWorker, m_logQueue);
+    LogComment("Frame Rate: " + frameRate.ToString());
+    LogComment("High Resolution: " + useHighResolution.ToString());
   }
 
   private void SetupCamera()
@@ -520,6 +541,7 @@ public class CamRecorder : MonoBehaviour
 
   private void ClearAndStopAll()
   {
+    StopWorker(m_logWorker);
     StopWorker(m_tempWorker);
     StopWorker(m_processWorker);
     m_framesDroppedList.Clear();
@@ -547,7 +569,6 @@ public class CamRecorder : MonoBehaviour
   {
     SetupCamera();
     SetupMultithread();
-    ClearAndStopAll();
   }
 
   void OnPostRender()
@@ -567,7 +588,6 @@ public class CamRecorder : MonoBehaviour
       case CamRecorderState.Processing:
         if (!m_processWorker.IsBusy)
         {
-          // Stop processing if process worker stopped working
           ProcessMissingTextures();
           StopProcessing();
         }
