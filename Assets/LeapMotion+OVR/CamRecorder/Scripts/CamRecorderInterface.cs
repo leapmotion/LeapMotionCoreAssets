@@ -14,6 +14,9 @@ public class CamRecorderInterface : MonoBehaviour {
   public Text valueText;
   public float countdown = 5.0f;
   public bool highResolution = false;
+  public List<GameObject> hideDuringRecording = new List<GameObject>();
+
+  private int m_hideLayer = 0;
 
   private string GetStatus()
   {
@@ -24,6 +27,15 @@ public class CamRecorderInterface : MonoBehaviour {
       camRecorder.framesDropped.ToString() + " ] " +
       camRecorder.framesActual.ToString() + "/" +
       camRecorder.framesExpect.ToString();
+  }
+
+  void Start()
+  {
+    m_hideLayer = LayerMask.NameToLayer(""); // Find available layer to use
+    for (int i = 0; i < hideDuringRecording.Count; ++i)
+    {
+      hideDuringRecording[i].layer = m_hideLayer; // Assign all objects to this layer
+    }
   }
 
 	void Update () {
@@ -38,7 +50,7 @@ public class CamRecorderInterface : MonoBehaviour {
         camRecorder.useHighResolution = highResolution;
         camRecorder.directory = Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         camRecorder.SetCountdown(countdown);
-        camRecorder.AddLayerToIgnore(instructionText.gameObject.layer);
+        camRecorder.AddLayersToIgnore(m_hideLayer);
         camRecorder.StartRecording();
       }
       else if (camRecorder.IsRecording() || camRecorder.IsCountingDown())
