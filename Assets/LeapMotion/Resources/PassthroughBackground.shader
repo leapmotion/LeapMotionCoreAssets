@@ -23,7 +23,7 @@
     
     //Global Coordinate Transformation of viewer from Now to ImageTimestamp
     //If warping will not be used this must be equal to the identity.
-    float4x4 _ViewerNowToImage;
+    float4x4 _ViewerImageFromNow;
 
     struct frag_in{
       float4 position : SV_POSITION;
@@ -37,7 +37,7 @@
       //(2) Apply the global transform
       //NOTE: Rotating viewer from Image to Now is equivalent to inverse rotation applied to work
       //(3) Apply the view and project matrices to derive the warped screen position
-      o.position = mul(UNITY_MATRIX_P, mul(_ViewerNowToImage, mul(UNITY_MATRIX_MV, v.vertex)));
+      o.position = mul(UNITY_MATRIX_P, mul(_ViewerImageFromNow, mul(UNITY_MATRIX_MV, v.vertex)));
       //o.position = mul(UNITY_MATRIX_P, mul(UNITY_MATRIX_MV, v.vertex));
       //o.position = mul(UNITY_MATRIX_MVP, v.vertex);
       

@@ -19,6 +19,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   public LeapImageRetriever leftImages;
   public LeapImageRetriever rightImages;
   public HandController handController;
+  public List<LeapImageBasedMaterial> warpedImages;
   
   [Header("Target History (micro-seconds)")]
   public long maxLatency = 100000; //microseconds
@@ -32,7 +33,8 @@ public class LeapCameraAlignment : MonoBehaviour {
   public float ovrLatency = 0;
   public KeyCode moreRewind = KeyCode.LeftArrow;
   public KeyCode lessRewind = KeyCode.RightArrow;
-  public float rewindAdjust = 0f; //Frame fraction
+  public float rewindAdjust = 1f; //Frame fraction
+  public float dbg_warp = 0f;
 
   protected struct TransformData {
     public long leapTime; // microseconds
@@ -153,8 +155,9 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
 
     UpdateHistory ();
-    UpdateRewind ();
+    //UpdateRewind ();
     UpdateAlignment ();
+    UpdateTimeWarp ();
   }
   
   void UpdateHistory () {
@@ -205,8 +208,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
   
   void UpdateRewind () {
-    //FIXME: leapLatency should be replaced with deltaImage
-    long rewindTime = leftImages.ImageNow () - (long)(frameLatency.value) - (long)(rewindAdjust*frameLatency.value);
+    long rewindTime = leftImages.ImageNow () - (long)(imageLatency.value) - (long)(rewindAdjust*frameLatency.value);
     long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(timeFrame - rewindTime));
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
@@ -219,16 +221,6 @@ public class LeapCameraAlignment : MonoBehaviour {
     leftImages.transform.position = handController.transform.parent.position - virtualCameraRadius * handController.transform.parent.right;
     leftImages.transform.rotation = past.rotation;
   }
-  
-//  void UpdateTimeWarp () {
-//    //FIXME: leapLatency should be replaced with deltaImage
-//    long rewindTime = leftImages.ImageNow () - (long)(frameLatency.value) - (long)(rewindAdjust*frameLatency.value);
-//    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(timeFrame - rewindTime));
-//    TransformData past = TransformAtTime(rewindTime + tweenAddition);
-//
-//    //TODO: Derive _ViewerNowToImage
-//    //NOTE: If applied after UpdateRewind this will compensate only for required rewinding...
-//  }
 
   void UpdateAlignment () {
     Vector3 addIPD = 0.5f * virtualCameraStereo.normalized * (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * virtualCameraStereo.magnitude);
@@ -236,6 +228,30 @@ public class LeapCameraAlignment : MonoBehaviour {
     handController.transform.parent.position = handController.transform.parent.position + toDevice;
     leftImages.transform.position = handController.transform.parent.position - addIPD;
     rightImages.transform.position = handController.transform.parent.position + addIPD;
+  }
+  
+  void UpdateTimeWarp () {
+    long rewindTime = leftImages.ImageNow () - (long)(imageLatency.value) - (long)(rewindAdjust*frameLatency.value);
+    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(timeFrame - rewindTime));
+    TransformData past = TransformAtTime(rewindTime + tweenAddition);
+
+    // Apply only a rotation ~ assume all objects are infinitely distant
+    //Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, past.rotation * Quaternion.Inverse(transform.rotation),Vector3.one);
+
+//    float dbg_angle;
+//    Vector3 dbg_axis;
+//    (past.rotation * Quaternion.Inverse(transform.rotation)).ToAngleAxis(out dbg_angle, out dbg_axis);
+//    Debug.Log("ImageFromNow ~ " + (dbg_angle * dbg_axis));
+    // RESULT: Rotation from Right to Forward is positive
+
+    // HERE: Apply the Axis Angle decomposition & construction to test definitions!
+    Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, Quaternion.AngleAxis(dbg_warp, new Vector3(0f, 1f, 0f)),Vector3.one);
+
+    foreach (LeapImageBasedMaterial image in warpedImages) {
+      image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageFromNow", ImageFromNow);
+
+      Debug.Log(image.transform.parent.name + " Transform = " + image.GetComponent<Renderer>().material.GetMatrix("_ViewerImageFromNow"));
+    }
   }
 
   bool IsFinite(float f) {
