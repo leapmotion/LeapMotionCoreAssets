@@ -12,7 +12,9 @@ public class CamRecorder : MonoBehaviour
   public int frameRate = 30;
   public int imageWidth = 1920;
   public int imageHeight = 1080;
-  public Camera optionalSyncCamera;
+  public Camera optionalSyncCam;
+  public bool optionalSyncCamFOV = true;
+  public bool optionalSyncCamLayers = true;
 
   [HideInInspector]
   public float duration = 0.0f;
@@ -468,12 +470,18 @@ public class CamRecorder : MonoBehaviour
 
   private void PrepareCamRecorder()
   {
-    if (optionalSyncCamera != null)
+    if (optionalSyncCam != null)
     {
-      m_camera.fieldOfView = optionalSyncCamera.fieldOfView;
-      m_camera.clearFlags = optionalSyncCamera.clearFlags;
-      m_camera.backgroundColor = optionalSyncCamera.backgroundColor;
-      m_camera.cullingMask = optionalSyncCamera.cullingMask;
+      if (optionalSyncCamFOV)
+      {
+        m_camera.fieldOfView = optionalSyncCam.fieldOfView;
+      }
+      if (optionalSyncCamLayers)
+      {
+        m_camera.clearFlags = optionalSyncCam.clearFlags;
+        m_camera.backgroundColor = optionalSyncCam.backgroundColor;
+        m_camera.cullingMask = optionalSyncCam.cullingMask;
+      }
     }
     m_camera.cullingMask &= ~(m_layersToIgnore);
 
