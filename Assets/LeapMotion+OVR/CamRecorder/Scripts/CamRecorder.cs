@@ -471,7 +471,8 @@ public class CamRecorder : MonoBehaviour
     if (optionalSyncCamera != null)
     {
       m_camera.fieldOfView = optionalSyncCamera.fieldOfView;
-      m_camera.rect = optionalSyncCamera.rect;
+      m_camera.clearFlags = optionalSyncCamera.clearFlags;
+      m_camera.backgroundColor = optionalSyncCamera.backgroundColor;
       m_camera.cullingMask = optionalSyncCamera.cullingMask;
     }
     m_camera.cullingMask &= ~(m_layersToIgnore);
