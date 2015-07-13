@@ -12,7 +12,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   public float tweenForward = 1f;
   
   public float latencySmoothing = 1f; //State delay in seconds
-  public SmoothedFloat leapLatency;
+  public SmoothedFloat frameLatency;
   public SmoothedFloat imageLatency;
 
   [Header("Alignment Targets")]
@@ -32,7 +32,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   public float ovrLatency = 0;
   public KeyCode moreRewind = KeyCode.LeftArrow;
   public KeyCode lessRewind = KeyCode.RightArrow;
-  public long rewindAdjust = 0;
+  public float rewindAdjust = 0f; //Frame fraction
 
   protected struct TransformData {
     public long leapTime; // microseconds
@@ -103,7 +103,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     imageLatency = new SmoothedFloat () {
       delay = latencySmoothing
     };
-    leapLatency = new SmoothedFloat () {
+    frameLatency = new SmoothedFloat () {
       delay = latencySmoothing
     };
   }
@@ -140,10 +140,10 @@ public class LeapCameraAlignment : MonoBehaviour {
 
     //DEBUG
     if (Input.GetKeyDown (moreRewind)) {
-      rewindAdjust += 1000; //ms
+      rewindAdjust += 0.1f;
     }
     if (Input.GetKeyDown (lessRewind)) {
-      rewindAdjust -= 1000; //ms
+      rewindAdjust -= 0.1f;
     }
     if (Input.GetKeyDown (KeyCode.Alpha0)) {
       tweenTimeWarp = 0f;
@@ -153,7 +153,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
 
     UpdateHistory ();
-    UpdateTimeWarp ();
+    UpdateRewind ();
     UpdateAlignment ();
   }
   
@@ -162,6 +162,32 @@ public class LeapCameraAlignment : MonoBehaviour {
     // Append latest position & rotation of stereo camera rig
     lastFrame = timeFrame;
     timeFrame = leftImages.LeapNow ();
+
+    // DEBUG
+    if (OVRManager.display != null) {
+      ovrLatency = OVRManager.display.latency.render;
+    } else {
+      ovrLatency = 0f;
+    }
+    
+    //TODO: Move this to UpdateHistory
+    long deltaFrame = timeFrame - lastFrame;
+    long deltaImage = timeFrame - leftImages.ImageNow ();
+    if (2 * (deltaFrame + deltaImage) < maxLatency) {
+      frameLatency.Update ((float)deltaFrame, Time.deltaTime);
+      imageLatency.Update ((float)deltaImage, Time.deltaTime);
+      //Debug.Log ("Leap deltaTime = " + ((float)deltaTime / 1000f) + " ms");
+      //Debug.Log ("Unity deltaTime = " + (Time.deltaTime * 1000f) + " ms");
+      // RESULT: Leap & Unity deltaTime measurements are consistent within error tolerance.
+      // Leap deltaTime will be used, since it references the same clock as images.
+    } else {
+      // Expect high latency during initial frames
+      Debug.LogWarning ("Maximum latency exceeded: " + ((float)deltaFrame / 1000f) + " ms");
+      frameLatency.value = ((float) maxLatency) / 1000f;
+      frameLatency.reset = true;
+    }
+
+    // Add current camera position and rotation to history
     history.Add (new TransformData () {
       leapTime = timeFrame,
       position = transform.position,
@@ -178,31 +204,9 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
   }
   
-  void UpdateTimeWarp () {
-    // DEBUG
-    if (OVRManager.display != null) {
-      ovrLatency = OVRManager.display.latency.render;
-    } else {
-      ovrLatency = 0f;
-    }
-
-    long deltaFrame = timeFrame - lastFrame;
-    long deltaImage = timeFrame - leftImages.ImageNow ();
-    if (2 * (deltaFrame + deltaImage) < maxLatency) {
-      imageLatency.Update ((float)deltaImage, Time.deltaTime);
-      leapLatency.Update ((float)(deltaFrame + deltaImage), Time.deltaTime);
-      //Debug.Log ("Leap deltaTime = " + ((float)deltaTime / 1000f) + " ms");
-      //Debug.Log ("Unity deltaTime = " + (Time.deltaTime * 1000f) + " ms");
-      // RESULT: Leap & Unity deltaTime measurements are consistent.
-      // Leap deltaTime will be used, since it references the same clock as images.
-    } else {
-      // High latency during initial frames
-      Debug.LogWarning ("Maximum latency exceeded: " + ((float)deltaFrame / 1000f) + " ms");
-      leapLatency.value = ((float) maxLatency) / 1000f;
-      leapLatency.reset = true;
-    }
-
-    long rewindTime = leftImages.ImageNow () - 2 * (long)(leapLatency.value) - rewindAdjust;
+  void UpdateRewind () {
+    //FIXME: leapLatency should be replaced with deltaImage
+    long rewindTime = leftImages.ImageNow () - (long)(frameLatency.value) - (long)(rewindAdjust*frameLatency.value);
     long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(timeFrame - rewindTime));
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
@@ -215,6 +219,16 @@ public class LeapCameraAlignment : MonoBehaviour {
     leftImages.transform.position = handController.transform.parent.position - virtualCameraRadius * handController.transform.parent.right;
     leftImages.transform.rotation = past.rotation;
   }
+  
+//  void UpdateTimeWarp () {
+//    //FIXME: leapLatency should be replaced with deltaImage
+//    long rewindTime = leftImages.ImageNow () - (long)(frameLatency.value) - (long)(rewindAdjust*frameLatency.value);
+//    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(timeFrame - rewindTime));
+//    TransformData past = TransformAtTime(rewindTime + tweenAddition);
+//
+//    //TODO: Derive _ViewerNowToImage
+//    //NOTE: If applied after UpdateRewind this will compensate only for required rewinding...
+//  }
 
   void UpdateAlignment () {
     Vector3 addIPD = 0.5f * virtualCameraStereo.normalized * (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * virtualCameraStereo.magnitude);

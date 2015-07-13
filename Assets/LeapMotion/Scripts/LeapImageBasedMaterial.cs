@@ -21,7 +21,7 @@ public class LeapImageBasedMaterial : MonoBehaviour {
 	void OnEnable() {
 		LeapImageRetriever.registerImageBasedMaterial(this);
 
-		Material image = GetComponent<Renderer>().material;
+		Material imageBasedMaterial = GetComponent<Renderer>().material;
         
 		//Initialize gamma correction
 		float gamma = 1f;
@@ -29,10 +29,10 @@ public class LeapImageBasedMaterial : MonoBehaviour {
 			gamma = -Mathf.Log10(Mathf.GammaToLinearSpace(0.1f));
 			//Debug.Log ("Derived gamma = " + gamma);
 		}
-		image.SetFloat ("_ColorSpaceGamma", gamma);
+		imageBasedMaterial.SetFloat ("_ColorSpaceGamma", gamma);
 		
 		//Initialize the Time-Warp to be the identity
-		image.SetMatrix("_ViewerNowToImage", Matrix4x4.identity);
+		imageBasedMaterial.SetMatrix("_ViewerNowToImage", Matrix4x4.identity);
     }
 
     void OnDisable() {

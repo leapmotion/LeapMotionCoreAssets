@@ -14,15 +14,6 @@ using Leap;
 // To use the LeapImageRetriever you must be on version 2.1+
 // and enable "Allow Images" in the Leap Motion settings.
 public class LeapImageRetriever : MonoBehaviour {
-  //DEBUG
-  public long lastframetime;
-  public long lastpostrender;
-  public long frametime;
-  public long update;
-  public long lateupdate;
-  public long precull;
-  public long postrender;
-
     public const string IR_SHADER_VARIANT_NAME = "LEAP_FORMAT_IR";
     public const string RGB_SHADER_VARIANT_NAME = "LEAP_FORMAT_RGB";
     public const string DEPTH_TEXTURE_VARIANT_NAME = "USE_DEPTH_TEXTURE";
@@ -229,10 +220,7 @@ public class LeapImageRetriever : MonoBehaviour {
     }
 
     void Update() {
-        update = LeapNow ();
         Frame frame = _controller.Frame();
-        lastframetime = frametime;
-        frametime = frame.Timestamp;
 
         if (frame.Hands.Count == 0) {
             _requestDistortionRecalc = true;
@@ -242,10 +230,6 @@ public class LeapImageRetriever : MonoBehaviour {
             _imageList = frame.Images;
             //Debug.Log (name + " SYNC_WITH_HANDS: frame.Timestamp: " + frame.Timestamp + " - imageList.Timestamp: " + _imageList[0].Timestamp + " = " + (frame.Timestamp - _imageList[0].Timestamp));
         }
-    }
-
-    void LateUpdate() {
-      lateupdate = LeapNow ();
     }
 
     void OnPreRender() {
@@ -309,14 +293,5 @@ public class LeapImageRetriever : MonoBehaviour {
   /// <returns>The current time using the same clock as GetImageNow</returns>
   public long LeapNow() {
     return _controller.Now ();
-  }
-
-  void OnPreCull() {
-    precull = LeapNow ();
-  }
-
-  void OnPostRender() {
-    lastpostrender = postrender;
-    postrender = LeapNow ();
   }
 }
