@@ -97,14 +97,17 @@ public class LeapImageRetriever : MonoBehaviour {
         imageBasedMaterial.GetComponent<Renderer>().material.SetFloat("_LeapGammaCorrectionExponent", 1.0f / gammaCorrection);
     }
 
-    private void updateImageBasedMaterial(LeapImageBasedMaterial imageBasedMaterial, ref Image image) {
-        imageBasedMaterial.GetComponent<Renderer>().material.SetTexture("_LeapTexture", _mainTexture);
+  private void updateImageBasedMaterial(LeapImageBasedMaterial imageBasedMaterial, ref Image image) {
+        Camera camera = GetComponent<Camera>();
+        Material material = imageBasedMaterial.GetComponent<Renderer>().material;
+        material.SetTexture("_LeapTexture", _mainTexture);
 
         Vector4 projection = new Vector4();
-        projection.x = GetComponent<Camera>().projectionMatrix[0, 2];
-        projection.z = GetComponent<Camera>().projectionMatrix[0, 0];
-        projection.w = GetComponent<Camera>().projectionMatrix[1, 1];
-        imageBasedMaterial.GetComponent<Renderer>().material.SetVector("_LeapProjection", projection);
+        projection.x = camera.projectionMatrix[0, 2];
+        projection.y = 0f;
+        projection.z = camera.projectionMatrix[0, 0];
+        projection.w = camera.projectionMatrix[1, 1];
+        material.SetVector("_LeapProjection", projection);
 
         if (_distortion == null) {
             initDistortion(image);
@@ -118,7 +121,14 @@ public class LeapImageRetriever : MonoBehaviour {
             _forceDistortionRecalc = false;
         }
 
-        imageBasedMaterial.GetComponent<Renderer>().material.SetTexture("_LeapDistortion", _distortion);
+        material.SetTexture("_LeapDistortion", _distortion);
+
+        // Set camera parameters
+        float vHalfView = camera.fieldOfView * Mathf.Deg2Rad / 2f;
+        float hHalfView = vHalfView * camera.aspect;
+        material.SetFloat("_vHalfView", vHalfView);
+        material.SetFloat("_hHalfView", hHalfView);
+        material.SetMatrix("_InverseView", camera.worldToCameraMatrix.inverse);
     }
 
     private TextureFormat getTextureFormat(Image image) {

@@ -28,7 +28,7 @@
     uniform float _ColorSpaceGamma;
     
     //Missing Camera Matrix
-    float4x4 _InvVPMatrix;
+    float4x4 _InverseView;
     
     //Global Coordinate Transformation of viewer from Now to ImageTimestamp
     //If warping will not be used this must be equal to the identity.
@@ -40,21 +40,6 @@
     
     float _hHalfView;
     float _vHalfView;
-
-	// Source:
-	// http://answers.unity3d.com/questions/783770/screenspace-to-worldspace-in-computeshader.html
-	float4 ComputeWorldPos(float3 screenPos)
-	{
-		// Transform pixel space to clipping space
-		screenPos.x = screenPos.x * (2.0f / _ScreenParams.x) - 1.0f;
-		screenPos.y =  1.0f - screenPos.y * (2.0f / _ScreenParams.y);
-		
-		// Do inverse VP multiplication
-		float4 worldPos = mul(_InvVPMatrix, float4(screenPos, 1f));
-		
-		// Calculate final world position
-		return worldPos;
-	}
 
     struct frag_in{
       float4 position : SV_POSITION;
@@ -82,15 +67,6 @@
       //PROBLEM: I need to know the transformation from screen
       //NEED: Camera.fieldOfView = vertical field of view in degrees
       //NEED: Camera.aspect * Camera.fieldOfView = horizontal field of view in degrees
-      
-      //TEST 1: Try projecting & then un-projecting
-//	  float3 guess = i.screenPos;
-//	  guess.z = i.position.z;
-//	  float4 test = ComputeWorldPos(guess);
-//	  test.xy *= _dbg_Scale;
-//	  test = mul(UNITY_MATRIX_VP, test);
-//      return float4(pow(LeapColor(ComputeScreenPos(test)), 1/_ColorSpaceGamma), 1);
-      
       //NEXT: Try constructing 3 vectors, applying rotation, then reprojecting to screen coordinates.
     
       //return float4(pow(LeapColor(i.screenPos), 1/_ColorSpaceGamma), 1);
@@ -98,8 +74,10 @@
       //TEST
       float2 window = 1.0 - 2.0*i.screenPos.xy/i.screenPos.w;
       //range (-1,1), x is horizontal, y is vertical, origin is center
-      float4 viewdir = float4(tan(_hHalfView)*window.x, tan(_vHalfView)*window.y, 1.0, 0.0);
-      float4 proj = mul(UNITY_MATRIX_P, viewdir);
+      float4 viewDir = float4(tan(_hHalfView)*window.x, tan(_vHalfView)*window.y, 1.0, 0.0);
+      float4 worldDir = mul(_InverseView, viewDir);
+      //HERE: Apply the time warping
+      float4 proj = mul(UNITY_MATRIX_VP, worldDir);
       float4 sp = ComputeScreenPos(proj);
       
       float2 wcoord = sp.xy / sp.w;
