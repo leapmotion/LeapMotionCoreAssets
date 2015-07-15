@@ -25,7 +25,8 @@ public class TouchCubeHelpMenu : MonoBehaviour {
       + "\n- : Reduce Virtual IPD";
     }
     helpText += 
-        "\nA : Turn IPD Alignment " + cameraAlignmentToState
+        "\nX : Use Time Warping"
+      + "\nA : Turn IPD Alignment " + cameraAlignmentToState
       + "\nO : Overlay Image Modes";
     textField.text = helpText;
   }

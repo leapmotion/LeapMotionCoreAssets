@@ -4,7 +4,7 @@
     _hView ("Horizontal View Degrees", Float) = 60.0
     _vView ("Vertical View Degrees", Float) = 60.0
     _useTimeWarp ("Use Time Warp", Int) = 0
-    _dbgTest("Original, Reprojected, R-O, O-R, Black", Int) = 0
+    //_dbgTest("Original, Reprojected, R-O, O-R, Black", Int) = 0
   }
 
   SubShader {
@@ -28,7 +28,7 @@
     float _vView;
     int _useTimeWarp;
     
-    int _dbgTest;
+    //int _dbgTest;
     
     //Missing Camera Matrix
     float4x4 _InverseView;
@@ -60,35 +60,34 @@
         return float4(pow(LeapColor(i.screenPos), 1/_ColorSpaceGamma), 1);
       }
       
-      // Map pixels to window coordinates
+      // Map pixels to clipping coordinates
       float2 window = 1.0 - 2.0*i.screenPos.xy/i.screenPos.w;
       //range (-1,1), x is horizontal, y is vertical, origin is center
       
       // Map window coordinates to world coordinates
       float4 viewDir = float4(tan(radians(_hView) / 2.0)*window.x, tan(radians(_vView) / 2.0)*window.y, 1.0, 0.0);
-      //float4 worldDir = mul(_InverseView, viewDir);
+      float4 worldDir = mul(_InverseView, viewDir);
       
       // Apply time warping
-      //worldDir = mul(_ViewerImageFromNow, worldDir);
+      worldDir = mul(_ViewerImageFromNow, worldDir);
       
       // Return to pixel coordinates
-      //float4 proj = mul(UNITY_MATRIX_VP, worldDir);
-      float4 proj = mul(UNITY_MATRIX_P, viewDir);
+      float4 proj = mul(UNITY_MATRIX_VP, worldDir);
+      //float4 proj = mul(UNITY_MATRIX_P, viewDir);
       float4 sp = ComputeScreenPos(proj);
       
-      //return float4(pow(LeapColor(sp), 1/_ColorSpaceGamma), 1);
-      if (_dbgTest < 1) {
-        return fixed4(i.screenPos.xy / i.screenPos.w, 0.0, 1.0);
-      }
-      if (_dbgTest < 2) {
-        return fixed4(sp.xy / sp.w, 0.0, 1.0);
-      }
-      if (_dbgTest < 3) {
-        return fixed4((sp.xy / sp.w) - (i.screenPos.xy / i.screenPos.xy), 0.0, 1.0);
-      }
-      if (_dbgTest < 4) {
-        return fixed4((i.screenPos.xy / i.screenPos.xy) - (sp.xy / sp.w), 0.0, 1.0);
-      }
+//      if (_dbgTest < 1) {
+//        return fixed4(i.screenPos.xy / i.screenPos.w, 0.0, 1.0);
+//      }
+//      if (_dbgTest < 2) {
+//        return fixed4(sp.xy / sp.w, 0.0, 1.0);
+//      }
+//      if (_dbgTest < 3) {
+//        return fixed4((sp.xy / sp.w) - (i.screenPos.xy / i.screenPos.xy), 0.0, 1.0);
+//      }
+//      if (_dbgTest < 4) {
+//        return fixed4((i.screenPos.xy / i.screenPos.xy) - (sp.xy / sp.w), 0.0, 1.0);
+//      }
       return float4(pow(LeapColor(sp), 1/_ColorSpaceGamma), 1);
       
 //      float2 wcoord = i.screenPos.xy/i.screenPos.w;

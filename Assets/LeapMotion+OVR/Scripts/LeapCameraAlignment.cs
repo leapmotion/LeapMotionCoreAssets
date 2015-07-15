@@ -35,7 +35,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   public KeyCode lessRewind = KeyCode.RightArrow;
   public float rewindAdjust = 1f; //Frame fraction
   public float dbg_warp = 0f;
-  public KeyCode swapPassthrough = KeyCode.X;
+  public KeyCode useTimeWarp = KeyCode.X;
 
   protected struct TransformData {
     public long leapTime; // microseconds
@@ -154,7 +154,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     if (Input.GetKeyDown (KeyCode.Alpha1)) {
       tweenTimeWarp = 1f;
     }
-    if (Input.GetKeyDown (swapPassthrough)) {
+    if (Input.GetKeyDown (useTimeWarp)) {
       foreach(LeapImageBasedMaterial image in warpedImages) {
         Material material = image.gameObject.GetComponent<Renderer>().material;
         if (material.GetInt ("_useTimeWarp") == 0) {
