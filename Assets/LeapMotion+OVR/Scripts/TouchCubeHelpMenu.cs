@@ -18,15 +18,9 @@ public class TouchCubeHelpMenu : MonoBehaviour {
     }
     string helpText = "H : Help Hide/Show" 
       + "\nR : Reset Virtual Cameras"
-      + "\nRet. : Cycle IPD Alignment";
-    if (!cameraAlignment.enabled) {
-      helpText += 
-        "\n+ : Increase Virtual IPD"
-      + "\n- : Reduce Virtual IPD";
-    }
+      + "\nRet. : Cycle Space-Time Alignment";
     helpText += 
-        "\nX : Use Time Warping"
-      + "\nA : Turn IPD Alignment " + cameraAlignmentToState
+        "\nA : Turn IPD Alignment " + cameraAlignmentToState
       + "\nO : Overlay Image Modes";
     textField.text = helpText;
   }

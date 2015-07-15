@@ -21,8 +21,8 @@ public class TouchCubeQueues : MonoBehaviour {
   public GameObject noAlignmentCanvas;
   public GameObject playerRescaleCanvas;
   public GameObject alignedViewsCanvas;
-  public GameObject synchronizedCanvas;
-  public GameObject timewarpingCanvas;
+  public GameObject rewindViewsCanvas;
+  public GameObject warpImagesCanvas;
 
   private int demoStage = 0;
 	
@@ -32,15 +32,17 @@ public class TouchCubeQueues : MonoBehaviour {
       return;
     }
     switch (demoStage) {
-    case 0:
+    case 0: // No Alignment
       helpMenuCanvas.SetActive(false);
-      alignment.tweenPosition = 0f;
+      alignment.tweenRewind = 0f;
       alignment.tweenTimeWarp = 0f;
+      alignment.tweenTimeWarp = 0f;
+      alignment.tweenPosition = 0f;
       handController.transform.localScale = Vector3.one / rescale.decreaseFactor;
       noAlignmentCanvas.SetActive(true);
       demoStage++;
       break;
-    case 1:
+    case 1: // Player Rescale
       noAlignmentCanvas.SetActive(false);
       handController.transform.localScale = Vector3.one;
       rescale.enabled = true;
@@ -48,7 +50,7 @@ public class TouchCubeQueues : MonoBehaviour {
       playerRescaleCanvas.SetActive(true);
       demoStage++;
       break;
-    case 2:
+    case 2: // IPD Alignment
       playerRescaleCanvas.SetActive(false);
       rescale.ResetScale();
       rescale.enabled = false;
@@ -56,10 +58,17 @@ public class TouchCubeQueues : MonoBehaviour {
       alignedViewsCanvas.SetActive(true);
       demoStage++;
       break;
-    case 3:
+    case 3: // IPD Alignment + Rewind
       alignedViewsCanvas.SetActive(false);
+      alignment.tweenRewind = 1f;
+      rewindViewsCanvas.SetActive(true);
+      demoStage++;
+      break;
+    case 4: // IPD Alignment + TimeWarp
+      rewindViewsCanvas.SetActive(false);
+      alignment.tweenRewind = 0f;
       alignment.tweenTimeWarp = 1f;
-      synchronizedCanvas.SetActive(true);
+      warpImagesCanvas.SetActive(true);
       demoStage++;
       break;
     default:
@@ -74,10 +83,11 @@ public class TouchCubeQueues : MonoBehaviour {
     noAlignmentCanvas.SetActive (false);
     playerRescaleCanvas.SetActive (false);
     alignedViewsCanvas.SetActive (false);
-    synchronizedCanvas.SetActive (false);
-    timewarpingCanvas.SetActive (false);
-    alignment.tweenPosition = 1f;
+    rewindViewsCanvas.SetActive (false);
+    warpImagesCanvas.SetActive (false);
+    alignment.tweenRewind = 0f;
     alignment.tweenTimeWarp = 1f;
+    alignment.tweenPosition = 1f;
     rescale.ResetScale ();
   }
 }

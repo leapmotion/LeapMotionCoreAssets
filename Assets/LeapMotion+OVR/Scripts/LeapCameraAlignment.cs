@@ -5,10 +5,12 @@ using Leap;
 
 public class LeapCameraAlignment : MonoBehaviour {
   [Range(0,1)]
-  public float tweenPosition = 1f;
+  public float tweenRewind = 0f;
   [Range(0,1)]
   public float tweenTimeWarp = 1f;
-  [Range(0,1)]
+  [Range(0,2)]
+  public float tweenPosition = 1f;
+  [Range(0,2)]
   public float tweenForward = 1f;
   
   public float latencySmoothing = 1f; //State delay in seconds
@@ -153,9 +155,9 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
 
     UpdateHistory ();
-    //UpdateRewind ();
-    UpdateAlignment ();
+    UpdateRewind ();
     UpdateTimeWarp ();
+    UpdateAlignment ();
   }
   
   void UpdateHistory () {
@@ -200,7 +202,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   
   void UpdateRewind () {
     long rewindTime = leftImages.ImageNow () - (long)(imageLatency.value) - (long)(rewindAdjust*frameLatency.value);
-    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(timeFrame - rewindTime));
+    long tweenAddition = (long)((1f - tweenRewind) * (float)(timeFrame - rewindTime));
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
     // Move Virtual cameras to synchronize position & orientation
@@ -212,6 +214,19 @@ public class LeapCameraAlignment : MonoBehaviour {
     leftImages.transform.position = handController.transform.parent.position - virtualCameraRadius * handController.transform.parent.right;
     leftImages.transform.rotation = past.rotation;
   }
+  
+  void UpdateTimeWarp () {
+    long rewindTime = leftImages.ImageNow () - (long)(imageLatency.value) - (long)(rewindAdjust*frameLatency.value);
+    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(timeFrame - rewindTime));
+    TransformData past = TransformAtTime(rewindTime + tweenAddition);
+    
+    // Apply only a rotation ~ assume all objects are infinitely distant
+    Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, transform.rotation * Quaternion.Inverse(past.rotation), Vector3.one);
+    
+    foreach (LeapImageBasedMaterial image in warpedImages) {
+      image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageToNow", ImageFromNow);
+    }
+  }
 
   void UpdateAlignment () {
     Vector3 addIPD = 0.5f * virtualCameraStereo.normalized * (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * virtualCameraStereo.magnitude);
@@ -219,19 +234,6 @@ public class LeapCameraAlignment : MonoBehaviour {
     handController.transform.parent.position = handController.transform.parent.position + toDevice;
     leftImages.transform.position = handController.transform.parent.position - addIPD;
     rightImages.transform.position = handController.transform.parent.position + addIPD;
-  }
-  
-  void UpdateTimeWarp () {
-    long rewindTime = leftImages.ImageNow () - (long)(imageLatency.value) - (long)(rewindAdjust*frameLatency.value);
-    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(timeFrame - rewindTime));
-    TransformData past = TransformAtTime(rewindTime + tweenAddition);
-
-    // Apply only a rotation ~ assume all objects are infinitely distant
-    Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, transform.rotation * Quaternion.Inverse(past.rotation), Vector3.one);
-
-    foreach (LeapImageBasedMaterial image in warpedImages) {
-      image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageToNow", ImageFromNow);
-    }
   }
 
   bool IsFinite(float f) {

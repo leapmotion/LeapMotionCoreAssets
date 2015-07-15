@@ -30,7 +30,7 @@ public class CompensatedRescale : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 	  if (unlockHold != KeyCode.None &&
-      !Input.GetKey (unlockHold)) {
+        !Input.GetKey (unlockHold)) {
       return;
     }
     if (Input.GetKeyDown (resetScale)) {
@@ -39,10 +39,12 @@ public class CompensatedRescale : MonoBehaviour {
     }
     if (Input.GetKeyDown (increaseScale)) {
       IncreaseScale();
+      Debug.Log ("IncreaseScale");
       return;
     }
     if (Input.GetKeyDown (decreaseScale)) {
       DecreaseScale();
+      Debug.Log ("DecreaseScale");
       return;
     }
   }

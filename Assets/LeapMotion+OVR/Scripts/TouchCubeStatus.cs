@@ -13,10 +13,10 @@ public class TouchCubeStatus : MonoBehaviour {
     statusText += "REWIND ADJUST: " + (cameraAlignment.rewindAdjust).ToString ("#00.0") + " frames\n";
 //    if (OVRManager.display != null) {
 //      float ovrLatency = OVRManager.display.latency.render;
-//      statusText += "OVR RENDER: " + (cameraAlignment.ovrLatency * 1000f).ToString ("#00.0") + " ms\n";
+//      statusText += "OVR RENDER: " + (OVRManager.display.latency.render * 1000f).ToString ("#00.0") + " ms\n";
+//      statusText += "TIME WARP: " + (OVRManager.display.latency.timeWarp * 1000f).ToString ("#00.0") + " ms\n";
+//      statusText += "POST PRESENT: " + (OVRManager.display.latency.postPresent * 1000f).ToString ("#00.0") + " ms";
 //    }
-    //statusText += "TIME WARP: " + (1000f * cameraAlignment.latency.timeWarp).ToString ("#00.0") + " ms\n";
-    //statusText += "POST PRESENT: " + (1000f * cameraAlignment.latency.postPresent).ToString ("#00.0") + " ms";
     textField.text = statusText;
 	}
 }
