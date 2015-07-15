@@ -71,17 +71,25 @@
     
       //return float4(pow(LeapColor(i.screenPos), 1/_ColorSpaceGamma), 1);
       
-      //TEST
+      // Map pixels to window coordinates
       float2 window = 1.0 - 2.0*i.screenPos.xy/i.screenPos.w;
       //range (-1,1), x is horizontal, y is vertical, origin is center
+      
+      // Map window coordinates to world coordinates
       float4 viewDir = float4(tan(_hHalfView)*window.x, tan(_vHalfView)*window.y, 1.0, 0.0);
       float4 worldDir = mul(_InverseView, viewDir);
-      //HERE: Apply the time warping
+      
+      // Apply time warping
+      worldDir = mul(_ViewerImageFromNow, worldDir);
+      
+      // Return to pixel coordinates
       float4 proj = mul(UNITY_MATRIX_VP, worldDir);
       float4 sp = ComputeScreenPos(proj);
       
-      float2 wcoord = sp.xy / sp.w;
-      return fixed4(wcoord.xy, 0.0, 1.0);
+      return float4(pow(LeapColor(sp), 1/_ColorSpaceGamma), 1);
+      
+//      float2 wcoord = sp.xy / sp.w;
+//      return fixed4(wcoord.xy, 0.0, 1.0);
       
 //      float2 wcoord = i.screenPos.xy/i.screenPos.w;
 //      fixed4 color;
