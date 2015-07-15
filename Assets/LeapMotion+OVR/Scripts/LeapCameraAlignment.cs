@@ -34,7 +34,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   public KeyCode moreRewind = KeyCode.LeftArrow;
   public KeyCode lessRewind = KeyCode.RightArrow;
   public float rewindAdjust = 1f; //Frame fraction
-  public float dbg_warp = 0f;
   public KeyCode useTimeWarp = KeyCode.X;
 
   protected struct TransformData {
@@ -247,21 +246,14 @@ public class LeapCameraAlignment : MonoBehaviour {
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
     // Apply only a rotation ~ assume all objects are infinitely distant
-    //Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, past.rotation * Quaternion.Inverse(transform.rotation),Vector3.one);
-
-    float dbg_angle;
-    Vector3 dbg_axis;
-    (past.rotation * Quaternion.Inverse(transform.rotation)).ToAngleAxis(out dbg_angle, out dbg_axis);
-    Debug.Log("Rewind Angle*Axis ~ " + (dbg_angle * dbg_axis));
-    // RESULT: Rotation from Right to Forward is positive
-
-    // HERE: Apply the Axis Angle decomposition & construction to test definitions!
-    Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, Quaternion.AngleAxis(dbg_warp, new Vector3(0f, 1f, 0f)),Vector3.one);
+    //Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, past.rotation * Quaternion.Inverse(transform.rotation), Vector3.one);
+    //Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, Quaternion.Inverse(past.rotation * Quaternion.Inverse(transform.rotation)), Vector3.one);
+    Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, transform.rotation * Quaternion.Inverse(past.rotation), Vector3.one);
 
     foreach (LeapImageBasedMaterial image in warpedImages) {
       image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageFromNow", ImageFromNow);
 
-      Debug.Log(image.transform.parent.name + " DBG Transform = " + image.GetComponent<Renderer>().material.GetMatrix("_ViewerImageFromNow"));
+      Debug.Log(image.transform.parent.name + " ViewerImageFromNow Transform = " + image.GetComponent<Renderer>().material.GetMatrix("_ViewerImageFromNow"));
     }
   }
 
