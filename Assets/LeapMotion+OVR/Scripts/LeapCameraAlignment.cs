@@ -30,11 +30,9 @@ public class LeapCameraAlignment : MonoBehaviour {
   private Vector3 virtualCameraStereo;
   
   //DEBUG
-  public float ovrLatency = 0;
   public KeyCode moreRewind = KeyCode.LeftArrow;
   public KeyCode lessRewind = KeyCode.RightArrow;
   public float rewindAdjust = 1f; //Frame fraction
-  public KeyCode useTimeWarp = KeyCode.X;
 
   protected struct TransformData {
     public long leapTime; // microseconds
@@ -153,16 +151,6 @@ public class LeapCameraAlignment : MonoBehaviour {
     if (Input.GetKeyDown (KeyCode.Alpha1)) {
       tweenTimeWarp = 1f;
     }
-    if (Input.GetKeyDown (useTimeWarp)) {
-      foreach(LeapImageBasedMaterial image in warpedImages) {
-        Material material = image.gameObject.GetComponent<Renderer>().material;
-        if (material.GetInt ("_useTimeWarp") == 0) {
-          image.gameObject.GetComponent<Renderer>().material.SetInt("_useTimeWarp", 1);
-        } else {
-          image.gameObject.GetComponent<Renderer>().material.SetInt("_useTimeWarp", 0);
-        }
-      }
-    }
 
     UpdateHistory ();
     //UpdateRewind ();
@@ -175,13 +163,6 @@ public class LeapCameraAlignment : MonoBehaviour {
     // Append latest position & rotation of stereo camera rig
     lastFrame = timeFrame;
     timeFrame = leftImages.LeapNow ();
-
-    // DEBUG
-    if (OVRManager.display != null) {
-      ovrLatency = OVRManager.display.latency.render;
-    } else {
-      ovrLatency = 0f;
-    }
     
     //TODO: Move this to UpdateHistory
     long deltaFrame = timeFrame - lastFrame;
@@ -246,14 +227,10 @@ public class LeapCameraAlignment : MonoBehaviour {
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
     // Apply only a rotation ~ assume all objects are infinitely distant
-    //Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, past.rotation * Quaternion.Inverse(transform.rotation), Vector3.one);
-    //Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, Quaternion.Inverse(past.rotation * Quaternion.Inverse(transform.rotation)), Vector3.one);
     Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, transform.rotation * Quaternion.Inverse(past.rotation), Vector3.one);
 
     foreach (LeapImageBasedMaterial image in warpedImages) {
-      image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageFromNow", ImageFromNow);
-
-      Debug.Log(image.transform.parent.name + " ViewerImageFromNow Transform = " + image.GetComponent<Renderer>().material.GetMatrix("_ViewerImageFromNow"));
+      image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageToNow", ImageFromNow);
     }
   }
 

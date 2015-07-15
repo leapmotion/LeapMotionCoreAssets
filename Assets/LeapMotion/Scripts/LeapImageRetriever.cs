@@ -124,10 +124,9 @@ public class LeapImageRetriever : MonoBehaviour {
         material.SetTexture("_LeapDistortion", _distortion);
 
         // Set camera parameters
-        float vView = camera.fieldOfView;
-        float hView = vView * camera.aspect * scaleAspect;
-        material.SetFloat("_vView", vView);
-        material.SetFloat("_hView", hView);
+        // NOTE: Oculus requires an aspect ratio correction
+        material.SetFloat("_VirtualCameraV", camera.fieldOfView);
+        material.SetFloat("_VirtualCameraH", camera.fieldOfView * camera.aspect * scaleAspect);
         material.SetMatrix("_InverseView", camera.worldToCameraMatrix.inverse);
     }
 

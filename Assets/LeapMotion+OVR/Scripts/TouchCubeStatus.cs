@@ -10,8 +10,11 @@ public class TouchCubeStatus : MonoBehaviour {
     Text textField = GetComponent<Text> ();
     string statusText = "IMAGE LATENCY: " + (cameraAlignment.imageLatency.value / 1000f).ToString("#00.0") + " ms\n";
     statusText += "LEAP RENDER: " + (cameraAlignment.frameLatency.value / 1000f).ToString ("#00.0") + " ms\n";
-    statusText += "OVR RENDER: " + (cameraAlignment.ovrLatency * 1000f).ToString ("#00.0") + " ms\n";
     statusText += "REWIND ADJUST: " + (cameraAlignment.rewindAdjust).ToString ("#00.0") + " frames\n";
+//    if (OVRManager.display != null) {
+//      float ovrLatency = OVRManager.display.latency.render;
+//      statusText += "OVR RENDER: " + (cameraAlignment.ovrLatency * 1000f).ToString ("#00.0") + " ms\n";
+//    }
     //statusText += "TIME WARP: " + (1000f * cameraAlignment.latency.timeWarp).ToString ("#00.0") + " ms\n";
     //statusText += "POST PRESENT: " + (1000f * cameraAlignment.latency.postPresent).ToString ("#00.0") + " ms";
     textField.text = statusText;
