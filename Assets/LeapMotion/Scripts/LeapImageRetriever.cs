@@ -33,7 +33,7 @@ public class LeapImageRetriever : MonoBehaviour {
     [Tooltip ("Should the image match the tracked hand, or should it be displayed as fast as possible")]
     public SYNC_MODE syncMode = SYNC_MODE.LOW_LATENCY;
     public float gammaCorrection = 1.0f;
-
+    public float scaleAspect = 1.09f; // This is required to correctly set the Oculus horizontal field of view
 
     private int _missedImages = 0;
     private Controller _controller;
@@ -124,10 +124,10 @@ public class LeapImageRetriever : MonoBehaviour {
         material.SetTexture("_LeapDistortion", _distortion);
 
         // Set camera parameters
-        float vHalfView = camera.fieldOfView * Mathf.Deg2Rad / 2f;
-        float hHalfView = vHalfView * camera.aspect;
-        material.SetFloat("_vHalfView", vHalfView);
-        material.SetFloat("_hHalfView", hHalfView);
+        float vView = camera.fieldOfView;
+        float hView = vView * camera.aspect * scaleAspect;
+        material.SetFloat("_vView", vView);
+        material.SetFloat("_hView", hView);
         material.SetMatrix("_InverseView", camera.worldToCameraMatrix.inverse);
     }
 

@@ -35,6 +35,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   public KeyCode lessRewind = KeyCode.RightArrow;
   public float rewindAdjust = 1f; //Frame fraction
   public float dbg_warp = 0f;
+  public KeyCode swapPassthrough = KeyCode.X;
 
   protected struct TransformData {
     public long leapTime; // microseconds
@@ -153,6 +154,16 @@ public class LeapCameraAlignment : MonoBehaviour {
     if (Input.GetKeyDown (KeyCode.Alpha1)) {
       tweenTimeWarp = 1f;
     }
+    if (Input.GetKeyDown (swapPassthrough)) {
+      foreach(LeapImageBasedMaterial image in warpedImages) {
+        Material material = image.gameObject.GetComponent<Renderer>().material;
+        if (material.GetInt ("_useTimeWarp") == 0) {
+          image.gameObject.GetComponent<Renderer>().material.SetInt("_useTimeWarp", 1);
+        } else {
+          image.gameObject.GetComponent<Renderer>().material.SetInt("_useTimeWarp", 0);
+        }
+      }
+    }
 
     UpdateHistory ();
     //UpdateRewind ();
@@ -238,10 +249,10 @@ public class LeapCameraAlignment : MonoBehaviour {
     // Apply only a rotation ~ assume all objects are infinitely distant
     //Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, past.rotation * Quaternion.Inverse(transform.rotation),Vector3.one);
 
-//    float dbg_angle;
-//    Vector3 dbg_axis;
-//    (past.rotation * Quaternion.Inverse(transform.rotation)).ToAngleAxis(out dbg_angle, out dbg_axis);
-//    Debug.Log("ImageFromNow ~ " + (dbg_angle * dbg_axis));
+    float dbg_angle;
+    Vector3 dbg_axis;
+    (past.rotation * Quaternion.Inverse(transform.rotation)).ToAngleAxis(out dbg_angle, out dbg_axis);
+    Debug.Log("Rewind Angle*Axis ~ " + (dbg_angle * dbg_axis));
     // RESULT: Rotation from Right to Forward is positive
 
     // HERE: Apply the Axis Angle decomposition & construction to test definitions!
@@ -250,7 +261,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     foreach (LeapImageBasedMaterial image in warpedImages) {
       image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageFromNow", ImageFromNow);
 
-      Debug.Log(image.transform.parent.name + " Transform = " + image.GetComponent<Renderer>().material.GetMatrix("_ViewerImageFromNow"));
+      Debug.Log(image.transform.parent.name + " DBG Transform = " + image.GetComponent<Renderer>().material.GetMatrix("_ViewerImageFromNow"));
     }
   }
 
