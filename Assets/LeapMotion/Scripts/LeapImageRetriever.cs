@@ -33,7 +33,7 @@ public class LeapImageRetriever : MonoBehaviour {
     [Tooltip ("Should the image match the tracked hand, or should it be displayed as fast as possible")]
     public SYNC_MODE syncMode = SYNC_MODE.LOW_LATENCY;
     public float gammaCorrection = 1.0f;
-
+    public float scaleAspect = 1.09f; // This is required to correctly set the Oculus horizontal field of view
 
     private int _missedImages = 0;
     private Controller _controller;
@@ -97,14 +97,17 @@ public class LeapImageRetriever : MonoBehaviour {
         imageBasedMaterial.GetComponent<Renderer>().material.SetFloat("_LeapGammaCorrectionExponent", 1.0f / gammaCorrection);
     }
 
-    private void updateImageBasedMaterial(LeapImageBasedMaterial imageBasedMaterial, ref Image image) {
-        imageBasedMaterial.GetComponent<Renderer>().material.SetTexture("_LeapTexture", _mainTexture);
+  private void updateImageBasedMaterial(LeapImageBasedMaterial imageBasedMaterial, ref Image image) {
+        Camera camera = GetComponent<Camera>();
+        Material material = imageBasedMaterial.GetComponent<Renderer>().material;
+        material.SetTexture("_LeapTexture", _mainTexture);
 
         Vector4 projection = new Vector4();
-        projection.x = GetComponent<Camera>().projectionMatrix[0, 2];
-        projection.z = GetComponent<Camera>().projectionMatrix[0, 0];
-        projection.w = GetComponent<Camera>().projectionMatrix[1, 1];
-        imageBasedMaterial.GetComponent<Renderer>().material.SetVector("_LeapProjection", projection);
+        projection.x = camera.projectionMatrix[0, 2];
+        projection.y = 0f;
+        projection.z = camera.projectionMatrix[0, 0];
+        projection.w = camera.projectionMatrix[1, 1];
+        material.SetVector("_LeapProjection", projection);
 
         if (_distortion == null) {
             initDistortion(image);
@@ -118,7 +121,13 @@ public class LeapImageRetriever : MonoBehaviour {
             _forceDistortionRecalc = false;
         }
 
-        imageBasedMaterial.GetComponent<Renderer>().material.SetTexture("_LeapDistortion", _distortion);
+        material.SetTexture("_LeapDistortion", _distortion);
+
+        // Set camera parameters
+        // NOTE: Oculus requires an aspect ratio correction
+        material.SetFloat("_VirtualCameraV", camera.fieldOfView);
+        material.SetFloat("_VirtualCameraH", camera.fieldOfView * camera.aspect * scaleAspect);
+        material.SetMatrix("_InverseView", camera.worldToCameraMatrix.inverse);
     }
 
     private TextureFormat getTextureFormat(Image image) {
@@ -228,12 +237,14 @@ public class LeapImageRetriever : MonoBehaviour {
 
         if (syncMode == SYNC_MODE.SYNC_WITH_HANDS) {
             _imageList = frame.Images;
+            //Debug.Log (name + " SYNC_WITH_HANDS: frame.Timestamp: " + frame.Timestamp + " - imageList.Timestamp: " + _imageList[0].Timestamp + " = " + (frame.Timestamp - _imageList[0].Timestamp));
         }
     }
 
     void OnPreRender() {
         if (syncMode == SYNC_MODE.LOW_LATENCY) {
-            _imageList = _controller.Images;
+          _imageList = _controller.Images;
+          //if (!_imageList.IsEmpty) Debug.Log (name + " LOW_LATENCY: controller.Now(): " + _controller.Now() + " - imageList.Timestamp: " + _imageList[0].Timestamp + " = " + (_controller.Now() - _imageList[0].Timestamp));
         }
 
         Image referenceImage = _imageList[(int)eye];
@@ -278,4 +289,18 @@ public class LeapImageRetriever : MonoBehaviour {
             }
         }
     }
+
+  /// <returns>The time at which the current image was recorded, in microseconds</returns>
+  public long ImageNow() {
+    if (_imageList.IsEmpty) {
+      Debug.LogWarning ("ImageNow has no images -> defaulting to LeapNow");
+      return LeapNow();
+    }
+    return _imageList [0].Timestamp;
+  }
+
+  /// <returns>The current time using the same clock as GetImageNow</returns>
+  public long LeapNow() {
+    return _controller.Now ();
+  }
 }

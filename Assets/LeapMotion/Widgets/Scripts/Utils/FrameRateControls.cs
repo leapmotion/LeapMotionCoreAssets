@@ -12,16 +12,16 @@ public class FrameRateControls : MonoBehaviour {
   public int targetRenderRateStep = 1;
   public int fixedPhysicsRate = 50; // must be > 0
   public int fixedPhysicsRateStep = 1;
-  public KeyCode physicsI = KeyCode.RightShift;
+  public KeyCode unlockRender = KeyCode.RightShift;
+  public KeyCode unlockPhysics = KeyCode.LeftShift;
   public KeyCode decrease = KeyCode.DownArrow;
   public KeyCode increase = KeyCode.UpArrow;
-  public KeyCode resetAll = KeyCode.Delete;
+  public KeyCode resetRate = KeyCode.Delete;
 
 	// Use this for initialization
 	void Awake () {
 		if (QualitySettings.vSyncCount != 0) {
-			Debug.Log("vSync will override target frame rate");
-			return;
+      Debug.LogWarning ("vSync will override target frame rate. vSyncCount = " + QualitySettings.vSyncCount);
 		}
 
     Application.targetFrameRate = targetRenderRate;
@@ -29,19 +29,8 @@ public class FrameRateControls : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update () {
-    if (Input.GetKey (physicsI)) {
-      if (Input.GetKeyDown (decrease)) {
-        if (fixedPhysicsRate > fixedPhysicsRateStep) {
-          fixedPhysicsRate -= fixedPhysicsRateStep;
-          Time.fixedDeltaTime = 1f/((float)fixedPhysicsRate);
-        }
-      }
-      if (Input.GetKeyDown (increase)) {
-        fixedPhysicsRate += fixedPhysicsRateStep;
-        Time.fixedDeltaTime = 1f/((float)fixedPhysicsRate);
-      }
-    } else {
+  void Update () {
+    if (Input.GetKey (unlockRender)) {
       if (Input.GetKeyDown (decrease)) {
         if (targetRenderRate > targetRenderRateStep) {
           targetRenderRate -= targetRenderRateStep;
@@ -52,16 +41,39 @@ public class FrameRateControls : MonoBehaviour {
         targetRenderRate += targetRenderRateStep;
         Application.targetFrameRate = targetRenderRate;
       }
+      if (Input.GetKeyDown (resetRate)) {
+        ResetRender();
+      }
     }
-    if (Input.GetKeyDown (resetAll)) {
-      Reset();
+    if (Input.GetKey (unlockPhysics)) {
+      if (Input.GetKeyDown (decrease)) {
+        if (fixedPhysicsRate > fixedPhysicsRateStep) {
+          fixedPhysicsRate -= fixedPhysicsRateStep;
+          Time.fixedDeltaTime = 1f/((float)fixedPhysicsRate);
+        }
+      }
+      if (Input.GetKeyDown (increase)) {
+        fixedPhysicsRate += fixedPhysicsRateStep;
+        Time.fixedDeltaTime = 1f/((float)fixedPhysicsRate);
+      }
+      if (Input.GetKeyDown (resetRate)) {
+        ResetPhysics();
+      }
     }
   }
 
-  public void Reset() {
+  public void ResetRender() {
     targetRenderRate = 60;
-    fixedPhysicsRate = 50;
     Application.targetFrameRate = -1;
+  }
+
+  public void ResetPhysics() {
+    fixedPhysicsRate = 50;
     Time.fixedDeltaTime = 0.02f;
+  }
+  
+  public void ResetAll() {
+    ResetRender ();
+    ResetPhysics ();
   }
 }

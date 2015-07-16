@@ -135,7 +135,7 @@ public class OVRGridCube : MonoBehaviour
 				
 				// No shadows
 				Renderer r = cube.GetComponent<Renderer>();
-				r.castShadows    = false;
+        r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 				r.receiveShadows = false;
 				
 				// Cube line is white down the middle
