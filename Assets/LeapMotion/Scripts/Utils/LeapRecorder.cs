@@ -141,7 +141,7 @@ public class LeapRecorder {
       The filename is automatically chosen and is stored in Unity's persistant data path. */
   public string SaveToNewFile() {
     string path = Application.persistentDataPath + "/Recording_" +
-                  System.DateTime.Now.ToString("yyyy MM dd hh-mm-ss") + ".bytes";
+                  System.DateTime.Now.ToString("yyyyMMdd_hhmmss") + ".bytes";
     return SaveToNewFile(path);
   }
 
