@@ -34,7 +34,7 @@ public class HandController : MonoBehaviour {
   /** Conversion factor for millimeters to meters. */
   protected const float MM_TO_M = 0.001f;
 
-  /** Whether to use a separate model for left and right hands (true); or mirror the same model for both hands (false). */ 
+  /** Whether to use a separate model for left and right hands (true); or mirror the same model for both hands (false). */
   public bool separateLeftRight = false;
   /** The GameObject containing graphics to use for the left hand or both hands if separateLeftRight is false. */
   public HandModel leftGraphicsModel;
@@ -72,10 +72,10 @@ public class HandController : MonoBehaviour {
   public float recorderSpeed = 1.0f;
   /** Whether to loop the playback. */
   public bool recorderLoop = true;
-  
+
   /** The object used to control recording and playback.*/
-  protected LeapRecorder recorder_ = new LeapRecorder();
-  
+  protected LeapRecorder recorder_;
+
   /** The underlying Leap Motion Controller object.*/
   protected Controller leap_controller_;
 
@@ -89,7 +89,7 @@ public class HandController : MonoBehaviour {
   private bool flag_initialized_ = false;
   private long prev_graphics_id_ = 0;
   private long prev_physics_id_ = 0;
-  
+
   /** Draws the Leap Motion gizmo when in the Unity editor. */
   void OnDrawGizmos() {
     // Draws the little Leap Motion Controller in the Editor view.
@@ -101,8 +101,7 @@ public class HandController : MonoBehaviour {
   * Initializes the Leap Motion policy flags.
   * The POLICY_OPTIMIZE_HMD flag improves tracking for head-mounted devices.
   */
-  void InitializeFlags()
-  {
+  void InitializeFlags() {
     // Optimize for top-down tracking if on head mounted display.
     Controller.PolicyFlag policy_flags = leap_controller_.PolicyFlags;
     if (isHeadMounted)
@@ -116,6 +115,7 @@ public class HandController : MonoBehaviour {
   /** Creates a new Leap Controller object. */
   void Awake() {
     leap_controller_ = new Controller();
+    recorder_ = new LeapRecorder();
   }
 
   /** Initalizes the hand and tool lists and recording, if enabled.*/
@@ -179,7 +179,7 @@ public class HandController : MonoBehaviour {
   * @param left_model The HandModel instance to use for new left hands.
   * @param right_model The HandModel instance to use for new right hands.
   */
-	protected void UpdateHandModels(Dictionary<int, HandModel> all_hands,
+  protected void UpdateHandModels(Dictionary<int, HandModel> all_hands,
                                   HandList leap_hands,
                                   HandModel left_model, HandModel right_model) {
     List<int> ids_to_check = new List<int>(all_hands.Keys);
@@ -188,7 +188,7 @@ public class HandController : MonoBehaviour {
     int num_hands = leap_hands.Count;
     for (int h = 0; h < num_hands; ++h) {
       Hand leap_hand = leap_hands[h];
-      
+
       HandModel model = (mirrorZAxis != leap_hand.IsLeft) ? left_model : right_model;
 
       // If we've mirrored since this hand was updated, destroy it.
@@ -216,8 +216,7 @@ public class HandController : MonoBehaviour {
           new_hand.InitHand();
           new_hand.UpdateHand();
           all_hands[leap_hand.Id] = new_hand;
-        }
-        else {
+        } else {
           // Make sure we update the Leap Hand reference.
           HandModel hand_model = all_hands[leap_hand.Id];
           hand_model.SetLeapHand(leap_hand);
@@ -264,7 +263,7 @@ public class HandController : MonoBehaviour {
     int num_tools = leap_tools.Count;
     for (int h = 0; h < num_tools; ++h) {
       Tool leap_tool = leap_tools[h];
-      
+
       // Only create or update if the tool is enabled.
       if (model) {
 
@@ -303,6 +302,11 @@ public class HandController : MonoBehaviour {
     return leap_controller_;
   }
 
+  /** Returns the Leap Recorder instance used by this Hand Controller. */
+  public LeapRecorder GetLeapRecorder() {
+    return recorder_;
+  }
+
   /**
   * Returns the latest frame object.
   *
@@ -310,7 +314,7 @@ public class HandController : MonoBehaviour {
   * Otherwise, the frame comes from the Leap Motion Controller itself.
   */
   public Frame GetFrame() {
-    if (enableRecordPlayback && recorder_.state == RecorderState.Playing)
+    if (enableRecordPlayback && (recorder_.state == RecorderState.Playing || recorder_.state == RecorderState.Paused))
       return recorder_.GetCurrentFrame();
 
     return leap_controller_.Frame();
@@ -320,16 +324,14 @@ public class HandController : MonoBehaviour {
   void Update() {
     if (leap_controller_ == null)
       return;
-    
+
     UpdateRecorder();
     Frame frame = GetFrame();
 
-    if (frame != null && !flag_initialized_)
-    {
+    if (frame != null && !flag_initialized_) {
       InitializeFlags();
     }
-    if (frame.Id != prev_graphics_id_)
-    {
+    if (frame.Id != prev_graphics_id_) {
       UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
       prev_graphics_id_ = frame.Id;
     }
@@ -342,8 +344,7 @@ public class HandController : MonoBehaviour {
 
     Frame frame = GetFrame();
 
-    if (frame.Id != prev_physics_id_)
-    {
+    if (frame.Id != prev_physics_id_) {
       UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
       UpdateToolModels(tools_, frame.Tools, toolModel);
       prev_physics_id_ = frame.Id;
@@ -364,7 +365,7 @@ public class HandController : MonoBehaviour {
     }
     // TODO: Add baseline & offset when included in API
     // NOTE: Alternative is to use device type since all parameters are invariant
-    info.isEmbedded = devices [0].IsEmbedded;
+    info.isEmbedded = devices[0].IsEmbedded;
     info.horizontalViewAngle = devices[0].HorizontalViewAngle * Mathf.Rad2Deg;
     info.verticalViewAngle = devices[0].VerticalViewAngle * Mathf.Rad2Deg;
     info.trackingRange = devices[0].Range / 1000f;
@@ -407,7 +408,7 @@ public class HandController : MonoBehaviour {
       hand_physics_.Clear();
     }
   }
-  
+
   /** The current frame position divided by the total number of frames in the recording. */
   public float GetRecordingProgress() {
     return recorder_.GetProgress();
@@ -458,8 +459,7 @@ public class HandController : MonoBehaviour {
 
     if (recorder_.state == RecorderState.Recording) {
       recorder_.AddFrame(leap_controller_.Frame());
-    }
-    else {
+    } else if (recorder_.state == RecorderState.Playing) {
       recorder_.NextFrame();
     }
   }
