@@ -28,7 +28,7 @@ public class LeapRecorder {
   /** Whether to lop back to the beginning when the last recorded frame is played.*/
   public bool loop = true;
   /** The current play state. */
-  public RecorderState state = RecorderState.Stopped;
+  public RecorderState state = RecorderState.Playing;
 
   protected List<byte[]> frames_;
   protected float frame_index_;
