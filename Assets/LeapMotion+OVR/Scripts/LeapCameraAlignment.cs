@@ -6,9 +6,11 @@ using Leap;
 public class LeapCameraAlignment : MonoBehaviour {
   public static bool VerboseDebuging = false;
 
-  [HideInInspector]//[Range(0,1)]
+  //[HideInInspector]
+  [Range(0,1)]
   public float tweenRewind = 0f;
-  [HideInInspector]//[Range(0,1)]
+  //[HideInInspector]
+  [Range(0,1)]
   public float tweenTimeWarp = 0f;
   [Range(0,2)]
   public float tweenPosition = 1f;
@@ -26,16 +28,17 @@ public class LeapCameraAlignment : MonoBehaviour {
   public List<LeapImageBasedMaterial> warpedImages;
   
   [Header("Target History (micro-seconds)")]
-  public long maxLatency = 100000; //microseconds
+  private long maxLatency = 100000; //microseconds
 
   LeapDeviceInfo deviceInfo;
   private long timeFrame = 0;
   private long lastFrame = 0;
   private Vector3 virtualCameraStereo;
   
-  //DEBUG
-  public KeyCode moreRewind = KeyCode.LeftArrow;
-  public KeyCode lessRewind = KeyCode.RightArrow;
+  // Manual Time Alignment
+  private KeyCode moreRewind = KeyCode.LeftArrow;
+  private KeyCode lessRewind = KeyCode.RightArrow;
+  [HideInInspector]
   public float rewindAdjust = 1f; //Frame fraction
 
   protected struct TransformData {
@@ -56,6 +59,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
   }
   protected List<TransformData> history;
+  private TransformData past;
   
   /// <summary>
   /// Estimates the transform at the specified time
@@ -91,6 +95,27 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
     
     return TransformData.Lerp (history[t-1], history[t], time);
+  }
+
+  private TransformData TimeAlignedTransformData() {
+    long rewindTime = leftImages.ImageNow () - (long)(imageLatency.value) - (long)(rewindAdjust*frameLatency.value);
+    long tweenAddition = (long)((1f - tweenRewind) * (float)(timeFrame - rewindTime));
+    return TransformAtTime(rewindTime + tweenAddition);
+  }
+
+  /// <summary>
+  /// Rewinds position of target relative to most recent point in history
+  /// </summary>
+  /// <remarks>
+  /// This method applies the same time difference logic using for time alignment
+  /// </remarks>
+  public void RelativeRewind(Transform target) {
+    TransformData present = history [history.Count - 1];
+    TransformData past = TimeAlignedTransformData ();
+    Quaternion rotate = past.rotation * Quaternion.Inverse (present.rotation);
+    Vector3 displace = past.position - present.position + rotate * (target.position - present.position);
+    target.rotation = rotate * target.rotation;
+    target.position = displace + target.position;
   }
 
   void Start () {
@@ -161,8 +186,13 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
 
     UpdateHistory ();
+    past = TimeAlignedTransformData();
+
+    // IMPORTANT: TimeWarp must follow rewind, since it applies warping relative to handController.parent.transform
     UpdateRewind ();
     UpdateTimeWarp ();
+
+    // IMPORTANT: Spatial alignment must be applied last
     UpdateAlignment ();
   }
   
@@ -209,10 +239,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
   
   void UpdateRewind () {
-    long rewindTime = leftImages.ImageNow () - (long)(imageLatency.value) - (long)(rewindAdjust*frameLatency.value);
-    long tweenAddition = (long)((1f - tweenRewind) * (float)(timeFrame - rewindTime));
-    TransformData past = TransformAtTime(rewindTime + tweenAddition);
-
     // Move Virtual cameras to synchronize position & orientation
     float virtualCameraRadius = 0.5f * virtualCameraStereo.magnitude;
     handController.transform.parent.position = past.position;
@@ -224,10 +250,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
   
   void UpdateTimeWarp () {
-    long rewindTime = leftImages.ImageNow () - (long)(imageLatency.value) - (long)(rewindAdjust*frameLatency.value);
-    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(timeFrame - rewindTime));
-    TransformData past = TransformAtTime(rewindTime + tweenAddition);
-    
     // Apply only a rotation ~ assume all objects are infinitely distant
     Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, transform.rotation * Quaternion.Inverse(past.rotation), Vector3.one);
     
