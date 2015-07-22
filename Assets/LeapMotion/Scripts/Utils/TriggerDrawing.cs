@@ -37,7 +37,7 @@ public class TriggerDrawing : MonoBehaviour {
     LineRenderer line_model = GetComponent<LineRenderer>();
     current_line_ = line_object.AddComponent<LineRenderer>();
     current_line_.materials = line_model.materials;
-    current_line_.castShadows = line_model.castShadows;
+    current_line_.shadowCastingMode = line_model.shadowCastingMode;
     current_line_.receiveShadows = line_model.receiveShadows;
     current_line_.SetWidth(lineWidth, lineWidth);
 
