@@ -12,9 +12,10 @@ using Leap;
 
 /** The states of the record-playback machine. */
 public enum RecorderState {
-  Idling = 0,
-  Recording = 1,
-  Playing = 2
+  Stopped = 0,
+  Paused = 1,
+  Recording = 2,
+  Playing = 3
 }
 
 /**
@@ -32,21 +33,21 @@ public class LeapRecorder {
   protected List<byte[]> frames_;
   protected float frame_index_;
   protected Frame current_frame_ = new Frame();
-  
+
   /** Creates a new LeapRecorder object. This doesn't make sense outside the context of a HandController object. */
   public LeapRecorder() {
     Reset();
   }
 
-  /** Sets the play state to idle. */
+  /** Sets the play state to stopped. Also resets the frame index to 0. */
   public void Stop() {
-    state = RecorderState.Idling;
+    state = RecorderState.Stopped;
     frame_index_ = 0.0f;
   }
 
-  /** Sets the play state to idle. */
+  /** Sets the play state to paused. */
   public void Pause() {
-    state = RecorderState.Idling;
+    state = RecorderState.Paused;
   }
 
   /** Sets the play state to playing. */
@@ -58,13 +59,13 @@ public class LeapRecorder {
   public void Record() {
     state = RecorderState.Recording;
   }
-  
+
   /** Discards any recorded frames. */
   public void Reset() {
     frames_ = new List<byte[]>();
     frame_index_ = 0;
   }
-  
+
   /** Restores the default behaviors. */
   public void SetDefault() {
     speed = 1.0f;
@@ -85,15 +86,14 @@ public class LeapRecorder {
    * Sets the playback position to the specified frame count (or the last frame if the 
    * specified index is after the last frame.
    */
-  public void SetIndex(int new_index) { 
+  public void SetIndex(int new_index) {
     if (new_index >= frames_.Count) {
       frame_index_ = frames_.Count - 1;
-    }
-    else {
-      frame_index_ = new_index; 
+    } else {
+      frame_index_ = new_index;
     }
   }
-  
+
   /** Serializes a Leap Frame object and adds it to the end of the recording. */
   public void AddFrame(Frame frame) {
     frames_.Add(frame.Serialize);
@@ -103,15 +103,14 @@ public class LeapRecorder {
   public Frame GetCurrentFrame() {
     return current_frame_;
   }
-  
+
   /** Advances the playhead, deserializes the frame, and returns it.*/
   public Frame NextFrame() {
     current_frame_ = new Frame();
     if (frames_.Count > 0) {
       if (frame_index_ >= frames_.Count && loop) {
         frame_index_ -= frames_.Count;
-      }
-      else if (frame_index_ < 0 && loop) {
+      } else if (frame_index_ < 0 && loop) {
         frame_index_ += frames_.Count;
       }
       if (frame_index_ < frames_.Count && frame_index_ >= 0) {
@@ -121,8 +120,8 @@ public class LeapRecorder {
     }
     return current_frame_;
   }
-  
-    /** Deserializes all the recorded frames and returns them in a new list. */
+
+  /** Deserializes all the recorded frames and returns them in a new list. */
   public List<Frame> GetFrames() {
     List<Frame> frames = new List<Frame>();
     for (int i = 0; i < frames_.Count; ++i) {
@@ -132,17 +131,22 @@ public class LeapRecorder {
     }
     return frames;
   }
-  
+
   /** The number of recorded frames. */
   public int GetFramesCount() {
     return frames_.Count;
   }
-  
-  /** Saves the recorded frames to a file, overwriting an existing file. */
+
+  /** Saves the recorded frames to a file, overwriting an existing file. 
+      The filename is automatically chosen and is stored in Unity's persistant data path. */
   public string SaveToNewFile() {
     string path = Application.persistentDataPath + "/Recording_" +
                   System.DateTime.Now.ToString("yyyyMMdd_hhmmss") + ".bytes";
+    return SaveToNewFile(path);
+  }
 
+  /** Saves the recorded frames to a file, overwriting an existing file. */
+  public string SaveToNewFile(string path) {
     if (File.Exists(@path)) {
       File.Delete(@path);
     }
@@ -154,14 +158,18 @@ public class LeapRecorder {
       stream.Write(frame_size, 0, frame_size.Length);
       stream.Write(frames_[i], 0, frames_[i].Length);
     }
-    
+
     stream.Close();
     return path;
   }
-  
+
   /** Loads saved frames from a file. */
   public void Load(TextAsset text_asset) {
-    byte[] data = text_asset.bytes;
+    Load(text_asset.bytes);
+  }
+
+  /** Loads saved frames from byte array. */
+  public void Load(byte[] data) {
     frame_index_ = 0;
     frames_.Clear();
     int i = 0;
