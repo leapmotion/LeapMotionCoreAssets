@@ -319,13 +319,8 @@ public class OVRMainMenu : MonoBehaviour
 		// Make sure to hide cursor 
 		if(Application.isEditor == false)
 		{
-#if UNITY_5_0
 			Cursor.visible = false; 
 			Cursor.lockState = CursorLockMode.Locked;
-#else
-			Cursor.visible = false; 
-			Screen.lockCursor = true;
-#endif
 		}
 		
 		// CameraController updates

@@ -37,36 +37,11 @@ public class RigidFinger : SkeletalFinger {
           capsule.height = GetBoneLength(i) + GetBoneWidth(i);
         }
 
-        bool useVelocity = false;
         Rigidbody boneBody = bones[i].GetComponent<Rigidbody>();
         if (boneBody) {
-          if (!boneBody.isKinematic) {
-            useVelocity = true;
-
-            // Set velocity.
-            Vector3 target_bone_position = GetBoneCenter(i);
-            
-            bones[i].GetComponent<Rigidbody>().velocity = (target_bone_position - bones[i].position) * ((1 - filtering) / Time.deltaTime);
-
-            // Set angular velocity.
-            Quaternion target_rotation = GetBoneRotation(i);
-            Quaternion delta_rotation = target_rotation * Quaternion.Inverse(bones[i].rotation);
-            float angle = 0.0f;
-            Vector3 axis = Vector3.zero;
-            delta_rotation.ToAngleAxis(out angle, out axis);
-
-            if (angle >= 180) {
-              angle = 360 - angle;
-              axis  = -axis;
-            }
-
-            if (angle != 0) {
-              float delta_radians = (1 - filtering) * angle * Mathf.Deg2Rad;
-              bones[i].GetComponent<Rigidbody>().angularVelocity = delta_radians * axis / Time.deltaTime;
-            }
-          }
-        }
-        if (!useVelocity) {
+          boneBody.MovePosition(GetBoneCenter(i));
+          boneBody.MoveRotation(GetBoneRotation(i));
+        } else {
           bones[i].position = GetBoneCenter(i);
           bones[i].rotation = GetBoneRotation(i);
         }

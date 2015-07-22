@@ -18,17 +18,21 @@ public class LeapImageBasedMaterial : MonoBehaviour {
         }
     }
 
-    void OnEnable() {
-        LeapImageRetriever.registerImageBasedMaterial(this);
-        // Make shader consistent with settings
+	void OnEnable() {
+		LeapImageRetriever.registerImageBasedMaterial(this);
+
+		Material imageBasedMaterial = GetComponent<Renderer>().material;
         
-        if (QualitySettings.activeColorSpace == ColorSpace.Linear) {
-          GetComponent<Renderer> ().material.SetFloat ("_ColorSpaceGamma", 1.0f);
-        } else {
-          float gamma = -Mathf.Log10(Mathf.GammaToLinearSpace(0.1f));
-          GetComponent<Renderer> ().material.SetFloat ("_ColorSpaceGamma", gamma);
-          //Debug.Log ("Derived gamma = " + gamma);
-        }
+		//Initialize gamma correction
+		float gamma = 1f;
+		if (QualitySettings.activeColorSpace != ColorSpace.Linear) {
+			gamma = -Mathf.Log10(Mathf.GammaToLinearSpace(0.1f));
+			//Debug.Log ("Derived gamma = " + gamma);
+		}
+		imageBasedMaterial.SetFloat ("_ColorSpaceGamma", gamma);
+		
+		//Initialize the Time-Warp to be the identity
+		imageBasedMaterial.SetMatrix("_ViewerNowToImage", Matrix4x4.identity);
     }
 
     void OnDisable() {

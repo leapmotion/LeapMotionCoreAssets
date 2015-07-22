@@ -24,6 +24,14 @@ sampler2D _LeapDistortion;
 float4 _LeapProjection;
 float _LeapGammaCorrectionExponent;
 
+// Virtual Camera Parameters
+float _VirtualCameraH; //degrees
+float _VirtualCameraV; //degrees
+float4x4 _InverseView;
+
+// Global Coordinate Transformation of viewer from Image.Timestamp to Controller.Now
+float4x4 _ViewerImageToNow;
+
 float2 LeapGetUndistortedUV(float4 screenPos){
 	float2 uv = (screenPos.xy / screenPos.w) * 2 - float2(1,1);
 	float2 tangent = (uv + _LeapProjection.xy) / _LeapProjection.zw;
@@ -89,6 +97,22 @@ float4 LeapRawColorBrightnessUV(float2 uv){
 	#endif
 }
 
+float4 WarpScreenPosition(float4 sp) {
+      // Map pixels to clipping coordinates
+      float2 window = float2(1.0, 1.0) - sp.xy*2.0/sp.w;
+      //range (-1,1), x is horizontal, y is vertical, origin is center
+      
+      // Map window coordinates to world coordinates
+      float4 viewDir = float4(tan(radians(_VirtualCameraH) / 2.0)*window.x, tan(radians(_VirtualCameraV) / 2.0)*window.y, 1.0, 0.0);
+      float4 worldDir = mul(_InverseView, viewDir);
+      
+      // Apply time warping
+      worldDir = mul(_ViewerImageToNow, worldDir);
+      
+      // Return to pixel coordinates
+      return ComputeScreenPos(mul(UNITY_MATRIX_VP, worldDir));
+}
+
 float LeapRawBrightness(float4 screenPos){
 	return LeapRawBrightnessUV(LeapGetUndistortedUV(screenPos));
 }
@@ -123,4 +147,12 @@ float3 LeapColor(float4 screenPos){
 
 float4 LeapColorBrightness(float4 screenPos){
 	return pow(LeapRawColorBrightness(screenPos), _LeapGammaCorrectionExponent);
+}
+
+float3 LeapColorWarp(float4 screenPos){
+	return pow(LeapRawColorBrightness(WarpScreenPosition(screenPos)), _LeapGammaCorrectionExponent);
+}
+
+float3 LeapColorBrightnessWarp(float4 screenPos){
+	return pow(LeapRawColorBrightness(WarpScreenPosition(screenPos)), _LeapGammaCorrectionExponent);
 }
