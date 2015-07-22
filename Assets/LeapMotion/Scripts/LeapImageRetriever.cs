@@ -293,7 +293,7 @@ public class LeapImageRetriever : MonoBehaviour {
   /// <returns>The time at which the current image was recorded, in microseconds</returns>
   public long ImageNow() {
     if(_imageList == null) { 
-      Debug.LogWarning("_imageList is null providing default value.");
+      Debug.LogWarning("Images have not been initialized -> defaulting to LeapNow");
       return LeapNow();
     }
 

@@ -6,10 +6,10 @@ using Leap;
 public class LeapCameraAlignment : MonoBehaviour {
   public static bool VerboseDebuging = false;
 
-  [Range(0,1)]
+  [HideInInspector]//[Range(0,1)]
   public float tweenRewind = 0f;
-  [Range(0,1)]
-  public float tweenTimeWarp = 1f;
+  [HideInInspector]//[Range(0,1)]
+  public float tweenTimeWarp = 0f;
   [Range(0,2)]
   public float tweenPosition = 1f;
   [Range(0,2)]
