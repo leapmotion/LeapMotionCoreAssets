@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using Leap;
 
 public class LeapCameraAlignment : MonoBehaviour {
+  public static bool VerboseDebuging = false;
+
   [Range(0,1)]
   public float tweenRewind = 0f;
   [Range(0,1)]
@@ -71,7 +73,9 @@ public class LeapCameraAlignment : MonoBehaviour {
       };
     }
     if (history [0].leapTime > time) {
-      Debug.LogWarning ("NO INTERPOLATION: Using earliest time = " + history [0].leapTime + " > time = " + time);
+      if (VerboseDebuging) {
+        Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
+      }
       return history[0];
     }
     int t = 1;
@@ -80,7 +84,9 @@ public class LeapCameraAlignment : MonoBehaviour {
       t++;
     }
     if (!(t < history.Count)) {
-      Debug.LogWarning ("NO INTERPOLATION: Using most recent time = " + history[history.Count-1].leapTime + " < time = " + time);
+      if (VerboseDebuging) {
+        Debug.LogWarning("NO INTERPOLATION: Using most recent time = " + history[history.Count - 1].leapTime + " < time = " + time);
+      }
       return history[history.Count-1];
     }
     
@@ -89,7 +95,7 @@ public class LeapCameraAlignment : MonoBehaviour {
 
   void Start () {
     if (handController == null) {
-      Debug.LogWarning ("TransformHistory REQUIRES a reference to a HandController");
+      Debug.LogWarning("TransformHistory REQUIRES a reference to a HandController");
       enabled = false;
       return;
     }
@@ -178,7 +184,9 @@ public class LeapCameraAlignment : MonoBehaviour {
       // Leap deltaTime will be used, since it references the same clock as images.
     } else {
       // Expect high latency during initial frames
-      Debug.LogWarning ("Maximum latency exceeded: " + ((float)deltaFrame / 1000f) + " ms");
+      if (VerboseDebuging) {
+        Debug.LogWarning("Maximum latency exceeded: " + ((float)deltaFrame / 1000f) + " ms");
+      }
       frameLatency.value = ((float) maxLatency) / 1000f;
       frameLatency.reset = true;
     }
@@ -229,6 +237,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
 
   void UpdateAlignment () {
+    Debug.Log(deviceInfo.type);
     Vector3 addIPD = 0.5f * virtualCameraStereo.normalized * (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * virtualCameraStereo.magnitude);
     Vector3 toDevice = tweenPosition * handController.transform.parent.forward * deviceInfo.focalPlaneOffset * tweenForward;
     handController.transform.parent.position = handController.transform.parent.position + toDevice;
