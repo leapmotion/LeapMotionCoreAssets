@@ -39,8 +39,7 @@
     }
 
     float4 frag (frag_in i) : COLOR {
-      //return float4(pow(LeapColorWarp(i.screenPos), 1/_ColorSpaceGamma), 1);
-	  return LeapBrightness(i.screenPos);
+      return float4(pow(LeapColorWarp(i.screenPos), 1/_ColorSpaceGamma), 1);
     }
 
     ENDCG
