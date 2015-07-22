@@ -237,7 +237,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
 
   void UpdateAlignment () {
-    Debug.Log(deviceInfo.type);
     Vector3 addIPD = 0.5f * virtualCameraStereo.normalized * (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * virtualCameraStereo.magnitude);
     Vector3 toDevice = tweenPosition * handController.transform.parent.forward * deviceInfo.focalPlaneOffset * tweenForward;
     handController.transform.parent.position = handController.transform.parent.position + toDevice;
