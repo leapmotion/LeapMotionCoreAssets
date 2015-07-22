@@ -50,7 +50,7 @@ float LeapRawBrightnessUV(float2 uv){
 	#if LEAP_FORMAT_IR
 		return tex2D(_LeapTexture, uv).a;
 	#else
-		return pow(dot(tex2D(_LeapTexture, uv), float4(G_BLEED, B_BLEED, R_BLEED, IR_BLEED)), 0.5);
+		return pow(saturate(dot(tex2D(_LeapTexture, uv), float4(G_BLEED, B_BLEED, R_BLEED, IR_BLEED))), 0.5);
 	#endif
 }
 
