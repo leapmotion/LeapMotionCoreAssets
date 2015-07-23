@@ -7,8 +7,8 @@ using UImage = UnityEngine.UI.Image;
 
 public class BugReporter : MonoBehaviour {
   public bool m_interfaceEnabled = false;
-  public KeyCode unlockStart = KeyCode.None;
-  public KeyCode changeState = KeyCode.Z;
+  public KeyCode unlockStart = KeyCode.LeftShift;
+  public KeyCode changeState = KeyCode.Tab;
 
   public HandController handController;
   public UImage progressStatus;
