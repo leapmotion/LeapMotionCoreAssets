@@ -3,8 +3,26 @@ using System.Collections;
 using System.Collections.Generic;
 using Leap;
 
+/// <summary>
+/// Implements spatial alignment of cameras and synchronization with images
+/// </summary>
 public class LeapCameraAlignment : MonoBehaviour {
-  public static bool VerboseDebuging = false;
+  [SerializeField]
+  protected LeapImageRetriever imageRetriever;
+  [SerializeField]
+  protected HandController handController;
+
+  [Header("Alignment Targets")]
+
+  [SerializeField]
+  protected Transform leftCamera;
+  [SerializeField]
+  protected Transform rightCamera;
+  [SerializeField]
+  protected Transform centerCamera;
+  public List<LeapImageBasedMaterial> warpedImages;
+
+  [Header("Alignment Settings")]
 
   //[HideInInspector]
   [Range(0,1)]
@@ -16,30 +34,19 @@ public class LeapCameraAlignment : MonoBehaviour {
   public float tweenPosition = 1f;
   [Range(0,2)]
   public float tweenForward = 1f;
-  
+
+  // Automatic Time Alignment
   public float latencySmoothing = 1f; //State delay in seconds
+  [HideInInspector]
   public SmoothedFloat frameLatency;
+  [HideInInspector]
   public SmoothedFloat imageLatency;
-
-  [Header("Alignment Targets")]
-  public LeapImageRetriever leftImages;
-  public LeapImageRetriever rightImages;
-  public HandController handController;
-  public List<LeapImageBasedMaterial> warpedImages;
-  
-  [Header("Target History (micro-seconds)")]
-  private long maxLatency = 100000; //microseconds
-
-  LeapDeviceInfo deviceInfo;
-  private long timeFrame = 0;
-  private long lastFrame = 0;
-  private Vector3 virtualCameraStereo;
   
   // Manual Time Alignment
-  private KeyCode moreRewind = KeyCode.LeftArrow;
-  private KeyCode lessRewind = KeyCode.RightArrow;
   [HideInInspector]
   public float rewindAdjust = 1f; //Frame fraction
+  private KeyCode moreRewind = KeyCode.LeftArrow;
+  private KeyCode lessRewind = KeyCode.RightArrow;
 
   protected struct TransformData {
     public long leapTime; // microseconds
@@ -58,11 +65,18 @@ public class LeapCameraAlignment : MonoBehaviour {
       };
     }
   }
+  
+  private long timeFrame = 0;
+  private long lastFrame = 0;
+  private long maxLatency = 100000; //microseconds
   protected List<TransformData> history;
-  private TransformData past;
+  
+  protected LeapDeviceInfo deviceInfo;
+
+  private Vector3 virtualCameraStereo;
   
   /// <summary>
-  /// Estimates the transform at the specified time
+  /// Estimates the transform of this gameObject at the specified time
   /// </summary>
   /// <returns>
   /// A transform with leapTime == time only if interpolation was possible
@@ -77,9 +91,8 @@ public class LeapCameraAlignment : MonoBehaviour {
       };
     }
     if (history [0].leapTime > time) {
-      if (VerboseDebuging) {
-        Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
-      }
+      // Expect this for initial frames which will have a very low frame rate
+      Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
       return history[0];
     }
     int t = 1;
@@ -88,43 +101,54 @@ public class LeapCameraAlignment : MonoBehaviour {
       t++;
     }
     if (!(t < history.Count)) {
-      if (VerboseDebuging) {
-        Debug.LogWarning("NO INTERPOLATION: Using most recent time = " + history[history.Count - 1].leapTime + " < time = " + time);
-      }
+      // Expect this for initial frames which will have a very low frame rate
+      Debug.LogWarning("NO INTERPOLATION: Using most recent time = " + history[history.Count - 1].leapTime + " < time = " + time);
       return history[history.Count-1];
     }
     
     return TransformData.Lerp (history[t-1], history[t], time);
   }
 
-  private TransformData TimeAlignedTransformData() {
-    long rewindTime = leftImages.ImageNow () - (long)(imageLatency.value) - (long)(rewindAdjust*frameLatency.value);
-    long tweenAddition = (long)((1f - tweenRewind) * (float)(timeFrame - rewindTime));
-    return TransformAtTime(rewindTime + tweenAddition);
-  }
-
   /// <summary>
   /// Rewinds position of target relative to most recent point in history
   /// </summary>
   /// <remarks>
-  /// This method applies the same time difference logic using for time alignment
+  /// This method applies the same time difference logic using for time alignment,
+  /// but ignores the tweening settings
   /// </remarks>
-  public void RelativeRewind(Transform target) {
-    TransformData present = history [history.Count - 1];
-    TransformData past = TimeAlignedTransformData ();
-    Quaternion rotate = past.rotation * Quaternion.Inverse (present.rotation);
-    Vector3 displace = past.position - present.position + rotate * (target.position - present.position);
-    target.rotation = rotate * target.rotation;
-    target.position = displace + target.position;
+  /// <param name="isLeftCenterRight">
+  /// Applies a left camera alignment if < 0,
+  /// applies a right camera alignment if > 0, 
+  /// and applies no alignment if == 0.
+  /// </param>
+  public void RelativeRewind(Transform target, int isLeftCenterRight = 0) {
+    TransformData past = TransformAtTime(imageRetriever.ImageNow () - (long)(rewindAdjust*frameLatency.value));
+    
+    // Rewind position and rotation
+    target.rotation = past.rotation;
+    target.position = past.position + past.rotation * Vector3.forward * deviceInfo.focalPlaneOffset;
+
+    if (isLeftCenterRight < 0) {
+      // Apply the left camera alignment
+      target.position += past.rotation * Vector3.left * deviceInfo.baseline * 0.5f;
+    }
+    if (isLeftCenterRight > 0) {
+      // Apply the right camera alignment
+      target.position += past.rotation * Vector3.right * deviceInfo.baseline * 0.5f;
+    }
   }
 
   void Start () {
-    if (handController == null) {
-      Debug.LogWarning("TransformHistory REQUIRES a reference to a HandController");
+    if (handController == null ||
+        imageRetriever == null ||
+        leftCamera == null ||
+        rightCamera == null ||
+        centerCamera == null) {
+      Debug.LogWarning ("HandController, ImageRetriever and Alignment Target references cannot be null -> enabled = false");
       enabled = false;
       return;
     }
-    
+
     deviceInfo = handController.GetDeviceInfo ();
     if (deviceInfo.type == LeapDeviceType.Invalid) {
       Debug.LogWarning ("Invalid Leap Device");
@@ -141,71 +165,48 @@ public class LeapCameraAlignment : MonoBehaviour {
     };
   }
 	
-  // FIXME: This should be attached to cameras & use OnPreCull
-	// IMPORTANT: This method MUST be called after
-  // OVRManager.LateUpdate
-  // NOTE: Call order is determined by activation order...
-  // Use EnableUpdateOrdering script to ensure correct call order
+	// IMPORTANT: This method MUST be called after OVRManager.LateUpdate.
+  // Use EnableUpdateOrdering script to ensure correct call order.
   void LateUpdate() {
-    if (handController == null ||
-        leftImages.transform == null ||
-        rightImages.transform == null ||
-        leftImages == null ||
-        rightImages == null) {
-      Debug.LogWarning ("Hand Controller & ImageRetriever references cannot be null");
-      return;
-    }
-
-    if (!(IsFinite (leftImages.transform.position) && IsFinite (leftImages.transform.rotation) &&
-          IsFinite (handController.transform.parent.position) && IsFinite (handController.transform.parent.rotation) &&
-          IsFinite (rightImages.transform.position) && IsFinite (rightImages.transform.rotation))) {
+    if (!(IsFinite (leftCamera.position) && IsFinite (leftCamera.rotation) &&
+          IsFinite (centerCamera.transform.position) && IsFinite (centerCamera.transform.rotation) &&
+          IsFinite (rightCamera.position) && IsFinite (rightCamera.rotation))) {
+      // Uninitialized camera positions
       Debug.LogWarning ("Uninitialized transforms -> skip alignment");
       return;
     }
 
-    virtualCameraStereo = rightImages.transform.position - leftImages.transform.position;
+    virtualCameraStereo = rightCamera.position - leftCamera.position;
     if (!(IsFinite (virtualCameraStereo.magnitude) &&
           virtualCameraStereo.magnitude > float.Epsilon)) {
       // Unmodified camera positions
-      Debug.LogWarning ("Bad virtualCameraStereo = " + virtualCameraStereo);
+      Debug.LogWarning ("Bad virtualCameraStereo = " + virtualCameraStereo + " -> skip alignment");
       return;
     }
 
-    //DEBUG
+    // Manual Time Alignment
     if (Input.GetKeyDown (moreRewind)) {
       rewindAdjust += 0.1f;
     }
     if (Input.GetKeyDown (lessRewind)) {
       rewindAdjust -= 0.1f;
     }
-    if (Input.GetKeyDown (KeyCode.Alpha0)) {
-      tweenTimeWarp = 0f;
-    }
-    if (Input.GetKeyDown (KeyCode.Alpha1)) {
-      tweenTimeWarp = 1f;
-    }
 
+    // IMPORTANT: UpdateHistory must happen first, before any transforms are modified.
     UpdateHistory ();
-    past = TimeAlignedTransformData();
 
-    // IMPORTANT: TimeWarp must follow rewind, since it applies warping relative to handController.parent.transform
-    UpdateRewind ();
-    UpdateTimeWarp ();
-
-    // IMPORTANT: Spatial alignment must be applied last
+    // IMPORTANT: UpdateAlignment must precede UpdateTimeWarp, since UpdateTimeWarp applies warping relative current positions
     UpdateAlignment ();
+    UpdateTimeWarp ();
   }
   
   void UpdateHistory () {
-    // ASSUME: Oculus resets relative camera positions in each frame
-    // Append latest position & rotation of stereo camera rig
     lastFrame = timeFrame;
-    timeFrame = leftImages.LeapNow ();
-    
-    //TODO: Move this to UpdateHistory
+    timeFrame = imageRetriever.LeapNow ();
+
     long deltaFrame = timeFrame - lastFrame;
-    long deltaImage = timeFrame - leftImages.ImageNow ();
-    if (2 * (deltaFrame + deltaImage) < maxLatency) {
+    long deltaImage = timeFrame - imageRetriever.ImageNow ();
+    if (deltaFrame + deltaImage < maxLatency) {
       frameLatency.Update ((float)deltaFrame, Time.deltaTime);
       imageLatency.Update ((float)deltaImage, Time.deltaTime);
       //Debug.Log ("Leap deltaTime = " + ((float)deltaTime / 1000f) + " ms");
@@ -214,18 +215,16 @@ public class LeapCameraAlignment : MonoBehaviour {
       // Leap deltaTime will be used, since it references the same clock as images.
     } else {
       // Expect high latency during initial frames
-      if (VerboseDebuging) {
-        Debug.LogWarning("Maximum latency exceeded: " + ((float)deltaFrame / 1000f) + " ms");
-      }
+      Debug.LogWarning("Maximum latency exceeded: " + ((float)deltaFrame / 1000f) + " ms -> reset latency estimates");
       frameLatency.value = ((float) maxLatency) / 1000f;
       frameLatency.reset = true;
     }
 
-    // Add current camera position and rotation to history
+    // Add current position and rotation to history
     history.Add (new TransformData () {
       leapTime = timeFrame,
-      position = transform.position,
-      rotation = transform.rotation
+      position = centerCamera.transform.position,
+      rotation = centerCamera.transform.rotation
     });
     //Debug.Log ("Last Index Time = " + history[history.Count-1].leapTime + " =? " + timeFrame);
     // NOTE: history.Add can be retrieved as history[history.Count-1]
@@ -238,32 +237,36 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
   }
   
-  void UpdateRewind () {
-    // Move Virtual cameras to synchronize position & orientation
-    float virtualCameraRadius = 0.5f * virtualCameraStereo.magnitude;
-    handController.transform.parent.position = past.position;
-    handController.transform.parent.rotation = past.rotation;
-    rightImages.transform.position = handController.transform.parent.position + virtualCameraRadius * handController.transform.parent.right;
-    rightImages.transform.rotation = past.rotation;
-    leftImages.transform.position = handController.transform.parent.position - virtualCameraRadius * handController.transform.parent.right;
-    leftImages.transform.rotation = past.rotation;
+  void UpdateAlignment () {
+    long rewindTime = imageRetriever.ImageNow () - (long)(rewindAdjust*frameLatency.value);
+    long tweenAddition = (long)((1f - tweenRewind) * (float)(timeFrame - rewindTime));
+    TransformData past = TransformAtTime(rewindTime + tweenAddition);
+
+    float separate = (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * virtualCameraStereo.magnitude) * 0.5f;
+    float forward = tweenPosition * tweenForward * deviceInfo.focalPlaneOffset;
+    Vector3 moveSeparate = past.rotation * Vector3.right * separate;
+    Vector3 moveForward = past.rotation * Vector3.forward * forward;
+    
+    // Move Virtual cameras to align position & orientation
+    centerCamera.transform.position = past.position + moveForward;
+    centerCamera.transform.rotation = past.rotation;
+    rightCamera.position = past.position + moveForward + moveSeparate;
+    rightCamera.rotation = past.rotation;
+    leftCamera.position = past.position + moveForward - moveSeparate;
+    leftCamera.rotation = past.rotation;
   }
   
   void UpdateTimeWarp () {
+    long rewindTime = imageRetriever.ImageNow () - (long)(rewindAdjust*frameLatency.value);
+    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(timeFrame - rewindTime));
+    TransformData past = TransformAtTime(rewindTime + tweenAddition);
+
     // Apply only a rotation ~ assume all objects are infinitely distant
-    Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, transform.rotation * Quaternion.Inverse(past.rotation), Vector3.one);
+    Matrix4x4 ImageFromNow = Matrix4x4.TRS (Vector3.zero, centerCamera.transform.rotation * Quaternion.Inverse(past.rotation), Vector3.one);
     
     foreach (LeapImageBasedMaterial image in warpedImages) {
       image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageToNow", ImageFromNow);
     }
-  }
-
-  void UpdateAlignment () {
-    Vector3 addIPD = 0.5f * virtualCameraStereo.normalized * (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * virtualCameraStereo.magnitude);
-    Vector3 toDevice = tweenPosition * handController.transform.parent.forward * deviceInfo.focalPlaneOffset * tweenForward;
-    handController.transform.parent.position = handController.transform.parent.position + toDevice;
-    leftImages.transform.position = handController.transform.parent.position - addIPD;
-    rightImages.transform.position = handController.transform.parent.position + addIPD;
   }
 
   bool IsFinite(float f) {

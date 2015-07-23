@@ -25,6 +25,10 @@ public class TouchCubeQueues : MonoBehaviour {
   public GameObject warpImagesCanvas;
 
   private int demoStage = 0;
+
+  void Start () {
+    Reset ();
+  }
 	
 	// Update is called once per frame
 	void Update () {
@@ -88,6 +92,6 @@ public class TouchCubeQueues : MonoBehaviour {
     alignment.tweenRewind = 0f;
     alignment.tweenTimeWarp = 1f;
     alignment.tweenPosition = 1f;
-    rescale.ResetScale ();
+    rescale.enabled = false;
   }
 }
