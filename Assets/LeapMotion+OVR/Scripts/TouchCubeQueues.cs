@@ -27,7 +27,7 @@ public class TouchCubeQueues : MonoBehaviour {
   private int demoStage = 0;
 
   void Start () {
-    Reset ();
+    ResetState ();
   }
 	
 	// Update is called once per frame
@@ -76,13 +76,13 @@ public class TouchCubeQueues : MonoBehaviour {
       demoStage++;
       break;
     default:
-      Reset();
+      ResetState();
       demoStage = 0;
       break;
     }
 	}
 
-  public void Reset() {
+  public void ResetState() {
     helpMenuCanvas.SetActive(true);
     noAlignmentCanvas.SetActive (false);
     playerRescaleCanvas.SetActive (false);
