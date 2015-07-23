@@ -3,7 +3,8 @@ using System.Collections;
 
 public enum LeapDeviceType {
   Invalid,
-  Peripheral
+  Peripheral,
+  Dragonfly
 }
 
 /// <summary>
@@ -30,6 +31,15 @@ public struct LeapDeviceInfo {
       isEmbedded = false;
       baseline = 0.04f;
       focalPlaneOffset = 0.07f;
+      horizontalViewAngle = 2.303835f * Mathf.Rad2Deg;
+      verticalViewAngle = 2.007129f * Mathf.Rad2Deg;
+      trackingRange = 470f / 1000f;
+      serialID = "";
+      break;
+    case LeapDeviceType.Dragonfly:
+      isEmbedded = false;
+      baseline = 0.064f;
+      focalPlaneOffset = 0.08f;
       horizontalViewAngle = 2.303835f * Mathf.Rad2Deg;
       verticalViewAngle = 2.007129f * Mathf.Rad2Deg;
       trackingRange = 470f / 1000f;
