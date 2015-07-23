@@ -5,6 +5,10 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class CamRecorderInterface : MonoBehaviour {
+  public bool m_interfaceEnabled = false;
+  // FIXME: This should be at the top level of the recorder hierarchy
+  public KeyCode unlockStart = KeyCode.None;
+  public KeyCode changeState = KeyCode.Return;
 
   public CamRecorder camRecorder;
   public Canvas startScreen;
@@ -17,8 +21,6 @@ public class CamRecorderInterface : MonoBehaviour {
   public List<GameObject> hideDuringRecording = new List<GameObject>();
 
   private int m_hideLayer = 0;
-
-  private bool m_interfaceEnabled = false;
 
   public bool InterfaceEnabled {
     get {
@@ -47,21 +49,21 @@ public class CamRecorderInterface : MonoBehaviour {
     for (int i = 0; i < hideDuringRecording.Count; ++i) {
       hideDuringRecording[i].layer = m_hideLayer; // Assign all objects to this layer
     }
-    InterfaceEnabled = false;
+    InterfaceEnabled = m_interfaceEnabled;
   }
 
   void Update() {
-
-    if (
-      (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) &&
-      Input.GetKeyDown(KeyCode.C) && // Not using 'R' becuase 'R' is recenter. 'C' for capture or camera - @Daniel
-      camRecorder.IsIdling()
-      ) {
-      InterfaceEnabled = !InterfaceEnabled;
+    if (camRecorder.IsIdling ()) {
+      if ((unlockStart == KeyCode.None || Input.GetKey (unlockStart)) &&
+        Input.GetKeyDown (changeState)) {
+        InterfaceEnabled = true;
+      } 
+    }else {
+      InterfaceEnabled = m_interfaceEnabled;
     }
 
     if (
-      (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) &&
+      (Input.GetKeyDown(changeState) || Input.GetKeyDown(KeyCode.KeypadEnter)) &&
       InterfaceEnabled
       ) {
       if (camRecorder.IsIdling()) {
@@ -81,12 +83,16 @@ public class CamRecorderInterface : MonoBehaviour {
     }
 
     if (camRecorder.IsIdling()) {
-      instructionText.text = "'Enter' to Start Recording";
+      if (unlockStart != KeyCode.None) {
+        instructionText.text = "Hold '" + unlockStart + "' and press '" + changeState + "' to Start Recording";
+      } else {
+        instructionText.text = "Press '" + changeState + "' to Start Recording";
+      }
       statusText.text = GetStatus();
       valueText.text = (camRecorder.framesExpect > 0) ? camRecorder.directory : "[ Success | Buffer | Dropped ] / Total";
     }
     else if (camRecorder.IsCountingDown()) {
-      instructionText.text = "'Enter' to End Recording";
+      instructionText.text = "Press '" + changeState + "' to End Recording";
       statusText.text = GetStatus();
       valueText.text = "Recording in..." + ((int)camRecorder.countdownRemaining + 1).ToString();
     }
@@ -95,12 +101,12 @@ public class CamRecorderInterface : MonoBehaviour {
       startScreen.gameObject.SetActive((camRecorder.currFrameIndex == 0));
       startSound.gameObject.SetActive((camRecorder.currFrameIndex == 0));
 
-      instructionText.text = "'Enter' to End Recording";
+      instructionText.text = "Press '" + changeState + "' to End Recording";
       statusText.text = GetStatus();
       valueText.text = "Recording..." + camRecorder.duration.ToString();
     }
     else if (camRecorder.IsProcessing()) {
-      instructionText.text = "'Enter' to Abort Processing";
+      instructionText.text = "'" + changeState.ToString() + "' to Abort Processing";
       statusText.text = GetStatus();
       valueText.text = "Processing..." + camRecorder.framesActual.ToString() + "/" + camRecorder.framesExpect.ToString();
     }
