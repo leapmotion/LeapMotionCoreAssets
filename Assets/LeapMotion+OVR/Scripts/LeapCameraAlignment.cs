@@ -20,6 +20,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   protected Transform rightCamera;
   [SerializeField]
   protected Transform centerCamera;
+  [HideInInspector]
   public List<LeapImageBasedMaterial> warpedImages;
 
   [Header("Alignment Settings")]
@@ -34,6 +35,16 @@ public class LeapCameraAlignment : MonoBehaviour {
   public float tweenPosition = 1f;
   [Range(0,2)]
   public float tweenForward = 1f;
+  
+  // Manual Time Alignment
+  [SerializeField]
+  protected KeyCode unlockHold = KeyCode.RightShift;
+  [SerializeField]
+  protected KeyCode moreRewind = KeyCode.LeftArrow;
+  [SerializeField]
+  protected KeyCode lessRewind = KeyCode.RightArrow;
+  [System.NonSerialized]
+  public float rewindAdjust = 1f; //Frame fraction
 
   // Automatic Time Alignment
   public float latencySmoothing = 1f; //State delay in seconds
@@ -41,12 +52,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   public SmoothedFloat frameLatency;
   [HideInInspector]
   public SmoothedFloat imageLatency;
-  
-  // Manual Time Alignment
-  [HideInInspector]
-  public float rewindAdjust = 1f; //Frame fraction
-  private KeyCode moreRewind = KeyCode.LeftArrow;
-  private KeyCode lessRewind = KeyCode.RightArrow;
 
   protected struct TransformData {
     public long leapTime; // microseconds
@@ -184,12 +189,15 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
-    // Manual Time Alignment
-    if (Input.GetKeyDown (moreRewind)) {
-      rewindAdjust += 0.1f;
-    }
-    if (Input.GetKeyDown (lessRewind)) {
-      rewindAdjust -= 0.1f;
+    if (unlockHold == KeyCode.None ||
+        Input.GetKey (unlockHold)) {
+      // Manual Time Alignment
+      if (Input.GetKeyDown (moreRewind)) {
+        rewindAdjust += 0.1f;
+      }
+      if (Input.GetKeyDown (lessRewind)) {
+        rewindAdjust -= 0.1f;
+      }
     }
 
     // IMPORTANT: UpdateHistory must happen first, before any transforms are modified.
