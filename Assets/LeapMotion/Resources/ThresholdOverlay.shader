@@ -22,6 +22,8 @@
     #include "LeapCG.cginc"
     #include "UnityCG.cginc"
     
+    #pragma target 3.0
+    
     #pragma vertex vert
     #pragma fragment frag
 
@@ -42,7 +44,7 @@
     uniform float _Fade;
 
     float4 frag (frag_in i) : COLOR {
-      float4 colorBrightness = LeapRawColorBrightness(i.screenPos);
+      float4 colorBrightness = LeapRawColorBrightnessWarp(i.screenPos);
       float alpha = _Fade * smoothstep(_Min, _Max, colorBrightness.a);
       return float4(pow(colorBrightness.rgb, _LeapGammaCorrectionExponent)*alpha, alpha);
     }

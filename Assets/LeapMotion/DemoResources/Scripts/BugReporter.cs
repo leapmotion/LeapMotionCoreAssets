@@ -6,9 +6,13 @@ using Leap;
 using UImage = UnityEngine.UI.Image;
 
 public class BugReporter : MonoBehaviour {
+  public bool m_interfaceEnabled = false;
+  public KeyCode unlockStart = KeyCode.LeftShift;
+  public KeyCode changeState = KeyCode.Tab;
 
   public HandController handController;
   public UImage progressStatus;
+  public UImage progressBar;
   public Text progressText;
   public Text instructionText;
 
@@ -31,6 +35,19 @@ public class BugReporter : MonoBehaviour {
 
   protected BugReportState bug_report_state_ = BugReportState.READY;
 
+  public bool InterfaceEnabled {
+    get {
+      return m_interfaceEnabled;
+    }
+    set {
+      progressStatus.gameObject.SetActive(value);
+      progressBar.gameObject.SetActive(value);
+      progressText.gameObject.SetActive(value);
+      instructionText.gameObject.SetActive(value);
+      m_interfaceEnabled = value;
+    }
+  }
+
   protected void SetProgressText(string text, Color color)
   {
     if (progressText == null)
@@ -51,7 +68,17 @@ public class BugReporter : MonoBehaviour {
 
   private void HandleKeyInputs()
   {
-    if (Input.GetKeyDown(KeyCode.Z))
+    if (bug_report_state_ == BugReportState.READY) {
+      if ((unlockStart == KeyCode.None || Input.GetKey (unlockStart)) &&
+          Input.GetKeyDown (changeState)) {
+        InterfaceEnabled = true;
+      } 
+    } else {
+      InterfaceEnabled = m_interfaceEnabled;
+    }
+
+    if ((unlockStart == KeyCode.None || Input.GetKey(unlockStart) || bug_report_state_ != BugReportState.READY) &&
+        Input.GetKeyDown(changeState))
     {
       switch (bug_report_state_)
       {
@@ -77,7 +104,7 @@ public class BugReporter : MonoBehaviour {
   private void ReplayTriggered()
   {
     SetProgressText("REPLAYING", Color.yellow);
-    SetInstructionText("PRESS 'Z' TO END REPLAY", instructionColor);
+    SetInstructionText("PRESS '" + changeState + "' TO END REPLAY", instructionColor);
     bug_report_state_ = BugReportState.REPLAYING;
   }
 
@@ -88,7 +115,7 @@ public class BugReporter : MonoBehaviour {
     handController.ResetRecording();
     handController.Record();
     SetProgressText("RECORDING", Color.yellow);
-    SetInstructionText("PRESS 'Z' TO END RECORD", instructionColor);
+    SetInstructionText("PRESS '" + changeState + "' TO END RECORD", instructionColor);
     bug_report_state_ = BugReportState.RECORDING;
   }
 
@@ -110,7 +137,7 @@ public class BugReporter : MonoBehaviour {
     handController.StopRecording();
     progressStatus.fillAmount = 1.0f;
     SetProgressText("READY", Color.green);
-    SetInstructionText("PRESS 'Z' TO START RECORD", instructionColor);
+    SetInstructionText("PRESS '" + changeState + "' TO START RECORD", instructionColor);
     bug_report_state_ = BugReportState.READY;
   }
   
@@ -133,14 +160,8 @@ public class BugReporter : MonoBehaviour {
     }
   }
 
-  bool Init()
+  void Init()
   {
-    leap_controller_ = handController.GetLeapController();
-    if (leap_controller_ == null)
-    {
-      Debug.LogWarning("Leap Controller is not found. Bug Reporting will not operate properly");
-      return false;
-    }
 
     handController.enableRecordPlayback = true;
 
@@ -148,37 +169,36 @@ public class BugReporter : MonoBehaviour {
 
     prev_bug_report_progress_ = leap_controller_.BugReport.Progress;
     prev_bug_report_state_ = leap_controller_.BugReport.IsActive;
-
-    return true;
+    
+    InterfaceEnabled = m_interfaceEnabled;
   }
 
   void Start()
   {
     if (handController == null)
     {
-      Debug.LogWarning("HandController not specified. Bug Recording will not operate properly");
+      Debug.LogWarning("HandController reference is null. Bug Recording -> Inactive");
+      gameObject.SetActive(false);
+      return;
     }
-    else
+    leap_controller_ = handController.GetLeapController();
+    if (leap_controller_ == null)
     {
-      Init();
+      Debug.LogWarning("Leap Controller was not found. Bug Recording -> Disabled until found");
+      return;
     }
+    Init();
   }
 	
 	// Update is called once per frame
 	void Update() {
-    if (Input.GetKeyDown(KeyCode.Escape))
-    {
-      Application.Quit();
-    }
-
-    if (handController == null)
-    {
-      return;
-    }
-    else if (leap_controller_ == null)
-    {
-      if (!Init())
+    if (leap_controller_ == null) {
+      leap_controller_ = handController.GetLeapController();
+      if (leap_controller_ != null) {
+        Init();
+      } else {
         return;
+      }
     }
 
     HandleKeyInputs();

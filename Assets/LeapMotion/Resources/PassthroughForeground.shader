@@ -16,6 +16,8 @@
     #include "LeapCG.cginc"
     #include "UnityCG.cginc"
     
+    #pragma target 3.0
+    
     #pragma vertex vert
     #pragma fragment frag
     
@@ -34,7 +36,7 @@
     }
 
     float4 frag (frag_in i) : COLOR {
-      return float4(pow(LeapColor(i.screenPos), 1/_ColorSpaceGamma), 1);
+      return float4(pow(LeapColorWarp(i.screenPos), 1/_ColorSpaceGamma), 1);
     }
 
     ENDCG

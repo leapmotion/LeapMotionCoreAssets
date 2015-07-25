@@ -164,10 +164,18 @@ float4 LeapColorBrightness(float4 screenPos){
 	return pow(LeapRawColorBrightness(screenPos), _LeapGammaCorrectionExponent);
 }
 
-float3 LeapColorWarp(float4 screenPos){
-	return pow(LeapRawColorBrightness(WarpScreenPosition(screenPos)), _LeapGammaCorrectionExponent);
+float3 LeapRawColorWarp(float4 screenPos){
+  return LeapRawColorBrightness(WarpScreenPosition(screenPos));
 }
 
-float3 LeapColorBrightnessWarp(float4 screenPos){
-	return pow(LeapRawColorBrightness(WarpScreenPosition(screenPos)), _LeapGammaCorrectionExponent);
+float4 LeapRawColorBrightnessWarp(float4 screenPos){
+  return LeapRawColorBrightness(WarpScreenPosition(screenPos));
+}
+
+float3 LeapColorWarp(float4 screenPos){
+	return pow(LeapRawColorBrightnessWarp(screenPos), _LeapGammaCorrectionExponent);
+}
+
+float4 LeapColorBrightnessWarp(float4 screenPos){
+	return pow(LeapRawColorBrightnessWarp(screenPos), _LeapGammaCorrectionExponent);
 }

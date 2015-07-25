@@ -25,6 +25,10 @@ public class TouchCubeQueues : MonoBehaviour {
   public GameObject warpImagesCanvas;
 
   private int demoStage = 0;
+
+  void Start () {
+    ResetState ();
+  }
 	
 	// Update is called once per frame
 	void Update () {
@@ -72,13 +76,13 @@ public class TouchCubeQueues : MonoBehaviour {
       demoStage++;
       break;
     default:
-      Reset();
+      ResetState();
       demoStage = 0;
       break;
     }
 	}
 
-  public void Reset() {
+  public void ResetState() {
     helpMenuCanvas.SetActive(true);
     noAlignmentCanvas.SetActive (false);
     playerRescaleCanvas.SetActive (false);
@@ -88,6 +92,6 @@ public class TouchCubeQueues : MonoBehaviour {
     alignment.tweenRewind = 0f;
     alignment.tweenTimeWarp = 1f;
     alignment.tweenPosition = 1f;
-    rescale.ResetScale ();
+    rescale.enabled = false;
   }
 }
