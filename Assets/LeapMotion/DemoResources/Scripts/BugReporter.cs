@@ -104,7 +104,7 @@ public class BugReporter : MonoBehaviour {
   private void ReplayTriggered()
   {
     SetProgressText("REPLAYING", Color.yellow);
-    SetInstructionText("PRESS 'Z' TO END REPLAY", instructionColor);
+    SetInstructionText("PRESS '" + changeState + "' TO END REPLAY", instructionColor);
     bug_report_state_ = BugReportState.REPLAYING;
   }
 
@@ -115,7 +115,7 @@ public class BugReporter : MonoBehaviour {
     handController.ResetRecording();
     handController.Record();
     SetProgressText("RECORDING", Color.yellow);
-    SetInstructionText("PRESS 'Z' TO END RECORD", instructionColor);
+    SetInstructionText("PRESS '" + changeState + "' TO END RECORD", instructionColor);
     bug_report_state_ = BugReportState.RECORDING;
   }
 
@@ -137,7 +137,7 @@ public class BugReporter : MonoBehaviour {
     handController.StopRecording();
     progressStatus.fillAmount = 1.0f;
     SetProgressText("READY", Color.green);
-    SetInstructionText("PRESS 'Z' TO START RECORD", instructionColor);
+    SetInstructionText("PRESS '" + changeState + "' TO START RECORD", instructionColor);
     bug_report_state_ = BugReportState.READY;
   }
   
