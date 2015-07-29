@@ -44,7 +44,7 @@ public class LeapImageBasedMaterial : MonoBehaviour
     imageBasedMaterial.SetFloat ("_ColorSpaceGamma", gamma);
     
     //Initialize the Time-Warp to be the identity
-    imageBasedMaterial.SetMatrix ("_ViewerNowToImage", Matrix4x4.identity);
+    imageBasedMaterial.SetMatrix ("_ViewerImageToNow", Matrix4x4.identity);
   }
 
   void OnDisable ()
