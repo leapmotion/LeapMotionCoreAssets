@@ -42,7 +42,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   [SerializeField]
   protected KeyCode lessRewind = KeyCode.RightArrow;
   [System.NonSerialized]
-  public float rewindAdjust = 1f; //Frame fraction
+  public float rewindAdjust = 0f; //Frame fraction
 
   // Automatic Time Alignment
   public float latencySmoothing = 1f; //State delay in seconds
@@ -97,7 +97,7 @@ public class LeapCameraAlignment : MonoBehaviour {
       };
     }
     if (history [0].leapTime >= time) {
-      // Expect this for initial frame only
+      // Expect this for initial frames with high latency
       if (history [0].leapTime > time) Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
       return history[0];
     }
@@ -249,7 +249,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
   
   void UpdateAlignment () {
-    long rewindTime = imageRetriever.ImageNow () - (long)(rewindAdjust*frameLatency.value);
+    long rewindTime = imageRetriever.ImageNow () - (long)frameLatency.value - (long)(rewindAdjust*frameLatency.value);
     long tweenAddition = (long)((1f - tweenRewind) * (float)(timeFrame - rewindTime));
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
