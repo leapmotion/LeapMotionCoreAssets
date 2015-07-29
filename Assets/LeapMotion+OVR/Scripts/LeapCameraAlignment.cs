@@ -25,10 +25,8 @@ public class LeapCameraAlignment : MonoBehaviour {
 
   [Header("Alignment Settings")]
 
-  //[HideInInspector]
   [Range(0,1)]
   public float tweenRewind = 0f;
-  //[HideInInspector]
   [Range(0,1)]
   public float tweenTimeWarp = 0f;
   [Range(0,2)]
@@ -76,7 +74,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   
   private long timeFrame = 0;
   private long lastFrame = 0;
-  private long maxLatency = 100000; //microseconds
+  private long maxLatency = 200000; //microseconds
   protected List<TransformData> history;
   
   protected LeapDeviceInfo deviceInfo;
@@ -98,19 +96,19 @@ public class LeapCameraAlignment : MonoBehaviour {
         rotation = Quaternion.identity
       };
     }
-    if (history [0].leapTime > time) {
-      // Expect this for initial frames which will have a very low frame rate
-      Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
+    if (history [0].leapTime >= time) {
+      // Expect this for initial frame only
+      if (history [0].leapTime > time) Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
       return history[0];
     }
     int t = 1;
     while (t < history.Count &&
-           history[t].leapTime < time) {
+           history[t].leapTime <= time) {
       t++;
     }
     if (!(t < history.Count)) {
       // Expect this for initial frames which will have a very low frame rate
-      Debug.LogWarning("NO INTERPOLATION: Using most recent time = " + history[history.Count - 1].leapTime + " < time = " + time);
+      if (history[history.Count - 1].leapTime < time) Debug.LogWarning("NO INTERPOLATION: Using most recent time = " + history[history.Count - 1].leapTime + " < time = " + time);
       return history[history.Count-1];
     }
     
@@ -226,9 +224,11 @@ public class LeapCameraAlignment : MonoBehaviour {
       // Leap deltaTime will be used, since it references the same clock as images.
     } else {
       // Expect high latency during initial frames
-      Debug.LogWarning("Maximum latency exceeded: " + ((float)deltaFrame / 1000f) + " ms -> reset latency estimates");
-      frameLatency.value = ((float) maxLatency) / 1000f;
+      Debug.LogWarning("Maximum latency exceeded: " + ((float)(deltaFrame + deltaImage) / 1000f) + " ms -> reset latency estimates");
+      frameLatency.value = 0f;
+      imageLatency.value = 0f;
       frameLatency.reset = true;
+      imageLatency.reset = true;
     }
 
     // Add current position and rotation to history
