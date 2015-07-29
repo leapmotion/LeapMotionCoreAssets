@@ -2,9 +2,11 @@
 using UnityEngine.UI;
 using System.Collections;
 
-public class TouchCubeHelpMenu : MonoBehaviour {
-  public LeapCameraAlignment cameraAlignment;
-  
+public class TouchCubeHelpMenu : MonoBehaviour
+{
+  public GameObject trackingController;
+  public GameObject overlayImage;
+
   // Update is called once per frame
   void Update () {
     Text textField = GetComponent<Text> ();
@@ -12,16 +14,19 @@ public class TouchCubeHelpMenu : MonoBehaviour {
       return;
     }
 
-    string cameraAlignmentToState = "ON";
-    if (cameraAlignment.enabled) {
-      cameraAlignmentToState = "OFF";
+    string trackingControllerToState = "ON";
+    if (trackingController.activeSelf) {
+      trackingControllerToState = "OFF";
     }
-    string helpText = "H : Help Hide/Show" 
+    string overlayImageToState = "ON";
+    if (overlayImage.activeSelf) {
+      overlayImageToState = "OFF";
+    }
+
+    textField.text = "H : Help Hide/Show" 
       + "\nR : Reset Virtual Cameras"
-      + "\nRet. : Cycle Space-Time Alignment";
-    helpText += 
-        "\nA : Turn IPD Alignment " + cameraAlignmentToState
-      + "\nO : Overlay Image Modes";
-    textField.text = helpText;
+      + "\nRet. : Cycle Space-Time Alignment"
+      + "\nT : Tracked Skeleton " + trackingControllerToState
+      + "\nO : Overlay Image Mode " + overlayImageToState;
   }
 }
