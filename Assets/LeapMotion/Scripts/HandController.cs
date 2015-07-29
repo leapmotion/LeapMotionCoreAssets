@@ -211,7 +211,7 @@ public class HandController : MonoBehaviour {
 
           // Set scaling based on reference hand.
           float hand_scale = MM_TO_M * leap_hand.PalmWidth / new_hand.handModelPalmWidth;
-          new_hand.transform.localScale = hand_scale * transform.lossyScale;
+          new_hand.transform.localScale = hand_scale * Vector3.one;
 
           new_hand.InitHand();
           new_hand.UpdateHand();
@@ -224,7 +224,7 @@ public class HandController : MonoBehaviour {
 
           // Set scaling based on reference hand.
           float hand_scale = MM_TO_M * leap_hand.PalmWidth / hand_model.handModelPalmWidth;
-          hand_model.transform.localScale = hand_scale * transform.lossyScale;
+          hand_model.transform.localScale = hand_scale * Vector3.one;
           hand_model.UpdateHand();
         }
       }
@@ -284,7 +284,7 @@ public class HandController : MonoBehaviour {
         tool_model.MirrorZAxis(mirrorZAxis);
 
         // Set scaling.
-        tool_model.transform.localScale = transform.lossyScale;
+        tool_model.transform.localScale = Vector3.one;
 
         tool_model.UpdateTool();
       }
