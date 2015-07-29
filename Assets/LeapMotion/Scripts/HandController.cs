@@ -409,6 +409,14 @@ public class HandController : MonoBehaviour {
     }
   }
 
+  void OnDisable () {
+    DestroyAllHands();
+  }
+
+  void OnDestroy () {
+    DestroyAllHands();
+  }
+
   /** The current frame position divided by the total number of frames in the recording. */
   public float GetRecordingProgress() {
     return recorder_.GetProgress();
