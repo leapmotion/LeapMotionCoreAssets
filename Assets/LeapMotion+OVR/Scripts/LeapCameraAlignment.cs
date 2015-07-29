@@ -53,6 +53,9 @@ public class LeapCameraAlignment : MonoBehaviour {
   [HideInInspector]
   public SmoothedFloat imageLatency;
 
+  public bool overrideDeviceType = false;
+  public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Invalid;
+
   protected struct TransformData {
     public long leapTime; // microseconds
     public Vector3 position; //meters
@@ -154,7 +157,7 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
-    deviceInfo = handController.GetDeviceInfo ();
+    deviceInfo = (overrideDeviceType) ? new LeapDeviceInfo(overrideDeviceTypeWith) : handController.GetDeviceInfo ();
     if (deviceInfo.type == LeapDeviceType.Invalid) {
       Debug.LogWarning ("Invalid Leap Device");
       enabled = false;
