@@ -11,6 +11,8 @@ public class HandFader : MonoBehaviour {
   protected float _smoothedConfidence = 0.0f;
   protected Renderer _renderer;
 
+  private const float EPISLON = 0.005f;
+
   protected virtual float GetUnsmoothedConfidence() {
     return _handModel.GetLeapHand().Confidence;
   }
@@ -24,7 +26,7 @@ public class HandFader : MonoBehaviour {
   protected virtual void Update() {
     _smoothedConfidence += (GetUnsmoothedConfidence() - _smoothedConfidence) / confidenceSmoothing;
     float fade = confidenceCurve.Evaluate(_smoothedConfidence);
-    _renderer.enabled = fade != 0.0f;
+    _renderer.enabled = (fade > EPISLON);
     _renderer.material.SetFloat("_Fade", confidenceCurve.Evaluate(_smoothedConfidence));
   }
 }
