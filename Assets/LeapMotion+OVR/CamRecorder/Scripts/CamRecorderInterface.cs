@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 public class CamRecorderInterface : MonoBehaviour {
   public bool m_interfaceEnabled = false;
+  public bool m_hideInstructions = false;
   public KeyCode unlockStart = KeyCode.LeftShift;
   public KeyCode changeState = KeyCode.Z;
 
@@ -26,7 +27,7 @@ public class CamRecorderInterface : MonoBehaviour {
       return m_interfaceEnabled;
     }
     set {
-      instructionText.gameObject.SetActive(value);
+      instructionText.gameObject.SetActive(value && !m_hideInstructions);
       statusText.gameObject.SetActive(value);
       valueText.gameObject.SetActive(value);
       m_interfaceEnabled = value;
@@ -61,10 +62,7 @@ public class CamRecorderInterface : MonoBehaviour {
       InterfaceEnabled = m_interfaceEnabled;
     }
 
-    if (
-      (Input.GetKeyDown(changeState) || Input.GetKeyDown(KeyCode.KeypadEnter)) &&
-      InterfaceEnabled
-      ) {
+    if (Input.GetKeyDown(changeState) && InterfaceEnabled) {
       if (camRecorder.IsIdling()) {
         startScreen.transform.localPosition = new Vector3(0.0f, 0.0f, camRecorder.GetComponent<Camera>().nearClipPlane + 0.01f);
         camRecorder.useHighResolution = highResolution;

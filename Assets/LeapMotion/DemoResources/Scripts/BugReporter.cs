@@ -16,6 +16,7 @@ public class BugReporter : MonoBehaviour {
   public Text progressText;
   public Text instructionText;
   public Text savedpathsText;
+  public CamRecorderInterface synchronizeRecorder;
   public bool saveReplayFrames = false;
 
   protected Color instructionColor = new Color(1.0f, 0.5f, 0.0f);
@@ -118,6 +119,11 @@ public class BugReporter : MonoBehaviour {
   {
     handController.ResetRecording();
     handController.StopRecording();
+    if (synchronizeRecorder != null &&
+        synchronizeRecorder.camRecorder != null) {
+      synchronizeRecorder.InterfaceEnabled = false;
+      synchronizeRecorder.camRecorder.StopRecording();
+    }
     progressStatus.fillAmount = 1.0f;
     SetProgressText("READY", Color.green);
     SetInstructionText("PRESS '" + changeState + "' TO START RECORDING", instructionColor);
@@ -131,6 +137,11 @@ public class BugReporter : MonoBehaviour {
     leap_controller_.BugReport.BeginRecording();
     handController.ResetRecording();
     handController.Record();
+    if (synchronizeRecorder != null &&
+        synchronizeRecorder.camRecorder != null) {
+      synchronizeRecorder.InterfaceEnabled = true;
+      synchronizeRecorder.camRecorder.StartRecording();
+    }
     SetProgressText("RECORDING", Color.yellow);
     SetInstructionText("PRESS '" + changeState + "' TO END RECORD", instructionColor);
     SetSavedPathsText ("");
@@ -149,6 +160,10 @@ public class BugReporter : MonoBehaviour {
       replayPath = "";
     }
     handController.PlayRecording();
+    if (synchronizeRecorder != null &&
+        synchronizeRecorder.camRecorder != null) {
+      synchronizeRecorder.camRecorder.StopRecording();
+    }
     SetProgressText("SAVING", Color.red);
     SetInstructionText("SAVING", Color.red);
     if (replayPath.Length > 0) {
@@ -187,14 +202,18 @@ public class BugReporter : MonoBehaviour {
 
   void Init()
   {
-
     handController.enableRecordPlayback = true;
 
     ReadyTriggered();
 
     prev_bug_report_progress_ = leap_controller_.BugReport.Progress;
     prev_bug_report_state_ = leap_controller_.BugReport.IsActive;
-    
+
+    if (synchronizeRecorder != null) {
+      synchronizeRecorder.m_hideInstructions = true;
+      synchronizeRecorder.InterfaceEnabled = false;
+    }
+
     InterfaceEnabled = m_interfaceEnabled;
   }
 
