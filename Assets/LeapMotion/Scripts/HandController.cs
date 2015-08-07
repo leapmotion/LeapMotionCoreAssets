@@ -341,7 +341,7 @@ public class HandController : MonoBehaviour {
    * with no timeline synchronization performed.  Otherwise, the frame comes directly from the Leap Motion
    * Controller.
    */
-  public Frame GetFixedUpdateFrame() {
+  public Frame GetFixedFrame() {
     if (enableRecordPlayback && (recorder_.state == RecorderState.Playing || recorder_.state == RecorderState.Paused))
       return recorder_.GetCurrentFrame();
 
@@ -398,7 +398,7 @@ public class HandController : MonoBehaviour {
     //into Update for smoothing.
     perFrameFixedUpdateOffset_ = leap_controller_.Frame().Timestamp * NS_TO_S - Time.fixedTime;
 
-    Frame frame = GetFixedUpdateFrame();
+    Frame frame = GetFixedFrame();
 
     if (frame.Id != prev_physics_id_) {
       UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
