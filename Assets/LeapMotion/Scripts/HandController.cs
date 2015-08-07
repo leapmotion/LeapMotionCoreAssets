@@ -33,6 +33,12 @@ public class HandController : MonoBehaviour {
   protected const float GIZMO_SCALE = 5.0f;
   /** Conversion factor for millimeters to meters. */
   protected const float MM_TO_M = 0.001f;
+  /** Conversion factor for nanoseconds to seconds. */
+  protected const float NS_TO_S = 0.000001f;
+  /** Conversion factor for seconds to nanoseconds. */
+  protected const float S_TO_NS = 1000000f;
+  /** How much smoothing to use when calculating the FixedUpdate offset. */
+  protected const float FIXED_UPDATE_OFFSET_SMOOTHING_DELAY = 0.1f;
 
   /** Whether to use a separate model for left and right hands (true); or mirror the same model for both hands (false). */
   public bool separateLeftRight = false;
@@ -90,6 +96,12 @@ public class HandController : MonoBehaviour {
   private long prev_graphics_id_ = 0;
   private long prev_physics_id_ = 0;
 
+  /** The smoothed offset between the FixedUpdate timeline and the Leap timeline.  
+   * Used to provide temporally correct frames within FixedUpdate */
+  private SmoothedFloat smoothedFixedUpdateOffset_ = new SmoothedFloat();
+  /** The maximum offset calculated per frame */
+  private float perFrameFixedUpdateOffset_;
+
   /** Draws the Leap Motion gizmo when in the Unity editor. */
   void OnDrawGizmos() {
     // Draws the little Leap Motion Controller in the Editor view.
@@ -125,6 +137,8 @@ public class HandController : MonoBehaviour {
     hand_physics_ = new Dictionary<int, HandModel>();
 
     tools_ = new Dictionary<int, ToolModel>();
+
+    smoothedFixedUpdateOffset_.delay = FIXED_UPDATE_OFFSET_SMOOTHING_DELAY;
 
     if (leap_controller_ == null) {
       Debug.LogWarning(
@@ -320,6 +334,41 @@ public class HandController : MonoBehaviour {
     return leap_controller_.Frame();
   }
 
+  /**
+   * Returns a Frame object that is properly synchronized to the FixedUpdate timeline.
+   * 
+   * If the recorder object is playing a recording, then the frame is taken directly from the recording,
+   * with no timeline synchronization performed.  Otherwise, the frame comes directly from the Leap Motion
+   * Controller.
+   */
+  public Frame GetFixedUpdateFrame() {
+    if (enableRecordPlayback && (recorder_.state == RecorderState.Playing || recorder_.state == RecorderState.Paused))
+      return recorder_.GetCurrentFrame();
+
+    //Aproximate the correct timestamp given the current fixed time
+    float correctedTimestamp = (Time.fixedTime - smoothedFixedUpdateOffset_.value) * S_TO_NS;
+
+    //Search the leap history for a frame with a timestamp closest to the corrected timestamp
+    Frame closestFrame = leap_controller_.Frame();
+    for (int searchHistoryIndex = 1; searchHistoryIndex < 60; searchHistoryIndex++) {
+      Frame historyFrame = leap_controller_.Frame(searchHistoryIndex);
+
+      //If we reach an invalid frame, terminate the search
+      if (!historyFrame.IsValid) {
+        break;
+      }
+
+      if (Mathf.Abs(historyFrame.Timestamp - correctedTimestamp) < Mathf.Abs(closestFrame.Timestamp - correctedTimestamp)) {
+        closestFrame = historyFrame;
+      } else {
+        //Since frames are always reported in order, we can terminate the search once we stop finding a closer frame
+        break;
+      }
+    }
+
+    return closestFrame;
+  }
+
   /** Updates the graphics objects. */
   void Update() {
     if (leap_controller_ == null)
@@ -335,6 +384,9 @@ public class HandController : MonoBehaviour {
       UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
       prev_graphics_id_ = frame.Id;
     }
+
+    //fixedUpdateDelay contains the maximum delay of this Update cycle
+    smoothedFixedUpdateOffset_.Update(perFrameFixedUpdateOffset_, Time.deltaTime);
   }
 
   /** Updates the physics objects */
@@ -342,7 +394,11 @@ public class HandController : MonoBehaviour {
     if (leap_controller_ == null)
       return;
 
-    Frame frame = GetFrame();
+    //All FixedUpdates of a frame happen before Update, so only the last of these calculations is passed
+    //into Update for smoothing.
+    perFrameFixedUpdateOffset_ = Time.fixedTime - leap_controller_.Frame().Timestamp * NS_TO_S;
+
+    Frame frame = GetFixedUpdateFrame();
 
     if (frame.Id != prev_physics_id_) {
       UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
@@ -409,11 +465,11 @@ public class HandController : MonoBehaviour {
     }
   }
 
-  void OnDisable () {
+  void OnDisable() {
     DestroyAllHands();
   }
 
-  void OnDestroy () {
+  void OnDestroy() {
     DestroyAllHands();
   }
 
