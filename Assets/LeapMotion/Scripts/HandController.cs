@@ -335,6 +335,8 @@ public class HandController : MonoBehaviour {
   }
 
   /**
+   * NOTE: This method should ONLY be called from within a FixedUpdate callback.
+   * 
    * Returns a Frame object that is properly synchronized to the FixedUpdate timeline.
    * 
    * If the recorder object is playing a recording, then the frame is taken directly from the recording,
