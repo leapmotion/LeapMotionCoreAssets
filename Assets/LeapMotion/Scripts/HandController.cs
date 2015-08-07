@@ -346,7 +346,7 @@ public class HandController : MonoBehaviour {
       return recorder_.GetCurrentFrame();
 
     //Aproximate the correct timestamp given the current fixed time
-    float correctedTimestamp = (Time.fixedTime - smoothedFixedUpdateOffset_.value) * S_TO_NS;
+    float correctedTimestamp = (Time.fixedTime + smoothedFixedUpdateOffset_.value) * S_TO_NS;
 
     //Search the leap history for a frame with a timestamp closest to the corrected timestamp
     Frame closestFrame = leap_controller_.Frame();
@@ -396,7 +396,7 @@ public class HandController : MonoBehaviour {
 
     //All FixedUpdates of a frame happen before Update, so only the last of these calculations is passed
     //into Update for smoothing.
-    perFrameFixedUpdateOffset_ = Time.fixedTime - leap_controller_.Frame().Timestamp * NS_TO_S;
+    perFrameFixedUpdateOffset_ = leap_controller_.Frame().Timestamp * NS_TO_S - Time.fixedTime;
 
     Frame frame = GetFixedUpdateFrame();
 
