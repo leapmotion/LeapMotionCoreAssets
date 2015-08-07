@@ -385,7 +385,7 @@ public class HandController : MonoBehaviour {
       prev_graphics_id_ = frame.Id;
     }
 
-    //fixedUpdateDelay contains the maximum delay of this Update cycle
+    //perFrameFixedUpdateOffset_ contains the maximum offset of this Update cycle
     smoothedFixedUpdateOffset_.Update(perFrameFixedUpdateOffset_, Time.deltaTime);
   }
 
