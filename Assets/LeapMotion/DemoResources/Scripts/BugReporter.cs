@@ -71,13 +71,12 @@ public class BugReporter : MonoBehaviour {
     instructionText.color = color;
   }
 
-  protected void SetSavedPathsText(string text, Color color)
+  protected void SetSavedPathsText(string text)
   {
     if (savedpathsText == null)
       return;
 
     savedpathsText.text = text;
-    savedpathsText.color = color;
   }
 
   private void HandleKeyInputs()
@@ -122,7 +121,7 @@ public class BugReporter : MonoBehaviour {
     progressStatus.fillAmount = 1.0f;
     SetProgressText("READY", Color.green);
     SetInstructionText("PRESS '" + changeState + "' TO START RECORDING", instructionColor);
-    SetSavedPathsText ("", Color.black);
+    SetSavedPathsText ("");
     bug_report_state_ = BugReportState.READY;
   }
 
@@ -134,7 +133,7 @@ public class BugReporter : MonoBehaviour {
     handController.Record();
     SetProgressText("RECORDING", Color.yellow);
     SetInstructionText("PRESS '" + changeState + "' TO END RECORD", instructionColor);
-    SetSavedPathsText ("", Color.black);
+    SetSavedPathsText ("");
     bug_report_state_ = BugReportState.RECORDING;
   }
 
@@ -153,7 +152,7 @@ public class BugReporter : MonoBehaviour {
     SetProgressText("SAVING", Color.red);
     SetInstructionText("SAVING", Color.red);
     if (replayPath.Length > 0) {
-      SetSavedPathsText("Replay File @ " + replayPath, Color.red);
+      SetSavedPathsText("Replay File @ " + replayPath);
     }
     saving_triggered_ = true;
   }
@@ -163,7 +162,7 @@ public class BugReporter : MonoBehaviour {
     SetProgressText("REPLAYING", Color.yellow);
     SetInstructionText("PRESS '" + changeState + "' TO END REPLAY", instructionColor);
     if (replayPath.Length > 0) {
-      SetSavedPathsText("Replay File @ " + replayPath, instructionColor);
+      SetSavedPathsText("Replay File @ " + replayPath);
     }
     bug_report_state_ = BugReportState.REPLAYING;
   }

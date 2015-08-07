@@ -5,7 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class CamRecorderInterface : MonoBehaviour {
-  // FIXME: Interface visibility should be at the top level of the recorder hierarchy
   public bool m_interfaceEnabled = false;
   public KeyCode unlockStart = KeyCode.LeftShift;
   public KeyCode changeState = KeyCode.Z;
