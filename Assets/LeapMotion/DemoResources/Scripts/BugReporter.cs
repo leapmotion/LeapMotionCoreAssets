@@ -15,6 +15,8 @@ public class BugReporter : MonoBehaviour {
   public UImage progressBar;
   public Text progressText;
   public Text instructionText;
+  public Text savedpathsText;
+  public bool saveReplayFrames = false;
 
   protected Color instructionColor = new Color(1.0f, 0.5f, 0.0f);
 
@@ -24,6 +26,8 @@ public class BugReporter : MonoBehaviour {
   protected bool prev_bug_report_state_;
 
   protected bool saving_triggered_ = false;
+
+  protected string replayPath;
 
   protected enum BugReportState
   {
@@ -44,6 +48,7 @@ public class BugReporter : MonoBehaviour {
       progressBar.gameObject.SetActive(value);
       progressText.gameObject.SetActive(value);
       instructionText.gameObject.SetActive(value);
+      savedpathsText.gameObject.SetActive (value);
       m_interfaceEnabled = value;
     }
   }
@@ -64,6 +69,15 @@ public class BugReporter : MonoBehaviour {
 
     instructionText.text = text;
     instructionText.color = color;
+  }
+
+  protected void SetSavedPathsText(string text, Color color)
+  {
+    if (savedpathsText == null)
+      return;
+
+    savedpathsText.text = text;
+    savedpathsText.color = color;
   }
 
   private void HandleKeyInputs()
@@ -100,12 +114,16 @@ public class BugReporter : MonoBehaviour {
       }
     }
   }
-
-  private void ReplayTriggered()
+  
+  private void ReadyTriggered()
   {
-    SetProgressText("REPLAYING", Color.yellow);
-    SetInstructionText("PRESS '" + changeState + "' TO END REPLAY", instructionColor);
-    bug_report_state_ = BugReportState.REPLAYING;
+    handController.ResetRecording();
+    handController.StopRecording();
+    progressStatus.fillAmount = 1.0f;
+    SetProgressText("READY", Color.green);
+    SetInstructionText("PRESS '" + changeState + "' TO START RECORDING", instructionColor);
+    SetSavedPathsText ("", Color.black);
+    bug_report_state_ = BugReportState.READY;
   }
 
   private void RecordingTriggered()
@@ -116,6 +134,7 @@ public class BugReporter : MonoBehaviour {
     handController.Record();
     SetProgressText("RECORDING", Color.yellow);
     SetInstructionText("PRESS '" + changeState + "' TO END RECORD", instructionColor);
+    SetSavedPathsText ("", Color.black);
     bug_report_state_ = BugReportState.RECORDING;
   }
 
@@ -124,23 +143,30 @@ public class BugReporter : MonoBehaviour {
     if (saving_triggered_)
       return;
 
-    handController.StopRecording();
+    if (saveReplayFrames) {
+      replayPath = handController.FinishAndSaveRecording ();
+    } else {
+      handController.StopRecording ();
+      replayPath = "";
+    }
     handController.PlayRecording();
-    SetProgressText("REPLAYING", Color.yellow);
+    SetProgressText("SAVING", Color.red);
     SetInstructionText("SAVING", Color.red);
+    if (replayPath.Length > 0) {
+      SetSavedPathsText("Replay File @ " + replayPath, Color.red);
+    }
     saving_triggered_ = true;
   }
-
-  private void ReadyTriggered()
-  {
-    handController.ResetRecording();
-    handController.StopRecording();
-    progressStatus.fillAmount = 1.0f;
-    SetProgressText("READY", Color.green);
-    SetInstructionText("PRESS '" + changeState + "' TO START RECORD", instructionColor);
-    bug_report_state_ = BugReportState.READY;
-  }
   
+  private void ReplayTriggered()
+  {
+    SetProgressText("REPLAYING", Color.yellow);
+    SetInstructionText("PRESS '" + changeState + "' TO END REPLAY", instructionColor);
+    if (replayPath.Length > 0) {
+      SetSavedPathsText("Replay File @ " + replayPath, instructionColor);
+    }
+    bug_report_state_ = BugReportState.REPLAYING;
+  }
 
   private void UpdateGUI()
   {
