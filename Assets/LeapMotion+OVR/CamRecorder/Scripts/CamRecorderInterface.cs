@@ -49,6 +49,8 @@ public class CamRecorderInterface : MonoBehaviour {
     for (int i = 0; i < hideDuringRecording.Count; ++i) {
       hideDuringRecording[i].layer = m_hideLayer; // Assign all objects to this layer
     }
+    camRecorder.AddLayersToIgnore(m_hideLayer);
+    Debug.Log ("Hide Layer = " + m_hideLayer);
     InterfaceEnabled = m_interfaceEnabled;
   }
 
@@ -68,7 +70,6 @@ public class CamRecorderInterface : MonoBehaviour {
         camRecorder.useHighResolution = highResolution;
         camRecorder.directory = Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         camRecorder.SetCountdown(countdown);
-        camRecorder.AddLayersToIgnore(m_hideLayer);
         camRecorder.StartRecording();
       }
       else if (camRecorder.IsRecording() || camRecorder.IsCountingDown()) {
@@ -87,6 +88,7 @@ public class CamRecorderInterface : MonoBehaviour {
       }
       statusText.text = GetStatus();
       valueText.text = (camRecorder.framesExpect > 0) ? camRecorder.directory : "[ Success | Buffer | Dropped ] / Total";
+      Debug.Log ("GET camRecorder.directory = " + camRecorder.directory);
     }
     else if (camRecorder.IsCountingDown()) {
       instructionText.text = "Press '" + changeState + "' to End Recording";

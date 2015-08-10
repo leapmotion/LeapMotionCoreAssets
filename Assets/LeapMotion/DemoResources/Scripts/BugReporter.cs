@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using System;
 using System.Collections;
 using Leap;
 
@@ -140,6 +141,7 @@ public class BugReporter : MonoBehaviour {
     if (synchronizeRecorder != null &&
         synchronizeRecorder.camRecorder != null) {
       synchronizeRecorder.InterfaceEnabled = true;
+      synchronizeRecorder.camRecorder.directory = Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
       synchronizeRecorder.camRecorder.StartRecording();
     }
     SetProgressText("RECORDING", Color.yellow);
