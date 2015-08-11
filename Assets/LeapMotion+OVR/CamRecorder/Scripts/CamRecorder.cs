@@ -573,7 +573,7 @@ public class CamRecorder : MonoBehaviour
     m_cameraRenderTexture.Release();
   }
 
-  void Start()
+  void Awake()
   {
     SetupCamera();
     SetupMultithread();

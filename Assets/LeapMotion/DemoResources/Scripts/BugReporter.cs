@@ -119,6 +119,7 @@ public class BugReporter : MonoBehaviour {
     handController.StopRecording();
     if (synchronizeRecorder != null &&
         synchronizeRecorder.camRecorder != null) {
+      synchronizeRecorder.m_hideInstructions = false;
       synchronizeRecorder.InterfaceEnabled = synchronizeRecorder.m_interfaceEnabled;
       synchronizeRecorder.showFrameTimeStamp = synchronizeRecorder.m_enableFrameTimeStamp;
       synchronizeRecorder.camRecorder.StopRecording();
@@ -139,6 +140,7 @@ public class BugReporter : MonoBehaviour {
     handController.Record();
     if (synchronizeRecorder != null &&
         synchronizeRecorder.camRecorder != null) {
+      synchronizeRecorder.m_hideInstructions = true;
       synchronizeRecorder.InterfaceEnabled = true;
       synchronizeRecorder.showFrameTimeStamp = true;
       synchronizeRecorder.camRecorder.directory = Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");

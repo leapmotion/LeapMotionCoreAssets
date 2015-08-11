@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 public class CamRecorderInterface : MonoBehaviour {
   public bool m_interfaceEnabled = false;
+  [System.NonSerialized]
   public bool m_hideInstructions = false;
   public KeyCode unlockStart = KeyCode.LeftShift;
   public KeyCode changeState = KeyCode.Z;
