@@ -32,11 +32,11 @@ public class HandController : MonoBehaviour {
   // Reference distance from thumb base to pinky base in mm.
   protected const float GIZMO_SCALE = 5.0f;
   /** Conversion factor for millimeters to meters. */
-  protected const float MM_TO_M = 0.001f;
+  protected const float MM_TO_M = 1e-3f;
   /** Conversion factor for nanoseconds to seconds. */
-  protected const float NS_TO_S = 0.000001f;
+  protected const float NS_TO_S = 1e-6f;
   /** Conversion factor for seconds to nanoseconds. */
-  protected const float S_TO_NS = 1000000f;
+  protected const float S_TO_NS = 1e6f;
   /** How much smoothing to use when calculating the FixedUpdate offset. */
   protected const float FIXED_UPDATE_OFFSET_SMOOTHING_DELAY = 0.1f;
 
