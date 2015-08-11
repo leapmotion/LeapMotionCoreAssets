@@ -123,6 +123,7 @@ public class BugReporter : MonoBehaviour {
     if (synchronizeRecorder != null &&
         synchronizeRecorder.camRecorder != null) {
       synchronizeRecorder.InterfaceEnabled = false;
+      synchronizeRecorder.showFrameTimeStamp = false;
       synchronizeRecorder.camRecorder.StopRecording();
     }
     progressStatus.fillAmount = 1.0f;
@@ -141,6 +142,7 @@ public class BugReporter : MonoBehaviour {
     if (synchronizeRecorder != null &&
         synchronizeRecorder.camRecorder != null) {
       synchronizeRecorder.InterfaceEnabled = true;
+      synchronizeRecorder.showFrameTimeStamp = true;
       synchronizeRecorder.camRecorder.directory = Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
       synchronizeRecorder.camRecorder.StartRecording();
     }

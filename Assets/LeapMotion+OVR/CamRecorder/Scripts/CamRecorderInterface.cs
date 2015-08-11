@@ -22,6 +22,26 @@ public class CamRecorderInterface : MonoBehaviour {
 
   private int m_hideLayer = 0;
 
+  [SerializeField]
+  private bool enableFrameTimeStamp = true;
+  public Text frameTimeStamp;
+  public HandController handController;
+
+  public bool showFrameTimeStamp {
+    get {
+      if (frameTimeStamp != null) {
+        return frameTimeStamp.isActiveAndEnabled;
+      }
+      return false;
+    }
+    set {
+      if (frameTimeStamp != null) {
+        frameTimeStamp.enabled = true;
+        frameTimeStamp.transform.parent.gameObject.SetActive(value);
+      }
+    }
+  }
+
   public bool InterfaceEnabled {
     get {
       return m_interfaceEnabled;
@@ -51,6 +71,7 @@ public class CamRecorderInterface : MonoBehaviour {
     }
     camRecorder.AddLayersToIgnore(m_hideLayer);
     InterfaceEnabled = m_interfaceEnabled;
+    showFrameTimeStamp = enableFrameTimeStamp;
   }
 
   void Update() {
@@ -106,6 +127,11 @@ public class CamRecorderInterface : MonoBehaviour {
       instructionText.text = "'" + changeState.ToString() + "' to Abort Processing";
       statusText.text = GetStatus();
       valueText.text = "Processing..." + camRecorder.framesActual.ToString() + "/" + camRecorder.framesExpect.ToString();
+    }
+
+    if (showFrameTimeStamp &&
+        handController != null) {
+      frameTimeStamp.text = handController.GetFrame().Id.ToString();
     }
   }
 }
