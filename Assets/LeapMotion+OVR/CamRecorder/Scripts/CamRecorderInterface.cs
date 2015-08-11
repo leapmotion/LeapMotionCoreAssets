@@ -50,7 +50,6 @@ public class CamRecorderInterface : MonoBehaviour {
       hideDuringRecording[i].layer = m_hideLayer; // Assign all objects to this layer
     }
     camRecorder.AddLayersToIgnore(m_hideLayer);
-    Debug.Log ("Hide Layer = " + m_hideLayer);
     InterfaceEnabled = m_interfaceEnabled;
   }
 
@@ -88,7 +87,6 @@ public class CamRecorderInterface : MonoBehaviour {
       }
       statusText.text = GetStatus();
       valueText.text = (camRecorder.framesExpect > 0) ? camRecorder.directory : "[ Success | Buffer | Dropped ] / Total";
-      Debug.Log ("GET camRecorder.directory = " + camRecorder.directory);
     }
     else if (camRecorder.IsCountingDown()) {
       instructionText.text = "Press '" + changeState + "' to End Recording";
