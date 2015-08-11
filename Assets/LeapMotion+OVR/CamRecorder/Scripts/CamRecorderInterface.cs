@@ -22,8 +22,7 @@ public class CamRecorderInterface : MonoBehaviour {
 
   private int m_hideLayer = 0;
 
-  [SerializeField]
-  private bool enableFrameTimeStamp = true;
+  public bool m_enableFrameTimeStamp = true;
   public Text frameTimeStamp;
   public HandController handController;
 
@@ -44,13 +43,16 @@ public class CamRecorderInterface : MonoBehaviour {
 
   public bool InterfaceEnabled {
     get {
-      return m_interfaceEnabled;
+      return (
+        (instructionText.gameObject.activeInHierarchy || m_hideInstructions) &&
+        statusText.gameObject.activeInHierarchy &&
+        valueText.gameObject.activeInHierarchy
+      );
     }
     set {
       instructionText.gameObject.SetActive(value && !m_hideInstructions);
       statusText.gameObject.SetActive(value);
       valueText.gameObject.SetActive(value);
-      m_interfaceEnabled = value;
     }
   }
 
@@ -71,7 +73,7 @@ public class CamRecorderInterface : MonoBehaviour {
     }
     camRecorder.AddLayersToIgnore(m_hideLayer);
     InterfaceEnabled = m_interfaceEnabled;
-    showFrameTimeStamp = enableFrameTimeStamp;
+    showFrameTimeStamp = m_enableFrameTimeStamp;
   }
 
   void Update() {
@@ -80,8 +82,6 @@ public class CamRecorderInterface : MonoBehaviour {
         Input.GetKeyDown (changeState)) {
         InterfaceEnabled = true;
       } 
-    } else {
-      InterfaceEnabled = m_interfaceEnabled;
     }
 
     if (Input.GetKeyDown(changeState) && InterfaceEnabled) {

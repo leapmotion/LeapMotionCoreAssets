@@ -51,7 +51,6 @@ public class BugReporter : MonoBehaviour {
       progressText.gameObject.SetActive(value);
       instructionText.gameObject.SetActive(value);
       savedpathsText.gameObject.SetActive (value);
-      m_interfaceEnabled = value;
     }
   }
 
@@ -88,8 +87,6 @@ public class BugReporter : MonoBehaviour {
           Input.GetKeyDown (changeState)) {
         InterfaceEnabled = true;
       } 
-    } else {
-      InterfaceEnabled = m_interfaceEnabled;
     }
 
     if ((unlockStart == KeyCode.None || Input.GetKey(unlockStart) || bug_report_state_ != BugReportState.READY) &&
@@ -122,10 +119,11 @@ public class BugReporter : MonoBehaviour {
     handController.StopRecording();
     if (synchronizeRecorder != null &&
         synchronizeRecorder.camRecorder != null) {
-      synchronizeRecorder.InterfaceEnabled = false;
-      synchronizeRecorder.showFrameTimeStamp = false;
+      synchronizeRecorder.InterfaceEnabled = synchronizeRecorder.m_interfaceEnabled;
+      synchronizeRecorder.showFrameTimeStamp = synchronizeRecorder.m_enableFrameTimeStamp;
       synchronizeRecorder.camRecorder.StopRecording();
     }
+    InterfaceEnabled = m_interfaceEnabled;
     progressStatus.fillAmount = 1.0f;
     SetProgressText("READY", Color.green);
     SetInstructionText("PRESS '" + changeState + "' TO START RECORDING", instructionColor);
@@ -213,11 +211,6 @@ public class BugReporter : MonoBehaviour {
     prev_bug_report_progress_ = leap_controller_.BugReport.Progress;
     prev_bug_report_state_ = leap_controller_.BugReport.IsActive;
 
-    if (synchronizeRecorder != null) {
-      synchronizeRecorder.m_hideInstructions = true;
-      synchronizeRecorder.InterfaceEnabled = false;
-    }
-
     InterfaceEnabled = m_interfaceEnabled;
   }
 
@@ -232,7 +225,8 @@ public class BugReporter : MonoBehaviour {
     leap_controller_ = handController.GetLeapController();
     if (leap_controller_ == null)
     {
-      Debug.LogWarning("Leap Controller was not found. Bug Recording -> Disabled until found");
+      Debug.LogWarning("Leap Controller was not found. Bug Recording -> Blocked until found");
+      InterfaceEnabled = false;
       return;
     }
     Init();
@@ -243,6 +237,7 @@ public class BugReporter : MonoBehaviour {
     if (leap_controller_ == null) {
       leap_controller_ = handController.GetLeapController();
       if (leap_controller_ != null) {
+        InterfaceEnabled = m_interfaceEnabled;
         Init();
       } else {
         return;
