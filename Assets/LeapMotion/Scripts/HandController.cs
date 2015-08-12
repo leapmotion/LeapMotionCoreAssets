@@ -401,7 +401,7 @@ public class HandController : MonoBehaviour {
   }
 
   /** Updates the graphics objects. */
-  void Update() {
+  virtual void Update() {
     if (leap_controller_ == null)
       return;
 
@@ -421,7 +421,7 @@ public class HandController : MonoBehaviour {
   }
 
   /** Updates the physics objects */
-  void FixedUpdate() {
+  virtual void FixedUpdate() {
     if (leap_controller_ == null)
       return;
 
