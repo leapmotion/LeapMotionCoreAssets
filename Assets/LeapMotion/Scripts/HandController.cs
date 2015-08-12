@@ -327,7 +327,7 @@ public class HandController : MonoBehaviour {
   * If the recorder object is playing a recording, then the frame is taken from the recording.
   * Otherwise, the frame comes from the Leap Motion Controller itself.
   */
-  public Frame GetFrame() {
+  public virtual Frame GetFrame() {
     if (enableRecordPlayback && (recorder_.state == RecorderState.Playing || recorder_.state == RecorderState.Paused))
       return recorder_.GetCurrentFrame();
 
@@ -335,15 +335,47 @@ public class HandController : MonoBehaviour {
   }
 
   /**
-   * NOTE: This method should ONLY be called from within a FixedUpdate callback.
+   * This method should ONLY be called from within a FixedUpdate callback.
    * 
-   * Returns a Frame object that is properly synchronized to the FixedUpdate timeline.
+   * Unity Physics runs at a constant frame step, where the physics time between each FixedUpdate is the same. However
+   * there is a big difference between the physics timeline and the real timeline.  In Unity, these timelines can be
+   * very skewed, where the actual times FixedUpdate is called can vary greatly.  For example, the graph below
+   * shows the real times when FixedUpdate was called.  
    * 
-   * If the recorder object is playing a recording, then the frame is taken directly from the recording,
-   * with no timeline synchronization performed.  Otherwise, the frame comes directly from the Leap Motion
-   * Controller.
+   * \image html images/GetFixedFrame_FixedUpdateCluster_Graph.png
+   * 
+   * The graph shows major clustering occuring of FixedUpdate calls, rather than an even spread.  Specifically, Unity
+   * always executes all of the FixedUpdate calls at the *begining* of an Update frame, and then performs interpolation
+   * to convert physics objects from the physics timeline to the real timeline.
+   * 
+   * This causes an issue when we need to aquire a Leap Frame from within FixedUpdate, since we need to provide a Frame
+   * to the physics timeline, but the Leap provides frames from the real timeline.  The image below shows what happens
+   * when we simply sample controller.Frame() from within FixedUpdate.  The X axis represents Time.fixedTime, and the Y
+   * axis represents the Frame.Timestamp
+   * 
+   * \image html images/GetFixedFrame_Naive_Graph.png
+   * 
+   * The graph shows how, from the perspective of the physics timeline, the Frames are arriving in a jagged way, staying
+   * the same for a large amount of time before jumping a large amount forward.  Ideally we would be able to take advantage
+   * of the full 120FPS of frames the service provides, properly interpolated into the physics timeline.  
+   * 
+   * GetFixedFrame attempts to establish a conversion from the real timeline to the physics timeline, to provide both
+   * uniformly sampled Frames, as well as not introducing latency.  The graph below shows a comparison between the naive
+   * method of sampling the most recent frame (red), and the usage of GetFixedFrame (green).  The X axis represents Time.fixedTime
+   * while the Y axis represents the Frame.Timestamp obtained by the 2 methods
+   * 
+   * \image html images/GetFixedFrame_Comparison_Graph.png
+   * 
+   * As the graph shows, the GetFixedFrame method can significantly help solve the judder that can occur when sampling
+   * controller.Frame while in FixedUpdate.
+   * 
+   * NOTE: This method should only be called during a FixedUpdate.  If it is called from anywhere else the Frame returned
+   * is not guaranteed to make sense.
+   * 
+   * ALSO: If the recorder object is playing a recording, then the frame is taken directly from the recording,
+   * with no timeline synchronization performed.
    */
-  public Frame GetFixedFrame() {
+  public virtual Frame GetFixedFrame() {
     if (enableRecordPlayback && (recorder_.state == RecorderState.Playing || recorder_.state == RecorderState.Paused))
       return recorder_.GetCurrentFrame();
 
