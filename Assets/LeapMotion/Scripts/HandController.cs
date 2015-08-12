@@ -335,7 +335,7 @@ public class HandController : MonoBehaviour {
   }
 
   /**
-   * This method should ONLY be called from within a FixedUpdate callback.
+   * NOTE: This method should ONLY be called from within a FixedUpdate callback.
    * 
    * Unity Physics runs at a constant frame step, where the physics time between each FixedUpdate is the same. However
    * there is a big difference between the physics timeline and the real timeline.  In Unity, these timelines can be
@@ -368,9 +368,6 @@ public class HandController : MonoBehaviour {
    * 
    * As the graph shows, the GetFixedFrame method can significantly help solve the judder that can occur when sampling
    * controller.Frame while in FixedUpdate.
-   * 
-   * NOTE: This method should only be called during a FixedUpdate.  If it is called from anywhere else the Frame returned
-   * is not guaranteed to make sense.
    * 
    * ALSO: If the recorder object is playing a recording, then the frame is taken directly from the recording,
    * with no timeline synchronization performed.
