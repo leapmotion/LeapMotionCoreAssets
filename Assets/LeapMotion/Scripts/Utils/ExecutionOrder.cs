@@ -143,7 +143,7 @@ public class ExecutionOrderSolver {
         cycleString = cycleNode.ToString() + " => " + cycleString;
       }
 
-      Debug.LogError("Found Execution Order Cycle!\n" + cycleString);
+      Debug.LogError("Found Execution Order Cycle!\n" + cycleString + "\nExecution order cannot be enforced until the cycle is removed!");
       return;
     }
 
