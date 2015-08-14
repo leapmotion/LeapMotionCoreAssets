@@ -1,11 +1,28 @@
 ﻿using UnityEngine;
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Callbacks;
+#endif
 using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+
+/* The ExecuteBefore and ExecuteAfter attributes can be used to cause a behavior to be executed after or before
+ * another behavior.  This is a more robust way to specify requirements in ordering than using Unity's built in
+ * ScriptExecutionOrder tab since it cannot be changed or invalidated accidentally by a user.
+ * 
+ * These attributes can be stacked and combined as much as one desires.  The effects of the ordering attributes
+ * are not inherited by an extending class.  
+ * 
+ * If one defines a cycle (Script A executed before B executes before C executes before A) the update of the 
+ * script order will fail, and alert you to the cycle so that you can resolve it.  
+ * 
+ * The application of the execution order occurs after every script reload, so there is no need to manually 
+ * trigger the proccess, but if you DO need to, you can go to Assets->Apply Execution Order Attributes to
+ * trigger the proccess manually
+ */
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class ExecuteBeforeAttribute : Attribute {
@@ -25,6 +42,7 @@ public class ExecuteAfterAttribute : Attribute {
   }
 }
 
+#if UNITY_EDITOR
 public class ExecutionOrderSolver {
   /* Every node represents a grouping of behaviors that all can the same execution index.  Grouping them
    * both helps algorithmix complexity, as well as ensuring that scripts with the same sorting index do
@@ -113,6 +131,7 @@ public class ExecutionOrderSolver {
     }
   }
 
+  [MenuItem("Assets/Apply Execution Order Attributes")]
   [DidReloadScripts]
   public static void solveForExecutionOrders() {
     MonoScript[] monoscripts = MonoImporter.GetAllRuntimeMonoScripts();
@@ -143,7 +162,7 @@ public class ExecutionOrderSolver {
         cycleString = cycleNode.ToString() + " => " + cycleString;
       }
 
-      Debug.LogError("Found Execution Order Cycle!\n" + cycleString + "\nExecution order cannot be enforced until the cycle is removed!");
+      EditorUtility.DisplayDialog("Execution Order Cycle!", "A cycle was found while trying to apply the Execution Order attributes!  Execution order cannot be applied until the cycle is removed\n\n" + cycleString, "Ok");
       return;
     }
 
@@ -511,3 +530,4 @@ public class ExecutionOrderSolver {
     }
   }
 }
+#endif
