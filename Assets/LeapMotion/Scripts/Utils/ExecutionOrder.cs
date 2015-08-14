@@ -26,8 +26,6 @@ public class ExecuteAfterAttribute : Attribute {
 }
 
 public class ExecutionOrderSolver {
-  public static bool DEBUG_OUTPUT = false;
-
   /* Every node represents a grouping of behaviors that all can the same execution index.  Grouping them
    * both helps algorithmix complexity, as well as ensuring that scripts with the same sorting index do
    * not become seperated */
@@ -60,6 +58,8 @@ public class ExecutionOrderSolver {
       this.executionIndex = executionIndex;
     }
 
+    /* Tries to combine another node into this one.  This method assumes that the other node is a direct
+     * neighbor to this one in an ordering, as two nodes cannot be combined if they are not neighbors. */
     public bool tryCombineWith(Node other) {
       /* If both nodes are anchored, but have difference execution indexes, we cannot combine them. */
       if (isAnchored && other.isAnchored && executionIndex != other.executionIndex) {
@@ -74,6 +74,8 @@ public class ExecutionOrderSolver {
       if (doesHaveOrderingComparedTo(other)) {
         return false;
       }
+
+      /* We can be combined! */
 
       types.AddRange(other.types);
       beforeTypes.AddRange(other.beforeTypes);
@@ -112,7 +114,6 @@ public class ExecutionOrderSolver {
   }
 
   [DidReloadScripts]
-  [MenuItem("WOW/WOW")]
   public static void solveForExecutionOrders() {
     MonoScript[] monoscripts = MonoImporter.GetAllRuntimeMonoScripts();
 
@@ -165,6 +166,17 @@ public class ExecutionOrderSolver {
     applyExecutionIndexes(monoscripts, nodes);
   }
 
+  /* Given all of the loaded monoscripts, construct a single node for each script.  This method returns true if
+   * it found at least one node that was out of order.  
+   * 
+   * Behaviors that have no ordering attributes are considered 'anchored', as their ordering has been defined by
+   * their current index in the ScriptExecutionOrder.  All anchored nodes should not be moved relative to each
+   * other, as this could be an important ordering that has been defined by the user or plugins
+   * 
+   * Behaviors that do have ordering attributes are not considered anchored, even if they are current in order.
+   * If the behavior is out of order relative to the requirements of its ordering attributes, it is marked
+   * as needing a new index.  
+   */
   private static bool tryConstructNodes(MonoScript[] monoscripts, ref List<Node> nodes) {
     Dictionary<Type, int> typeToIndex = new Dictionary<Type, int>();
     foreach (MonoScript script in monoscripts) {
@@ -188,9 +200,7 @@ public class ExecutionOrderSolver {
       nodes.Add(newNode);
 
       if (Attribute.IsDefined(scriptType, typeof(ExecuteAfterAttribute), false) || Attribute.IsDefined(scriptType, typeof(ExecuteBeforeAttribute), false)) {
-
-        Attribute[] customAttributes = Attribute.GetCustomAttributes(scriptType, false);
-        foreach (Attribute customAttribute in customAttributes) {
+        foreach (Attribute customAttribute in Attribute.GetCustomAttributes(scriptType, false)) {
           if (customAttribute is ExecuteAfterAttribute) {
             ExecuteAfterAttribute executeAfter = customAttribute as ExecuteAfterAttribute;
 
@@ -236,6 +246,7 @@ public class ExecutionOrderSolver {
    * but it might be later grouped by the collapseNeighbors() method
    */
   private static void collapseAnchoredNodes(ref List<Node> nodes) {
+    //Create a set of all types that are referenced by at least one ordering attribute
     HashSet<Type> referencedTypes = new HashSet<Type>();
     foreach (Node node in nodes) {
       referencedTypes.UnionWith(node.beforeTypes);
@@ -275,11 +286,12 @@ public class ExecutionOrderSolver {
   }
 
   private static void constructAnchoredEdges(List<Node> nodes, ref Dictionary<Node, List<Node>> edges) {
+    //Create a sorted list of all the execution indexes of all of the anchored nodes
     List<int> anchoredNodeIndexes = nodes.Where(n => n.isAnchored).Select(n => n.executionIndex).Distinct().ToList();
     anchoredNodeIndexes.Sort();
 
+    //Map each index to a list of all the anchored nodes with that index
     Dictionary<int, List<Node>> _indexToAnchoredNodes = new Dictionary<int, List<Node>>();
-
     foreach (Node anchoredNode in nodes.Where(n => n.isAnchored)) {
       List<Node> list;
       if (!_indexToAnchoredNodes.TryGetValue(anchoredNode.executionIndex, out list)) {
@@ -289,6 +301,10 @@ public class ExecutionOrderSolver {
       list.Add(anchoredNode);
     }
 
+    /* Each anchored node has an edge connecting it to every other anchored node with the next lowest index
+     * We do not need to connect every combination of nodes, because of the communicative property of comparison
+     * if A > B > C, we don't need to specify that A > C explicitly, creating an edge for A > B and B > C is 
+     * enough */
     foreach (Node anchoredNode in nodes.Where(n => n.isAnchored)) {
       int offset = anchoredNodeIndexes.IndexOf(anchoredNode.executionIndex);
 
@@ -309,7 +325,8 @@ public class ExecutionOrderSolver {
       }
     }
 
-    //Build edges for non-anchored nodes
+    /* Build edges for non-anchored nodes.  This is simpler than the edges for the anchored nodes, since
+     * there is exactly one edge for every ordering attribute */
     foreach (Node relativeNode in nodes.Where(n => !n.isAnchored)) {
       foreach (Type beforeType in relativeNode.beforeTypes) {
         Node beforeNode = typeToNode[beforeType];
@@ -372,6 +389,8 @@ public class ExecutionOrderSolver {
    * always falls before a node it points towards.  This modifies the graph in the proccess.
    * 
    * Direct implementation of https://en.wikipedia.org/wiki/Topological_sorting#Algorithms
+   * 
+   * This method destroys the graph during the solve.
    */
   private static void solveTopologicalOrdering(ref List<Node> nodes, ref Dictionary<Node, List<Node>> edges) {
 
@@ -415,7 +434,7 @@ public class ExecutionOrderSolver {
     Node current = nodes[0];
     newNodeList.Add(current);
 
-    for(int i=1; i<nodes.Count; i++){
+    for (int i = 1; i < nodes.Count; i++) {
       Node node = nodes[i];
       if (!current.tryCombineWith(node)) {
         current = node;
@@ -482,20 +501,11 @@ public class ExecutionOrderSolver {
       typeToMonoScript[scriptType] = monoscript;
     }
 
-    if (DEBUG_OUTPUT) {
-      Debug.Log("##### Calculated Ordering #####");
-    }
-
     foreach (Node node in nodes) {
-
-      if (DEBUG_OUTPUT) {
-        Debug.Log(node.executionIndex + " : " + node);
-      }
-
       foreach (Type type in node.types) {
         MonoScript monoscript = typeToMonoScript[type];
         if (MonoImporter.GetExecutionOrder(monoscript) != node.executionIndex) {
-          //MonoImporter.SetExecutionOrder(monoscript, grouping.executionIndex);
+          MonoImporter.SetExecutionOrder(monoscript, node.executionIndex);
         }
       }
     }
