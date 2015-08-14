@@ -157,24 +157,14 @@ public class ExecutionOrderSolver {
 
     Dictionary<Node, List<Node>> edges = new Dictionary<Node, List<Node>>();
 
-    constructAnchoredEdges(nodes, ref edges);
     constructRelativeEdges(nodes, ref edges);
+    if (checkForCycles(edges)) return;
 
-    /* Here we check to see if there are any cycles in the graph we have constructed.  Our
-     * solving algorithm will tell us if there is no solution, but it doesn't give us any
-     * useful information about why it is unsolvable.  We try to find a cycle here so that
-     * we can output it so that the user can more easily find the cycle and correct it
-     */
-    Stack<Node> cycle;
-    if (tryFindCycle(edges, out cycle)) {
-      string cycleString = cycle.Last().ToString();
-      foreach (Node cycleNode in cycle) {
-        cycleString = cycleNode.ToString() + " => " + cycleString;
-      }
+    constructAnchoredEdges(nodes, ref edges);
+    if (checkForCycles(edges)) return;
 
-      EditorUtility.DisplayDialog("Execution Order Cycle!", "A cycle was found while trying to apply the Execution Order attributes!  Execution order cannot be applied until the cycle is removed\n\n" + cycleString, "Ok");
-      return;
-    }
+    constructEventSystemEdges(nodes, ref edges);
+    if (checkForCycles(edges)) return;
 
     solveTopologicalOrdering(ref nodes, ref edges);
 
@@ -355,8 +345,6 @@ public class ExecutionOrderSolver {
       }
     }
 
-    Node eventSystemNode = nodes.First(n => n.isEventSystem);
-
     /* Build edges for non-anchored nodes.  This is simpler than the edges for the anchored nodes, since
      * there is exactly one edge for every ordering attribute */
     foreach (Node relativeNode in nodes.Where(n => !n.isAnchored)) {
@@ -369,7 +357,12 @@ public class ExecutionOrderSolver {
         Node afterNode = typeToNode[afterType];
         addEdge(edges, afterNode, relativeNode);
       }
+    }
+  }
 
+  private static void constructEventSystemEdges(List<Node> nodes, ref Dictionary<Node, List<Node>> edges) {
+    Node eventSystemNode = nodes.First(n => n.isEventSystem);
+    foreach (Node relativeNode in nodes.Where(n => !n.isAnchored)) {
       addEdge(edges, eventSystemNode, relativeNode);
     }
   }
@@ -385,11 +378,22 @@ public class ExecutionOrderSolver {
     after.incomingEdgeCount++;
   }
 
-  private static bool tryFindCycle(Dictionary<Node, List<Node>> edges, out Stack<Node> cycle) {
-    cycle = new Stack<Node>();
+  /* Here we check to see if there are any cycles in the graph we have constructed.  Our
+   * solving algorithm will tell us if there is no solution, but it doesn't give us any
+   * useful information about why it is unsolvable.  We try to find a cycle here so that
+   * we can output it so that the user can more easily find the cycle and correct it
+   */
+  private static bool checkForCycles(Dictionary<Node, List<Node>> edges) {
+    Stack<Node> cycle = new Stack<Node>();
 
     foreach (var edge in edges) {
       if (findCycle(edges, edge.Key, cycle)) {
+        string cycleString = cycle.Last().ToString();
+        foreach (Node cycleNode in cycle) {
+          cycleString = cycleNode.ToString() + " => " + cycleString;
+        }
+
+        EditorUtility.DisplayDialog("Execution Order Cycle!", "A cycle was found while trying to apply the Execution Order attributes!  Execution order cannot be applied until the cycle is removed\n\n" + cycleString, "Ok");
         return true;
       }
     }
