@@ -79,6 +79,10 @@ public class ExecutionOrderSolver {
     /* Tries to combine another node into this one.  This method assumes that the other node is a direct
      * neighbor to this one in an ordering, as two nodes cannot be combined if they are not neighbors. */
     public bool tryCombineWith(Node other) {
+      if (isEventSystem || other.isEventSystem) {
+        return false;
+      }
+
       /* If both nodes are anchored, but have difference execution indexes, we cannot combine them. */
       if (isAnchored && other.isAnchored && executionIndex != other.executionIndex) {
         return false;
@@ -116,6 +120,12 @@ public class ExecutionOrderSolver {
         }
       }
       return false;
+    }
+
+    public bool isEventSystem {
+      get {
+        return types.Contains(typeof(UnityEngine.EventSystems.EventSystem));
+      }
     }
 
     public override string ToString() {
@@ -286,7 +296,8 @@ public class ExecutionOrderSolver {
       }
 
       //If the node is anchored, and not referenced by any ordering, we can put it into the collapsed node
-      if (node.isAnchored && !isReferenced) {
+      //The EventSystem node should never be combined
+      if (node.isAnchored && !isReferenced && !node.isEventSystem) {
 
         Node anchorGroup;
         if (!_collapsedAnchoredNodes.TryGetValue(node.executionIndex, out anchorGroup)) {
@@ -344,6 +355,8 @@ public class ExecutionOrderSolver {
       }
     }
 
+    Node eventSystemNode = nodes.First(n => n.isEventSystem);
+
     /* Build edges for non-anchored nodes.  This is simpler than the edges for the anchored nodes, since
      * there is exactly one edge for every ordering attribute */
     foreach (Node relativeNode in nodes.Where(n => !n.isAnchored)) {
@@ -356,6 +369,8 @@ public class ExecutionOrderSolver {
         Node afterNode = typeToNode[afterType];
         addEdge(edges, afterNode, relativeNode);
       }
+
+      addEdge(edges, eventSystemNode, relativeNode);
     }
   }
 
