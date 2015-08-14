@@ -28,19 +28,20 @@ public class ExecuteAfterAttribute : Attribute {
 public class ExecutionOrderSolver {
   public static bool DEBUG_OUTPUT = false;
 
-  /* Every node represents a grouping of types that all can the same execution index.  We could treat
-   * each monoscript as its own node, but that would be much slower. */
+  /* Every node represents a grouping of behaviors that all can the same execution index.  Grouping them
+   * both helps algorithmix complexity, as well as ensuring that scripts with the same sorting index do
+   * not become seperated */
   private class Node {
-    /* A set of all the monoscript types associated with this Node */
+    /* A set of all the behavior types associated with this Node */
     public List<Type> types = new List<Type>(1);
 
-    //Types this node executes before
+    //Types that this node executes before
     public List<Type> beforeTypes = new List<Type>();
 
-    //Types this node executes after
+    //Types that this node executes after
     public List<Type> afterTypes = new List<Type>();
 
-    /* Used during the ordering solve.  Represents the number of edges that travel to this node in the graph*/
+    /* Used during the topological sort.  Represents the number of edges that travel to this node in the graph*/
     public int incomingEdgeCount = 0;
 
     /* Represents the execution index of this node.  Is initialized to the exising execution index, and 
@@ -50,7 +51,8 @@ public class ExecutionOrderSolver {
     /* Is true if this node needs a new execution index calculated */
     public bool needsNewIndex = false;
 
-    /* The ordering of anchored nodes is not allowed to change. */
+    /* The ordering of anchored nodes is not allowed to change. Anchored nodes are behaviors that 
+     * have no ordering attributes. */
     public bool isAnchored = false;
 
     public Node(Type type, int executionIndex) {
