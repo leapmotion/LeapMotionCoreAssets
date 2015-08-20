@@ -45,7 +45,7 @@ public class ExecuteAfterAttribute : Attribute {
 #if UNITY_EDITOR
 public class ExecutionOrderSolver {
   /* Every node represents a grouping of behaviors that all can the same execution index.  Grouping them
-   * both helps algorithmix complexity, as well as ensuring that scripts with the same sorting index do
+   * both helps algorithmic complexity, as well as ensuring that scripts with the same sorting index do
    * not become seperated */
   private class Node {
     /* A set of all the behavior types associated with this Node */
@@ -97,7 +97,7 @@ public class ExecutionOrderSolver {
         return false;
       }
 
-      /* We can be combined! */
+      /* This node and other node can be combined! */
 
       types.AddRange(other.types);
       beforeTypes.AddRange(other.beforeTypes);
