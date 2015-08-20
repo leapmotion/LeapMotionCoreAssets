@@ -46,11 +46,15 @@ public class BugReporter : MonoBehaviour {
       return m_interfaceEnabled;
     }
     set {
+      m_interfaceEnabled = value;
       progressStatus.gameObject.SetActive(value);
       progressBar.gameObject.SetActive(value);
       progressText.gameObject.SetActive(value);
       instructionText.gameObject.SetActive(value);
       savedpathsText.gameObject.SetActive (value);
+      if (synchronizeRecorder != null) {
+        synchronizeRecorder.InterfaceEnabled = InterfaceEnabled;
+      }
     }
   }
 
@@ -82,18 +86,9 @@ public class BugReporter : MonoBehaviour {
 
   private void HandleKeyInputs()
   {
-    if (bug_report_state_ == BugReportState.READY) {
-      if ((unlockStart == KeyCode.None || Input.GetKey (unlockStart)) &&
-          Input.GetKeyDown (changeState)) {
-        InterfaceEnabled = true;
-      } 
-    }
-
     if ((unlockStart == KeyCode.None || Input.GetKey(unlockStart) || bug_report_state_ != BugReportState.READY) &&
-        Input.GetKeyDown(changeState))
-    {
-      switch (bug_report_state_)
-      {
+        Input.GetKeyDown(changeState) && InterfaceEnabled) {
+      switch (bug_report_state_) {
         case BugReportState.READY:
           RecordingTriggered();
           break;
@@ -111,6 +106,13 @@ public class BugReporter : MonoBehaviour {
           break;
       }
     }
+
+    if (bug_report_state_ == BugReportState.READY) {
+      if ((unlockStart == KeyCode.None || Input.GetKey (unlockStart)) &&
+          Input.GetKeyDown (changeState)) {
+        InterfaceEnabled = true;
+      } 
+    }
   }
   
   private void ReadyTriggered()
@@ -127,7 +129,7 @@ public class BugReporter : MonoBehaviour {
     InterfaceEnabled = m_interfaceEnabled;
     progressStatus.fillAmount = 1.0f;
     SetProgressText("READY", Color.green);
-    SetInstructionText("PRESS '" + changeState + "' TO START RECORDING", instructionColor);
+    SetInstructionText("PRESS '" + unlockStart + "+" + changeState + "' TO START RECORDING", instructionColor);
     SetSavedPathsText ("");
     bug_report_state_ = BugReportState.READY;
   }

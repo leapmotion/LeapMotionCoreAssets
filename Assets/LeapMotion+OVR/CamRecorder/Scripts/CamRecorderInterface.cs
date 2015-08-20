@@ -51,6 +51,7 @@ public class CamRecorderInterface : MonoBehaviour {
       );
     }
     set {
+      m_interfaceEnabled = value;
       instructionText.gameObject.SetActive(value && !m_hideInstructions);
       statusText.gameObject.SetActive(value);
       valueText.gameObject.SetActive(value);
@@ -78,15 +79,8 @@ public class CamRecorderInterface : MonoBehaviour {
   }
 
   void Update() {
-    if (camRecorder.IsIdling ()) {
-      if ((unlockStart == KeyCode.None || Input.GetKey (unlockStart)) &&
-        Input.GetKeyDown (changeState)) {
-        InterfaceEnabled = true;
-      } 
-    }
-
     if (Input.GetKeyDown(changeState) && InterfaceEnabled) {
-      if (camRecorder.IsIdling()) {
+      if (camRecorder.IsIdling() && (unlockStart == KeyCode.None || Input.GetKey (unlockStart))) {
         startScreen.transform.localPosition = new Vector3(0.0f, 0.0f, camRecorder.GetComponent<Camera>().nearClipPlane + 0.01f);
         camRecorder.useHighResolution = highResolution;
         camRecorder.directory = Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
@@ -98,6 +92,13 @@ public class CamRecorderInterface : MonoBehaviour {
       }
       else if (camRecorder.IsProcessing()) {
         camRecorder.StopProcessing();
+      }
+    }
+
+    if (camRecorder.IsIdling()) {
+      if ((unlockStart == KeyCode.None || Input.GetKey(unlockStart)) &&
+        Input.GetKeyDown(changeState)) {
+        InterfaceEnabled = true;
       }
     }
 
