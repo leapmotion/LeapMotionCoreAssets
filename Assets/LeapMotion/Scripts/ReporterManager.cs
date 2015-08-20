@@ -51,60 +51,83 @@ public class ReporterManager : MonoBehaviour {
         if (OnSafetyTrigger()) {
           foreach (ReporterBase reporter in m_reporters) {
             reporter.gameObject.SetActive(true);
+            reporter.SetKeys(safetyKey, triggerKey);
+            reporter.TriggerReset();
           }
-          m_managerState = RecordingState.READY;
         }
         break;
       case RecordingState.READY:
         if (OnSafetyTrigger()) {
-          bool success = true;
           foreach (ReporterBase reporter in m_reporters) {
-            if (reporter.IsReady()) {
-              if (!reporter.StartRecording())
-                success = false;
-            }
+            reporter.TriggerStartRecording();
           }
-          if (success)
-            m_managerState = RecordingState.RECORDING;
         }
         break;
       case RecordingState.RECORDING:
         if (OnTrigger()) {
-          bool success = true;
           foreach (ReporterBase reporter in m_reporters) {
-            if (reporter.IsRecording()) {
-              if (!reporter.AbortRecording() || !reporter.StartSaving())
-                success = false;
-            }
+            reporter.TriggerAbortRecording();
+            reporter.TriggerStartSaving();
           }
-          if (success)
-            m_managerState = RecordingState.SAVING;
         }
         break;
       case RecordingState.SAVING:
         if (OnTrigger()) {
-          bool success = true;
           foreach (ReporterBase reporter in m_reporters) {
-            if (reporter.IsSaving()) {
-              if (!reporter.AbortSaving() || !reporter.StartReplaying())
-                success = false;
-            }
+            reporter.TriggerAbortSaving();
+            reporter.TriggerStartReplaying();
           }
-          if (success)
-            m_managerState = RecordingState.REPLAYING;
         }
         break;
       case RecordingState.REPLAYING:
         if (OnTrigger()) {
-          bool success = true;
           foreach (ReporterBase reporter in m_reporters) {
-            if (reporter.IsReplaying())
-              if (!reporter.AbortReplaying())
-                success = false;
+            reporter.TriggerAbortReplaying();
+            reporter.TriggerReset();
           }
-          if (success)
-            m_managerState = RecordingState.READY;
         }
+        break;
+      default:
+        break;
+    }
+
+    // Propagate to the next state only if all reporters are no longer same with manager state. This allows manager the wait for last reporter
+    bool changeState = true;
+    switch (m_managerState) {
+      case RecordingState.INACTIVE:
+        foreach (ReporterBase reporter in m_reporters) {
+          if (!reporter.gameObject.activeSelf)
+            changeState = false;
+        }
+        if (changeState) m_managerState = RecordingState.READY;
+        break;
+      case RecordingState.READY:
+        foreach (ReporterBase reporter in m_reporters) {
+          if (reporter.IsReady())
+            changeState = false;
+        }
+        if (changeState) m_managerState = RecordingState.RECORDING;
+        break;
+      case RecordingState.RECORDING:
+        foreach (ReporterBase reporter in m_reporters) {
+          if (reporter.IsRecording())
+            changeState = false;
+        }
+        if (changeState) m_managerState = RecordingState.SAVING;
+        break;
+      case RecordingState.SAVING:
+        foreach (ReporterBase reporter in m_reporters) {
+          if (reporter.IsSaving())
+            changeState = false;
+        }
+        if (changeState) m_managerState = RecordingState.REPLAYING;
+        break;
+      case RecordingState.REPLAYING:
+        foreach (ReporterBase reporter in m_reporters) {
+          if (reporter.IsReplaying())
+            changeState = false;
+        }
+        if (changeState) m_managerState = RecordingState.READY;
         break;
       default:
         break;

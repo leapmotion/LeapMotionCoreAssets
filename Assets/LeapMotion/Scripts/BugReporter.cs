@@ -6,57 +6,19 @@ using Leap;
 
 using UImage = UnityEngine.UI.Image;
 
-public class BugReporter : MonoBehaviour {
-  public bool m_interfaceEnabled = false;
-  public KeyCode unlockStart = KeyCode.LeftShift;
-  public KeyCode changeState = KeyCode.Tab;
-
+public class BugReporter : ReporterBase {
   public HandController handController;
   public UImage progressStatus;
   public UImage progressBar;
   public Text progressText;
   public Text instructionText;
   public Text savedpathsText;
-  public CamRecorderInterface synchronizeRecorder;
   public bool saveReplayFrames = false;
 
   protected Color instructionColor = new Color(1.0f, 0.5f, 0.0f);
-
   protected Controller leap_controller_;
-
-  protected float prev_bug_report_progress_;
   protected bool prev_bug_report_state_;
-
-  protected bool saving_triggered_ = false;
-
   protected string replayPath;
-
-  protected enum BugReportState
-  {
-    READY,
-    RECORDING,
-    SAVING,
-    REPLAYING,
-  };
-
-  protected BugReportState bug_report_state_ = BugReportState.READY;
-
-  public bool InterfaceEnabled {
-    get {
-      return m_interfaceEnabled;
-    }
-    set {
-      m_interfaceEnabled = value;
-      progressStatus.gameObject.SetActive(value);
-      progressBar.gameObject.SetActive(value);
-      progressText.gameObject.SetActive(value);
-      instructionText.gameObject.SetActive(value);
-      savedpathsText.gameObject.SetActive (value);
-      if (synchronizeRecorder != null) {
-        synchronizeRecorder.InterfaceEnabled = InterfaceEnabled;
-      }
-    }
-  }
 
   protected void SetProgressText(string text, Color color)
   {
@@ -84,108 +46,57 @@ public class BugReporter : MonoBehaviour {
     savedpathsText.text = text;
   }
 
-  private void HandleKeyInputs()
-  {
-    if ((unlockStart == KeyCode.None || Input.GetKey(unlockStart) || bug_report_state_ != BugReportState.READY) &&
-        Input.GetKeyDown(changeState) && InterfaceEnabled) {
-      switch (bug_report_state_) {
-        case BugReportState.READY:
-          RecordingTriggered();
-          break;
-        case BugReportState.RECORDING:
-          leap_controller_.BugReport.EndRecording();
-          SavingTriggered();
-          break;
-        case BugReportState.SAVING:
-          ReplayTriggered();
-          break;
-        case BugReportState.REPLAYING:
-          ReadyTriggered();
-          break;
-        default:
-          break;
-      }
-    }
-
-    if (bug_report_state_ == BugReportState.READY) {
-      if ((unlockStart == KeyCode.None || Input.GetKey (unlockStart)) &&
-          Input.GetKeyDown (changeState)) {
-        InterfaceEnabled = true;
-      } 
-    }
-  }
-  
-  private void ReadyTriggered()
-  {
-    handController.ResetRecording();
-    handController.StopRecording();
-    if (synchronizeRecorder != null &&
-        synchronizeRecorder.camRecorder != null) {
-      synchronizeRecorder.m_hideInstructions = false;
-      synchronizeRecorder.InterfaceEnabled = synchronizeRecorder.m_interfaceEnabled;
-      synchronizeRecorder.showFrameTimeStamp = synchronizeRecorder.m_enableFrameTimeStamp;
-      synchronizeRecorder.camRecorder.StopRecording();
-    }
-    InterfaceEnabled = m_interfaceEnabled;
+  protected override bool Reset() {
+    handController.enableRecordPlayback = true;
+    
     progressStatus.fillAmount = 1.0f;
     SetProgressText("READY", Color.green);
-    SetInstructionText("PRESS '" + unlockStart + "+" + changeState + "' TO START RECORDING", instructionColor);
-    SetSavedPathsText ("");
-    bug_report_state_ = BugReportState.READY;
+    SetInstructionText("PRESS '" + m_safetyKey + "+" + m_triggerKey + "' TO START RECORDING", instructionColor);
+    SetSavedPathsText("");
+    return true;
   }
 
-  private void RecordingTriggered()
-  {
-    saving_triggered_ = false;
+  protected override bool StartRecording() {
     leap_controller_.BugReport.BeginRecording();
     handController.ResetRecording();
     handController.Record();
-    if (synchronizeRecorder != null &&
-        synchronizeRecorder.camRecorder != null) {
-      synchronizeRecorder.m_hideInstructions = true;
-      synchronizeRecorder.InterfaceEnabled = true;
-      synchronizeRecorder.showFrameTimeStamp = true;
-      synchronizeRecorder.camRecorder.directory = Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-      synchronizeRecorder.camRecorder.StartRecording();
-    }
+
     SetProgressText("RECORDING", Color.yellow);
-    SetInstructionText("PRESS '" + changeState + "' TO END RECORD", instructionColor);
-    SetSavedPathsText ("");
-    bug_report_state_ = BugReportState.RECORDING;
+    SetInstructionText("PRESS '" + m_triggerKey + "' TO END RECORD", instructionColor);
+    SetSavedPathsText("");
+    return true;
   }
 
-  private void SavingTriggered()
-  {
-    if (saving_triggered_)
-      return;
+  protected override bool AbortRecording() {
+    leap_controller_.BugReport.EndRecording();
+    handController.ResetRecording();
+    handController.StopRecording();
+    return true;
+  }
 
+  protected override bool StartSaving() {
     if (saveReplayFrames) {
-      replayPath = handController.FinishAndSaveRecording ();
+      replayPath = handController.FinishAndSaveRecording();
     } else {
-      handController.StopRecording ();
+      handController.StopRecording();
       replayPath = "";
     }
     handController.PlayRecording();
-    if (synchronizeRecorder != null &&
-        synchronizeRecorder.camRecorder != null) {
-      synchronizeRecorder.camRecorder.StopRecording();
-    }
     SetProgressText("SAVING", Color.red);
     SetInstructionText("SAVING", Color.red);
     if (replayPath.Length > 0) {
       SetSavedPathsText("Replay File @ " + replayPath);
     }
-    saving_triggered_ = true;
+    return true;
   }
-  
-  private void ReplayTriggered()
-  {
+
+  protected override bool StartReplaying() {
     SetProgressText("REPLAYING", Color.yellow);
-    SetInstructionText("PRESS '" + changeState + "' TO END REPLAY", instructionColor);
+    SetInstructionText("PRESS '" + m_triggerKey + "' TO END REPLAY", instructionColor);
     if (replayPath.Length > 0) {
       SetSavedPathsText("Replay File @ " + replayPath);
     }
-    bug_report_state_ = BugReportState.REPLAYING;
+    return true;
   }
 
   private void UpdateGUI()
@@ -196,26 +107,15 @@ public class BugReporter : MonoBehaviour {
       progressStatus.fillAmount = progress;
       if (progress == 1.0f)
       {
-        SavingTriggered();
+        TriggerStartSaving();
       }
     }
 
     if (leap_controller_.BugReport.IsActive != prev_bug_report_state_ && leap_controller_.BugReport.IsActive == false)
     {
-      ReplayTriggered();
+      TriggerStartReplaying();
     }
-  }
-
-  void Init()
-  {
-    handController.enableRecordPlayback = true;
-
-    ReadyTriggered();
-
-    prev_bug_report_progress_ = leap_controller_.BugReport.Progress;
     prev_bug_report_state_ = leap_controller_.BugReport.IsActive;
-
-    InterfaceEnabled = m_interfaceEnabled;
   }
 
   void Start()
@@ -230,28 +130,19 @@ public class BugReporter : MonoBehaviour {
     if (leap_controller_ == null)
     {
       Debug.LogWarning("Leap Controller was not found. Bug Recording -> Blocked until found");
-      InterfaceEnabled = false;
       return;
     }
-    Init();
   }
 	
 	// Update is called once per frame
 	void Update() {
     if (leap_controller_ == null) {
       leap_controller_ = handController.GetLeapController();
-      if (leap_controller_ != null) {
-        InterfaceEnabled = m_interfaceEnabled;
-        Init();
-      } else {
+      if (leap_controller_ == null) {
         return;
       }
     }
 
-    HandleKeyInputs();
     UpdateGUI();
-
-    prev_bug_report_progress_ = leap_controller_.BugReport.Progress;
-    prev_bug_report_state_ = leap_controller_.BugReport.IsActive;
 	}
 }

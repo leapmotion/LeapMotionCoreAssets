@@ -2,16 +2,16 @@
 using System.Collections;
 
 public abstract class ReporterBase : MonoBehaviour {
+  protected KeyCode m_safetyKey;
+  protected KeyCode m_triggerKey;
+
   protected enum RecordingState {
     READY,
     RECORDING,
     SAVING,
     REPLAYING
   }
-  protected RecordingState m_recordingState = RecordingState.READY;
-
-  protected KeyCode m_safetyKey;
-  protected KeyCode m_triggerKey;
+  private RecordingState m_recordingState = RecordingState.READY;
 
   public void SetKeys(KeyCode safetyKey, KeyCode triggerKey) 
   {
@@ -24,12 +24,57 @@ public abstract class ReporterBase : MonoBehaviour {
   public bool IsSaving() { return m_recordingState == RecordingState.SAVING; }
   public bool IsReplaying() { return m_recordingState == RecordingState.REPLAYING; }
 
-  public abstract bool StartRecording();
-  public abstract bool AbortRecording();
-  public virtual bool StartSaving() { return true; }
-  public virtual bool AbortSaving() { return true; }
-  public virtual bool StartReplaying() { return true; }
-  public virtual bool AbortReplaying() { return true; }
+  public void TriggerStartRecording() {
+    if (!IsReady())
+      return;
+    if (StartRecording())
+      m_recordingState = RecordingState.RECORDING;
+  }
+
+  public void TriggerAbortRecording() {
+    if (!IsRecording())
+      return;
+    AbortRecording();
+  }
+
+  public void TriggerStartSaving() {
+    if (!IsRecording())
+      return;
+    if (StartSaving())
+      m_recordingState = RecordingState.SAVING;
+  }
+
+  public void TriggerAbortSaving() {
+    if (!IsSaving())
+      return;
+    AbortSaving();
+  }
+
+  public void TriggerStartReplaying() {
+    if (!IsSaving())
+      return;
+    if (StartReplaying())
+      m_recordingState = RecordingState.REPLAYING;
+  }
+
+  public void TriggerAbortReplaying() {
+    if (!IsReplaying())
+      return;
+    AbortReplaying();
+  }
+
+  public void TriggerReset() {
+    if (Reset())
+      m_recordingState = RecordingState.READY;
+  }
+
+  protected virtual bool Reset() { return true; }
+  protected abstract bool StartRecording();
+  protected abstract bool AbortRecording();
+  protected virtual bool StartSaving() { return true; }
+  protected virtual bool AbortSaving() { return true; }
+  protected virtual bool StartReplaying() { return true; }
+  protected virtual bool AbortReplaying() { return true; }
 
   protected virtual void OnEnable() {
     m_recordingState = RecordingState.READY;
