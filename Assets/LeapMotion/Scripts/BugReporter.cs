@@ -58,7 +58,6 @@ public class BugReporter : ReporterBase {
 
   protected override bool StartRecording() {
     leap_controller_.BugReport.BeginRecording();
-    handController.ResetRecording();
     handController.Record();
 
     SetProgressText("RECORDING", Color.yellow);
@@ -69,25 +68,24 @@ public class BugReporter : ReporterBase {
 
   protected override bool AbortRecording() {
     leap_controller_.BugReport.EndRecording();
-    handController.ResetRecording();
     handController.StopRecording();
     return true;
   }
 
   protected override bool StartSaving() {
-    if (saveReplayFrames) {
-      replayPath = handController.FinishAndSaveRecording();
-    } else {
-      handController.StopRecording();
-      replayPath = "";
-    }
+    replayPath = (saveReplayFrames) ? handController.FinishAndSaveRecording() : "";
     handController.PlayRecording();
+
     SetProgressText("SAVING", Color.red);
     SetInstructionText("SAVING", Color.red);
     if (replayPath.Length > 0) {
       SetSavedPathsText("Replay File @ " + replayPath);
     }
     return true;
+  }
+
+  protected override bool AbortSaving() {
+    return false; // Disallow aborting saving
   }
 
   protected override bool StartReplaying() {
@@ -99,6 +97,11 @@ public class BugReporter : ReporterBase {
     return true;
   }
 
+  protected override bool AbortReplaying() {
+    handController.ResetRecording();
+    return true;
+  }
+
   private void UpdateGUI()
   {
     float progress = leap_controller_.BugReport.Progress;
@@ -107,7 +110,8 @@ public class BugReporter : ReporterBase {
       progressStatus.fillAmount = progress;
       if (progress == 1.0f)
       {
-        TriggerStartSaving();
+        if (TriggerAbortRecording())
+          TriggerStartSaving();
       }
     }
 

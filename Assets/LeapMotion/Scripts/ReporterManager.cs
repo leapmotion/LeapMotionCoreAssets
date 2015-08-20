@@ -66,24 +66,24 @@ public class ReporterManager : MonoBehaviour {
       case RecordingState.RECORDING:
         if (OnTrigger()) {
           foreach (ReporterBase reporter in m_reporters) {
-            reporter.TriggerAbortRecording();
-            reporter.TriggerStartSaving();
+            if (reporter.TriggerAbortRecording())
+              reporter.TriggerStartSaving();
           }
         }
         break;
       case RecordingState.SAVING:
         if (OnTrigger()) {
           foreach (ReporterBase reporter in m_reporters) {
-            reporter.TriggerAbortSaving();
-            reporter.TriggerStartReplaying();
+            if (reporter.TriggerAbortSaving())
+              reporter.TriggerStartReplaying();
           }
         }
         break;
       case RecordingState.REPLAYING:
         if (OnTrigger()) {
           foreach (ReporterBase reporter in m_reporters) {
-            reporter.TriggerAbortReplaying();
-            reporter.TriggerReset();
+            if (reporter.TriggerAbortReplaying())
+              reporter.TriggerReset();
           }
         }
         break;

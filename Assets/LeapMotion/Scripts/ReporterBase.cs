@@ -31,10 +31,10 @@ public abstract class ReporterBase : MonoBehaviour {
       m_recordingState = RecordingState.RECORDING;
   }
 
-  public void TriggerAbortRecording() {
+  public bool TriggerAbortRecording() {
     if (!IsRecording())
-      return;
-    AbortRecording();
+      return false;
+    return AbortRecording();
   }
 
   public void TriggerStartSaving() {
@@ -44,10 +44,10 @@ public abstract class ReporterBase : MonoBehaviour {
       m_recordingState = RecordingState.SAVING;
   }
 
-  public void TriggerAbortSaving() {
+  public bool TriggerAbortSaving() {
     if (!IsSaving())
-      return;
-    AbortSaving();
+      return false;
+    return AbortSaving();
   }
 
   public void TriggerStartReplaying() {
@@ -57,10 +57,10 @@ public abstract class ReporterBase : MonoBehaviour {
       m_recordingState = RecordingState.REPLAYING;
   }
 
-  public void TriggerAbortReplaying() {
+  public bool TriggerAbortReplaying() {
     if (!IsReplaying())
-      return;
-    AbortReplaying();
+      return false;
+    return AbortReplaying();
   }
 
   public void TriggerReset() {
@@ -71,8 +71,8 @@ public abstract class ReporterBase : MonoBehaviour {
   protected virtual bool Reset() { return true; }
   protected abstract bool StartRecording();
   protected abstract bool AbortRecording();
-  protected virtual bool StartSaving() { return true; }
-  protected virtual bool AbortSaving() { return true; }
+  protected abstract bool StartSaving();
+  protected abstract bool AbortSaving();
   protected virtual bool StartReplaying() { return true; }
   protected virtual bool AbortReplaying() { return true; }
 
