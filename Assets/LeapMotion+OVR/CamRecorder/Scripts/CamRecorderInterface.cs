@@ -89,7 +89,14 @@ public class CamRecorderInterface : ReporterBase {
         instructionText.text = "Press '" + m_triggerKey + "' to Start Recording";
       }
       statusText.text = GetStatus();
-      valueText.text = (camRecorder.framesExpect > 0) ? camRecorder.directory : "[ Success | Buffer | Dropped ] / Total";
+      if (camRecorder.framesExpect > 0) {
+        valueText.text = camRecorder.directory;
+        TriggerStartReplaying();
+        TriggerAbortReplaying();
+        TriggerReset();
+      } else {
+        valueText.text = "[ Success | Buffer | Dropped ] / Total";
+      }
     } else if (camRecorder.IsCountingDown()) {
       instructionText.text = "Press '" + m_triggerKey + "' to End Recording";
       statusText.text = GetStatus();

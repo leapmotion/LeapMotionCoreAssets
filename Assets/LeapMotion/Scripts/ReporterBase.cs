@@ -72,8 +72,8 @@ public abstract class ReporterBase : MonoBehaviour {
   protected abstract bool AbortRecording();
   protected abstract bool StartSaving();
   protected abstract bool AbortSaving();
-  protected virtual bool StartReplaying() { return true; }
-  protected virtual bool AbortReplaying() { return true; }
+  protected virtual bool StartReplaying() { TriggerAbortReplaying();  return true; }
+  protected virtual bool AbortReplaying() { TriggerReset();  return true; }
 
   protected virtual void OnEnable() {
     m_recordingState = RecordingState.READY;
