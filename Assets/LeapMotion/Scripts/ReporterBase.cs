@@ -13,8 +13,7 @@ public abstract class ReporterBase : MonoBehaviour {
   }
   private RecordingState m_recordingState = RecordingState.READY;
 
-  public void SetKeys(KeyCode safetyKey, KeyCode triggerKey) 
-  {
+  public void SetKeys(KeyCode safetyKey, KeyCode triggerKey) {
     m_safetyKey = safetyKey;
     m_triggerKey = triggerKey;
   }

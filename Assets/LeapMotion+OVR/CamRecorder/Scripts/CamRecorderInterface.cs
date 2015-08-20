@@ -90,13 +90,11 @@ public class CamRecorderInterface : ReporterBase {
       }
       statusText.text = GetStatus();
       valueText.text = (camRecorder.framesExpect > 0) ? camRecorder.directory : "[ Success | Buffer | Dropped ] / Total";
-    }
-    else if (camRecorder.IsCountingDown()) {
+    } else if (camRecorder.IsCountingDown()) {
       instructionText.text = "Press '" + m_triggerKey + "' to End Recording";
       statusText.text = GetStatus();
       valueText.text = "Recording in..." + ((int)camRecorder.countdownRemaining + 1).ToString();
-    }
-    else if (camRecorder.IsRecording()) {
+    } else if (camRecorder.IsRecording()) {
       // Flash screen and beep in the first frame
       startScreen.gameObject.SetActive((camRecorder.currFrameIndex == 0));
       startSound.gameObject.SetActive((camRecorder.currFrameIndex == 0));
@@ -104,8 +102,7 @@ public class CamRecorderInterface : ReporterBase {
       instructionText.text = "Press '" + m_triggerKey + "' to End Recording";
       statusText.text = GetStatus();
       valueText.text = "Recording..." + camRecorder.duration.ToString();
-    }
-    else if (camRecorder.IsProcessing()) {
+    } else if (camRecorder.IsProcessing()) {
       instructionText.text = "'" + m_triggerKey.ToString() + "' to Abort Processing";
       statusText.text = GetStatus();
       valueText.text = "Processing..." + camRecorder.framesActual.ToString() + "/" + camRecorder.framesExpect.ToString();

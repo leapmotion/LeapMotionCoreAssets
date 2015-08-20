@@ -28,12 +28,10 @@ public class ReporterManager : MonoBehaviour {
 
   void Start() {
     m_reporters = new List<ReporterBase>();
-    ReporterBase[] reporters = GetComponentsInChildren<ReporterBase>();
+    ReporterBase[] reporters = GetComponentsInChildren<ReporterBase>(true);
     // Acquire all enabled ReporterBase in children
     foreach (ReporterBase reporter in reporters) {
-      if (reporter.gameObject.activeSelf) {
-        m_reporters.Add(reporter);
-      }
+      m_reporters.Add(reporter);
     }
     // If it's not enabled on start, set all to inactive
     if (!enableOnStart) {
