@@ -128,7 +128,23 @@ public class ExecutionOrderSolver {
       }
     }
 
+    public bool hasOnlyUnityEngine {
+      get {
+        return types.All(t => t.Namespace != null && t.Namespace.StartsWith("UnityEngine"));
+      }
+    }
+
+    public bool hasAnyUnityEngine {
+      get {
+        return types.Any(t => t.Namespace != null && t.Namespace.StartsWith("UnityEngine"));
+      }
+    }
+
     public override string ToString() {
+      if (hasAnyUnityEngine && !isEventSystem) {
+        return "[UnityEngine]";
+      }
+
       string typeList = "";
       foreach (Type t in types) {
         if (typeList == "") {
@@ -153,6 +169,10 @@ public class ExecutionOrderSolver {
       return;
     }
 
+    unanchorReferencedNodes(ref nodes);
+
+    collapseUnityEngineNodes(ref nodes);
+    
     collapseAnchoredNodes(ref nodes);
 
     Dictionary<Node, List<Node>> edges = new Dictionary<Node, List<Node>>();
@@ -173,6 +193,7 @@ public class ExecutionOrderSolver {
      * cases are an error and we cannot procede.  This is mostly here for sanity checking, and
      * should never be hit if everything is working as it should.
      */
+
     if (edges.Values.Any(l => l.Count != 0)) {
       Debug.LogError("Topological sort failed for unknown reason!\nExecution order cannot be enforced!");
       return;
@@ -180,7 +201,9 @@ public class ExecutionOrderSolver {
 
     collapseNeighbors(ref nodes);
 
-    assignExecutionIndexes(ref nodes);
+    if (!tryAssignExecutionIndexes(ref nodes)) {
+      return;
+    }
 
     applyExecutionIndexes(monoscripts, nodes);
   }
@@ -259,36 +282,70 @@ public class ExecutionOrderSolver {
     return didFindAnyOutOfOrder;
   }
 
-  /* No ordering has been created yet, we are just combining anchors with the same index into a single node.
-   * This is so they don't get split up by the ordering algorithm, which is undefined when there are nodes
-   * with the same execution index.  An anchored node cannot be grouped if it is referenced in an ordering,
-   * but it might be later grouped by the collapseNeighbors() method
+  /* Any nodes that are referenced by other nodes in an ordering will be unanchored so that
+   * they are not grouped, and so that they are completely free to move around to satisfy an
+   * ordering.
    */
-  private static void collapseAnchoredNodes(ref List<Node> nodes) {
-    //Create a set of all types that are referenced by at least one ordering attribute
+  private static void unanchorReferencedNodes(ref List<Node> nodes) {
     HashSet<Type> referencedTypes = new HashSet<Type>();
     foreach (Node node in nodes) {
       referencedTypes.UnionWith(node.beforeTypes);
       referencedTypes.UnionWith(node.afterTypes);
     }
 
+    foreach (Node node in nodes) {
+      if (node.hasOnlyUnityEngine || node.isEventSystem) {
+        continue;
+      }
+
+      foreach (Type type in node.types) {
+        if (referencedTypes.Contains(type)) {
+          node.isAnchored = false;
+          break;
+        }
+      }
+    }
+  }
+
+  /* All Behaviors that are part of the UnityEngine cannot have their execution order changed,
+   * so they are all collapsed into a single group to prevent them from being seperated out 
+   * from each other.  Any ordering that tries to insert a script between two unity behaviors
+   * will result in a cycle, since both unity behaviors will exist inside of the same Node.
+   */
+  private static void collapseUnityEngineNodes(ref List<Node> nodes) {
+    List<Node> newNodeList = new List<Node>();
+
+    Node unityEngineNode = null;
+    foreach (Node node in nodes) {
+      if (node.hasOnlyUnityEngine && !node.isEventSystem) {
+        if (unityEngineNode == null) {
+          unityEngineNode = node;
+        } else {
+          unityEngineNode.types.AddRange(node.types);
+        }
+      } else {
+        newNodeList.Add(node);
+      }
+    }
+
+    newNodeList.Add(unityEngineNode);
+
+    nodes = newNodeList;
+  }
+
+  /* Anchored nodes never change their ordering relative to other anchored nodes.  Consequently we
+   * can combine anchored nodes with the same index.  This helps remove valid orderings that move
+   * a large body of scripts needlessly.  
+   */
+  private static void collapseAnchoredNodes(ref List<Node> nodes) {
     List<Node> newNodeList = new List<Node>();
 
     Dictionary<int, Node> _collapsedAnchoredNodes = new Dictionary<int, Node>();
 
     foreach (Node node in nodes) {
-      bool isReferenced = false;
-      foreach (Type type in node.types) {
-        if (referencedTypes.Contains(type)) {
-          isReferenced = true;
-          break;
-        }
-      }
-
-      //If the node is anchored, and not referenced by any ordering, we can put it into the collapsed node
+      //If the node is anchored, we can put it into the collapsed node
       //The EventSystem node should never be combined
-      if (node.isAnchored && !isReferenced && !node.isEventSystem) {
-
+      if (node.isAnchored && !node.isEventSystem) {
         Node anchorGroup;
         if (!_collapsedAnchoredNodes.TryGetValue(node.executionIndex, out anchorGroup)) {
           anchorGroup = node;
@@ -388,6 +445,9 @@ public class ExecutionOrderSolver {
 
     foreach (var edge in edges) {
       if (findCycle(edges, edge.Key, cycle)) {
+
+        
+
         string cycleString = cycle.Last().ToString();
         foreach (Node cycleNode in cycle) {
           cycleString = cycleNode.ToString() + " => " + cycleString;
@@ -465,7 +525,11 @@ public class ExecutionOrderSolver {
     nodes = L;
   }
 
-  /* It is often the case that neighboring nodes can be combined into a single node. */
+  /* It is often the case that neighboring nodes can be combined into a single node. 
+   * This also ensures that there is exactly one default node.  A default node is a node
+   * that us both anchored, and has an index of 0.  If there are multiple such nodes before
+   * this method is called, they will always be neighbors, and will always be combined 
+   * to one node after this method is complete. */
   private static void collapseNeighbors(ref List<Node> nodes) {
     List<Node> newNodeList = new List<Node>();
 
@@ -490,15 +554,20 @@ public class ExecutionOrderSolver {
    * 'push' a Node that is already in order to a different index.  This only occurs if there is not
    * enough room between two Nodes to fit all the Nodes that need to be between.
    */
-  private static void assignExecutionIndexes(ref List<Node> groupings) {
+  private static bool tryAssignExecutionIndexes(ref List<Node> groupings) {
     /* We find where the default Node is in the ordering.  We want to keep this node at the same
      * execution index, so we need to shift all scripts away from this Node when making room*/
-    int indexOfDefault = -1;
-    for (int i = 0; i < groupings.Count; i++) {
-      if (groupings[i].executionIndex == 0 && groupings[i].isAnchored) {
-        indexOfDefault = i;
+
+    var defaultNodes = groupings.Where(n => n.isAnchored && n.executionIndex == 0);
+    if (defaultNodes.Count() != 1) {
+      Debug.LogError("There must be exactly 1 default node, " + defaultNodes.Count() + " were found!");
+      foreach (Node n in defaultNodes) {
+        Debug.LogError(n);
       }
+      return false;
     }
+
+    int indexOfDefault = groupings.IndexOf(defaultNodes.First());
 
     /* Shift all nodes that come before the default node away from the default node */
     int minIndex = 0;
@@ -523,6 +592,8 @@ public class ExecutionOrderSolver {
 
       groupings[i].executionIndex = maxIndex;
     }
+
+    return true;
   }
 
   /* Given the list of existing monoscripts and the Node ordering, apply the ordering to the
