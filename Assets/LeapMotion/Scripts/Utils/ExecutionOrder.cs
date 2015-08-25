@@ -42,8 +42,22 @@ public class ExecuteAfterAttribute : Attribute {
   }
 }
 
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public class ExecuteBeforeDefault : Attribute { }
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public class ExecuteAfterDefault : Attribute { }
+
 #if UNITY_EDITOR
 public class ExecutionOrderSolver {
+
+  private enum NodeType {
+    RELATIVE_ORDERED = 0,
+    RELATIVE_UNORDERED = 1,
+    ANCHORED = 2,
+    LOCKED = 3
+  }
+
   /* Every node represents a grouping of behaviors that all can the same execution index.  Grouping them
    * both helps algorithmic complexity, as well as ensuring that scripts with the same sorting index do
    * not become seperated */
@@ -64,27 +78,25 @@ public class ExecutionOrderSolver {
      * eventually is solved to satisfy the ordering attributes */
     public int executionIndex = 0;
 
-    /* Is true if this node needs a new execution index calculated */
-    public bool needsNewIndex = false;
+    public NodeType nodeType;
 
-    /* The ordering of anchored nodes is not allowed to change. Anchored nodes are behaviors that 
-     * have no ordering attributes. */
-    public bool isAnchored = false;
-
-    public Node(Type type, int executionIndex) {
+    public Node(Type type, int executionIndex, NodeType nodeType) {
       this.types.Add(type);
       this.executionIndex = executionIndex;
+      this.nodeType = nodeType;
+    }
+
+    public bool isAnchoredOrLocked {
+      get {
+        return nodeType == NodeType.ANCHORED || nodeType == NodeType.LOCKED;
+      }
     }
 
     /* Tries to combine another node into this one.  This method assumes that the other node is a direct
      * neighbor to this one in an ordering, as two nodes cannot be combined if they are not neighbors. */
     public bool tryCombineWith(Node other) {
-      if (isEventSystem || other.isEventSystem) {
-        return false;
-      }
-
-      /* If both nodes are anchored, but have difference execution indexes, we cannot combine them. */
-      if (isAnchored && other.isAnchored && executionIndex != other.executionIndex) {
+      /* If both nodes are anchored or locked, but have difference execution indexes, we cannot combine them. */
+      if (isAnchoredOrLocked && other.isAnchoredOrLocked && executionIndex != other.executionIndex) {
         return false;
       }
 
@@ -97,15 +109,14 @@ public class ExecutionOrderSolver {
         return false;
       }
 
-      /* This node and other node can be combined! */
+      /* This node and the other node can be combined! */
 
       types.AddRange(other.types);
       beforeTypes.AddRange(other.beforeTypes);
       afterTypes.AddRange(other.afterTypes);
 
-      executionIndex = isAnchored ? executionIndex : other.executionIndex;
-      isAnchored |= other.isAnchored;
-      needsNewIndex &= other.needsNewIndex;
+      executionIndex = isAnchoredOrLocked ? executionIndex : other.executionIndex;
+      nodeType = (NodeType)Mathf.Max((int)nodeType, (int)other.nodeType);
 
       return true;
     }
@@ -122,29 +133,7 @@ public class ExecutionOrderSolver {
       return false;
     }
 
-    public bool isEventSystem {
-      get {
-        return types.Contains(typeof(UnityEngine.EventSystems.EventSystem));
-      }
-    }
-
-    public bool hasOnlyUnityEngine {
-      get {
-        return types.All(t => t.Namespace != null && t.Namespace.StartsWith("UnityEngine"));
-      }
-    }
-
-    public bool hasAnyUnityEngine {
-      get {
-        return types.Any(t => t.Namespace != null && t.Namespace.StartsWith("UnityEngine"));
-      }
-    }
-
     public override string ToString() {
-      if (hasAnyUnityEngine && !isEventSystem) {
-        return "[UnityEngine]";
-      }
-
       string typeList = "";
       foreach (Type t in types) {
         if (typeList == "") {
@@ -162,8 +151,14 @@ public class ExecutionOrderSolver {
   public static void solveForExecutionOrders() {
     MonoScript[] monoscripts = MonoImporter.GetAllRuntimeMonoScripts();
 
-    List<Node> nodes = new List<Node>();
-    if (!tryConstructNodes(monoscripts, ref nodes)) {
+    List<Node> nodes;
+    Node defaultNode;
+
+    constructLockedNodes(monoscripts, out nodes, out defaultNode);
+
+    constructRelativeNodes(monoscripts, defaultNode, ref nodes);
+
+    if (!nodes.Any(n => n.nodeType == NodeType.RELATIVE_UNORDERED)) {
       //tryConstructNodes returns false when no out of order node was found
       //If all nodes are already in order, we can just return!
       return;
@@ -171,28 +166,48 @@ public class ExecutionOrderSolver {
 
     unanchorReferencedNodes(ref nodes);
 
-    collapseUnityEngineNodes(ref nodes);
-
-    collapseAnchoredNodes(ref nodes);
+    collapseAnchoredOrLockedNodes(ref nodes);
 
     Dictionary<Node, List<Node>> edges = new Dictionary<Node, List<Node>>();
 
     constructRelativeEdges(nodes, ref edges);
-    if (checkForCycles(edges)) return;
+    if (checkForCycles(defaultNode, edges)) return;
 
     constructAnchoredEdges(nodes, ref edges);
-    if (checkForCycles(edges)) return;
-
-    constructEventSystemEdges(nodes, ref edges);
-    if (checkForCycles(edges)) return;
+    if (checkForCycles(defaultNode, edges)) return;
 
     if (!trySolveTopologicalOrdering(ref nodes, ref edges)) return;
 
     collapseNeighbors(ref nodes);
 
-    if (!tryAssignExecutionIndexes(ref nodes)) return;
+    if (!tryAssignExecutionIndexes(defaultNode, ref nodes)) return;
 
     applyExecutionIndexes(monoscripts, nodes);
+  }
+
+  private static void constructLockedNodes(MonoScript[] monoscripts, out List<Node> nodes, out Node defaultNode) {
+    Dictionary<int, Node> indexToNode = new Dictionary<int, Node>();
+    nodes = new List<Node>();
+
+    foreach (MonoScript script in monoscripts) {
+      Type type = script.GetClass();
+      if (type == null) continue;
+      if (type.Namespace == null) continue;
+      if (!type.Namespace.StartsWith("UnityEngine")) continue;
+
+      int executionIndex = MonoImporter.GetExecutionOrder(script);
+
+      Node node;
+      if (!indexToNode.TryGetValue(executionIndex, out node)) {
+        node = new Node(type, executionIndex, NodeType.LOCKED);
+        nodes.Add(node);
+        indexToNode[executionIndex] = node;
+      } else {
+        node.types.Add(type);
+      }
+    }
+
+    defaultNode = indexToNode[0];
   }
 
   /* Given all of the loaded monoscripts, construct a single node for each script.  This method returns true if
@@ -206,67 +221,85 @@ public class ExecutionOrderSolver {
    * If the behavior is out of order relative to the requirements of its ordering attributes, it is marked
    * as needing a new index.  
    */
-  private static bool tryConstructNodes(MonoScript[] monoscripts, ref List<Node> nodes) {
+  private static void constructRelativeNodes(MonoScript[] monoscripts, Node defaultNode, ref List<Node> nodes) {
     Dictionary<Type, int> typeToIndex = new Dictionary<Type, int>();
     foreach (MonoScript script in monoscripts) {
       Type scriptType = script.GetClass();
-      if (scriptType == null) {
-        continue;
-      }
+      if (scriptType == null) continue;
 
       typeToIndex[scriptType] = MonoImporter.GetExecutionOrder(script);
     }
 
-    bool didFindAnyOutOfOrder = false;
-
     foreach (MonoScript script in monoscripts) {
       Type scriptType = script.GetClass();
-      if (scriptType == null) {
-        continue;
-      }
+      if (scriptType == null) continue;
+      if (scriptType.Namespace != null && scriptType.Namespace.StartsWith("UnityEngine")) continue;
 
-      Node newNode = new Node(scriptType, typeToIndex[scriptType]);
-      nodes.Add(newNode);
+      if (Attribute.IsDefined(scriptType, typeof(ExecuteAfterAttribute), false) ||
+          Attribute.IsDefined(scriptType, typeof(ExecuteBeforeAttribute), false) ||
+          Attribute.IsDefined(scriptType, typeof(ExecuteBeforeDefault), false) ||
+          Attribute.IsDefined(scriptType, typeof(ExecuteAfterDefault), false)) {
 
-      if (Attribute.IsDefined(scriptType, typeof(ExecuteAfterAttribute), false) || Attribute.IsDefined(scriptType, typeof(ExecuteBeforeAttribute), false)) {
+        Node relativeNode = new Node(scriptType, typeToIndex[scriptType], NodeType.RELATIVE_ORDERED);
+        nodes.Add(relativeNode);
+
         foreach (Attribute customAttribute in Attribute.GetCustomAttributes(scriptType, false)) {
+
           if (customAttribute is ExecuteAfterAttribute) {
             ExecuteAfterAttribute executeAfter = customAttribute as ExecuteAfterAttribute;
-
-            if (!typeof(Behaviour).IsAssignableFrom(executeAfter.afterType)) {
-              Debug.LogWarning(script.name + " cannot execute afer " + executeAfter.afterType + " because " + executeAfter.afterType + " is not a Behaviour");
-              continue;
-            }
-
-            newNode.afterTypes.Add(executeAfter.afterType);
-
-            if (newNode.executionIndex <= typeToIndex[executeAfter.afterType]) {
-              newNode.needsNewIndex = true;
-              didFindAnyOutOfOrder = true;
-            }
-
+            setRelativeToType(typeToIndex, relativeNode, executeAfter.afterType, defaultNode, false);
           } else if (customAttribute is ExecuteBeforeAttribute) {
             ExecuteBeforeAttribute executeBefore = customAttribute as ExecuteBeforeAttribute;
-
-            if (!typeof(Behaviour).IsAssignableFrom(executeBefore.beforeType)) {
-              Debug.LogWarning(script.name + " cannot execute afer " + executeBefore.beforeType + " because " + executeBefore.beforeType + " is not a Behaviour");
-              continue;
-            }
-
-            newNode.beforeTypes.Add(executeBefore.beforeType);
-
-            if (newNode.executionIndex >= typeToIndex[executeBefore.beforeType]) {
-              newNode.needsNewIndex = true;
-              didFindAnyOutOfOrder = true;
-            }
+            setRelativeToType(typeToIndex, relativeNode, executeBefore.beforeType, defaultNode, true);
+          } else if (customAttribute is ExecuteAfterDefault) {
+            setRelativeToDefault(relativeNode, defaultNode, false);
+          } else if (customAttribute is ExecuteBeforeDefault) {
+            setRelativeToDefault(relativeNode, defaultNode, true);
           }
+
         }
       } else {
-        newNode.isAnchored = true;
+        Node anchoredNode = new Node(scriptType, typeToIndex[scriptType], NodeType.ANCHORED);
+        nodes.Add(anchoredNode);
       }
     }
+  }
 
-    return didFindAnyOutOfOrder;
+  private static void setRelativeToType(Dictionary<Type, int> typeToIndex, Node node, Type relativeType, Node defaultNode, bool isBefore) {
+    string beforeAfter = isBefore ? "before" : "after";
+
+    if (!typeof(Behaviour).IsAssignableFrom(relativeType)) {
+      Debug.LogWarning(node + " can not execute " + beforeAfter + " " + relativeType.Name + " because " + relativeType + " is not a Behaviour");
+      return;
+    }
+
+    int relativeIndex;
+    if (!typeToIndex.TryGetValue(relativeType, out relativeIndex)) {
+      setRelativeToDefault(node, defaultNode, isBefore);
+      return;
+    }
+
+    if (isBefore != (node.executionIndex < relativeIndex)) {
+      node.nodeType = NodeType.RELATIVE_UNORDERED;
+    }
+
+    if (isBefore) {
+      node.beforeTypes.Add(relativeType);
+    } else {
+      node.afterTypes.Add(relativeType);
+    }
+  }
+
+  private static void setRelativeToDefault(Node node, Node defaultNode, bool isBefore) {
+    if (isBefore != (node.executionIndex < 0)) {
+      node.nodeType = NodeType.RELATIVE_UNORDERED;
+    }
+
+    if (isBefore) {
+      node.beforeTypes.AddRange(defaultNode.types);
+    } else {
+      node.afterTypes.AddRange(defaultNode.types);
+    }
   }
 
   /* Any nodes that are referenced by other nodes in an ordering will be unanchored so that
@@ -280,51 +313,19 @@ public class ExecutionOrderSolver {
       referencedTypes.UnionWith(node.afterTypes);
     }
 
-    foreach (Node node in nodes) {
-      if (node.hasOnlyUnityEngine || node.isEventSystem) {
-        continue;
-      }
-
+    foreach (Node node in nodes.Where(n => n.nodeType == NodeType.ANCHORED)) {
       foreach (Type type in node.types) {
         if (referencedTypes.Contains(type)) {
-          node.isAnchored = false;
+          node.nodeType = NodeType.RELATIVE_UNORDERED;
           break;
         }
       }
     }
   }
 
-  /* All Behaviors that are part of the UnityEngine cannot have their execution order changed,
-   * so they are all collapsed into a single group to prevent them from being seperated out 
-   * from each other.  Any ordering that tries to insert a script between two unity behaviors
-   * will result in a cycle, since both unity behaviors will exist inside of the same Node.
+  /* Collapses any anchored or locked nodes with the same index into the same node.
    */
-  private static void collapseUnityEngineNodes(ref List<Node> nodes) {
-    List<Node> newNodeList = new List<Node>();
-
-    Node unityEngineNode = null;
-    foreach (Node node in nodes) {
-      if (node.hasOnlyUnityEngine && !node.isEventSystem) {
-        if (unityEngineNode == null) {
-          unityEngineNode = node;
-        } else {
-          unityEngineNode.types.AddRange(node.types);
-        }
-      } else {
-        newNodeList.Add(node);
-      }
-    }
-
-    newNodeList.Add(unityEngineNode);
-
-    nodes = newNodeList;
-  }
-
-  /* Anchored nodes never change their ordering relative to other anchored nodes.  Consequently we
-   * can combine anchored nodes with the same index.  This helps remove valid orderings that move
-   * a large body of scripts needlessly.  
-   */
-  private static void collapseAnchoredNodes(ref List<Node> nodes) {
+  private static void collapseAnchoredOrLockedNodes(ref List<Node> nodes) {
     List<Node> newNodeList = new List<Node>();
 
     Dictionary<int, Node> _collapsedAnchoredNodes = new Dictionary<int, Node>();
@@ -332,14 +333,14 @@ public class ExecutionOrderSolver {
     foreach (Node node in nodes) {
       //If the node is anchored, we can put it into the collapsed node
       //The EventSystem node should never be combined
-      if (node.isAnchored && !node.isEventSystem) {
+      if (node.isAnchoredOrLocked) {
         Node anchorGroup;
         if (!_collapsedAnchoredNodes.TryGetValue(node.executionIndex, out anchorGroup)) {
           anchorGroup = node;
           _collapsedAnchoredNodes[anchorGroup.executionIndex] = anchorGroup;
           newNodeList.Add(anchorGroup);
         } else {
-          anchorGroup.types.AddRange(node.types);
+          anchorGroup.tryCombineWith(node);
         }
       } else {
         newNodeList.Add(node);
@@ -351,12 +352,12 @@ public class ExecutionOrderSolver {
 
   private static void constructAnchoredEdges(List<Node> nodes, ref Dictionary<Node, List<Node>> edges) {
     //Create a sorted list of all the execution indexes of all of the anchored nodes
-    List<int> anchoredNodeIndexes = nodes.Where(n => n.isAnchored).Select(n => n.executionIndex).Distinct().ToList();
+    List<int> anchoredNodeIndexes = nodes.Where(n => n.isAnchoredOrLocked).Select(n => n.executionIndex).Distinct().ToList();
     anchoredNodeIndexes.Sort();
 
     //Map each index to a list of all the anchored nodes with that index
     Dictionary<int, List<Node>> _indexToAnchoredNodes = new Dictionary<int, List<Node>>();
-    foreach (Node anchoredNode in nodes.Where(n => n.isAnchored)) {
+    foreach (Node anchoredNode in nodes.Where(n => n.isAnchoredOrLocked)) {
       List<Node> list;
       if (!_indexToAnchoredNodes.TryGetValue(anchoredNode.executionIndex, out list)) {
         list = new List<Node>();
@@ -369,7 +370,7 @@ public class ExecutionOrderSolver {
      * We do not need to connect every combination of nodes, because of the communicative property of comparison
      * if A > B > C, we don't need to specify that A > C explicitly, creating an edge for A > B and B > C is 
      * enough */
-    foreach (Node anchoredNode in nodes.Where(n => n.isAnchored)) {
+    foreach (Node anchoredNode in nodes.Where(n => n.isAnchoredOrLocked)) {
       int offset = anchoredNodeIndexes.IndexOf(anchoredNode.executionIndex);
 
       if (offset != 0) {
@@ -391,7 +392,7 @@ public class ExecutionOrderSolver {
 
     /* Build edges for non-anchored nodes.  This is simpler than the edges for the anchored nodes, since
      * there is exactly one edge for every ordering attribute */
-    foreach (Node relativeNode in nodes.Where(n => !n.isAnchored)) {
+    foreach (Node relativeNode in nodes.Where(n => !n.isAnchoredOrLocked)) {
       foreach (Type beforeType in relativeNode.beforeTypes) {
         Node beforeNode = typeToNode[beforeType];
         addEdge(edges, relativeNode, beforeNode);
@@ -401,13 +402,6 @@ public class ExecutionOrderSolver {
         Node afterNode = typeToNode[afterType];
         addEdge(edges, afterNode, relativeNode);
       }
-    }
-  }
-
-  private static void constructEventSystemEdges(List<Node> nodes, ref Dictionary<Node, List<Node>> edges) {
-    Node eventSystemNode = nodes.First(n => n.isEventSystem);
-    foreach (Node relativeNode in nodes.Where(n => !n.isAnchored)) {
-      addEdge(edges, eventSystemNode, relativeNode);
     }
   }
 
@@ -427,17 +421,21 @@ public class ExecutionOrderSolver {
    * useful information about why it is unsolvable.  We try to find a cycle here so that
    * we can output it so that the user can more easily find the cycle and correct it
    */
-  private static bool checkForCycles(Dictionary<Node, List<Node>> edges) {
+  private static bool checkForCycles(Node defaultNode, Dictionary<Node, List<Node>> edges) {
     Stack<Node> cycle = new Stack<Node>();
 
     foreach (var edge in edges) {
       if (findCycle(edges, edge.Key, cycle)) {
 
+        string cycleString = "";
+        foreach (Node cycleNode in cycle.Reverse()) {
+          string nodeString = cycleNode == defaultNode ? "[Default]" : cycleNode.ToString();
 
-
-        string cycleString = cycle.Last().ToString();
-        foreach (Node cycleNode in cycle) {
-          cycleString = cycleNode.ToString() + " => " + cycleString;
+          if (cycleString == "") {
+            cycleString = nodeString;
+          } else {
+            cycleString += " => " + nodeString;
+          }
         }
 
         EditorUtility.DisplayDialog("Execution Order Cycle!", "A cycle was found while trying to apply the Execution Order attributes!  Execution order cannot be applied until the cycle is removed\n\n" + cycleString, "Ok");
@@ -449,24 +447,27 @@ public class ExecutionOrderSolver {
   }
 
   private static bool findCycle(Dictionary<Node, List<Node>> edges, Node visitingNode, Stack<Node> visitedNodes) {
-    if (visitedNodes.Contains(visitingNode)) {
+    if (visitedNodes.LastOrDefault() == visitingNode) {
+      visitedNodes.Push(visitingNode);
       return true;
     }
 
+    if (visitedNodes.Contains(visitingNode)) {
+      return false;
+    }
+
+    visitedNodes.Push(visitingNode);
+
     List<Node> connections;
     if (edges.TryGetValue(visitingNode, out connections)) {
-
-      visitedNodes.Push(visitingNode);
-
       foreach (Node nextNode in connections) {
         if (findCycle(edges, nextNode, visitedNodes)) {
           return true;
         }
       }
-
-      visitedNodes.Pop();
     }
 
+    visitedNodes.Pop();
     return false;
   }
 
@@ -553,59 +554,66 @@ public class ExecutionOrderSolver {
    * 'push' a Node that is already in order to a different index.  This only occurs if there is not
    * enough room between two Nodes to fit all the Nodes that need to be between.
    */
-  private static bool tryAssignExecutionIndexes(ref List<Node> groupings) {
+  private static bool tryAssignExecutionIndexes(Node defaultNode, ref List<Node> nodes) {
     /* We find where the default Node is in the ordering.  We want to keep this node at the same
      * execution index, so we need to shift all scripts away from this Node when making room*/
 
-    var defaultNodes = groupings.Where(n => n.isAnchored && n.executionIndex == 0);
-    if (defaultNodes.Count() != 1) {
-      Debug.LogError("There must be exactly 1 default node, " + defaultNodes.Count() + " were found!");
-      foreach (Node n in defaultNodes) {
-        Debug.LogError(n);
-      }
-      return false;
-    }
-
-    int indexOfDefault = groupings.IndexOf(defaultNodes.First());
+    int indexOfDefault = nodes.IndexOf(defaultNode);
 
     /* Shift all nodes that come before the default node away from the default node */
     int minIndex = 0;
     for (int i = indexOfDefault - 1; i >= 0; i--) {
       minIndex--;
 
-      if (!groupings[i].needsNewIndex) {
-        minIndex = Mathf.Min(groupings[i].executionIndex, minIndex);
+      Node node = nodes[i];
+
+      switch (node.nodeType) {
+        case NodeType.RELATIVE_UNORDERED:
+          break;
+        case NodeType.RELATIVE_ORDERED:
+          minIndex = Mathf.Min(node.executionIndex, minIndex);
+          break;
+        case NodeType.ANCHORED:
+          minIndex = Mathf.Min(node.executionIndex, minIndex);
+          break;
+        case NodeType.LOCKED:
+          if (minIndex < node.executionIndex) {
+            Debug.LogError("Note enough execution indexes to fit all of the scripts!");
+            return false;
+          }
+          minIndex = node.executionIndex;
+          break;
       }
 
-      groupings[i].executionIndex = minIndex;
+      node.executionIndex = minIndex;
     }
 
     /* Shift all nodes that come after the default node away from the default node */
     int maxIndex = 0;
-    for (int i = indexOfDefault + 1; i < groupings.Count; i++) {
+    for (int i = indexOfDefault + 1; i < nodes.Count; i++) {
       maxIndex++;
 
-      if (!groupings[i].needsNewIndex) {
-        maxIndex = Mathf.Max(groupings[i].executionIndex, maxIndex);
+      Node node = nodes[i];
+
+      switch (node.nodeType) {
+        case NodeType.RELATIVE_UNORDERED:
+          break;
+        case NodeType.RELATIVE_ORDERED:
+          maxIndex = Mathf.Max(node.executionIndex, maxIndex);
+          break;
+        case NodeType.ANCHORED:
+          maxIndex = Mathf.Min(node.executionIndex, maxIndex);
+          break;
+        case NodeType.LOCKED:
+          if (maxIndex > node.executionIndex) {
+            Debug.LogError("Note enough execution indexes to fit all of the scripts!");
+            return false;
+          }
+          maxIndex = node.executionIndex;
+          break;
       }
 
-      groupings[i].executionIndex = maxIndex;
-    }
-
-    /* Verify that all UnityEngine nodes wind up with an execution index equal to zero.
-     * Verify that the EventSystem node does not get grouped with any other types. */
-    foreach (Node grouping in groupings) {
-      if (grouping.isEventSystem) {
-        if (grouping.types.Count != 1) {
-          Debug.LogError("EventSystem was erronously grouped with another script!");
-          return false;
-        }
-      } else if (grouping.hasAnyUnityEngine) {
-        if (grouping.executionIndex != 0) {
-          Debug.LogError("A Node with a UnityEngine Behaviour was assigned an execution index other than zero!");
-          return false;
-        }
-      }
+      node.executionIndex = maxIndex;
     }
 
     return true;
@@ -626,10 +634,11 @@ public class ExecutionOrderSolver {
     }
 
     foreach (Node node in nodes) {
+      Debug.Log(node + " : " + node.executionIndex);
       foreach (Type type in node.types) {
         MonoScript monoscript = typeToMonoScript[type];
         if (MonoImporter.GetExecutionOrder(monoscript) != node.executionIndex) {
-          MonoImporter.SetExecutionOrder(monoscript, node.executionIndex);
+          //MonoImporter.SetExecutionOrder(monoscript, node.executionIndex);
         }
       }
     }
