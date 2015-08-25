@@ -52,10 +52,10 @@ public class ExecuteAfterDefault : Attribute { }
 public class ExecutionOrderSolver {
 
   private enum NodeType {
-    RELATIVE_ORDERED = 0,
-    RELATIVE_UNORDERED = 1,
-    ANCHORED = 2,
-    LOCKED = 3
+    RELATIVE_ORDERED = 0,   // The node has at least one ordering attribute, but no attribute has been violated
+    RELATIVE_UNORDERED = 1, // The node has at least one ordering attribute, and at least one has been violated
+    ANCHORED = 2,           // The node has no ordering attributes, and its index is allowed to change.  Relative ordering is NOT allowed to change.
+    LOCKED = 3              // The node has no ordering attributes, and its index is NOT allowed to change.
   }
 
   /* Every node represents a grouping of behaviors that all can the same execution index.  Grouping them
@@ -548,11 +548,12 @@ public class ExecutionOrderSolver {
   }
 
   /* This method takes the Node ordering and assigns execution indexes to each of them.  The
-   * anchored node at index 0 (the default node) is never moved, since that is the node that
-   * contains all of the default scripts, and we would rather not change hundreds of meta
-   * files to reorder around a single ordering request. This method does have the potential to
-   * 'push' a Node that is already in order to a different index.  This only occurs if there is not
-   * enough room between two Nodes to fit all the Nodes that need to be between.
+   * default node is never moved, since that is the node that contains all of Unity's behaviours,
+   * which we cannot change the ordering for. This method has the potential to 'push' an
+   * anchored Node to a different index, but will throw an error if tries to push a locked 
+   * node.  
+   * 
+   * Currently the only case 
    */
   private static bool tryAssignExecutionIndexes(Node defaultNode, ref List<Node> nodes) {
     /* We find where the default Node is in the ordering.  We want to keep this node at the same
