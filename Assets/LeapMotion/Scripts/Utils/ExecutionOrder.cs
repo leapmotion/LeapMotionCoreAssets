@@ -159,8 +159,7 @@ public class ExecutionOrderSolver {
     constructRelativeNodes(monoscripts, defaultNode, ref nodes);
 
     if (!nodes.Any(n => n.nodeType == NodeType.RELATIVE_UNORDERED)) {
-      //tryConstructNodes returns false when no out of order node was found
-      //If all nodes are already in order, we can just return!
+      //If we don't have any unordered nodes, there is no work to do.
       return;
     }
 
@@ -185,6 +184,10 @@ public class ExecutionOrderSolver {
     applyExecutionIndexes(monoscripts, nodes);
   }
 
+  /* Given all of the loaded monoscripts inside of the UnityEngine namespace, construct a locked Node
+   * for every group of scropts with the same execution index.  The node with the index of 0 is assigned
+   * to be the default node.
+   */
   private static void constructLockedNodes(MonoScript[] monoscripts, out List<Node> nodes, out Node defaultNode) {
     Dictionary<int, Node> indexToNode = new Dictionary<int, Node>();
     nodes = new List<Node>();
@@ -210,16 +213,16 @@ public class ExecutionOrderSolver {
     defaultNode = indexToNode[0];
   }
 
-  /* Given all of the loaded monoscripts, construct a single node for each script.  This method returns true if
-   * it found at least one node that was out of order.  
+  /* Given all of the loaded monoscripts outside of the UnityEngine namespace, construct a single Node for
+   * each monoscript.
    * 
-   * Behaviors that have no ordering attributes are considered 'anchored', as their ordering has been defined by
+   * Monoscripts that have no ordering attributes are considered 'anchored', as their ordering has been defined by
    * their current index in the ScriptExecutionOrder.  All anchored nodes should not be moved relative to each
-   * other, as this could be an important ordering that has been defined by the user or plugins
+   * other, as this could be an important ordering that has been defined by the user or plugins.
    * 
-   * Behaviors that do have ordering attributes are not considered anchored, even if they are current in order.
+   * Behaviors that do have ordering attributes are not considered anchored, even if they are currently in order.
    * If the behavior is out of order relative to the requirements of its ordering attributes, it is marked
-   * as needing a new index.  
+   * as unordered.
    */
   private static void constructRelativeNodes(MonoScript[] monoscripts, Node defaultNode, ref List<Node> nodes) {
     Dictionary<Type, int> typeToIndex = new Dictionary<Type, int>();
@@ -323,8 +326,7 @@ public class ExecutionOrderSolver {
     }
   }
 
-  /* Collapses any anchored or locked nodes with the same index into the same node.
-   */
+  /* Collapses any anchored or locked nodes with the same index into the same node. */
   private static void collapseAnchoredOrLockedNodes(ref List<Node> nodes) {
     List<Node> newNodeList = new List<Node>();
 
@@ -419,7 +421,7 @@ public class ExecutionOrderSolver {
   /* Here we check to see if there are any cycles in the graph we have constructed.  Our
    * solving algorithm will tell us if there is no solution, but it doesn't give us any
    * useful information about why it is unsolvable.  We try to find a cycle here so that
-   * we can output it so that the user can more easily find the cycle and correct it
+   * we can output it so that the user can more easily find the cycle and correct it.
    */
   private static bool checkForCycles(Node defaultNode, Dictionary<Node, List<Node>> edges) {
     Stack<Node> cycle = new Stack<Node>();
@@ -525,11 +527,7 @@ public class ExecutionOrderSolver {
     return true;
   }
 
-  /* It is often the case that neighboring nodes can be combined into a single node. 
-   * This also ensures that there is exactly one default node.  A default node is a node
-   * that us both anchored, and has an index of 0.  If there are multiple such nodes before
-   * this method is called, they will always be neighbors, and will always be combined 
-   * to one node after this method is complete. */
+  /* It is often the case that neighboring nodes can be combined into a single node. */
   private static void collapseNeighbors(ref List<Node> nodes) {
     List<Node> newNodeList = new List<Node>();
 
@@ -551,14 +549,14 @@ public class ExecutionOrderSolver {
    * default node is never moved, since that is the node that contains all of Unity's behaviours,
    * which we cannot change the ordering for. This method has the potential to 'push' an
    * anchored Node to a different index, but will throw an error if tries to push a locked 
-   * node.  
+   * node.
    * 
-   * Currently the only case 
+   * The only case where a locked node tries to be pushed is if there are 2 locked nodes with more 
+   * scripts between them than there are indexes available.  Currently in Unity the only locked 
+   * nodes are the Default node (index 0) and the EventSystem node (index -1000).  The odds 
+   * of 1000 scripts that all execute in a dependant chain is fairly  small.
    */
   private static bool tryAssignExecutionIndexes(Node defaultNode, ref List<Node> nodes) {
-    /* We find where the default Node is in the ordering.  We want to keep this node at the same
-     * execution index, so we need to shift all scripts away from this Node when making room*/
-
     int indexOfDefault = nodes.IndexOf(defaultNode);
 
     /* Shift all nodes that come before the default node away from the default node */
@@ -635,11 +633,10 @@ public class ExecutionOrderSolver {
     }
 
     foreach (Node node in nodes) {
-      Debug.Log(node + " : " + node.executionIndex);
       foreach (Type type in node.types) {
         MonoScript monoscript = typeToMonoScript[type];
         if (MonoImporter.GetExecutionOrder(monoscript) != node.executionIndex) {
-          //MonoImporter.SetExecutionOrder(monoscript, node.executionIndex);
+          MonoImporter.SetExecutionOrder(monoscript, node.executionIndex);
         }
       }
     }
