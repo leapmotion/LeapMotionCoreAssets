@@ -172,7 +172,7 @@ public class ExecutionOrderSolver {
     unanchorReferencedNodes(ref nodes);
 
     collapseUnityEngineNodes(ref nodes);
-    
+
     collapseAnchoredNodes(ref nodes);
 
     Dictionary<Node, List<Node>> edges = new Dictionary<Node, List<Node>>();
@@ -186,24 +186,11 @@ public class ExecutionOrderSolver {
     constructEventSystemEdges(nodes, ref edges);
     if (checkForCycles(edges)) return;
 
-    solveTopologicalOrdering(ref nodes, ref edges);
-
-    /* The only time this if statement will be satisfied is if we failed to find a cycle that
-     * existed before, or if the solving algorithm failed to find an existing solution.  Both
-     * cases are an error and we cannot procede.  This is mostly here for sanity checking, and
-     * should never be hit if everything is working as it should.
-     */
-
-    if (edges.Values.Any(l => l.Count != 0)) {
-      Debug.LogError("Topological sort failed for unknown reason!\nExecution order cannot be enforced!");
-      return;
-    }
+    if (!trySolveTopologicalOrdering(ref nodes, ref edges)) return;
 
     collapseNeighbors(ref nodes);
 
-    if (!tryAssignExecutionIndexes(ref nodes)) {
-      return;
-    }
+    if (!tryAssignExecutionIndexes(ref nodes)) return;
 
     applyExecutionIndexes(monoscripts, nodes);
   }
@@ -446,7 +433,7 @@ public class ExecutionOrderSolver {
     foreach (var edge in edges) {
       if (findCycle(edges, edge.Key, cycle)) {
 
-        
+
 
         string cycleString = cycle.Last().ToString();
         foreach (Node cycleNode in cycle) {
@@ -490,7 +477,7 @@ public class ExecutionOrderSolver {
    * 
    * This method destroys the graph during the solve.
    */
-  private static void solveTopologicalOrdering(ref List<Node> nodes, ref Dictionary<Node, List<Node>> edges) {
+  private static bool trySolveTopologicalOrdering(ref List<Node> nodes, ref Dictionary<Node, List<Node>> edges) {
 
     //Empty list to contain sorted nodes
     List<Node> L = new List<Node>(nodes.Count);
@@ -523,6 +510,18 @@ public class ExecutionOrderSolver {
     }
 
     nodes = L;
+
+    /* The only time this if statement will be satisfied is if we failed to find a cycle that
+     * existed before, or if the solving algorithm failed to find an existing solution.  Both
+     * cases are an error and we cannot procede.  This is mostly here for sanity checking, and
+     * should never be hit if everything is working as it should.
+     */
+    if (edges.Values.Any(l => l.Count != 0)) {
+      Debug.LogError("Topological sort failed for unknown reason!  Execution Order cannot be enforced!");
+      return false;
+    }
+
+    return true;
   }
 
   /* It is often the case that neighboring nodes can be combined into a single node. 
@@ -591,6 +590,22 @@ public class ExecutionOrderSolver {
       }
 
       groupings[i].executionIndex = maxIndex;
+    }
+
+    /* Verify that all UnityEngine nodes wind up with an execution index equal to zero.
+     * Verify that the EventSystem node does not get grouped with any other types. */
+    foreach (Node grouping in groupings) {
+      if (grouping.isEventSystem) {
+        if (grouping.types.Count != 1) {
+          Debug.LogError("EventSystem was erronously grouped with another script!");
+          return false;
+        }
+      } else if (grouping.hasAnyUnityEngine) {
+        if (grouping.executionIndex != 0) {
+          Debug.LogError("A Node with a UnityEngine Behaviour was assigned an execution index other than zero!");
+          return false;
+        }
+      }
     }
 
     return true;
