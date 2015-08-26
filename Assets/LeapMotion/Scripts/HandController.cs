@@ -32,7 +32,13 @@ public class HandController : MonoBehaviour {
   // Reference distance from thumb base to pinky base in mm.
   protected const float GIZMO_SCALE = 5.0f;
   /** Conversion factor for millimeters to meters. */
-  protected const float MM_TO_M = 0.001f;
+  protected const float MM_TO_M = 1e-3f;
+  /** Conversion factor for nanoseconds to seconds. */
+  protected const float NS_TO_S = 1e-6f;
+  /** Conversion factor for seconds to nanoseconds. */
+  protected const float S_TO_NS = 1e6f;
+  /** How much smoothing to use when calculating the FixedUpdate offset. */
+  protected const float FIXED_UPDATE_OFFSET_SMOOTHING_DELAY = 0.1f;
 
   /** Whether to use a separate model for left and right hands (true); or mirror the same model for both hands (false). */
   public bool separateLeftRight = false;
@@ -90,6 +96,12 @@ public class HandController : MonoBehaviour {
   private long prev_graphics_id_ = 0;
   private long prev_physics_id_ = 0;
 
+  /** The smoothed offset between the FixedUpdate timeline and the Leap timeline.  
+   * Used to provide temporally correct frames within FixedUpdate */
+  private SmoothedFloat smoothedFixedUpdateOffset_ = new SmoothedFloat();
+  /** The maximum offset calculated per frame */
+  private float perFrameFixedUpdateOffset_;
+
   /** Draws the Leap Motion gizmo when in the Unity editor. */
   void OnDrawGizmos() {
     // Draws the little Leap Motion Controller in the Editor view.
@@ -125,6 +137,8 @@ public class HandController : MonoBehaviour {
     hand_physics_ = new Dictionary<int, HandModel>();
 
     tools_ = new Dictionary<int, ToolModel>();
+
+    smoothedFixedUpdateOffset_.delay = FIXED_UPDATE_OFFSET_SMOOTHING_DELAY;
 
     if (leap_controller_ == null) {
       Debug.LogWarning(
@@ -313,15 +327,81 @@ public class HandController : MonoBehaviour {
   * If the recorder object is playing a recording, then the frame is taken from the recording.
   * Otherwise, the frame comes from the Leap Motion Controller itself.
   */
-  public Frame GetFrame() {
+  public virtual Frame GetFrame() {
     if (enableRecordPlayback && (recorder_.state == RecorderState.Playing || recorder_.state == RecorderState.Paused))
       return recorder_.GetCurrentFrame();
 
     return leap_controller_.Frame();
   }
 
+  /**
+   * NOTE: This method should ONLY be called from within a FixedUpdate callback.
+   * 
+   * Unity Physics runs at a constant frame step, where the physics time between each FixedUpdate is the same. However
+   * there is a big difference between the physics timeline and the real timeline.  In Unity, these timelines can be
+   * very skewed, where the actual times FixedUpdate is called can vary greatly.  For example, the graph below
+   * shows the real times when FixedUpdate was called.  
+   * 
+   * \image html images/GetFixedFrame_FixedUpdateCluster_Graph.png
+   * 
+   * The graph shows major clustering occuring of FixedUpdate calls, rather than an even spread.  Specifically, Unity
+   * always executes all of the FixedUpdate calls at the *begining* of an Update frame, and then performs interpolation
+   * to convert physics objects from the physics timeline to the real timeline.
+   * 
+   * This causes an issue when we need to aquire a Leap Frame from within FixedUpdate, since we need to provide a Frame
+   * to the physics timeline, but the Leap provides frames from the real timeline.  The image below shows what happens
+   * when we simply sample controller.Frame() from within FixedUpdate.  The X axis represents Time.fixedTime, and the Y
+   * axis represents the Frame.Timestamp
+   * 
+   * \image html images/GetFixedFrame_Naive_Graph.png
+   * 
+   * The graph shows how, from the perspective of the physics timeline, the Frames are arriving in a jagged way, staying
+   * the same for a large amount of time before jumping a large amount forward.  Ideally we would be able to take advantage
+   * of the full 120FPS of frames the service provides, properly interpolated into the physics timeline.  
+   * 
+   * GetFixedFrame attempts to establish a conversion from the real timeline to the physics timeline, to provide both
+   * uniformly sampled Frames, as well as not introducing latency.  The graph below shows a comparison between the naive
+   * method of sampling the most recent frame (red), and the usage of GetFixedFrame (green).  The X axis represents Time.fixedTime
+   * while the Y axis represents the Frame.Timestamp obtained by the 2 methods
+   * 
+   * \image html images/GetFixedFrame_Comparison_Graph.png
+   * 
+   * As the graph shows, the GetFixedFrame method can significantly help solve the judder that can occur when sampling
+   * controller.Frame while in FixedUpdate.
+   * 
+   * ALSO: If the recorder object is playing a recording, then the frame is taken directly from the recording,
+   * with no timeline synchronization performed.
+   */
+  public virtual Frame GetFixedFrame() {
+    if (enableRecordPlayback && (recorder_.state == RecorderState.Playing || recorder_.state == RecorderState.Paused))
+      return recorder_.GetCurrentFrame();
+
+    //Aproximate the correct timestamp given the current fixed time
+    float correctedTimestamp = (Time.fixedTime + smoothedFixedUpdateOffset_.value) * S_TO_NS;
+
+    //Search the leap history for a frame with a timestamp closest to the corrected timestamp
+    Frame closestFrame = leap_controller_.Frame();
+    for (int searchHistoryIndex = 1; searchHistoryIndex < 60; searchHistoryIndex++) {
+      Frame historyFrame = leap_controller_.Frame(searchHistoryIndex);
+
+      //If we reach an invalid frame, terminate the search
+      if (!historyFrame.IsValid) {
+        break;
+      }
+
+      if (Mathf.Abs(historyFrame.Timestamp - correctedTimestamp) < Mathf.Abs(closestFrame.Timestamp - correctedTimestamp)) {
+        closestFrame = historyFrame;
+      } else {
+        //Since frames are always reported in order, we can terminate the search once we stop finding a closer frame
+        break;
+      }
+    }
+
+    return closestFrame;
+  }
+
   /** Updates the graphics objects. */
-  void Update() {
+  protected virtual void Update() {
     if (leap_controller_ == null)
       return;
 
@@ -335,14 +415,21 @@ public class HandController : MonoBehaviour {
       UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
       prev_graphics_id_ = frame.Id;
     }
+
+    //perFrameFixedUpdateOffset_ contains the maximum offset of this Update cycle
+    smoothedFixedUpdateOffset_.Update(perFrameFixedUpdateOffset_, Time.deltaTime);
   }
 
   /** Updates the physics objects */
-  void FixedUpdate() {
+  protected virtual void FixedUpdate() {
     if (leap_controller_ == null)
       return;
 
-    Frame frame = GetFrame();
+    //All FixedUpdates of a frame happen before Update, so only the last of these calculations is passed
+    //into Update for smoothing.
+    perFrameFixedUpdateOffset_ = leap_controller_.Frame().Timestamp * NS_TO_S - Time.fixedTime;
+
+    Frame frame = GetFixedFrame();
 
     if (frame.Id != prev_physics_id_) {
       UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
@@ -409,11 +496,11 @@ public class HandController : MonoBehaviour {
     }
   }
 
-  void OnDisable () {
+  void OnDisable() {
     DestroyAllHands();
   }
 
-  void OnDestroy () {
+  void OnDestroy() {
     DestroyAllHands();
   }
 
