@@ -79,6 +79,12 @@ public class HandController : MonoBehaviour {
   /** Whether to loop the playback. */
   public bool recorderLoop = true;
 
+  public delegate void handEvent(HandModel hand);
+  /** Called in the Update cycle in which a hand has been created, after initialization. */
+  public event handEvent onCreateHand;
+  /** Called in the Update cycle in which a hand will be destroyed, before destruciton. */
+  public event handEvent onDestroyHand;
+
   /** The object used to control recording and playback.*/
   protected LeapRecorder recorder_;
 
@@ -160,7 +166,7 @@ public class HandController : MonoBehaviour {
   }
 
   /** Creates a new HandModel instance. */
-  protected HandModel CreateHand(HandModel model) {
+  protected HandModel CreateHand(Hand leap_hand, HandModel model) {
     HandModel hand_model = Instantiate(model, transform.position, transform.rotation)
                            as HandModel;
     hand_model.gameObject.SetActive(true);
@@ -168,6 +174,15 @@ public class HandController : MonoBehaviour {
     if (handParent != null) {
       hand_model.transform.SetParent(handParent.transform);
     }
+    hand_model.SetLeapHand(leap_hand);
+    hand_model.MirrorZAxis(mirrorZAxis);
+    hand_model.SetController(this);
+
+    handEvent handHandler = onCreateHand;
+    if (handHandler != null) {
+      handHandler(hand_model);
+    }
+    
     return hand_model;
   }
 
@@ -176,6 +191,10 @@ public class HandController : MonoBehaviour {
   * If you set destroyHands to false, you must destroy the hand instances elsewhere in your code.
   */
   protected void DestroyHand(HandModel hand_model) {
+    handEvent handHandler = onDestroyHand;
+    if (handHandler != null) {
+      handHandler (hand_model);
+    }
     if (destroyHands)
       Destroy(hand_model.gameObject);
     else
@@ -218,10 +237,7 @@ public class HandController : MonoBehaviour {
 
         // Create the hand and initialized it if it doesn't exist yet.
         if (!all_hands.ContainsKey(leap_hand.Id)) {
-          HandModel new_hand = CreateHand(model);
-          new_hand.SetLeapHand(leap_hand);
-          new_hand.MirrorZAxis(mirrorZAxis);
-          new_hand.SetController(this);
+          HandModel new_hand = CreateHand(leap_hand, model);
 
           // Set scaling based on reference hand.
           float hand_scale = MM_TO_M * leap_hand.PalmWidth / new_hand.handModelPalmWidth;

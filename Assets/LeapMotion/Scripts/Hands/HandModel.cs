@@ -269,6 +269,18 @@ public abstract class HandModel : MonoBehaviour {
     UpdateHand ();
   }
 
+  /**
+   * Returns the ID associated with the hand in the Leap API.
+   * This ID is guaranteed to be unique among all hands in a frame,
+   * and is invariant for the lifetime of the hand model.
+  */
+  public int LeapID() {
+    if (hand_ != null) {
+      return hand_.Id;
+    }
+    return -1;
+  }
+
   /** 
   * Implement this function to update this hand once every game loop.
   * For HandModel instances assigned to the HandController graphics hand list, the HandController calls this 
