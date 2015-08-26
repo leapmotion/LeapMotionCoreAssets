@@ -50,10 +50,6 @@ public class HandController : MonoBehaviour {
   public HandModel rightGraphicsModel;
   /** The physics hand model to use for the right hand. */
   public HandModel rightPhysicsModel;
-  /** The parent transform to which the hand models are added as children.
-   * If null, the hands have no parent.
-   */
-  public Transform handParent = null;
 
   /** The GameObject containing both graphics and colliders for tools. */
   public ToolModel toolModel;
@@ -171,9 +167,7 @@ public class HandController : MonoBehaviour {
                            as HandModel;
     hand_model.gameObject.SetActive(true);
     Leap.Utils.IgnoreCollisions(hand_model.gameObject, gameObject);
-    if (handParent != null) {
-      hand_model.transform.SetParent(handParent.transform);
-    }
+    hand_model.transform.SetParent(transform);
     hand_model.SetLeapHand(leap_hand);
     hand_model.MirrorZAxis(mirrorZAxis);
     hand_model.SetController(this);
