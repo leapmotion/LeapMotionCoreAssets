@@ -97,8 +97,8 @@ public class LeapCameraAlignment : MonoBehaviour {
       };
     }
     if (history [0].leapTime >= time) {
-      // Expect this for initial frames with high latency
-      if (history [0].leapTime > time) Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
+      // Expect this when using LOW LATENCY image retrieval, which can yield negative latency estimates due to incorrect clock synchronization
+      //if (history [0].leapTime > time) Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
       return history[0];
     }
     int t = 1;

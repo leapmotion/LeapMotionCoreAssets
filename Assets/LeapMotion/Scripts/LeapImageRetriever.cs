@@ -36,6 +36,7 @@ public class LeapImageRetriever : MonoBehaviour {
 
     private int _missedImages = 0;
     private Controller _controller;
+	public HandController handController;
 
     //Information about the current format the retriever is configured for.  Used to detect changes in format
     private int _currentWidth = 0;
@@ -216,9 +217,8 @@ public class LeapImageRetriever : MonoBehaviour {
     }
 
     void Start() {
-        HandController handController = FindObjectOfType<HandController>();
         if (handController == null) {
-            Debug.LogWarning("Cannot use LeapImageRetriever if there is no HandController in the scene!");
+            Debug.LogWarning("Cannot use LeapImageRetriever if there is no HandController!");
             enabled = false;
             return;
         }
@@ -236,15 +236,23 @@ public class LeapImageRetriever : MonoBehaviour {
 
         if (syncMode == SYNC_MODE.SYNC_WITH_HANDS) {
             _imageList = frame.Images;
-            //Debug.Log (name + " SYNC_WITH_HANDS: frame.Timestamp: " + frame.Timestamp + " - imageList.Timestamp: " + _imageList[0].Timestamp + " = " + (frame.Timestamp - _imageList[0].Timestamp));
-        }
+			/*if (!_imageList.IsEmpty) {
+				Debug.Log (name + " SYNC_WITH_HANDS: frame.Timestamp: " + frame.Timestamp + " - imageList.Timestamp: " + _imageList[0].Timestamp + " = " + (frame.Timestamp - _imageList[0].Timestamp));
+			} else {
+				Debug.LogWarning (name + " SYNC_WITH_HANDS -> NO FRAMES: frame.Timestamp: " + frame.Timestamp);
+			}*/
+		}
     }
 
     void OnPreRender() {
         if (syncMode == SYNC_MODE.LOW_LATENCY) {
           _imageList = _controller.Images;
-          //if (!_imageList.IsEmpty) Debug.Log (name + " LOW_LATENCY: controller.Now(): " + _controller.Now() + " - imageList.Timestamp: " + _imageList[0].Timestamp + " = " + (_controller.Now() - _imageList[0].Timestamp));
-        }
+          /*if (!_imageList.IsEmpty) {
+				Debug.Log (name + " LOW_LATENCY: controller.Now(): " + _controller.Now() + " - imageList.Timestamp: " + _imageList[0].Timestamp + " = " + (_controller.Now() - _imageList[0].Timestamp));
+		  } else {
+				Debug.LogWarning(name + " LOW_LATENCY -> NO FRAMES");
+		  }*/
+		}
 
         Image referenceImage = _imageList[(int)eye];
 
@@ -272,13 +280,13 @@ public class LeapImageRetriever : MonoBehaviour {
             _forceDistortionRecalc = true;
         }
 
-        loadMainTexture(referenceImage);
+		loadMainTexture(referenceImage);
 
         for (int i = _imageBasedMaterialsToInit.Count - 1; i >= 0; i--) {
             LeapImageBasedMaterial material = _imageBasedMaterialsToInit[i];
             initImageBasedMaterial(material);
             _imageBasedMaterialsToInit.RemoveAt(i);
-        }
+		}
 
         foreach (LeapImageBasedMaterial material in _registeredImageBasedMaterials) {
             if (material.imageMode == LeapImageBasedMaterial.ImageMode.STEREO ||
