@@ -21,7 +21,9 @@ public class LeapImageRetriever : MonoBehaviour {
 
     public enum EYE {
         LEFT = 0,
-        RIGHT = 1
+        RIGHT = 1,
+		LEFT2RIGHT = 2,
+		RIGHT2LEFT = 3
     }
 
     public enum SYNC_MODE {
@@ -30,6 +32,7 @@ public class LeapImageRetriever : MonoBehaviour {
     }
 
     public EYE eye = (EYE)(-1);
+	private int frameEye = 0;
     [Tooltip ("Should the image match the tracked hand, or should it be displayed as fast as possible")]
     public SYNC_MODE syncMode = SYNC_MODE.LOW_LATENCY;
     public float gammaCorrection = 1.0f;
@@ -242,9 +245,14 @@ public class LeapImageRetriever : MonoBehaviour {
 				Debug.LogWarning (name + " SYNC_WITH_HANDS -> NO FRAMES: frame.Timestamp: " + frame.Timestamp);
 			}*/
 		}
+
+		Debug.Log ("LeapImageRetriever.Update() frame.Id = " + frame.Id);
+		frameEye = 0;
     }
 
     void OnPreRender() {
+		Debug.Log ("LeapImageRetriever.OnPreRender() frameEye = " + frameEye);
+
         if (syncMode == SYNC_MODE.LOW_LATENCY) {
           _imageList = _controller.Images;
           /*if (!_imageList.IsEmpty) {
@@ -254,7 +262,19 @@ public class LeapImageRetriever : MonoBehaviour {
 		  }*/
 		}
 
-        Image referenceImage = _imageList[(int)eye];
+		int imageEye = (int)eye;
+		switch (imageEye) {
+		case 2:
+			imageEye = frameEye;
+			break;
+		case 3:
+			imageEye = 1 - imageEye;
+			break;
+		default:
+			break;
+		}
+
+		Image referenceImage = _imageList[imageEye];
 
         if (referenceImage.Width == 0 || referenceImage.Height == 0) {
             _missedImages++;
@@ -295,6 +315,8 @@ public class LeapImageRetriever : MonoBehaviour {
                 updateImageBasedMaterial(material, ref referenceImage);
             }
         }
+
+		frameEye++;
     }
 
   /// <returns>The time at which the current image was recorded, in microseconds</returns>
