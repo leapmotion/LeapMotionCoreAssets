@@ -22,8 +22,8 @@ public class LeapImageRetriever : MonoBehaviour {
     public enum EYE {
         LEFT = 0,
         RIGHT = 1,
-		LEFT2RIGHT = 2,
-		RIGHT2LEFT = 3
+		LEFT_TO_RIGHT = 2,
+		RIGHT_TO_LEFT = 3
     }
 
     public enum SYNC_MODE {
@@ -246,13 +246,10 @@ public class LeapImageRetriever : MonoBehaviour {
 			}*/
 		}
 
-		Debug.Log ("LeapImageRetriever.Update() frame.Id = " + frame.Id);
 		frameEye = 0;
     }
 
     void OnPreRender() {
-		Debug.Log ("LeapImageRetriever.OnPreRender() frameEye = " + frameEye);
-
         if (syncMode == SYNC_MODE.LOW_LATENCY) {
           _imageList = _controller.Images;
           /*if (!_imageList.IsEmpty) {

@@ -223,8 +223,8 @@ public class LeapCameraAlignment : MonoBehaviour {
       // RESULT: Leap & Unity deltaTime measurements are consistent within error tolerance.
       // Leap deltaTime will be used, since it references the same clock as images.
     } else {
-      // Expect high latency during initial frames
-      Debug.LogWarning("Maximum latency exceeded: " + ((float)(deltaFrame + deltaImage) / 1000f) + " ms -> reset latency estimates");
+      // Expect high latency during initial frames or after pausing
+      //Debug.Log("Maximum latency exceeded: " + ((float)(deltaFrame + deltaImage) / 1000f) + " ms -> reset latency estimates");
       frameLatency.value = 0f;
       imageLatency.value = 0f;
       frameLatency.reset = true;

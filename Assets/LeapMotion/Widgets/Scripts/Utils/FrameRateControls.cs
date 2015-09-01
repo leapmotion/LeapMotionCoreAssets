@@ -16,7 +16,7 @@ public class FrameRateControls : MonoBehaviour {
   public KeyCode unlockPhysics = KeyCode.LeftShift;
   public KeyCode decrease = KeyCode.DownArrow;
   public KeyCode increase = KeyCode.UpArrow;
-  public KeyCode resetRate = KeyCode.Delete;
+  public KeyCode resetRate = KeyCode.Backspace;
 
 	// Use this for initialization
 	void Awake () {
