@@ -8,7 +8,7 @@ public class LeapImageRetrieverEditor : Editor {
     public override void OnInspectorGUI() {
         base.OnInspectorGUI();
 
-        SerializedProperty eyeProperty = serializedObject.FindProperty("eye");
+    SerializedProperty eyeProperty = serializedObject.FindProperty("retrievedEye");
         if (eyeProperty.enumValueIndex == -1) {
             LeapImageRetriever retrieverScript = target as LeapImageRetriever;
             bool containsLeft = retrieverScript.gameObject.name.ToLower().Contains("left");
