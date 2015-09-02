@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.VR;
 using System.Collections;
 using System.Collections.Generic;
 using Leap;
@@ -35,6 +36,8 @@ public class LeapCameraAlignment : MonoBehaviour {
   public float tweenForward = 1f;
 
   public float stereoSeparation = 0.064f;
+
+  public KeyCode recenter = KeyCode.R;
   
   // Manual Time Alignment
   [SerializeField]
@@ -171,6 +174,12 @@ public class LeapCameraAlignment : MonoBehaviour {
     frameLatency = new SmoothedFloat () {
       delay = latencySmoothing
     };
+  }
+
+  void Update() {
+    if (Input.GetKeyDown (recenter)) {
+      InputTracking.Recenter();
+    }
   }
 	
 	// IMPORTANT: This method MUST be called after OVRManager.LateUpdate.
