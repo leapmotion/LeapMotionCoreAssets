@@ -33,6 +33,8 @@ public class LeapCameraAlignment : MonoBehaviour {
   public float tweenPosition = 1f;
   [Range(0,2)]
   public float tweenForward = 1f;
+
+  public float stereoSeparation = 0.064f;
   
   // Manual Time Alignment
   [SerializeField]
@@ -189,6 +191,11 @@ public class LeapCameraAlignment : MonoBehaviour {
       Debug.LogWarning ("Bad virtualCameraStereo = " + virtualCameraStereo + " -> skip alignment");
       return;
     }
+		Debug.Log ("virtualCameraStereo.magnitude = " + virtualCameraStereo.magnitude);
+
+    //Camera stereoCamera = centerCamera.GetComponent<Camera> ();
+    //Debug.Log ("stereoCamera.stereoSeparation = " + stereoCamera.stereoSeparation);
+    //stereoCamera.stereoSeparation = stereoSeparation;
 
     if (unlockHold == KeyCode.None ||
         Input.GetKey (unlockHold)) {

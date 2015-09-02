@@ -16,6 +16,10 @@ public class CompensatedRescale : MonoBehaviour {
   [Range(0,1)]
   public float decreaseFactor = 0.625f; //40 mm CFS / 64 mm IPD
 
+  [Range(0.25f,4f)]
+  public float newScaleFactor = 1f;
+  private float oldScaleFactor = 1f;
+
   private Vector3 initialScale;
 
 	// Use this for initialization
@@ -47,9 +51,17 @@ public class CompensatedRescale : MonoBehaviour {
       Debug.Log ("DecreaseScale");
       return;
     }
+
+    if (oldScaleFactor != newScaleFactor) {
+      ApplyRescale (newScaleFactor / oldScaleFactor);
+      oldScaleFactor = newScaleFactor;
+      Debug.Log("newScaleFactor = " + newScaleFactor);
+    }
   }
 
   public void ResetScale() {
+    oldScaleFactor = newScaleFactor = 1f;
+
     float multiplier = (
       (initialScale.x / transform.localScale.x) + 
       (initialScale.y / transform.localScale.y) +
