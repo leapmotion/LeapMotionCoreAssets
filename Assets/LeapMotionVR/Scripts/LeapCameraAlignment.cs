@@ -180,6 +180,19 @@ public class LeapCameraAlignment : MonoBehaviour {
     if (Input.GetKeyDown (recenter)) {
       InputTracking.Recenter();
     }
+
+    Debug.Log ("Can haz VR? " + VRDevice.isPresent);
+    Debug.Log ("I can iz Oculus? " + (VRSettings.loadedDevice == VRDeviceType.Oculus));
+    if (VRDevice.isPresent &&
+        VRSettings.loadedDevice == VRDeviceType.Oculus)
+    {
+      float ipd = OVRPlugin.ipd;
+      Debug.Log("IPD = " + ipd);
+      float eyeHeight = OVRPlugin.eyeHeight;
+      Debug.Log("eyeHeight = " + eyeHeight);
+      float eyeDepth = OVRPlugin.eyeDepth;
+      Debug.Log("eyeDepth = " + eyeDepth);
+    }
   }
 	
 	// IMPORTANT: This method MUST be called after OVRManager.LateUpdate.
