@@ -35,8 +35,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   [Range(0,2)]
   public float tweenForward = 1f;
 
-  public float stereoSeparation = 0.064f;
-
   public KeyCode recenter = KeyCode.R;
   
   // Manual Time Alignment
@@ -58,6 +56,15 @@ public class LeapCameraAlignment : MonoBehaviour {
 
   public bool overrideDeviceType = false;
   public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Invalid;
+
+  protected struct UserEyeAlignment {
+    public bool use;
+    public float ipd;
+    public float eyeDepth;
+    public float eyeHeight;
+  }
+
+  protected UserEyeAlignment eyeAlignment;
 
   protected struct TransformData {
     public long leapTime; // microseconds
@@ -83,8 +90,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   protected List<TransformData> history;
   
   protected LeapDeviceInfo deviceInfo;
-
-  private Vector3 virtualCameraStereo;
   
   /// <summary>
   /// Estimates the transform of this gameObject at the specified time
@@ -167,6 +172,24 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
+    if (VRDevice.isPresent &&
+        VRSettings.loadedDevice == VRDeviceType.Oculus) {
+      eyeAlignment = new UserEyeAlignment() {
+        use = true,
+        ipd = OVRPlugin.ipd,
+        eyeDepth = OVRPlugin.eyeDepth,
+        eyeHeight = OVRPlugin.eyeHeight
+      };
+      Debug.Log ("VR Support with Oculus");
+    } else {
+      eyeAlignment = new UserEyeAlignment() {
+        use = false,
+        ipd = 0f,
+        eyeDepth = 0f,
+        eyeHeight = 0f
+      };
+    }
+    
     history = new List<TransformData> ();
     imageLatency = new SmoothedFloat () {
       delay = latencySmoothing
@@ -177,21 +200,19 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
 
   void Update() {
+    if (unlockHold == KeyCode.None ||
+        Input.GetKey (unlockHold)) {
+      // Manual Time Alignment
+      if (Input.GetKeyDown (moreRewind)) {
+        rewindAdjust += 0.1f;
+      }
+      if (Input.GetKeyDown (lessRewind)) {
+        rewindAdjust -= 0.1f;
+      }
+    }
+    
     if (Input.GetKeyDown (recenter)) {
       InputTracking.Recenter();
-    }
-
-    Debug.Log ("Can haz VR? " + VRDevice.isPresent);
-    Debug.Log ("I can iz Oculus? " + (VRSettings.loadedDevice == VRDeviceType.Oculus));
-    if (VRDevice.isPresent &&
-        VRSettings.loadedDevice == VRDeviceType.Oculus)
-    {
-      float ipd = OVRPlugin.ipd;
-      Debug.Log("IPD = " + ipd);
-      float eyeHeight = OVRPlugin.eyeHeight;
-      Debug.Log("eyeHeight = " + eyeHeight);
-      float eyeDepth = OVRPlugin.eyeDepth;
-      Debug.Log("eyeDepth = " + eyeDepth);
     }
   }
 	
@@ -206,36 +227,27 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
-    virtualCameraStereo = rightCamera.position - leftCamera.position;
-    if (!(IsFinite (virtualCameraStereo.magnitude) &&
-          virtualCameraStereo.magnitude > float.Epsilon)) {
-      // Unmodified camera positions
-      Debug.LogWarning ("Bad virtualCameraStereo = " + virtualCameraStereo + " -> skip alignment");
-      return;
-    }
-		Debug.Log ("virtualCameraStereo.magnitude = " + virtualCameraStereo.magnitude);
-
-    //Camera stereoCamera = centerCamera.GetComponent<Camera> ();
-    //Debug.Log ("stereoCamera.stereoSeparation = " + stereoCamera.stereoSeparation);
-    //stereoCamera.stereoSeparation = stereoSeparation;
-
-    if (unlockHold == KeyCode.None ||
-        Input.GetKey (unlockHold)) {
-      // Manual Time Alignment
-      if (Input.GetKeyDown (moreRewind)) {
-        rewindAdjust += 0.1f;
-      }
-      if (Input.GetKeyDown (lessRewind)) {
-        rewindAdjust -= 0.1f;
-      }
-    }
-
     // IMPORTANT: UpdateHistory must happen first, before any transforms are modified.
     UpdateHistory ();
 
     // IMPORTANT: UpdateAlignment must precede UpdateTimeWarp, since UpdateTimeWarp applies warping relative current positions
     UpdateAlignment ();
     UpdateTimeWarp ();
+  }
+
+  bool ComputeStereo() {
+    if (!eyeAlignment.use) {
+      Vector3 cameraSeparation = leftCamera.position - rightCamera.position;
+      if (!(IsFinite (cameraSeparation) &&
+        cameraSeparation.magnitude > float.Epsilon)) {
+        // Unmodified camera positions
+        Debug.LogWarning ("Bad camera separation = " + cameraSeparation + " -> skip alignment");
+        eyeAlignment.ipd = 0f;
+        return false;
+      }
+      eyeAlignment.ipd = cameraSeparation.magnitude;
+    }
+    return true;
   }
   
   void UpdateHistory () {
@@ -282,7 +294,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     long tweenAddition = (long)((1f - tweenRewind) * (float)(timeFrame - rewindTime));
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
-    float separate = (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * virtualCameraStereo.magnitude) * 0.5f;
+    float separate = (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * eyeAlignment.ipd) * 0.5f;
     float forward = tweenPosition * tweenForward * deviceInfo.focalPlaneOffset;
     Vector3 moveSeparate = past.rotation * Vector3.right * separate;
     Vector3 moveForward = past.rotation * Vector3.forward * forward;
