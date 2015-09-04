@@ -445,34 +445,36 @@ public class HandController : MonoBehaviour {
 
   /** Returns information describing the device hardware. */
   public LeapDeviceInfo GetDeviceInfo() {
-    DeviceList devices = leap_controller_.Devices;
-    if (devices.Count != 1) {
+    DeviceList devices = leap_controller_.Devices;  
+    if (devices.Count == 1) {
+      LeapDeviceInfo info = new LeapDeviceInfo(LeapDeviceType.Invalid);
+      // TODO: DeviceList does not tell us the device type. Dragonfly serial starts with "LE" and peripheral starts with "LP"
+      if (devices[0].SerialNumber.Length >= 2) {
+        switch (devices[0].SerialNumber.Substring(0, 2)) {
+          case ("LP"):
+            info = new LeapDeviceInfo(LeapDeviceType.Peripheral);
+            break;
+          case ("LE"):
+            info = new LeapDeviceInfo(LeapDeviceType.Dragonfly);
+            break;
+          default:
+            break;
+        }
+      }
+
+      // TODO: Add baseline & offset when included in API
+      // NOTE: Alternative is to use device type since all parameters are invariant
+      info.isEmbedded = devices[0].IsEmbedded;
+      info.horizontalViewAngle = devices[0].HorizontalViewAngle * Mathf.Rad2Deg;
+      info.verticalViewAngle = devices[0].VerticalViewAngle * Mathf.Rad2Deg;
+      info.trackingRange = devices[0].Range / 1000f;
+      info.serialID = devices[0].SerialNumber;
+      return info;
+    }
+    else if (devices.Count > 1) {
       return new LeapDeviceInfo(LeapDeviceType.Peripheral);
     }
-
-    LeapDeviceInfo info = new LeapDeviceInfo(LeapDeviceType.Invalid);
-    // TODO: DeviceList does not tell us the device type. Dragonfly serial starts with "LE" and peripheral starts with "LP"
-    if (devices[0].SerialNumber.Length >= 2) {
-      switch (devices[0].SerialNumber.Substring(0, 2)) {
-        case ("LP"):
-          info = new LeapDeviceInfo(LeapDeviceType.Peripheral);
-          break;
-        case ("LE"):
-          info = new LeapDeviceInfo(LeapDeviceType.Dragonfly);
-          break;
-        default:
-          break;
-      }
-    }
-    
-    // TODO: Add baseline & offset when included in API
-    // NOTE: Alternative is to use device type since all parameters are invariant
-    info.isEmbedded = devices[0].IsEmbedded;
-    info.horizontalViewAngle = devices[0].HorizontalViewAngle * Mathf.Rad2Deg;
-    info.verticalViewAngle = devices[0].VerticalViewAngle * Mathf.Rad2Deg;
-    info.trackingRange = devices[0].Range / 1000f;
-    info.serialID = devices[0].SerialNumber;
-    return info;
+    return new LeapDeviceInfo(LeapDeviceType.Invalid);
   }
 
   /** Returns a copy of the hand model list. */
