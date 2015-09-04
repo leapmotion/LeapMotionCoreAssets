@@ -62,6 +62,13 @@ public class LeapCameraAlignment : MonoBehaviour {
   public bool overrideDeviceType = false;
   public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Invalid;
 
+  protected enum VRCameras {
+    NONE = 0,
+    CENTER = 1,
+    LEFT_RIGHT = 2
+  }
+  protected VRCameras hasCameras = VRCameras.NONE;
+
   protected struct UserEyeAlignment {
     public bool use;
     public float ipd;
@@ -88,8 +95,7 @@ public class LeapCameraAlignment : MonoBehaviour {
       };
     }
   }
-  
-  private long timeFrame = 0;
+
   private long lastFrame = 0;
   private long maxLatency = 200000; //microseconds
   protected List<TransformData> history;
@@ -159,6 +165,26 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
   }
 
+  VRCameras GetVRCameras () {
+    VRCameras cameras = VRCameras.NONE;
+    if (centerCamera != null) {
+      Camera center = centerCamera.GetComponent<Camera>();
+      if (center != null && center.isActiveAndEnabled) {
+        cameras = VRCameras.CENTER;
+      }
+    }
+    if (cameras == VRCameras.NONE) {
+      Camera left = leftCamera.GetComponent<Camera>();
+      Camera right = rightCamera.GetComponent<Camera>();
+      if (left != null && left.isActiveAndEnabled &&
+          right != null && right.isActiveAndEnabled) {
+        cameras = VRCameras.LEFT_RIGHT;
+      }
+    }
+    return cameras;
+  }
+
+
   void Start () {
     if (handController == null ||
         imageRetriever == null) {
@@ -167,16 +193,16 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
-    if (!(centerCamera != null ||
-        (leftCamera != null && rightCamera != null))) {
+    hasCameras = GetVRCameras ();
+    if (hasCameras == VRCameras.NONE) {
       Debug.LogWarning ("Either a central Camera for both eyes, or a Left and Right cameras must be referenced -> enabled = false");
       enabled = false;
       return;
     }
 
-      if ((leftCamera != null && transform != leftCamera.parent) ||
-          (centerCamera != null && transform != centerCamera.parent) ||
-          (rightCamera != null && transform != rightCamera.parent)) {
+    if (transform != leftCamera.parent ||
+        transform != centerCamera.parent ||
+        transform != rightCamera.parent) {
       Debug.LogWarning ("LeapCameraAlignment must be a component of the parent of the camera tranasforms -> enabled = false");
       enabled = false;
       return;
@@ -197,17 +223,7 @@ public class LeapCameraAlignment : MonoBehaviour {
         eyeDepth = OVRPlugin.eyeDepth,
         eyeHeight = OVRPlugin.eyeHeight
       };
-      Debug.Log ("VR Support with Oculus");
-
-      // FIXME: This needs to be generalized & adjustable
-
-      // Rescale this object in order to modify the virtual camera baseline in the child objects
-      transform.localScale = Vector3.one * (deviceInfo.baseline / eyeAlignment.ipd);
-
-      // Apply a complementary scale to child objects such as the hand controller
-      foreach (Transform child in counterAligned) {
-        child.localScale = Vector3.one * (eyeAlignment.ipd / deviceInfo.baseline);
-      }
+      Debug.Log ("Unity VR Support with Oculus");
     } else {
       eyeAlignment = new UserEyeAlignment() {
         use = false,
@@ -215,6 +231,7 @@ public class LeapCameraAlignment : MonoBehaviour {
         eyeDepth = 0f,
         eyeHeight = 0f
       };
+      Debug.Log ("Two-camera stereoscopic alignment");
     }
     
     history = new List<TransformData> ();
@@ -244,7 +261,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
 	
 	// IMPORTANT: This method MUST be called after OVRManager.LateUpdate.
-  // Use EnableUpdateOrdering script to ensure correct call order.
+  // FIXME Use EnableUpdateOrdering script to ensure correct call order -> Declare relative script ordering
   void LateUpdate() {
     if (!(IsFinite (leftCamera.position) && IsFinite (leftCamera.rotation) &&
           IsFinite (centerCamera.transform.position) && IsFinite (centerCamera.transform.rotation) &&
@@ -253,19 +270,50 @@ public class LeapCameraAlignment : MonoBehaviour {
       Debug.LogWarning ("Uninitialized transforms -> skip alignment");
       return;
     }
-    Debug.Log ("All the things!");
+
     // IMPORTANT: UpdateHistory must happen first, before any transforms are modified.
     UpdateHistory ();
 
-    // IMPORTANT: UpdateAlignment must precede UpdateTimeWarp, since UpdateTimeWarp applies warping relative current positions
+    // IMPORTANT: UpdateAlignment must precede UpdateTimeWarp,
+    // since UpdateTimeWarp applies warping relative current positions
     UpdateAlignment ();
     UpdateTimeWarp ();
   }
   
   void UpdateHistory () {
-    lastFrame = timeFrame;
-    timeFrame = imageRetriever.LeapNow ();
+    // Add current position and rotation to history
+    // NOTE: history.Add can be retrieved as history[history.Count-1]
+    if (history.Count >= 1) {
+      lastFrame = history [history.Count - 1].leapTime;
+    } else {
+      lastFrame = 0;
+    }
+    long timeFrame = imageRetriever.LeapNow ();
+    switch (hasCameras) {
+    case VRCameras.CENTER:
+      history.Add (new TransformData () {
+        leapTime = timeFrame,
+        position = centerCamera.position,
+        rotation = centerCamera.rotation
+      });
+      break;
+    case VRCameras.LEFT_RIGHT:
+      history.Add (new TransformData () {
+        leapTime = timeFrame,
+        position = Vector3.Lerp (leftCamera.position, rightCamera.position, 0.5f), 
+        rotation = Quaternion.Slerp (leftCamera.rotation, rightCamera.rotation, 0.5f)
+      });
+      break;
+    default: //case VRCameras.NONE:
+      history.Add (new TransformData () {
+        leapTime = timeFrame,
+        position = Vector3.zero,
+        rotation = Quaternion.identity
+      });
+      break;
+    }
 
+    // Update smoothed averages of latency and frame rate
     long deltaFrame = timeFrame - lastFrame;
     long deltaImage = timeFrame - imageRetriever.ImageNow ();
     if (deltaFrame + deltaImage < maxLatency) {
@@ -283,31 +331,6 @@ public class LeapCameraAlignment : MonoBehaviour {
       frameLatency.reset = true;
       imageLatency.reset = true;
     }
-
-    // Add current position and rotation to history
-    // IMPORTANT: Record the movement of the cameras that are used for VR
-    Camera lc = leftCamera.GetComponent<Camera> ();
-    Camera cc = centerCamera.GetComponent<Camera> ();
-    Camera rc = rightCamera.GetComponent<Camera> ();
-    if (cc != null && cc.isActiveAndEnabled) {
-      history.Add (new TransformData () {
-        leapTime = timeFrame,
-        position = centerCamera.position,
-        rotation = centerCamera.rotation
-      });
-    } else if (lc != null && lc.isActiveAndEnabled &&
-               rc != null && rc.isActiveAndEnabled) {
-      history.Add (new TransformData () {
-        leapTime = timeFrame,
-        position = Vector3.Lerp (leftCamera.position, rightCamera.position, 0.5f), 
-        rotation = Quaternion.Slerp (leftCamera.rotation, rightCamera.rotation, 0.5f)
-      });
-      Debug.Log ("VR Support UpdateHistory");
-    } else {
-      Debug.LogWarning ("No active camera components were found - camera transform references must not be correct!");
-    }
-    //Debug.Log ("Last Index Time = " + history[history.Count-1].leapTime + " =? " + timeFrame);
-    // NOTE: history.Add can be retrieved as history[history.Count-1]
     
     // Reduce history length
     while (history.Count > 0 &&
@@ -316,10 +339,39 @@ public class LeapCameraAlignment : MonoBehaviour {
       history.RemoveAt(0);
     }
   }
+
+  void ApplyRescale(float rescale) {
+    // Rescale this object, thereby rescaling the virtual camera separation
+    transform.localScale = Vector3.one * rescale;
+
+    // Move this object to compensate for the rescaling of head movement
+    Vector3 cameraScaledPosition = Vector3.zero;
+    switch (hasCameras) {
+    case VRCameras.CENTER:
+      cameraScaledPosition = centerCamera.position;
+      break;
+    case VRCameras.LEFT_RIGHT:
+      cameraScaledPosition = Vector3.Lerp (leftCamera.position, rightCamera.position, 0.5f) - transform.position;
+      break;
+    default: //case VRCameras.NONE:
+      break;
+    }
+    if (transform.parent) {
+      transform.parent.InverseTransformVector(cameraScaledPosition);
+    }
+    transform.localPosition = cameraScaledPosition * (1f / rescale - 1f);
+
+    // Apply the inverse scale to child objects such as the hand controller
+    Vector3 counterScale = Vector3.one / rescale;
+    foreach (Transform child in counterAligned) {
+      child.localScale = counterScale;
+    }
+  }
   
   void UpdateAlignment () {
+    long latestTime = history [history.Count - 1].leapTime;
     long rewindTime = imageRetriever.ImageNow () - (long)frameLatency.value - (long)(rewindAdjust*frameLatency.value);
-    long tweenAddition = (long)((1f - tweenRewind) * (float)(timeFrame - rewindTime));
+    long tweenAddition = (long)((1f - tweenRewind) * (float)(latestTime - rewindTime));
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
     if (!eyeAlignment.use) {
@@ -335,40 +387,42 @@ public class LeapCameraAlignment : MonoBehaviour {
       eyeAlignment.ipd = virtualBaseline.magnitude;
     }
     
-    float separate = (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * eyeAlignment.ipd) * 0.5f;
+    float separate = (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * eyeAlignment.ipd);
     float forward = tweenPosition * tweenForward * deviceInfo.focalPlaneOffset;
-    Vector3 moveSeparate = past.rotation * Vector3.right * separate;
+    Vector3 moveSeparate = past.rotation * Vector3.right * separate * 0.5f;
     Vector3 moveForward = past.rotation * Vector3.forward * forward;
-
+    
     if (!eyeAlignment.use) {
-      Debug.Log ("VR Non-Support Support");
       // Move Virtual cameras to align position & orientation
       centerCamera.transform.position = past.position + moveForward;
       centerCamera.transform.rotation = past.rotation;
-      rightCamera.position = past.position + moveForward + moveSeparate;
-      rightCamera.rotation = past.rotation;
       leftCamera.position = past.position + moveForward - moveSeparate;
       leftCamera.rotation = past.rotation;
+      rightCamera.position = past.position + moveForward + moveSeparate;
+      rightCamera.rotation = past.rotation;
     } else {
-      Debug.Log ("VR Support Support");
-      // Camera motion is local, but cannot be modified
-      // Instead, the parent object must be modified in order to compensate for the rescaled motion
-      Vector3 centerLocalPosition;
-      if (centerCamera != null && false) {
-        centerLocalPosition = centerCamera.localPosition;
-      } else {
-        centerLocalPosition = Vector3.Lerp(rightCamera.localPosition, leftCamera.localPosition, 0.5f);
-        Debug.Log ("rightCamera.localPosition = " + rightCamera.localPosition);
-        Debug.Log ("leftCamera.localPosition = " + leftCamera.localPosition);
+      ApplyRescale(separate / eyeAlignment.ipd);
+
+      //FIXME: The past adjustment must be applied to this transform
+      switch (hasCameras) {
+      case VRCameras.CENTER:
+        leftCamera.position = past.position + moveForward - moveSeparate;
+        leftCamera.rotation = past.rotation;
+        rightCamera.position = past.position + moveForward + moveSeparate;
+        rightCamera.rotation = past.rotation;
+        break;
+      case VRCameras.LEFT_RIGHT:
+        centerCamera.transform.position = past.position + moveForward;
+        centerCamera.transform.rotation = past.rotation;
+        break;
       }
-      transform.localPosition = centerLocalPosition * (eyeAlignment.ipd / deviceInfo.baseline - 1f);
-      Debug.Log ("transform.localPosition = " + transform.localPosition);
     }
   }
   
   void UpdateTimeWarp () {
+    long latestTime = history [history.Count - 1].leapTime;
     long rewindTime = imageRetriever.ImageNow () - (long)(rewindAdjust*frameLatency.value);
-    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(timeFrame - rewindTime));
+    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(latestTime - rewindTime));
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
     // Apply only a rotation ~ assume all objects are infinitely distant
