@@ -450,7 +450,7 @@ public class HandController : MonoBehaviour {
       return new LeapDeviceInfo(LeapDeviceType.Peripheral);
     }
 
-    LeapDeviceInfo info;
+    LeapDeviceInfo info = new LeapDeviceInfo(LeapDeviceType.Invalid);
     // TODO: DeviceList does not tell us the device type. Dragonfly serial starts with "LE" and peripheral starts with "LP"
     if (devices[0].SerialNumber.Length >= 2) {
       switch (devices[0].SerialNumber.Substring(0, 2)) {
@@ -461,11 +461,8 @@ public class HandController : MonoBehaviour {
           info = new LeapDeviceInfo(LeapDeviceType.Dragonfly);
           break;
         default:
-          info = new LeapDeviceInfo(LeapDeviceType.Peripheral);
           break;
       }
-    } else {
-      info = new LeapDeviceInfo(LeapDeviceType.Peripheral);
     }
     
     // TODO: Add baseline & offset when included in API
