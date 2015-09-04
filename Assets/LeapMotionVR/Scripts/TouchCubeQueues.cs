@@ -14,12 +14,10 @@ using System.Collections.Generic;
 public class TouchCubeQueues : MonoBehaviour {
   public KeyCode queueKey = KeyCode.Return;
   public LeapCameraAlignment alignment;
-  public CompensatedRescale rescale;
   public GameObject headMount;
   [Header("Messages")]
   public GameObject helpMenuCanvas;
   public GameObject noAlignmentCanvas;
-  public GameObject playerRescaleCanvas;
   public GameObject alignedViewsCanvas;
   public GameObject rewindViewsCanvas;
   public GameObject warpImagesCanvas;
@@ -40,35 +38,25 @@ public class TouchCubeQueues : MonoBehaviour {
       helpMenuCanvas.SetActive(false);
       alignment.tweenRewind = 0f;
       alignment.tweenTimeWarp = 0f;
-      alignment.tweenTimeWarp = 0f;
       alignment.tweenPosition = 0f;
-      headMount.transform.localScale = Vector3.one / rescale.decreaseFactor;
+      alignment.tweenForward = 0f;
       noAlignmentCanvas.SetActive(true);
       demoStage++;
       break;
-    case 1: // Player Rescale
+    case 1: // IPD Alignment
       noAlignmentCanvas.SetActive(false);
-      headMount.transform.localScale = Vector3.one;
-      rescale.enabled = true;
-      rescale.DecreaseScale();
-      playerRescaleCanvas.SetActive(true);
-      demoStage++;
-      break;
-    case 2: // IPD Alignment
-      playerRescaleCanvas.SetActive(false);
-      rescale.ResetScale();
-      rescale.enabled = false;
       alignment.tweenPosition = 1f;
+      alignment.tweenForward = 1f;
       alignedViewsCanvas.SetActive(true);
       demoStage++;
       break;
-    case 3: // IPD Alignment + Rewind
+    case 2: // IPD Alignment + Rewind
       alignedViewsCanvas.SetActive(false);
       alignment.tweenRewind = 1f;
       rewindViewsCanvas.SetActive(true);
       demoStage++;
       break;
-    case 4: // IPD Alignment + TimeWarp
+    case 3: // IPD Alignment + TimeWarp
       rewindViewsCanvas.SetActive(false);
       alignment.tweenRewind = 0f;
       alignment.tweenTimeWarp = 1f;
@@ -85,13 +73,12 @@ public class TouchCubeQueues : MonoBehaviour {
   public void ResetState() {
     helpMenuCanvas.SetActive(true);
     noAlignmentCanvas.SetActive (false);
-    playerRescaleCanvas.SetActive (false);
     alignedViewsCanvas.SetActive (false);
     rewindViewsCanvas.SetActive (false);
     warpImagesCanvas.SetActive (false);
     alignment.tweenRewind = 0f;
     alignment.tweenTimeWarp = 1f;
     alignment.tweenPosition = 1f;
-    rescale.enabled = false;
+    alignment.tweenForward = 1f;
   }
 }
