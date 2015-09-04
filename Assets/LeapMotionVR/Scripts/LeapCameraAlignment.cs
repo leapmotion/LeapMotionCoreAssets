@@ -165,26 +165,6 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
   }
 
-  VRCameras GetVRCameras () {
-    VRCameras cameras = VRCameras.NONE;
-    if (centerCamera != null) {
-      Camera center = centerCamera.GetComponent<Camera>();
-      if (center != null && center.isActiveAndEnabled) {
-        cameras = VRCameras.CENTER;
-      }
-    }
-    if (cameras == VRCameras.NONE) {
-      Camera left = leftCamera.GetComponent<Camera>();
-      Camera right = rightCamera.GetComponent<Camera>();
-      if (left != null && left.isActiveAndEnabled &&
-          right != null && right.isActiveAndEnabled) {
-        cameras = VRCameras.LEFT_RIGHT;
-      }
-    }
-    return cameras;
-  }
-
-
   void Start () {
     if (handController == null ||
         imageRetriever == null) {
@@ -193,7 +173,21 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
-    hasCameras = GetVRCameras ();
+    hasCameras = VRCameras.NONE;
+    if (centerCamera != null) {
+      Camera center = centerCamera.GetComponent<Camera>();
+      if (center != null && center.isActiveAndEnabled) {
+        hasCameras = VRCameras.CENTER;
+      }
+    }
+    if (hasCameras == VRCameras.NONE) {
+      Camera left = leftCamera.GetComponent<Camera>();
+      Camera right = rightCamera.GetComponent<Camera>();
+      if (left != null && left.isActiveAndEnabled &&
+          right != null && right.isActiveAndEnabled) {
+        hasCameras = VRCameras.LEFT_RIGHT;
+      }
+    }
     if (hasCameras == VRCameras.NONE) {
       Debug.LogWarning ("Either a central Camera for both eyes, or a Left and Right cameras must be referenced -> enabled = false");
       enabled = false;
