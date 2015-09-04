@@ -28,9 +28,9 @@ public class LeapCameraAlignment : MonoBehaviour {
 
   [Header("Alignment Settings")]
 
-  [Range(0,1)]
+  [Range(0,2)]
   public float tweenRewind = 0f;
-  [Range(0,1)]
+  [Range(0,2)]
   public float tweenTimeWarp = 0f;
   [Range(0,2)]
   public float tweenPosition = 1f;
@@ -194,6 +194,12 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
+    if (transform.parent == null) {
+      Debug.LogWarning ("Alignment requires a parent object to define the location of the player in the world. enabled -> false");
+      enabled = false;
+      return;
+    }
+
     if (transform != leftCamera.parent ||
         transform != centerCamera.parent ||
         transform != rightCamera.parent) {
@@ -258,7 +264,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   // FIXME Use EnableUpdateOrdering script to ensure correct call order -> Declare relative script ordering
   void LateUpdate() {
     if (!(IsFinite (leftCamera.position) && IsFinite (leftCamera.rotation) &&
-          IsFinite (centerCamera.transform.position) && IsFinite (centerCamera.transform.rotation) &&
+          IsFinite (centerCamera.position) && IsFinite (centerCamera.rotation) &&
           IsFinite (rightCamera.position) && IsFinite (rightCamera.rotation))) {
       // Uninitialized camera positions
       Debug.LogWarning ("Uninitialized transforms -> skip alignment");
@@ -350,9 +356,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     default: //case VRCameras.NONE:
       break;
     }
-    if (transform.parent) {
-      transform.parent.InverseTransformVector(cameraScaledPosition);
-    }
+    cameraScaledPosition = transform.parent.InverseTransformVector(cameraScaledPosition);
     transform.localPosition = cameraScaledPosition * (1f / rescale - 1f);
 
     // Apply the inverse scale to child objects such as the hand controller
@@ -383,31 +387,62 @@ public class LeapCameraAlignment : MonoBehaviour {
     
     float separate = (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * eyeAlignment.ipd);
     float forward = tweenPosition * tweenForward * deviceInfo.focalPlaneOffset;
-    Vector3 moveSeparate = past.rotation * Vector3.right * separate * 0.5f;
-    Vector3 moveForward = past.rotation * Vector3.forward * forward;
     
     if (!eyeAlignment.use) {
       // Move Virtual cameras to align position & orientation
-      centerCamera.transform.position = past.position + moveForward;
-      centerCamera.transform.rotation = past.rotation;
-      leftCamera.position = past.position + moveForward - moveSeparate;
+      centerCamera.rotation = past.rotation;
+      centerCamera.position = past.position + centerCamera.forward * forward;
+      leftCamera.position = centerCamera.position - centerCamera.right * separate * 0.5f;
       leftCamera.rotation = past.rotation;
-      rightCamera.position = past.position + moveForward + moveSeparate;
+      rightCamera.position = centerCamera.position + centerCamera.right * separate * 0.5f;
       rightCamera.rotation = past.rotation;
     } else {
+      // Rescale and apply compensating displacement
       ApplyRescale(separate / eyeAlignment.ipd);
+
+      // Rewind
+      TransformData latestTransform = history[history.Count - 1];
+      Quaternion rewindRotate = past.rotation * Quaternion.Inverse(latestTransform.rotation);
+      Vector3 rewindDisplace = latestTransform.position - rewindRotate*latestTransform.position;
+      rewindDisplace += past.position - latestTransform.position;
+      Debug.Log ("rewindRotation = " + rewindRotate);
+      Debug.Log ("rewindDisplacement = " + rewindDisplace);
+
+      // PROBLEM: None of the methods below work
+      // GUESS: The local transform is updated relative to this...
+      // therefore this transformation needs to be inverted.
+      // GOAL: The local transformations should be recorded relative to the PARENT
+      // so that the compensating motion is NOT included in the history
+
+      transform.localRotation = transform.parent.rotation*rewindRotate*Quaternion.Inverse(transform.parent.rotation);
+      transform.localPosition += transform.parent.InverseTransformVector(rewindDisplace);
+
+      //transform.rotation = rewindRotate * transform.rotation;
+      //transform.position = rewindDisplace + transform.position;
 
       //FIXME: The past adjustment must be applied to this transform
       switch (hasCameras) {
       case VRCameras.CENTER:
-        leftCamera.position = past.position + moveForward - moveSeparate;
-        leftCamera.rotation = past.rotation;
-        rightCamera.position = past.position + moveForward + moveSeparate;
-        rightCamera.rotation = past.rotation;
+        // Shift forward
+        transform.position += centerCamera.forward * forward;
+
+        // Align non-tracked cameras
+        leftCamera.position = centerCamera.position - centerCamera.right * separate * 0.5f;
+        leftCamera.rotation = centerCamera.rotation;
+        rightCamera.position = centerCamera.position + centerCamera.right * separate * 0.5f;
+        rightCamera.rotation = centerCamera.rotation;
         break;
       case VRCameras.LEFT_RIGHT:
-        centerCamera.transform.position = past.position + moveForward;
-        centerCamera.transform.rotation = past.rotation;
+        Vector3 centerPosition = Vector3.Lerp(leftCamera.position, rightCamera.position, 0.5f);
+        Quaternion centerRotation = Quaternion.Slerp(leftCamera.rotation, rightCamera.rotation, 0.5f);
+
+        // Shift forward
+        Vector3 moveForward = centerRotation * Vector3.forward * forward;
+        transform.position += moveForward;
+
+        // Align non-tracked camera
+        centerCamera.position = centerPosition + moveForward;
+        centerCamera.rotation = centerRotation;
         break;
       }
     }
@@ -420,8 +455,8 @@ public class LeapCameraAlignment : MonoBehaviour {
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
     // Apply only a rotation ~ assume all objects are infinitely distant
-    Quaternion rotateImageToNow = centerCamera.transform.rotation * Quaternion.Inverse(past.rotation);
-    Matrix4x4 ImageToNow = Matrix4x4.TRS (Vector3.zero, centerCamera.transform.rotation * Quaternion.Inverse(past.rotation), Vector3.one);
+    Quaternion rotateImageToNow = centerCamera.rotation * Quaternion.Inverse(past.rotation);
+    Matrix4x4 ImageToNow = Matrix4x4.TRS (Vector3.zero, centerCamera.rotation * Quaternion.Inverse(past.rotation), Vector3.one);
     
     foreach (LeapImageBasedMaterial image in warpedImages) {
       image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageToNow", ImageToNow);
