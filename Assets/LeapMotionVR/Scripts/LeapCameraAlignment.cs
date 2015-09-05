@@ -281,6 +281,13 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
   
   void UpdateHistory () {
+    if (eyeAlignment.use) {
+      // Revert the tracking space transform
+      transform.localPosition = Vector3.zero;
+      transform.localRotation = Quaternion.identity;
+      transform.localScale = Vector3.one;
+    }
+    
     // Add current position and rotation to history
     // NOTE: history.Add can be retrieved as history[history.Count-1]
     if (history.Count >= 1) {
@@ -413,6 +420,7 @@ public class LeapCameraAlignment : MonoBehaviour {
       // therefore this transformation needs to be inverted.
       // GOAL: The local transformations should be recorded relative to the PARENT
       // so that the compensating motion is NOT included in the history
+      // QUESTION: How were transformations defined in the old system? Relative to the parent?
 
       transform.localRotation = transform.parent.rotation*rewindRotate*Quaternion.Inverse(transform.parent.rotation);
       transform.localPosition += transform.parent.InverseTransformVector(rewindDisplace);
