@@ -412,21 +412,8 @@ public class LeapCameraAlignment : MonoBehaviour {
       Quaternion rewindRotate = past.rotation * Quaternion.Inverse(latestTransform.rotation);
       Vector3 rewindDisplace = latestTransform.position - rewindRotate*latestTransform.position;
       rewindDisplace += past.position - latestTransform.position;
-      Debug.Log ("rewindRotation = " + rewindRotate);
-      Debug.Log ("rewindDisplacement = " + rewindDisplace);
-
-      // PROBLEM: None of the methods below work
-      // GUESS: The local transform is updated relative to this...
-      // therefore this transformation needs to be inverted.
-      // GOAL: The local transformations should be recorded relative to the PARENT
-      // so that the compensating motion is NOT included in the history
-      // QUESTION: How were transformations defined in the old system? Relative to the parent?
-
       transform.localRotation = transform.parent.rotation*rewindRotate*Quaternion.Inverse(transform.parent.rotation);
       transform.localPosition += transform.parent.InverseTransformVector(rewindDisplace);
-
-      //transform.rotation = rewindRotate * transform.rotation;
-      //transform.position = rewindDisplace + transform.position;
 
       //FIXME: The past adjustment must be applied to this transform
       switch (hasCameras) {
@@ -469,6 +456,8 @@ public class LeapCameraAlignment : MonoBehaviour {
     foreach (LeapImageBasedMaterial image in warpedImages) {
       image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageToNow", ImageToNow);
     }
+
+    //FIXME: Apply to child transforms!
     centerCamera.localRotation = Quaternion.Inverse(rotateImageToNow) * centerCamera.localRotation;
   }
 
