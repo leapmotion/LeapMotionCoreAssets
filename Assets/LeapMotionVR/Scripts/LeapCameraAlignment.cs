@@ -8,9 +8,7 @@ using Leap;
 /// Implements spatial alignment of cameras and synchronization with images
 /// </summary>
 public class LeapCameraAlignment : MonoBehaviour {
-  [SerializeField]
   protected LeapImageRetriever imageRetriever;
-  [SerializeField]
   protected HandController handController;
 
   [Header("Alignment Targets")]
@@ -20,14 +18,13 @@ public class LeapCameraAlignment : MonoBehaviour {
   protected Transform rightCamera;
   [SerializeField]
   protected Transform centerCamera;
-  [HideInInspector]
+  [System.NonSerialized]
   public List<LeapImageBasedMaterial> warpedImages;
 
   [Header("Counter-Aligned Targets")]
   public List<Transform> counterAligned;
 
   [Header("Alignment Settings")]
-
   [Range(0,2)]
   public float tweenRewind = 0f;
   [Range(0,2)]
@@ -165,10 +162,41 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
   }
 
+  void Awake () {
+    warpedImages = new List<LeapImageBasedMaterial>();
+
+    history = new List<TransformData> ();
+    imageLatency = new SmoothedFloat () {
+      delay = latencySmoothing
+    };
+
+    frameLatency = new SmoothedFloat () {
+      delay = latencySmoothing
+    };
+
+  }
+
   void Start () {
-    if (handController == null ||
-        imageRetriever == null) {
-      Debug.LogWarning ("HandController and ImageRetriever references cannot be null -> enabled = false");
+    HandController[] allControllers = FindObjectsOfType<HandController> ();
+    foreach (HandController controller in allControllers) {
+      if (controller.isActiveAndEnabled) {
+        handController = controller;
+      }
+    }
+    if (handController == null) {
+      Debug.LogWarning ("Camera alignment requires an active HandController in the scene -> enabled = false");
+      enabled = false;
+      return;
+    }
+
+    LeapImageRetriever[] allRetrievers = FindObjectsOfType<LeapImageRetriever> ();
+    foreach (LeapImageRetriever retriever in allRetrievers) {
+      if (retriever.isActiveAndEnabled) {
+        imageRetriever = retriever;
+      }
+    }
+    if (imageRetriever == null) {
+      Debug.LogWarning ("Camera alignment requires an active LeapImageRetriever in the scene -> enabled = false");
       enabled = false;
       return;
     }
@@ -233,14 +261,6 @@ public class LeapCameraAlignment : MonoBehaviour {
       };
       Debug.Log ("Two-camera stereoscopic alignment");
     }
-    
-    history = new List<TransformData> ();
-    imageLatency = new SmoothedFloat () {
-      delay = latencySmoothing
-    };
-    frameLatency = new SmoothedFloat () {
-      delay = latencySmoothing
-    };
   }
 
   void Update() {
@@ -415,7 +435,9 @@ public class LeapCameraAlignment : MonoBehaviour {
       transform.localRotation = transform.parent.rotation*rewindRotate*Quaternion.Inverse(transform.parent.rotation);
       transform.localPosition += transform.parent.InverseTransformVector(rewindDisplace);
 
-      //FIXME: The past adjustment must be applied to this transform
+      // Move untracked cameras into alignment
+      // NOTE: If the right and left cameras are tracked, they will have the SAME position as the center camera,
+      // but if they are not tracked they will be placed where Leap cameras are located.
       switch (hasCameras) {
       case VRCameras.CENTER:
         // Shift forward
@@ -457,8 +479,10 @@ public class LeapCameraAlignment : MonoBehaviour {
       image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageToNow", ImageToNow);
     }
 
-    //FIXME: Apply to child transforms!
-    centerCamera.localRotation = Quaternion.Inverse(rotateImageToNow) * centerCamera.localRotation;
+    // Counter-rotate objects to align with Time Warp
+    foreach (Transform child in counterAligned) {
+      child.localRotation = Quaternion.Inverse(rotateImageToNow);
+    }
   }
 
   bool IsFinite(float f) {
