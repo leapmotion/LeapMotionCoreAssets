@@ -56,6 +56,7 @@ float LeapRawBrightnessUV(float2 uv){
 		ir = dot(rawColor, float4(G_BLEED, B_BLEED, R_BLEED, IR_BLEED));
 		ir = saturate(ir);
 		ir = pow(ir, 0.5);
+
 		return ir;
 	#endif
 }
@@ -81,8 +82,9 @@ float3 LeapRawColorUV(float2 uv){
 		float3 fudge = step(FUDGE_THRESHOLD, input_lf.rgb) * fudgeMult;
 
 		float3 color = (output_lf_fudge.rgb - output_lf.rgb) * fudge * fudge + output_lf.rgb;
+    color *= RGB_SCALE;
 
-		return saturate(color * RGB_SCALE);
+		return saturate(color);
 	#endif
 }
 
@@ -95,7 +97,8 @@ float4 LeapRawColorBrightnessUV(float2 uv){
 
 		uv.y = clamp(uv.y, 0.01, 0.99);
 
-		input_lf.a = tex2D(_LeapTexture, uv).a;
+    float4 noOffset = tex2D(_LeapTexture, uv);
+		input_lf.a = noOffset.a;
 		input_lf.r = tex2D(_LeapTexture, uv + R_OFFSET).b;
 		input_lf.g = tex2D(_LeapTexture, uv + G_OFFSET).r;
 		input_lf.b = tex2D(_LeapTexture, uv + B_OFFSET).g;
@@ -107,8 +110,13 @@ float4 LeapRawColorBrightnessUV(float2 uv){
 		float3 fudge = step(FUDGE_THRESHOLD, input_lf.rgb) * fudgeMult;
 
 		float3 color = (output_lf_fudge.rgb - output_lf.rgb) * fudge * fudge + output_lf.rgb;
+    color *= RGB_SCALE;
 
-		return saturate(float4(color * RGB_SCALE, pow(dot(input_lf, float4(R_BLEED, G_BLEED, B_BLEED, IR_BLEED)), 0.5)));
+    float ir = dot(noOffset, float4(G_BLEED, B_BLEED, R_BLEED, IR_BLEED));
+    ir = saturate(ir);
+    ir = pow(ir, 0.5);
+
+		return float4(color, ir);
 	#endif
 }
 
