@@ -104,8 +104,8 @@ public class HMRConfigurationManagerEditor : Editor {
 
     if (selectedConfiguration == HMRConfigurationManager.HMRConfiguration.VR_WORLD_VR_HANDS) {
       EditorGUILayout.LabelField("Hands to use for VR Hands (References Hand Controller)", EditorStyles.boldLabel);
-      //configManager._handController.leftGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Left Hand Graphics Model", configManager._handController.leftGraphicsModel, typeof(HandModel), false);
-      //configManager._handController.rightGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Right Hand Graphics Model", configManager._handController.leftGraphicsModel, typeof(HandModel), false);
+      configManager._handController.leftGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Left Hand Graphics Model", configManager._handController.leftGraphicsModel, typeof(HandModel), false);
+      configManager._handController.rightGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Right Hand Graphics Model", configManager._handController.leftGraphicsModel, typeof(HandModel), false);
     }
   }
 
@@ -144,7 +144,6 @@ public class HMRConfigurationManagerEditor : Editor {
   }
 
   private void setGraphicsModels(HandModel leftHandGraphicsModel, HandModel rightHandGraphicsModel) {
-    Debug.Log("set graphics models");
     _handController.leftGraphicsModel = leftHandGraphicsModel;
     _handController.rightGraphicsModel = rightHandGraphicsModel;
     EditorUtility.SetDirty(_handController);
