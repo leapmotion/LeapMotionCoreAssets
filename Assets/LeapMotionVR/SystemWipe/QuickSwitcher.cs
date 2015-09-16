@@ -124,7 +124,6 @@ public class QuickSwitcher : MonoBehaviour {
 	}
 
 	private IEnumerator doPositionTween(float goalPercent, float transitionTime, TweenCompleteDelegate onComplete = null) {
-    Debug.Log("doPositionTween: " + goalPercent);
 		float startTime = Time.time;
 
 		Vector3 from = transform.localPosition;
