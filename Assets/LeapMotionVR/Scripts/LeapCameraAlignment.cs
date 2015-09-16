@@ -119,6 +119,24 @@ public class LeapCameraAlignment : MonoBehaviour {
   protected List<TransformData> history;
   
   protected LeapDeviceInfo deviceInfo;
+
+  private long _latestImageTimestamp {
+    get {
+      if (imageRetriever != null) {
+        return imageRetriever.ImageNow();
+      }
+
+      else if (handController != null) {
+        ImageList images = handController.GetFrame().Images;
+        if (images.Count > 0) {
+          return images[0].Timestamp;
+        }
+      }
+
+      Debug.LogWarning("Could not calculate valid timestamp. Returning 0.");
+      return 0;
+    }
+  }
   
   /// <summary>
   /// Estimates the transform of this gameObject at the specified time
@@ -167,7 +185,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   /// and applies no alignment if == 0.
   /// </param>
   public void RelativeRewind(Transform target, int isLeftCenterRight = 0) {
-    TransformData past = TransformAtTime(imageRetriever.ImageNow () - (long)(rewindAdjust*frameLatency.value));
+    TransformData past = TransformAtTime(_latestImageTimestamp - (long)(rewindAdjust * frameLatency.value));
     
     // Rewind position and rotation
     target.rotation = past.rotation;
@@ -216,11 +234,11 @@ public class LeapCameraAlignment : MonoBehaviour {
         imageRetriever = retriever;
       }
     }
-    if (imageRetriever == null) {
+    /*if (imageRetriever == null) {
       Debug.LogWarning ("Camera alignment requires an active LeapImageRetriever in the scene -> enabled = false");
       enabled = false;
       return;
-    }
+    }*/
 
     hasCameras = VRCameras.NONE;
     if (centerCamera != null) {
@@ -338,7 +356,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     } else {
       lastFrame = 0;
     }
-    long timeFrame = imageRetriever.LeapNow ();
+    long timeFrame = handController.GetLeapController().Now();
     switch (hasCameras) {
     case VRCameras.CENTER:
       history.Add (new TransformData () {
@@ -365,7 +383,7 @@ public class LeapCameraAlignment : MonoBehaviour {
 
     // Update smoothed averages of latency and frame rate
     long deltaFrame = timeFrame - lastFrame;
-    long deltaImage = timeFrame - imageRetriever.ImageNow ();
+    long deltaImage = timeFrame - _latestImageTimestamp;
     if (deltaFrame + deltaImage < maxLatency) {
       frameLatency.Update ((float)deltaFrame, Time.deltaTime);
       imageLatency.Update ((float)deltaImage, Time.deltaTime);
@@ -418,7 +436,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   
   void UpdateAlignment () {
     long latestTime = history [history.Count - 1].leapTime;
-    long rewindTime = imageRetriever.ImageNow () - (long)frameLatency.value - (long)(rewindAdjust*frameLatency.value);
+    long rewindTime = _latestImageTimestamp - (long)frameLatency.value - (long)(rewindAdjust * frameLatency.value);
     long tweenAddition = (long)((1f - tweenRewind) * (float)(latestTime - rewindTime));
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
@@ -490,7 +508,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   
   void UpdateTimeWarp () {
     long latestTime = history [history.Count - 1].leapTime;
-    long rewindTime = imageRetriever.ImageNow () - (long)(rewindAdjust*frameLatency.value);
+    long rewindTime = _latestImageTimestamp - (long)(rewindAdjust * frameLatency.value);
     long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(latestTime - rewindTime));
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
 
