@@ -303,6 +303,8 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
 
   void Update() {
+    disallowPeripheralTimewarp();
+
     if (_allowManualTimeAlignment) {
       if (unlockHold == KeyCode.None ||
           Input.GetKey(unlockHold)) {
@@ -318,6 +320,16 @@ public class LeapCameraAlignment : MonoBehaviour {
     
     if (Input.GetKeyDown (recenter)) {
       InputTracking.Recenter();
+    }
+  }
+
+  /// <summary>
+  /// Temporary solution until timecodes on peripheral is fixed.
+  /// </summary>
+  private void disallowPeripheralTimewarp() {
+    DeviceList devices = handController.GetLeapController().Devices;
+    if (devices.Count > 0 && devices[0].Type == Device.DeviceType.TYPE_PERIPHERAL) {
+      tweenTimeWarp = 0;
     }
   }
 	
