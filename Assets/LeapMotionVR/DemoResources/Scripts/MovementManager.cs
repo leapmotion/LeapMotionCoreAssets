@@ -5,8 +5,10 @@ public class MovementManager : MonoBehaviour {
   public GameObject leapMotionOVRController = null;
   public HandController handController = null;
 
+  private float startingHeight;
 	// Use this for initialization
 	void Start () {
+    startingHeight = leapMotionOVRController.transform.position.y;
 	}
 	
 	// Update is called once per frame
@@ -27,7 +29,7 @@ public class MovementManager : MonoBehaviour {
       if (Vector3.Dot(direction0, normal0) > direction0.sqrMagnitude * 0.5f && Vector3.Dot(direction1, normal1) > direction1.sqrMagnitude * 0.5f)
       {
         Vector3 target = (hands[0].GetPalmPosition() + hands[1].GetPalmPosition()) / 2.0f;
-        target.y = 0f;
+        target.y = startingHeight;
         leapMotionOVRController.transform.position = Vector3.Lerp(leapMotionOVRController.transform.position, target, 0.1f);
       }
     }
