@@ -33,11 +33,14 @@ public class LeapImageRetriever : MonoBehaviour
     LOW_LATENCY
   }
 
+  [AdvancedModeOnly]
   public EYE retrievedEye = (EYE)(-1);
   private int frameEye = 0;
   [Tooltip ("Should the image match the tracked hand, or should it be displayed as fast as possible")]
+  [AdvancedModeOnly]
   public SYNC_MODE
     syncMode = SYNC_MODE.LOW_LATENCY;
+  [AdvancedModeOnly]
   public float gammaCorrection = 1.0f;
   private int _missedImages = 0;
   private Controller _controller;
