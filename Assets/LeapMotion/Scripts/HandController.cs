@@ -75,6 +75,10 @@ public class HandController : MonoBehaviour {
   /** Whether to loop the playback. */
   public bool recorderLoop = true;
 
+  public delegate void LifecycleEventHandler(HandController handController);
+  /* Called at the end of the MonoBehavior Start() function */
+  public event LifecycleEventHandler onStart;
+
   public delegate void handEvent(HandModel hand);
   /** Called in the Update cycle in which a hand has been created, after initialization. */
   public event handEvent onCreateHand;
@@ -149,6 +153,11 @@ public class HandController : MonoBehaviour {
 
     if (enableRecordPlayback && recordingAsset != null)
       recorder_.Load(recordingAsset);
+
+    LifecycleEventHandler handler = onStart;
+    if (handler != null) {
+      handler(this);
+    }
   }
 
   /**
