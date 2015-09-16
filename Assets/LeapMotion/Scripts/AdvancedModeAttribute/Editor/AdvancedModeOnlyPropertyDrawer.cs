@@ -8,7 +8,7 @@
    * Enabling advanced mode will make these values visible in the editor.
    */
 
-//#define ADVANCED_MODE_ENABLED
+#define ADVANCED_MODE_ENABLED
 
 #if !ADVANCED_MODE_ENABLED
 using UnityEngine;
