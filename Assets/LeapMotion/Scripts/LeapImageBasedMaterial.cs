@@ -30,6 +30,7 @@ public class LeapImageBasedMaterial : MonoBehaviour
     
     //Initialize the Time-Warp to be the identity
     imageBasedMaterial.SetMatrix ("_ViewerImageToNow", Matrix4x4.identity);
+    LeapImageRetriever.registerImageBasedMaterial(this);
   }
 
   void Start () {
@@ -39,7 +40,6 @@ public class LeapImageBasedMaterial : MonoBehaviour
       return;
     }
 
-    LeapImageRetriever.registerImageBasedMaterial (this);
     cameraAlignment = FindObjectOfType<LeapCameraAlignment> ();
     if (cameraAlignment != null && 
         !cameraAlignment.warpedImages.Contains (this)) {
