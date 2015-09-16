@@ -285,14 +285,16 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
 
   void Update() {
-    if (unlockHold == KeyCode.None ||
-        Input.GetKey (unlockHold)) {
-      // Manual Time Alignment
-      if (Input.GetKeyDown (moreRewind)) {
-        rewindAdjust += 0.1f;
-      }
-      if (Input.GetKeyDown (lessRewind)) {
-        rewindAdjust -= 0.1f;
+    if (_allowManualTimeAlignment) {
+      if (unlockHold == KeyCode.None ||
+          Input.GetKey(unlockHold)) {
+        // Manual Time Alignment
+        if (Input.GetKeyDown(moreRewind)) {
+          rewindAdjust += 0.1f;
+        }
+        if (Input.GetKeyDown(lessRewind)) {
+          rewindAdjust -= 0.1f;
+        }
       }
     }
     
