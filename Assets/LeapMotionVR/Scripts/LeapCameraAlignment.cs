@@ -496,7 +496,7 @@ public class LeapCameraAlignment : MonoBehaviour {
 
     // Apply only a rotation ~ assume all objects are infinitely distant
     Quaternion rotateImageToNow = centerCamera.rotation * Quaternion.Inverse(past.rotation);
-    Matrix4x4 ImageToNow = Matrix4x4.TRS (Vector3.zero, centerCamera.rotation * Quaternion.Inverse(past.rotation), Vector3.one);
+    Matrix4x4 ImageToNow = Matrix4x4.TRS(Vector3.zero, rotateImageToNow, Vector3.one);
     
     foreach (LeapImageBasedMaterial image in warpedImages) {
       image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageToNow", ImageToNow);
