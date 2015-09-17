@@ -5,8 +5,9 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class CamRecorderInterface : MonoBehaviour {
-  // FIXME: Interface visibility should be at the top level of the recorder hierarchy
   public bool m_interfaceEnabled = false;
+  [System.NonSerialized]
+  public bool m_hideInstructions = false;
   public KeyCode unlockStart = KeyCode.LeftShift;
   public KeyCode changeState = KeyCode.Z;
 
@@ -22,15 +23,37 @@ public class CamRecorderInterface : MonoBehaviour {
 
   private int m_hideLayer = 0;
 
-  public bool InterfaceEnabled {
+  public bool m_enableFrameTimeStamp = true;
+  public Text frameTimeStamp;
+  public HandController handController;
+
+  public bool showFrameTimeStamp {
     get {
-      return m_interfaceEnabled;
+      if (frameTimeStamp != null) {
+        return frameTimeStamp.isActiveAndEnabled;
+      }
+      return false;
     }
     set {
-      instructionText.gameObject.SetActive(value);
+      if (frameTimeStamp != null) {
+        frameTimeStamp.enabled = true;
+        frameTimeStamp.transform.parent.gameObject.SetActive(value);
+      }
+    }
+  }
+
+  public bool InterfaceEnabled {
+    get {
+      return (
+        (instructionText.gameObject.activeInHierarchy || m_hideInstructions) &&
+        statusText.gameObject.activeInHierarchy &&
+        valueText.gameObject.activeInHierarchy
+      );
+    }
+    set {
+      instructionText.gameObject.SetActive(value && !m_hideInstructions);
       statusText.gameObject.SetActive(value);
       valueText.gameObject.SetActive(value);
-      m_interfaceEnabled = value;
     }
   }
 
@@ -49,7 +72,9 @@ public class CamRecorderInterface : MonoBehaviour {
     for (int i = 0; i < hideDuringRecording.Count; ++i) {
       hideDuringRecording[i].layer = m_hideLayer; // Assign all objects to this layer
     }
+    camRecorder.AddLayersToIgnore(m_hideLayer);
     InterfaceEnabled = m_interfaceEnabled;
+    showFrameTimeStamp = m_enableFrameTimeStamp;
   }
 
   void Update() {
@@ -58,20 +83,14 @@ public class CamRecorderInterface : MonoBehaviour {
         Input.GetKeyDown (changeState)) {
         InterfaceEnabled = true;
       } 
-    } else {
-      InterfaceEnabled = m_interfaceEnabled;
     }
 
-    if (
-      (Input.GetKeyDown(changeState) || Input.GetKeyDown(KeyCode.KeypadEnter)) &&
-      InterfaceEnabled
-      ) {
+    if (Input.GetKeyDown(changeState) && InterfaceEnabled) {
       if (camRecorder.IsIdling()) {
         startScreen.transform.localPosition = new Vector3(0.0f, 0.0f, camRecorder.GetComponent<Camera>().nearClipPlane + 0.01f);
         camRecorder.useHighResolution = highResolution;
         camRecorder.directory = Application.persistentDataPath + "/" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         camRecorder.SetCountdown(countdown);
-        camRecorder.AddLayersToIgnore(m_hideLayer);
         camRecorder.StartRecording();
       }
       else if (camRecorder.IsRecording() || camRecorder.IsCountingDown()) {
@@ -109,6 +128,11 @@ public class CamRecorderInterface : MonoBehaviour {
       instructionText.text = "'" + changeState.ToString() + "' to Abort Processing";
       statusText.text = GetStatus();
       valueText.text = "Processing..." + camRecorder.framesActual.ToString() + "/" + camRecorder.framesExpect.ToString();
+    }
+
+    if (showFrameTimeStamp &&
+        handController != null) {
+      frameTimeStamp.text = handController.GetFrame().Id.ToString();
     }
   }
 }

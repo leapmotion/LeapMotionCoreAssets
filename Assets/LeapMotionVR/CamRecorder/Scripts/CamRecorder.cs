@@ -43,7 +43,7 @@ public class CamRecorder : MonoBehaviour
   private RenderTexture m_currentRenderTexture;
   private Texture2D m_cameraTexture2D;
   private Rect m_cameraRect;
-  private int m_layersToIgnore; // Bit-array represented in int32. 1 = Ignore. 0 = Do not ignore
+  private int m_layersToIgnore = 0; // Bit-array represented in int32. 1 = Ignore. 0 = Do not ignore
   private string m_fileExtension;
 
   // Queue and Thread required to optimize camera recorder
@@ -523,7 +523,6 @@ public class CamRecorder : MonoBehaviour
     m_camera.targetTexture = m_cameraRenderTexture;
     directory = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
     SetCountdown(0.0f);
-    ResetLayersToIgnore();
     m_camera.enabled = false;
   }
 
@@ -574,7 +573,7 @@ public class CamRecorder : MonoBehaviour
     m_cameraRenderTexture.Release();
   }
 
-  void Start()
+  void Awake()
   {
     SetupCamera();
     SetupMultithread();

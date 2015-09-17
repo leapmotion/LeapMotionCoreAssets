@@ -38,130 +38,138 @@ float4x4 _InverseView;
 float4x4 _ViewerImageToNow;
 
 float2 LeapGetUndistortedUV(float4 screenPos){
-	float2 uv = (screenPos.xy / screenPos.w) * 2 - float2(1,1);
-	float2 tangent = (uv + _LeapProjection.xy) / _LeapProjection.zw;
-	float2 distortionUV = 0.125 * tangent + float2(0.5, 0.5);
+  float2 uv = (screenPos.xy / screenPos.w) * 2 - float2(1,1);
+  float2 tangent = (uv + _LeapProjection.xy) / _LeapProjection.zw;
+  float2 distortionUV = 0.125 * tangent + float2(0.5, 0.5);
 
-	float4 distortionAmount = tex2D(_LeapDistortion, distortionUV);
-	return float2(DecodeFloatRG(distortionAmount.xy), DecodeFloatRG(distortionAmount.zw)) * 2.3 - float2(0.6, 0.6);
+  float4 distortionAmount = tex2D(_LeapDistortion, distortionUV);
+  return float2(DecodeFloatRG(distortionAmount.xy), DecodeFloatRG(distortionAmount.zw)) * 2.3 - float2(0.6, 0.6);
 }
 
 float LeapRawBrightnessUV(float2 uv){
-	#if LEAP_FORMAT_IR
-		return tex2D(_LeapTexture, uv).a;
-	#else
-		float4 rawColor = tex2D(_LeapTexture, uv);
+  #if LEAP_FORMAT_IR
+    return tex2D(_LeapTexture, uv).a;
+  #else
+    float4 rawColor = tex2D(_LeapTexture, uv);
 
-		float ir;
-		ir = dot(rawColor, float4(G_BLEED, B_BLEED, R_BLEED, IR_BLEED));
-		ir = saturate(ir);
-		ir = pow(ir, 0.5);
-		return ir;
-	#endif
+    float ir;
+    ir = dot(rawColor, float4(G_BLEED, B_BLEED, R_BLEED, IR_BLEED));
+    ir = saturate(ir);
+    ir = pow(ir, 0.5);
+
+    return ir;
+  #endif
 }
 
 float3 LeapRawColorUV(float2 uv){
-	#if LEAP_FORMAT_IR
-		float brightness = LeapRawBrightnessUV(uv);
-		return float3(brightness, brightness, brightness);
-	#else
-		float4 input_lf;
+  #if LEAP_FORMAT_IR
+    float brightness = LeapRawBrightnessUV(uv);
+    return float3(brightness, brightness, brightness);
+  #else
+    float4 input_lf;
 
-		uv.y = clamp(uv.y, 0.01, 0.99);
+    uv.y = clamp(uv.y, 0.01, 0.99);
 
-		input_lf.a = tex2D(_LeapTexture, uv).a;
-		input_lf.r = tex2D(_LeapTexture, uv + R_OFFSET).b;
-		input_lf.g = tex2D(_LeapTexture, uv + G_OFFSET).r;
-		input_lf.b = tex2D(_LeapTexture, uv + B_OFFSET).g;
+    input_lf.a = tex2D(_LeapTexture, uv).a;
+    input_lf.r = tex2D(_LeapTexture, uv + R_OFFSET).b;
+    input_lf.g = tex2D(_LeapTexture, uv + G_OFFSET).r;
+    input_lf.b = tex2D(_LeapTexture, uv + B_OFFSET).g;
 
-		float4 output_lf       = mul(TRANSFORMATION, input_lf);
-		float4 output_lf_fudge = mul(CONSERVATIVE,   input_lf);
+    float4 output_lf       = mul(TRANSFORMATION, input_lf);
+    float4 output_lf_fudge = mul(CONSERVATIVE,   input_lf);
 
-		float3 fudgeMult = input_lf.rgb * FUDGE_CONSTANT - FUDGE_CONSTANT * FUDGE_THRESHOLD;
-		float3 fudge = step(FUDGE_THRESHOLD, input_lf.rgb) * fudgeMult;
+    float3 fudgeMult = input_lf.rgb * FUDGE_CONSTANT - FUDGE_CONSTANT * FUDGE_THRESHOLD;
+    float3 fudge = step(FUDGE_THRESHOLD, input_lf.rgb) * fudgeMult;
 
-		float3 color = (output_lf_fudge.rgb - output_lf.rgb) * fudge * fudge + output_lf.rgb;
+    float3 color = (output_lf_fudge.rgb - output_lf.rgb) * fudge * fudge + output_lf.rgb;
+    color *= RGB_SCALE;
 
-		return saturate(color * RGB_SCALE);
-	#endif
+    return saturate(color);
+  #endif
 }
 
 float4 LeapRawColorBrightnessUV(float2 uv){
-	#if LEAP_FORMAT_IR
-		float brightness = LeapRawBrightnessUV(uv);
-		return float4(brightness, brightness, brightness, brightness);
-	#else
-		float4 input_lf;
+  #if LEAP_FORMAT_IR
+    float brightness = LeapRawBrightnessUV(uv);
+    return float4(brightness, brightness, brightness, brightness);
+  #else
+    float4 input_lf;
 
-		uv.y = clamp(uv.y, 0.01, 0.99);
+    uv.y = clamp(uv.y, 0.01, 0.99);
 
-		input_lf.a = tex2D(_LeapTexture, uv).a;
-		input_lf.r = tex2D(_LeapTexture, uv + R_OFFSET).b;
-		input_lf.g = tex2D(_LeapTexture, uv + G_OFFSET).r;
-		input_lf.b = tex2D(_LeapTexture, uv + B_OFFSET).g;
+    float4 noOffset = tex2D(_LeapTexture, uv);
+    input_lf.a = noOffset.a;
+    input_lf.r = tex2D(_LeapTexture, uv + R_OFFSET).b;
+    input_lf.g = tex2D(_LeapTexture, uv + G_OFFSET).r;
+    input_lf.b = tex2D(_LeapTexture, uv + B_OFFSET).g;
 
-		float4 output_lf       = mul(TRANSFORMATION, input_lf);
-		float4 output_lf_fudge = mul(CONSERVATIVE,   input_lf);
+    float4 output_lf       = mul(TRANSFORMATION, input_lf);
+    float4 output_lf_fudge = mul(CONSERVATIVE,   input_lf);
 
-		float3 fudgeMult = input_lf.rgb * FUDGE_CONSTANT - FUDGE_CONSTANT * FUDGE_THRESHOLD;
-		float3 fudge = step(FUDGE_THRESHOLD, input_lf.rgb) * fudgeMult;
+    float3 fudgeMult = input_lf.rgb * FUDGE_CONSTANT - FUDGE_CONSTANT * FUDGE_THRESHOLD;
+    float3 fudge = step(FUDGE_THRESHOLD, input_lf.rgb) * fudgeMult;
 
-		float3 color = (output_lf_fudge.rgb - output_lf.rgb) * fudge * fudge + output_lf.rgb;
+    float3 color = (output_lf_fudge.rgb - output_lf.rgb) * fudge * fudge + output_lf.rgb;
+    color *= RGB_SCALE;
 
-		return saturate(float4(color * RGB_SCALE, pow(dot(input_lf, float4(R_BLEED, G_BLEED, B_BLEED, IR_BLEED)), 0.5)));
-	#endif
+    float ir = dot(noOffset, float4(G_BLEED, B_BLEED, R_BLEED, IR_BLEED));
+    ir = saturate(ir);
+    ir = pow(ir, 0.5);
+
+    return float4(color, ir);
+  #endif
 }
 
 float4 WarpScreenPosition(float4 sp) {
-      // Map pixels to clipping coordinates
-      float2 window = float2(1.0, 1.0) - sp.xy*2.0/sp.w;
-      //range (-1,1), x is horizontal, y is vertical, origin is center
+  // Map pixels to clipping coordinates
+  float2 window = float2(1.0, 1.0) - sp.xy*2.0/sp.w;
+  //range (-1,1), x is horizontal, y is vertical, origin is center
       
-      // Map window coordinates to world coordinates
-      float4 viewDir = float4(tan(radians(_VirtualCameraH) / 2.0)*window.x, tan(radians(_VirtualCameraV) / 2.0)*window.y, 1.0, 0.0);
-      float4 worldDir = mul(_InverseView, viewDir);
+  // Map window coordinates to world coordinates
+  float4 viewDir = float4(tan(radians(_VirtualCameraH) / 2.0)*window.x, tan(radians(_VirtualCameraV) / 2.0)*window.y, 1.0, 0.0);
+  float4 worldDir = mul(_InverseView, viewDir);
       
-      // Apply time warping
-      worldDir = mul(_ViewerImageToNow, worldDir);
+  // Apply time warping
+  worldDir = mul(_ViewerImageToNow, worldDir);
       
-      // Return to pixel coordinates
-      return ComputeScreenPos(mul(UNITY_MATRIX_VP, worldDir));
+  // Return to pixel coordinates
+  return ComputeScreenPos(mul(UNITY_MATRIX_VP, worldDir));
 }
 
 float LeapRawBrightness(float4 screenPos){
-	return LeapRawBrightnessUV(LeapGetUndistortedUV(screenPos));
+  return LeapRawBrightnessUV(LeapGetUndistortedUV(screenPos));
 }
 
 float3 LeapRawColor(float4 screenPos){
-	return LeapRawColorUV(LeapGetUndistortedUV(screenPos));
+  return LeapRawColorUV(LeapGetUndistortedUV(screenPos));
 }
 
 float4 LeapRawColorBrightness(float4 screenPos){
-	return LeapRawColorBrightnessUV(LeapGetUndistortedUV(screenPos));
+  return LeapRawColorBrightnessUV(LeapGetUndistortedUV(screenPos));
 }
 
 float LeapBrightnessUV(float2 uv){
-	return pow(LeapRawBrightnessUV(uv), _LeapGammaCorrectionExponent);
+  return pow(LeapRawBrightnessUV(uv), _LeapGammaCorrectionExponent);
 }
 
 float3 LeapColorUV(float2 uv){
-	return pow(LeapRawColorUV(uv), _LeapGammaCorrectionExponent);
+  return pow(LeapRawColorUV(uv), _LeapGammaCorrectionExponent);
 }
 
 float4 LeapColorBrightnessUV(float2 uv){
-	return pow(LeapRawColorBrightnessUV(uv), _LeapGammaCorrectionExponent);
+  return pow(LeapRawColorBrightnessUV(uv), _LeapGammaCorrectionExponent);
 }
 
 float LeapBrightness(float4 screenPos){
-	return pow(LeapRawBrightness(screenPos), _LeapGammaCorrectionExponent);
+  return pow(LeapRawBrightness(screenPos), _LeapGammaCorrectionExponent);
 }
 
 float3 LeapColor(float4 screenPos){
-	return pow(LeapRawColor(screenPos), _LeapGammaCorrectionExponent);
+  return pow(LeapRawColor(screenPos), _LeapGammaCorrectionExponent);
 }
 
 float4 LeapColorBrightness(float4 screenPos){
-	return pow(LeapRawColorBrightness(screenPos), _LeapGammaCorrectionExponent);
+  return pow(LeapRawColorBrightness(screenPos), _LeapGammaCorrectionExponent);
 }
 
 float3 LeapRawColorWarp(float4 screenPos){
@@ -173,9 +181,9 @@ float4 LeapRawColorBrightnessWarp(float4 screenPos){
 }
 
 float3 LeapColorWarp(float4 screenPos){
-	return pow(LeapRawColorBrightnessWarp(screenPos), _LeapGammaCorrectionExponent);
+  return pow(LeapRawColorBrightnessWarp(screenPos), _LeapGammaCorrectionExponent);
 }
 
 float4 LeapColorBrightnessWarp(float4 screenPos){
-	return pow(LeapRawColorBrightnessWarp(screenPos), _LeapGammaCorrectionExponent);
+  return pow(LeapRawColorBrightnessWarp(screenPos), _LeapGammaCorrectionExponent);
 }
