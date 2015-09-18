@@ -88,8 +88,7 @@ public class HMRConfigurationManagerEditor : Editor {
     HMRConfigurationManager configManager = (HMRConfigurationManager)target;
     configManager.validateConfigurationsLabeled();
     EditorGUI.BeginChangeCheck();
-    serializedObject.FindProperty("_configuration").enumValueIndex = 
-      (int)(HMRConfigurationManager.HMRConfiguration)EditorGUILayout.EnumPopup("Selected Configuration", (HMRConfigurationManager.HMRConfiguration)serializedObject.FindProperty("_configuration").enumValueIndex);
+    EditorGUILayout.PropertyField(serializedObject.FindProperty("_configuration"), new GUIContent("Selected Configuration"));
     serializedObject.ApplyModifiedProperties();
     if (EditorGUI.EndChangeCheck()) {
       applySelectedConfiguration();
@@ -104,8 +103,14 @@ public class HMRConfigurationManagerEditor : Editor {
 
     if (selectedConfiguration == HMRConfigurationManager.HMRConfiguration.VR_WORLD_VR_HANDS) {
       EditorGUILayout.LabelField("Hands to use for VR Hands (References Hand Controller)", EditorStyles.boldLabel);
+      EditorGUI.BeginChangeCheck();
       configManager._handController.leftGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Left Hand Graphics Model", configManager._handController.leftGraphicsModel, typeof(HandModel), false);
-      configManager._handController.rightGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Right Hand Graphics Model", configManager._handController.leftGraphicsModel, typeof(HandModel), false);
+      configManager._handController.rightGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Right Hand Graphics Model", configManager._handController.rightGraphicsModel, typeof(HandModel), false);
+      if (EditorGUI.EndChangeCheck()) {
+        EditorUtility.SetDirty(configManager._handController.leftGraphicsModel);
+        EditorUtility.SetDirty(configManager._handController.rightGraphicsModel);
+      }
+      
     }
   }
 
