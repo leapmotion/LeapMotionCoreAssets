@@ -15,7 +15,6 @@ public class SystemWipeArgs : EventArgs {
 }
 
 public class SystemWipeRecognizerListener : MonoBehaviour {
-  
   public event EventHandler<SystemWipeArgs> SystemWipeUpdate;
   
   public static SystemWipeRecognizerListener Instance;
@@ -41,6 +40,7 @@ public class SystemWipeRecognizerListener : MonoBehaviour {
   void Update() {
     // This code is not used in synchronous querying
     //
+    /*
     lock(wipeInfoLock) {
       if( m_wipeInfoDirty) {
         EventHandler<SystemWipeArgs> handler = SystemWipeUpdate;
@@ -50,7 +50,7 @@ public class SystemWipeRecognizerListener : MonoBehaviour {
         }
         m_wipeInfoDirty = false;
       }
-    }
+    }*/
     
     // Synchronous access:
     //
@@ -71,10 +71,12 @@ public class SystemWipeRecognizerListener : MonoBehaviour {
       
       // Execute handler for one lastest info.
       EventHandler<SystemWipeArgs> handler = SystemWipeUpdate;
-      if (handler != null) { handler(this, new SystemWipeArgs(m_latestWipeInfo)); }
+      if (handler != null) {
+        handler(this, new SystemWipeArgs(m_latestWipeInfo)); 
+      }
     }
   }
-  
+  /*
   void SystemWipeInfoCallback(Leap.Util.SystemWipeInfo info)
   {
     //Debug.Log("Swipe " + info.Status + " " + info.Direction + " " + info.Progress);
@@ -82,7 +84,7 @@ public class SystemWipeRecognizerListener : MonoBehaviour {
       m_wipeInfoDirty = true;
       m_latestWipeInfo = info;
     }
-  }
+  }*/
   
   // Called before the body's first Update() and, if you Disable the body it's called again before the first following Update().
   void OnEnable()
