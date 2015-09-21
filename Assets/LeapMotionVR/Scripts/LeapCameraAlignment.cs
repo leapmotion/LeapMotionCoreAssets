@@ -341,6 +341,9 @@ public class LeapCameraAlignment : MonoBehaviour {
 	// IMPORTANT: This method MUST be called after OVRManager.LateUpdate.
   // FIXME Use EnableUpdateOrdering script to ensure correct call order -> Declare relative script ordering
   void OnCameraFinalTransform(Transform centerTransform) {
+    centerCamera.position = centerTransform.position;
+    centerCamera.rotation = centerTransform.rotation;
+
     if (!(IsFinite (leftCamera.position) && IsFinite (leftCamera.rotation) &&
           IsFinite (centerCamera.position) && IsFinite (centerCamera.rotation) &&
           IsFinite (rightCamera.position) && IsFinite (rightCamera.rotation))) {
