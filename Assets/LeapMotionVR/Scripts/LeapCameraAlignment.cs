@@ -217,6 +217,7 @@ public class LeapCameraAlignment : MonoBehaviour {
       delay = latencySmoothing
     };
 
+    LeapCameraCorrection.OnCameraFinalTransform += OnCameraFinalTransform;
   }
 
   void Start () {

@@ -24,10 +24,13 @@ public class TouchCubeQueues : MonoBehaviour {
 
   private int demoStage = 0;
 
+  /*
   void Start () {
     ResetState ();
   }
-	
+	*/
+
+  /*
 	// Update is called once per frame
 	void Update () {
 	  if (!Input.GetKeyDown (queueKey)) {
@@ -69,7 +72,9 @@ public class TouchCubeQueues : MonoBehaviour {
       break;
     }
 	}
+  */
 
+  /*
   public void ResetState() {
     helpMenuCanvas.SetActive(true);
     noAlignmentCanvas.SetActive (false);
@@ -81,4 +86,5 @@ public class TouchCubeQueues : MonoBehaviour {
     alignment.tweenPosition = 1f;
     alignment.tweenForward = 1f;
   }
+   * */
 }
