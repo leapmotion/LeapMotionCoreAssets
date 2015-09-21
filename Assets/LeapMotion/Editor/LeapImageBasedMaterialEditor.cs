@@ -6,7 +6,9 @@ using System.Collections.Generic;
 [CustomEditor(typeof(LeapImageBasedMaterial))]
 public class LeapImageBasedMaterialEditor : Editor {
 
-  private List<string> BasicModePropertyNames = new List<string>() { };
+  private List<string> BasicModePropertyNames = new List<string>() { 
+    "m_Script",
+  };
 
   public override void OnInspectorGUI() {
     SerializedProperty properties = serializedObject.GetIterator();

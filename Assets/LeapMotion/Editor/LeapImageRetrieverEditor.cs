@@ -7,6 +7,7 @@ using System.Collections.Generic;
 public class LeapImageRetrieverEditor : Editor {
 
     private List<string> BasicModePropertyNames = new List<string>() {
+      "m_Script",
       "handController",
     };
 
