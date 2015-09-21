@@ -3,13 +3,11 @@ using System.Collections;
 
 public class WooCube : MonoBehaviour {
 
-  public Transform wooCube;
-
-  void OnPreRender() {
-    wooCube.transform.position = new Vector3(0.0f, 0.0f, 0.3f);
+  void Update() {
+    transform.position = new Vector3(0, 10, 0);
   }
 
-  void OnPostRender() {
-    wooCube.transform.position = new Vector3(0.0f, 10.0f, 0.0f);
+  void OnWillRenderObject() {
+    transform.position = new Vector3(0.0f, 0.0f, 0.3f);
   }
 }

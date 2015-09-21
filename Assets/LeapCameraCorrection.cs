@@ -31,6 +31,7 @@ public class LeapCameraCorrection : MonoBehaviour {
   private bool _hasLaunchedFinalTransformEvent = false;
   private Matrix4x4 _finalCenterMatrix;
   private LeapDeviceInfo _deviceInfo;
+  private int _preRenderIndex = 0;
 
 #if UNITY_EDITOR
   void Reset() {
@@ -63,6 +64,8 @@ public class LeapCameraCorrection : MonoBehaviour {
     }
 
     _hasLaunchedFinalTransformEvent = false;
+
+    _preRenderIndex = 0;
   }
 
   void OnPreCull() {
@@ -88,11 +91,25 @@ public class LeapCameraCorrection : MonoBehaviour {
     }
 #endif
 
+    bool isLeft;
+    if (_eye == LeapImageRetriever.EYE.LEFT) {
+      isLeft = true;
+    } else if (_eye == LeapImageRetriever.EYE.RIGHT) {
+      isLeft = false;
+    } else if (_eye == LeapImageRetriever.EYE.LEFT_TO_RIGHT) {
+      isLeft = _preRenderIndex == 0;
+    } else if (_eye == LeapImageRetriever.EYE.RIGHT_TO_LEFT) {
+      isLeft = _preRenderIndex == 1;
+    } else {
+      throw new Exception("Unexpected EYE " + _eye);
+    }
+    _preRenderIndex++;
+
     Matrix4x4 offsetMatrix;
     
     if(_overrideIPD){
       offsetMatrix = _finalCenterMatrix;
-      Vector3 ipdOffset = (_eye == LeapImageRetriever.EYE.RIGHT ? -1 : 1) * transform.right * _deviceInfo.baseline * 0.5f;
+      Vector3 ipdOffset = (isLeft ? 1 : -1) * transform.right * _deviceInfo.baseline * 0.5f;
       offsetMatrix *= Matrix4x4.TRS(ipdOffset, Quaternion.identity, Vector3.one);
     } else{
       offsetMatrix = _camera.worldToCameraMatrix;
