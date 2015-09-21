@@ -18,56 +18,43 @@ public class LeapCameraAlignment : MonoBehaviour {
 
   [Header("Alignment Targets (Advanced Mode)")]
   [SerializeField]
-  [AdvancedModeOnly]
   protected Transform leftCamera;
   [SerializeField]
-  [AdvancedModeOnly]
   protected Transform rightCamera;
   [SerializeField]
-  [AdvancedModeOnly]
   protected Transform centerCamera;
   [System.NonSerialized]
   public List<LeapImageBasedMaterial> warpedImages;
 
   [Header("Counter-Aligned Targets (Advanced Mode)")]
-  [AdvancedModeOnly]
   public Transform[] counterAligned;
 
   [Header("Alignment Settings (Advanced Mode)")]
   [Range(0,2)]
-  [AdvancedModeOnly]
   public float tweenRewind = 0f;
 
   [Range(0,2)]
-  [AdvancedModeOnly]
   public float tweenTimeWarp = 0f;
   
   [Range(0,2)]
-  [AdvancedModeOnly]
   public float tweenPosition = 1f;
   
   [Range(0,2)]
-  [AdvancedModeOnly]
   public float tweenForward = 1f;
   
   // Manual Time Alignment
   [SerializeField]
-  [AdvancedModeOnly]
   private bool _allowManualTimeAlignment;
   [SerializeField]
-  [AdvancedModeOnly]
   protected KeyCode unlockHold = KeyCode.RightShift;
   [SerializeField]
-  [AdvancedModeOnly]
   protected KeyCode moreRewind = KeyCode.LeftArrow;
   [SerializeField]
-  [AdvancedModeOnly]
   protected KeyCode lessRewind = KeyCode.RightArrow;
   [System.NonSerialized]
   public float rewindAdjust = 0f; //Frame fraction
 
   // Automatic Time Alignment
-  [AdvancedModeOnly]
   public float latencySmoothing = 1f; //State delay in seconds
   [System.NonSerialized]
   public SmoothedFloat frameLatency;
@@ -75,9 +62,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   public SmoothedFloat imageLatency;
 
   // HACK: Non-peripheral devices sometimes self-identify as peripherals
-  [AdvancedModeOnly]
   public bool overrideDeviceType = false;
-  [AdvancedModeOnly]
   public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Invalid;
 
   protected enum VRCameras {
