@@ -16,6 +16,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   [SerializeField]
   protected KeyCode recenter = KeyCode.R;
 
+
   [Header("Alignment Targets (Advanced Mode)")]
   [SerializeField]
   [AdvancedModeOnly]
@@ -34,21 +35,10 @@ public class LeapCameraAlignment : MonoBehaviour {
   public Transform[] counterAligned;
 
   [Header("Alignment Settings (Advanced Mode)")]
-  [Range(0,2)]
-  [AdvancedModeOnly]
-  public float tweenRewind = 0f;
 
-  [Range(0,2)]
+  [Range(0,1)]
   [AdvancedModeOnly]
   public float tweenTimeWarp = 0f;
-  
-  [Range(0,2)]
-  [AdvancedModeOnly]
-  public float tweenPosition = 1f;
-  
-  [Range(0,2)]
-  [AdvancedModeOnly]
-  public float tweenForward = 1f;
   
   // Manual Time Alignment
   [SerializeField]
@@ -65,6 +55,14 @@ public class LeapCameraAlignment : MonoBehaviour {
   protected KeyCode lessRewind = KeyCode.RightArrow;
   [System.NonSerialized]
   public float rewindAdjust = 0f; //Frame fraction
+
+  [System.Serializable]
+  public class AdvancedOptions {
+    public int advancedOptionSecretInt = 100;
+  }
+
+  [SerializeField]
+  private AdvancedOptions advancedOptions;
 
   // Automatic Time Alignment
   [AdvancedModeOnly]
@@ -126,6 +124,8 @@ public class LeapCameraAlignment : MonoBehaviour {
         return imageRetriever.ImageNow();
       }
 
+
+
       else if (handController != null) {
         ImageList images = handController.GetFrame().Images;
         if (images.Count > 0) {
@@ -153,6 +153,10 @@ public class LeapCameraAlignment : MonoBehaviour {
         rotation = Quaternion.identity
       };
     }
+
+
+
+
     if (history [0].leapTime >= time) {
       // Expect this when using LOW LATENCY image retrieval, which can yield negative latency estimates due to incorrect clock synchronization
       //if (history [0].leapTime > time) Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
@@ -335,7 +339,7 @@ public class LeapCameraAlignment : MonoBehaviour {
 	
 	// IMPORTANT: This method MUST be called after OVRManager.LateUpdate.
   // FIXME Use EnableUpdateOrdering script to ensure correct call order -> Declare relative script ordering
-  void LateUpdate() {
+  void OnCameraFinalTransform(Transform centerTransform) {
     if (!(IsFinite (leftCamera.position) && IsFinite (leftCamera.rotation) &&
           IsFinite (centerCamera.position) && IsFinite (centerCamera.rotation) &&
           IsFinite (rightCamera.position) && IsFinite (rightCamera.rotation))) {
@@ -345,15 +349,14 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
 
     // IMPORTANT: UpdateHistory must happen first, before any transforms are modified.
-    UpdateHistory ();
+    UpdateHistory (centerTransform);
 
     // IMPORTANT: UpdateAlignment must precede UpdateTimeWarp,
     // since UpdateTimeWarp applies warping relative current positions
-    UpdateAlignment ();
     UpdateTimeWarp ();
   }
   
-  void UpdateHistory () {
+  void UpdateHistory (Transform centerTransform) {
     if (eyeAlignment.use) {
       // Revert the tracking space transform
       transform.localPosition = Vector3.zero;
@@ -368,30 +371,13 @@ public class LeapCameraAlignment : MonoBehaviour {
     } else {
       lastFrame = 0;
     }
+
     long timeFrame = handController.GetLeapController().Now();
-    switch (hasCameras) {
-    case VRCameras.CENTER:
-      history.Add (new TransformData () {
+    history.Add (new TransformData () {
         leapTime = timeFrame,
-        position = centerCamera.position,
-        rotation = centerCamera.rotation
-      });
-      break;
-    case VRCameras.LEFT_RIGHT:
-      history.Add (new TransformData () {
-        leapTime = timeFrame,
-        position = Vector3.Lerp (leftCamera.position, rightCamera.position, 0.5f), 
-        rotation = Quaternion.Slerp (leftCamera.rotation, rightCamera.rotation, 0.5f)
-      });
-      break;
-    default: //case VRCameras.NONE:
-      history.Add (new TransformData () {
-        leapTime = timeFrame,
-        position = Vector3.zero,
-        rotation = Quaternion.identity
-      });
-      break;
-    }
+        position = centerTransform.position,
+        rotation = centerTransform.rotation
+    });
 
     // Update smoothed averages of latency and frame rate
     long deltaFrame = timeFrame - lastFrame;
@@ -446,6 +432,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
   }
   
+  /*
   void UpdateAlignment () {
     long latestTime = history [history.Count - 1].leapTime;
     long rewindTime = _latestImageTimestamp - (long)frameLatency.value - (long)(rewindAdjust * frameLatency.value);
@@ -517,12 +504,15 @@ public class LeapCameraAlignment : MonoBehaviour {
       }
     }
   }
-  
+  */
+
   void UpdateTimeWarp () {
     long latestTime = history [history.Count - 1].leapTime;
     long rewindTime = _latestImageTimestamp - (long)(rewindAdjust * frameLatency.value);
     long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(latestTime - rewindTime));
     TransformData past = TransformAtTime(rewindTime + tweenAddition);
+    //
+    //TransformData past = TransformAtTime((long)Mathf.Lerp((float)latestTime, (float)rewindTime, tweenTimeWarp));
 
     // Apply only a rotation ~ assume all objects are infinitely distant
     Quaternion rotateImageToNow = centerCamera.rotation * Quaternion.Inverse(past.rotation);

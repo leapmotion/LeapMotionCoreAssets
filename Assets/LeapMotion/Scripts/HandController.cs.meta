@@ -1,8 +1,19 @@
 fileFormatVersion: 2
 guid: 2c4e0350c46ae405b8db39262c18b8f5
+timeCreated: 1442863172
+licenseType: Pro
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - leftGraphicsModel: {instanceID: 0}
+  - leftPhysicsModel: {instanceID: 0}
+  - rightGraphicsModel: {fileID: 11400004, guid: 704f5d64b4ac849cbb1d88b6a50f0975,
+      type: 2}
+  - rightPhysicsModel: {instanceID: 0}
+  - toolModel: {instanceID: 0}
+  - recordingAsset: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
+  assetBundleName: 
+  assetBundleVariant: 
