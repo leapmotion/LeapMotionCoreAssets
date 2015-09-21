@@ -20,5 +20,7 @@ public class LeapImageBasedMaterialEditor : Editor {
         EditorGUILayout.PropertyField(properties, true);
       }
     }
+
+    serializedObject.ApplyModifiedProperties();
   }
 }

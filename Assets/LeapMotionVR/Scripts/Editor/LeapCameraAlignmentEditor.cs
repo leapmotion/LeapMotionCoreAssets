@@ -21,6 +21,7 @@ public class LeapCameraAlignmentEditor : Editor {
         EditorGUILayout.PropertyField(properties, true);
       }
     }
+    serializedObject.ApplyModifiedProperties();
   }
 }
 
