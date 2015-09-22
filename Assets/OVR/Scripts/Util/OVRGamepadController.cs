@@ -38,6 +38,8 @@ public class OVRGamepadController : MonoBehaviour
 	   	RightYAxis,
 	   	LeftTrigger,
 	   	RightTrigger,
+        DPad_X_Axis,
+        DPad_Y_Axis,
 		Max,
 	};
 
@@ -63,9 +65,9 @@ public class OVRGamepadController : MonoBehaviour
 	};
 
 	/// <summary>
-	/// The default Unity input name for each gamepad Axis.
+	/// The default Android Unity input name for each gamepad Axis.
 	/// </summary>
-	public static string[] DefaultAxisNames = new string[(int)Axis.Max]
+	public static string[] AndroidAxisNames = new string[(int)Axis.Max]
 	{
 		"Left_X_Axis",
 		"Left_Y_Axis",
@@ -73,12 +75,14 @@ public class OVRGamepadController : MonoBehaviour
 		"Right_Y_Axis",
 		"LeftTrigger",
 		"RightTrigger",
+        "DPad_X_Axis",
+        "DPad_Y_Axis",
 	};
 
 	/// <summary>
-	/// The default Unity input name for each gamepad Button.
+	/// The default Android Unity input name for each gamepad Button.
 	/// </summary>
-    public static string[] DefaultButtonNames = new string[(int)Button.Max]
+    public static string[] AndroidButtonNames = new string[(int)Button.Max]
 	{
 		"Button A",
 		"Button B",
@@ -96,10 +100,48 @@ public class OVRGamepadController : MonoBehaviour
 		"RightShoulder",
 	};
 
+	/// <summary>
+	/// The default Unity input name for each gamepad Axis.
+	/// </summary>
+	public static string[] DesktopAxisNames = new string[(int)Axis.Max]
+	{
+		"Desktop_Left_X_Axis",
+		"Desktop_Left_Y_Axis",
+		"Desktop_Right_X_Axis",
+		"Desktop_Right_Y_Axis",
+		"Desktop_LeftTrigger",
+		"Desktop_RightTrigger",
+        "Desktop_DPad_X_Axis",
+        "Desktop_DPad_Y_Axis",
+	};
+	
+	/// <summary>
+	/// The default Unity input name for each gamepad Button.
+	/// </summary>
+	public static string[] DesktopButtonNames = new string[(int)Button.Max]
+	{
+		"Desktop_Button A",
+		"Desktop_Button B",
+		"Desktop_Button X",
+		"Desktop_Button Y",
+		"Desktop_Up",
+		"Desktop_Down",
+		"Desktop_Left",
+		"Desktop_Right",
+		"Desktop_Start",
+		"Desktop_Back",
+		"Desktop_LStick",
+		"Desktop_RStick",
+		"Desktop_LeftShoulder",
+		"Desktop_RightShoulder",
+	};
+
 	public static int[] DefaultButtonIds = new int[(int)Button.Max]
 	{
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
 	};
+
+    private static bool[] ButtonDownLastFrame = new bool[(int)Button.Max]; 
 
 	/// <summary>
 	/// The current Unity input names for all gamepad axes.
@@ -111,10 +153,20 @@ public class OVRGamepadController : MonoBehaviour
 	/// </summary>
     public static string[] ButtonNames = null;
 
+#if !UNITY_ANDROID || UNITY_EDITOR
+    private static int lastGPCRefresh = 0;
+    private static bool isMapped = true;
+#endif
+
     static OVRGamepadController()
     {
-        SetAxisNames(DefaultAxisNames);
-        SetButtonNames(DefaultButtonNames);
+#if UNITY_ANDROID && !UNITY_EDITOR
+        SetAxisNames(AndroidAxisNames);
+        SetButtonNames(AndroidButtonNames);
+#else
+		SetAxisNames(DesktopAxisNames);
+		SetButtonNames(DesktopButtonNames);
+#endif
     }
 
 	/// <summary>
@@ -180,11 +232,21 @@ public class OVRGamepadController : MonoBehaviour
 	/// <returns><c>true</c>, if c_ update was GPed, <c>false</c> otherwise.</returns>
 	public static bool GPC_Update()
     {
+        lastGPCRefresh = Time.frameCount;
         if (!OVRManager.instance.isSupportedPlatform)
             return false;
 		return OVR_GamepadController_Update();
 	}
 #endif
+	static void GPC_LateUpdate()
+    {
+        if (!OVRManager.instance.isSupportedPlatform)
+            return;
+        for (int i = 0; i < (int)Button.Max; i++)
+        {
+            ButtonDownLastFrame[i] = GPC_GetButton((Button)i);
+        }
+	}
 
 	/// <summary>
 	/// GPC_GetAxis
@@ -197,7 +259,16 @@ public class OVRGamepadController : MonoBehaviour
 #if UNITY_ANDROID && !UNITY_EDITOR
 		return Input.GetAxis(AxisNames[(int)axis]);
 #else
-		return OVR_GamepadController_GetAxis((int)axis);
+        float xinputValue = OVR_GamepadController_GetAxis((int)axis);
+
+        float unityValue = 0f;
+        if (isMapped)
+        {
+            try { unityValue = Input.GetAxis(AxisNames[(int)axis]); }
+            catch { isMapped = false; }
+        }
+
+        return Mathf.Abs(xinputValue) > Mathf.Abs(unityValue) ? xinputValue : unityValue;
 #endif
 	}
 	
@@ -224,7 +295,19 @@ public class OVRGamepadController : MonoBehaviour
 #if UNITY_ANDROID && !UNITY_EDITOR
 		return Input.GetButton(ButtonNames[(int)button]);
 #else
-		return OVR_GamepadController_GetButton((int)button);
+        if (Time.frameCount != lastGPCRefresh)
+        {
+            GPC_Update();
+        }
+
+        bool unityValue = false;
+        if (isMapped)
+        {
+            try { unityValue = Input.GetButton(ButtonNames[(int)button]); }
+            catch { isMapped = false; }
+        }
+
+		return OVR_GamepadController_GetButton((int)button) || unityValue;
 #endif
 	}
 
@@ -237,6 +320,24 @@ public class OVRGamepadController : MonoBehaviour
 			return false;
 		return ReadButton(button);
 	}
+    /// <summary>
+	/// Returns true if the given Button was pressed this frame.
+	/// </summary>
+    public static bool GPC_GetButtonDown(Button button)
+    {
+        if (ReadButton == null)
+            return false;
+        return ReadButton(button) && !ButtonDownLastFrame[(int)button];
+    }
+    /// <summary>
+	/// Returns true if the given Button was released this frame.
+	/// </summary>
+    public static bool GPC_GetButtonUp(Button button)
+    {
+        if (ReadButton == null)
+            return false;
+        return !ReadButton(button) && ButtonDownLastFrame[(int)button];
+    }
 
 	public static void SetReadButtonDelegate(ReadButtonDelegate del)
 	{
@@ -282,7 +383,10 @@ public class OVRGamepadController : MonoBehaviour
 
     void Update()
     {
-		GPC_Available = GPC_Update();
+        if (lastGPCRefresh < Time.frameCount)
+        {
+            GPC_Available = GPC_Update();
+        }
     }
 
 	void OnDestroy()
@@ -291,17 +395,21 @@ public class OVRGamepadController : MonoBehaviour
 		GPC_Available = false;
 	}
 
-	public const string LibOVR = "OculusPlugin";
+	public const string DllName = "OVRGamepad";
 	
-	[DllImport(LibOVR, CallingConvention = CallingConvention.Cdecl)]
+	[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 	public static extern bool OVR_GamepadController_Initialize();
-	[DllImport(LibOVR, CallingConvention = CallingConvention.Cdecl)]
+	[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 	public static extern bool OVR_GamepadController_Destroy();
-	[DllImport(LibOVR, CallingConvention = CallingConvention.Cdecl)]
+	[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 	public static extern bool OVR_GamepadController_Update();
-	[DllImport(LibOVR, CallingConvention = CallingConvention.Cdecl)]
+	[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 	public static extern float OVR_GamepadController_GetAxis(int axis);
-	[DllImport(LibOVR, CallingConvention = CallingConvention.Cdecl)]
+	[DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
 	public static extern bool OVR_GamepadController_GetButton(int button);
 #endif
+    void LateUpdate()
+    {
+        GPC_LateUpdate();
+    }
 }

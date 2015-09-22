@@ -50,7 +50,9 @@ public class BugReporter : MonoBehaviour {
       progressBar.gameObject.SetActive(value);
       progressText.gameObject.SetActive(value);
       instructionText.gameObject.SetActive(value);
-      savedpathsText.gameObject.SetActive (value);
+      if (savedpathsText != null) {
+        savedpathsText.gameObject.SetActive(value);
+      }
     }
   }
 
@@ -127,7 +129,7 @@ public class BugReporter : MonoBehaviour {
     InterfaceEnabled = m_interfaceEnabled;
     progressStatus.fillAmount = 1.0f;
     SetProgressText("READY", Color.green);
-    SetInstructionText("PRESS '" + changeState + "' TO START RECORDING", instructionColor);
+    SetInstructionText("PRESS '" + unlockStart + "' + '" + changeState + "' TO START RECORDING", instructionColor);
     SetSavedPathsText ("");
     bug_report_state_ = BugReportState.READY;
   }
