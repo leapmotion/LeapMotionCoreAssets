@@ -103,6 +103,7 @@ public class LeapImageRetriever : MonoBehaviour {
     material.SetTexture("_LeapTexture", eyeTextureData.mainTexture);
 
     Vector4 projection = new Vector4();
+
     projection.x = _cachedCamera.projectionMatrix[0, 2];
     projection.y = 0f;
     projection.z = _cachedCamera.projectionMatrix[0, 0];
@@ -265,10 +266,16 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
+  void OnPreCull() {
+    Debug.Log(_cachedCamera.projectionMatrix);
+  }
+
   void OnPreRender() {
     if (syncMode == SYNC_MODE.LOW_LATENCY) {
       _imageList = _controller.Images;
     }
+
+    Debug.Log(_cachedCamera.projectionMatrix);
 
     int imageEye = frameEye;
     switch (retrievedEye) {

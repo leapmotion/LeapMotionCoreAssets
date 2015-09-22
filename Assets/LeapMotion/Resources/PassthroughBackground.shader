@@ -5,6 +5,9 @@
     _vView ("Vertical View Degrees", Float) = 60.0
     _useTimeWarp ("Use Time Warp", Int) = 0
     //_dbgTest("Original, Reprojected, R-O, O-R, Black", Int) = 0
+
+    _LeapTexture ("LEap Texture", 2D) = "" {}
+    _LeapDistortion ("Leap Distortion", 2D) = "" {}
   }
 
   SubShader {
@@ -41,7 +44,7 @@
     }
 
     float4 frag (frag_in i) : COLOR {
-      return float4(pow(LeapColorWarp(i.screenPos), 1/_ColorSpaceGamma), 1);
+      return float4(pow(LeapColor(i.screenPos), 1/_ColorSpaceGamma), 1);
     }
 
     ENDCG
