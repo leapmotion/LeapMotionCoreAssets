@@ -124,6 +124,7 @@ public class HMRConfigurationManagerEditor : Editor {
     setLeftAndRightCamerasEnabled(configuration.enableLeftAndRightCameras);
     setLeftAndRightImageRetrieversEnabled(configuration.enableLeftAndRightImageRetrievers);
     setCenterCameraEnabled(configuration.enableCenterCamera);
+    setCameraClearFlags((CameraClearFlags)configuration.cameraClearFlags);
     setTimewarp(configuration.tweenTimewarp);
     setPosition(configuration.tweenPosition);
     setForward(configuration.tweenForward);
@@ -182,6 +183,21 @@ public class HMRConfigurationManagerEditor : Editor {
     EditorUtility.SetDirty(center);
   }
 
+  private void setCameraClearFlags(CameraClearFlags cameraClearFlags) {
+    Camera left = getCameraObjectForEye(UnityEngine.VR.VRNode.LeftEye);
+    Camera center = getCameraObjectForEye(UnityEngine.VR.VRNode.CenterEye);
+    Camera right = getCameraObjectForEye(UnityEngine.VR.VRNode.RightEye);
+
+    left.clearFlags = cameraClearFlags;
+    center.clearFlags = cameraClearFlags;
+    right.clearFlags = cameraClearFlags;
+
+    EditorUtility.SetDirty(left);
+    EditorUtility.SetDirty(center);
+    EditorUtility.SetDirty(right);
+
+  }
+
   private void setTimewarp(float value) {
     _aligner.tweenTimeWarp = value;
     EditorUtility.SetDirty(_aligner);
@@ -205,16 +221,20 @@ public class HMRConfigurationManagerEditor : Editor {
     bool enableLeftAndRightCameras = headMountedRigProperty.FindPropertyRelative("_enableLeftAndRightCameras").boolValue;
     bool enableLeftAndRightImageRetrievers = headMountedRigProperty.FindPropertyRelative("_enableLeftAndRightImageRetrievers").boolValue;
     bool enableCenterCamera = headMountedRigProperty.FindPropertyRelative("_enableCenterCamera").boolValue;
+    CameraClearFlags clearFlags = (CameraClearFlags)headMountedRigProperty.FindPropertyRelative("_cameraClearFlags").intValue;
     float tweenTimewarp = headMountedRigProperty.FindPropertyRelative("_tweenTimewarp").floatValue;
     float tweenPosition = headMountedRigProperty.FindPropertyRelative("_tweenPosition").floatValue;
     float tweenForward = headMountedRigProperty.FindPropertyRelative("_tweenForward").floatValue;
+
+
+    Debug.Log("deserilized clear flag: " + clearFlags.ToString() + " : " + (int)clearFlags);
 
     return new LMHeadMountedRigConfiguration(
       configurationName,
       enableBackgroundQuad,
       leftHandGraphicsModel, rightHandGraphicsModel,
       enableLeftAndRightCameras, enableLeftAndRightImageRetrievers,
-      enableCenterCamera,
+      enableCenterCamera, (int)clearFlags,
       tweenTimewarp, tweenPosition, tweenForward);
   }
 }
