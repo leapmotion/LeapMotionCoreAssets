@@ -28,7 +28,7 @@ public class LeapCameraCorrection : MonoBehaviour {
     }
   }
 
-  private bool _hasLaunchedFinalTransformEvent = false;
+  private static bool _hasLaunchedFinalTransformEvent = false;
   private Matrix4x4 _finalCenterMatrix;
   private LeapDeviceInfo _deviceInfo;
   private int _preRenderIndex = 0;
@@ -47,14 +47,15 @@ public class LeapCameraCorrection : MonoBehaviour {
   }
 #endif
 
-  void Awake() {
+  void Start() {
     HandController controller = FindObjectsOfType<HandController>().FirstOrDefault(h => h.isActiveAndEnabled);
     if (controller == null) {
       enabled = false;
       return;
     }
 
-    _deviceInfo = controller.GetDeviceInfo();
+    _deviceInfo = new LeapDeviceInfo(LeapDeviceType.Dragonfly);
+    //_deviceInfo = controller.GetDeviceInfo();
   }
 
   void Update() {

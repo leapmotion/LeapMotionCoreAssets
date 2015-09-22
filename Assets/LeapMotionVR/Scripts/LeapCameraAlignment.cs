@@ -16,17 +16,8 @@ public class LeapCameraAlignment : MonoBehaviour {
   [SerializeField]
   protected KeyCode recenter = KeyCode.R;
 
-
-  [Header("Alignment Targets (Advanced Mode)")]
   [AdvancedModeOnly]
-  [SerializeField]
-  protected Transform centerCamera;
-  [System.NonSerialized]
-  public List<LeapImageBasedMaterial> warpedImages;
-
-  [Header("Counter-Aligned Targets (Advanced Mode)")]
-  [AdvancedModeOnly]
-  public Transform[] counterAligned;
+  public Transform[] rewoundTransforms;
 
   [Header("Alignment Settings (Advanced Mode)")]
 
@@ -47,7 +38,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   [SerializeField]
   [AdvancedModeOnly]
   protected KeyCode lessRewind = KeyCode.RightArrow;
-  [System.NonSerialized]
+  //[System.NonSerialized]
   public float rewindAdjust = 0f; //Frame fraction
 
   [System.Serializable]
@@ -99,21 +90,20 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
   }
 
+  [System.NonSerialized]
+  public List<LeapImageBasedMaterial> warpedImages;
   private long lastFrame = 0;
   private long maxLatency = 200000; //microseconds
   protected List<TransformData> history;
   
   protected LeapDeviceInfo deviceInfo;
+  protected Quaternion _lateUpdateRotation;
 
   private long _latestImageTimestamp {
     get {
       if (imageRetriever != null) {
         return imageRetriever.ImageNow();
-      }
-
-
-
-      else if (handController != null) {
+      } else if (handController != null) {
         ImageList images = handController.GetFrame().Images;
         if (images.Count > 0) {
           return images[0].Timestamp;
@@ -156,7 +146,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
     if (!(t < history.Count)) {
       // Expect this for initial frames which will have a very low frame rate
-      if (history[history.Count - 1].leapTime < time) Debug.LogWarning("NO INTERPOLATION: Using most recent time = " + history[history.Count - 1].leapTime + " < time = " + time);
+      //if (history[history.Count - 1].leapTime < time) Debug.LogWarning("NO INTERPOLATION: Using most recent time = " + history[history.Count - 1].leapTime + " < time = " + time);
       return history[history.Count-1];
     }
     
@@ -290,19 +280,27 @@ public class LeapCameraAlignment : MonoBehaviour {
       tweenTimeWarp = 0;
     }
   }
-	
-	// IMPORTANT: This method MUST be called after OVRManager.LateUpdate.
-  // FIXME Use EnableUpdateOrdering script to ensure correct call order -> Declare relative script ordering
+
+  void LateUpdate() {
+    long rewindTime = _latestImageTimestamp - (long)(rewindAdjust * frameLatency.value);
+    TransformData past = TransformAtTime(rewindTime);
+
+    _lateUpdateRotation = past.rotation;
+
+    foreach (Transform t in rewoundTransforms) {
+      t.transform.position = past.position;
+      t.transform.rotation = past.rotation;
+    }
+  }
+
   void OnCameraFinalTransform(Transform centerTransform) {
-    centerCamera.position = centerTransform.position;
-    centerCamera.rotation = centerTransform.rotation;
 
     // IMPORTANT: UpdateHistory must happen first, before any transforms are modified.
     UpdateHistory (centerTransform);
 
     // IMPORTANT: UpdateAlignment must precede UpdateTimeWarp,
     // since UpdateTimeWarp applies warping relative current positions
-    UpdateTimeWarp ();
+    UpdateTimeWarp(centerTransform);
   }
   
   void UpdateHistory (Transform centerTransform) {
@@ -355,16 +353,10 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
   }
 
-  void UpdateTimeWarp () {
-    long latestTime = history [history.Count - 1].leapTime;
-    long rewindTime = _latestImageTimestamp - (long)(rewindAdjust * frameLatency.value);
-    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(latestTime - rewindTime));
-    TransformData past = TransformAtTime(rewindTime + tweenAddition);
-    //
-    //TransformData past = TransformAtTime((long)Mathf.Lerp((float)latestTime, (float)rewindTime, tweenTimeWarp));
-
+  void UpdateTimeWarp (Transform centerTransform) {
     // Apply only a rotation ~ assume all objects are infinitely distant
-    Quaternion rotateImageToNow = centerCamera.rotation * Quaternion.Inverse(past.rotation);
+    Quaternion rotateImageToNow = centerTransform.rotation * Quaternion.Inverse(_lateUpdateRotation);
+    //Quaternion rotateImageToNow = _lateUpdateRotation * Quaternion.Inverse(centerTransform.rotation);
     Matrix4x4 ImageToNow = Matrix4x4.TRS(Vector3.zero, rotateImageToNow, Vector3.one);
     
     foreach (LeapImageBasedMaterial image in warpedImages) {
