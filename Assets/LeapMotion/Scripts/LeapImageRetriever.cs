@@ -266,16 +266,10 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-  void OnPreCull() {
-    Debug.Log(_cachedCamera.projectionMatrix);
-  }
-
   void OnPreRender() {
     if (syncMode == SYNC_MODE.LOW_LATENCY) {
       _imageList = _controller.Images;
     }
-
-    Debug.Log(_cachedCamera.projectionMatrix);
 
     int imageEye = frameEye;
     switch (retrievedEye) {
