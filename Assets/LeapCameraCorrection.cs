@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.VR;
 using System;
-using System.Linq;
 using System.Collections;
 
 [RequireComponent(typeof(Camera))]
@@ -11,10 +10,10 @@ public class LeapCameraCorrection : MonoBehaviour {
   private LeapImageRetriever.EYE _eye = LeapImageRetriever.EYE.RIGHT;
 
   [SerializeField]
-  private bool _overrideIPD = false;
+  private bool _overrideIPD = true;
 
   [SerializeField]
-  private bool _pushForward = false;
+  private bool _pushForward = true;
 
   private Camera _cachedCamera;
   private Camera _camera {
@@ -44,12 +43,6 @@ public class LeapCameraCorrection : MonoBehaviour {
 #endif
 
   void Start() {
-    HandController controller = FindObjectsOfType<HandController>().FirstOrDefault(h => h.isActiveAndEnabled);
-    if (controller == null) {
-      enabled = false;
-      return;
-    }
-
     _deviceInfo = new LeapDeviceInfo(LeapDeviceType.Dragonfly);
   }
 
