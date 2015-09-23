@@ -1,6 +1,6 @@
 ﻿Shader "LeapMotion/Passthrough/Background" {
   Properties {
-    _ColorSpaceGamma ("Color Space Gamma", Float) = 1.0
+    _LeapGlobalColorSpaceGamma ("Color Space Gamma", Float) = 1.0
     _hView ("Horizontal View Degrees", Float) = 60.0
     _vView ("Vertical View Degrees", Float) = 60.0
     _useTimeWarp ("Use Time Warp", Int) = 0
@@ -25,7 +25,7 @@
     #pragma vertex vert
     #pragma fragment frag
     
-    uniform float _ColorSpaceGamma;
+    uniform float _LeapGlobalColorSpaceGamma;
 
     struct frag_in{
       float4 position : SV_POSITION;
@@ -41,7 +41,7 @@
     }
 
     float4 frag (frag_in i) : COLOR {
-      return float4(pow(LeapColorWarp(i.screenPos), 1/_ColorSpaceGamma), 1);
+      return float4(pow(LeapColorWarp(i.screenPos), 1/_LeapGlobalColorSpaceGamma), 1);
     }
 
     ENDCG

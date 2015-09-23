@@ -11,7 +11,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
     _GlowThreshold   ("Glow Threshold", Float)    = 0.5
     _GlowPower       ("Glow Power", Float)        = 10.0
     
-    _ColorSpaceGamma ("Color Space Gamma", Float) = 1.0
+    _LeapGlobalColorSpaceGamma ("Color Space Gamma", Float) = 1.0
   }
 
 
@@ -32,7 +32,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
   uniform float     _MaxThreshold;
   uniform float     _GlowThreshold;
   uniform float     _GlowPower;
-  uniform float     _ColorSpaceGamma;
+  uniform float     _LeapGlobalColorSpaceGamma;
   
   #ifdef USE_DEPTH_TEXTURE
   uniform sampler2D _CameraDepthTexture;
@@ -72,11 +72,11 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
     // Map leap image to linear color space
     float4 leapRawColor = LeapRawColorBrightnessWarp(screenPos);
     clip(leapRawColor.a - _MinThreshold);
-    float3 leapLinearColor = pow(pow(leapRawColor.rgb, _LeapGammaCorrectionExponent), 1/_ColorSpaceGamma);
+    float3 leapLinearColor = pow(pow(leapRawColor.rgb, _LeapGlobalGammaCorrectionExponent), 1/_LeapGlobalColorSpaceGamma);
     // Apply edge glow and interior shading
     float brightness = smoothstep(_MinThreshold, _MaxThreshold, leapRawColor.a) * _Fade;
     float glow = smoothstep(_GlowThreshold, _MinThreshold, leapRawColor.a) * brightness;
-    float4 linearColor = pow(_Color, _ColorSpaceGamma) * glow * _GlowPower;
+    float4 linearColor = pow(_Color, _LeapGlobalColorSpaceGamma) * glow * _GlowPower;
     return float4(leapLinearColor + linearColor, brightness);
   }
   
@@ -86,7 +86,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
     float sceneZ = LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(projPos)));
     float partZ = projPos.z;
     float diff = smoothstep(_Intersection, 0, sceneZ - partZ);
-    float4 linearColor = pow(_Color, _ColorSpaceGamma) * _IntersectionEffectBrightness;
+    float4 linearColor = pow(_Color, _LeapGlobalColorSpaceGamma) * _IntersectionEffectBrightness;
     return float4(lerp(handGlow.rgb, linearColor.rgb, diff), handGlow.a * (1 - diff));
   }
   #endif

@@ -23,8 +23,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   protected Transform rightCamera;
   [SerializeField]
   protected Transform centerCamera;
-  [System.NonSerialized]
-  public List<LeapImageBasedMaterial> warpedImages;
 
   [Header("Counter-Aligned Targets (Advanced Mode)")]
   public Transform[] counterAligned;
@@ -187,8 +185,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
 
   void Awake () {
-    warpedImages = new List<LeapImageBasedMaterial>();
-
     history = new List<TransformData> ();
     imageLatency = new SmoothedFloat () {
       delay = latencySmoothing
@@ -197,7 +193,6 @@ public class LeapCameraAlignment : MonoBehaviour {
     frameLatency = new SmoothedFloat () {
       delay = latencySmoothing
     };
-
   }
 
   void Start () {
@@ -512,10 +507,8 @@ public class LeapCameraAlignment : MonoBehaviour {
     // Apply only a rotation ~ assume all objects are infinitely distant
     Quaternion rotateImageToNow = centerCamera.rotation * Quaternion.Inverse(past.rotation);
     Matrix4x4 ImageToNow = Matrix4x4.TRS(Vector3.zero, rotateImageToNow, Vector3.one);
-    
-    foreach (LeapImageBasedMaterial image in warpedImages) {
-      image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageToNow", ImageToNow);
-    }
+
+    Shader.SetGlobalMatrix("_LeapGlobalViewerImageToNow", ImageToNow);
 
     // Counter-rotate objects to align with Time Warp
     foreach (Transform child in counterAligned) {
