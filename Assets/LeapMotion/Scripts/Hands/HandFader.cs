@@ -11,6 +11,8 @@ public class HandFader : MonoBehaviour {
   protected float _smoothedConfidence = 0.0f;
   protected Renderer _renderer;
 
+  protected MaterialPropertyBlock _fadePropertyBlock;
+
   private const float EPISLON = 0.005f;
 
   protected virtual float GetUnsmoothedConfidence() {
@@ -20,7 +22,11 @@ public class HandFader : MonoBehaviour {
   protected virtual void Awake() {
     _handModel = GetComponent<HandModel>();
     _renderer = GetComponentInChildren<Renderer>();
-    _renderer.material.SetFloat("_Fade", 0);
+
+    _fadePropertyBlock = new MaterialPropertyBlock();
+    _renderer.GetPropertyBlock(_fadePropertyBlock);
+    _fadePropertyBlock.SetFloat("_Fade", 0);
+    _renderer.SetPropertyBlock(_fadePropertyBlock);
   }
 
   protected virtual void Update() {
@@ -28,6 +34,9 @@ public class HandFader : MonoBehaviour {
     _smoothedConfidence += (unsmoothedConfidence - _smoothedConfidence) / confidenceSmoothing;
     float fade = confidenceCurve.Evaluate(_smoothedConfidence);
     _renderer.enabled = (fade > EPISLON);
-    _renderer.material.SetFloat("_Fade", confidenceCurve.Evaluate(_smoothedConfidence));
+
+    _renderer.GetPropertyBlock(_fadePropertyBlock);
+    _fadePropertyBlock.SetFloat("_Fade", confidenceCurve.Evaluate(_smoothedConfidence));
+    _renderer.SetPropertyBlock(_fadePropertyBlock);
   }
 }

@@ -9,7 +9,7 @@
 
 #define R_OFFSET      CAMERA_DELTA * float2(-0.5, 0.0)
 #define G_OFFSET      CAMERA_DELTA * float2(-0.5, 0.5)
-#define B_OFFSET      CAMERA_DELTA * float2( 0.0, 0.5)_LeapGlobalDistortion
+#define B_OFFSET      CAMERA_DELTA * float2( 0.0, 0.5)
 
 #define R_BLEED       -0.05
 #define G_BLEED       0.001

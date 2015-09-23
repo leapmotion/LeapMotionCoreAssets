@@ -10,10 +10,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
     _MaxThreshold    ("Max Threshold", Float)     = 0.2
     _GlowThreshold   ("Glow Threshold", Float)    = 0.5
     _GlowPower       ("Glow Power", Float)        = 10.0
-    
-    _LeapGlobalColorSpaceGamma ("Color Space Gamma", Float) = 1.0
   }
-
 
   CGINCLUDE
   #pragma multi_compile LEAP_FORMAT_IR LEAP_FORMAT_RGB
