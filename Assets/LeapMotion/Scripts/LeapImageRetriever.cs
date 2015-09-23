@@ -34,7 +34,7 @@ public class LeapImageRetriever : MonoBehaviour {
   private int frameEye = 0;
   [Tooltip ("Should the image match the tracked hand, or should it be displayed as fast as possible")]
   public SYNC_MODE
-    syncMode = SYNC_MODE.LOW_LATENCY;
+    syncMode = SYNC_MODE.SYNC_WITH_HANDS;
   public float gammaCorrection = 1.0f;
   private int _missedImages = 0;
   private Controller _controller;
@@ -234,10 +234,26 @@ public class LeapImageRetriever : MonoBehaviour {
 
   void OnValidate() {
     foreach (var retriever in FindObjectsOfType<LeapImageRetriever>()) {
-      retriever.gammaCorrection = gammaCorrection;
-      retriever.syncMode = syncMode;
-      retriever.handController = handController;
-      UnityEditor.EditorUtility.SetDirty(retriever);
+      bool anyChange = false;
+
+      if (retriever.gammaCorrection != gammaCorrection) {
+        retriever.gammaCorrection = gammaCorrection;
+        anyChange = true;
+      }
+
+      if (retriever.syncMode != syncMode) {
+        retriever.syncMode = syncMode;
+        anyChange = true;
+      }
+
+      if (retriever.handController != handController && handController != null) {
+        retriever.handController = handController;
+        anyChange = true;
+      }
+
+      if (anyChange) {
+        UnityEditor.EditorUtility.SetDirty(retriever);
+      }
     }
   }
 #endif

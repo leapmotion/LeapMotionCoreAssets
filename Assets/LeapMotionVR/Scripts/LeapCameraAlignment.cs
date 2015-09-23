@@ -332,9 +332,6 @@ public class LeapCameraAlignment : MonoBehaviour {
     // IMPORTANT: UpdateHistory must happen first, before any transforms are modified.
     UpdateHistory ();
 
-    // IMPORTANT: UpdateAlignment must precede UpdateTimeWarp,
-    // since UpdateTimeWarp applies warping relative current positions
-    UpdateAlignment ();
     UpdateTimeWarp ();
   }
   
@@ -405,104 +402,6 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
   }
 
-  void ApplyRescale(float rescale) {
-    // Rescale this object, thereby rescaling the virtual camera separation
-    transform.localScale = Vector3.one * rescale;
-
-    // Move this object to compensate for the rescaling of head movement
-    Vector3 cameraScaledPosition = Vector3.zero;
-    switch (hasCameras) {
-    case VRCameras.CENTER:
-      cameraScaledPosition = centerCamera.position;
-      break;
-    case VRCameras.LEFT_RIGHT:
-      cameraScaledPosition = Vector3.Lerp (leftCamera.position, rightCamera.position, 0.5f) - transform.position;
-      break;
-    default: //case VRCameras.NONE:
-      break;
-    }
-    cameraScaledPosition = transform.parent.InverseTransformVector(cameraScaledPosition);
-    transform.localPosition = cameraScaledPosition * (1f / rescale - 1f);
-
-    // Apply the inverse scale to child objects such as the hand controller
-    Vector3 counterScale = Vector3.one / rescale;
-    foreach (Transform child in counterAligned) {
-      child.localScale = counterScale;
-    }
-  }
-  
-  void UpdateAlignment () {
-    long latestTime = history [history.Count - 1].leapTime;
-    long rewindTime = _latestImageTimestamp - (long)frameLatency.value - (long)(rewindAdjust * frameLatency.value);
-    long tweenAddition = (long)((1f - tweenRewind) * (float)(latestTime - rewindTime));
-    TransformData past = TransformAtTime(rewindTime + tweenAddition);
-
-    if (!eyeAlignment.use) {
-      // Derive eye alignment from the left & right cameras
-      Vector3 virtualBaseline = leftCamera.position - rightCamera.position;
-      if (!(IsFinite (virtualBaseline) &&
-        virtualBaseline.magnitude > float.Epsilon)) {
-        // Unmodified camera positions
-        Debug.LogWarning ("Bad camera separation = " + virtualBaseline + " -> skip alignment");
-        eyeAlignment.ipd = 0f;
-        return;
-      }
-      eyeAlignment.ipd = virtualBaseline.magnitude;
-    }
-    
-    float separate = (tweenPosition * deviceInfo.baseline + (1f - tweenPosition) * eyeAlignment.ipd);
-    float forward = tweenPosition * tweenForward * deviceInfo.focalPlaneOffset;
-    
-    if (!eyeAlignment.use) {
-      // Move Virtual cameras to align position & orientation
-      centerCamera.rotation = past.rotation;
-      centerCamera.position = past.position + centerCamera.forward * forward;
-      leftCamera.position = centerCamera.position - centerCamera.right * separate * 0.5f;
-      leftCamera.rotation = past.rotation;
-      rightCamera.position = centerCamera.position + centerCamera.right * separate * 0.5f;
-      rightCamera.rotation = past.rotation;
-    } else {
-      // Rescale and apply compensating displacement
-      ApplyRescale(separate / eyeAlignment.ipd);
-
-      // Rewind
-      TransformData latestTransform = history[history.Count - 1];
-      Quaternion rewindRotate = past.rotation * Quaternion.Inverse(latestTransform.rotation);
-      Vector3 rewindDisplace = latestTransform.position - rewindRotate*latestTransform.position;
-      rewindDisplace += past.position - latestTransform.position;
-      transform.localRotation = transform.parent.rotation*rewindRotate*Quaternion.Inverse(transform.parent.rotation);
-      transform.localPosition += transform.parent.InverseTransformVector(rewindDisplace);
-
-      // Move untracked cameras into alignment
-      // NOTE: If the right and left cameras are tracked, they will have the SAME position as the center camera,
-      // but if they are not tracked they will be placed where Leap cameras are located.
-      switch (hasCameras) {
-      case VRCameras.CENTER:
-        // Shift forward
-        transform.position += centerCamera.forward * forward;
-
-        // Align non-tracked cameras
-        leftCamera.position = centerCamera.position - centerCamera.right * separate * 0.5f;
-        leftCamera.rotation = centerCamera.rotation;
-        rightCamera.position = centerCamera.position + centerCamera.right * separate * 0.5f;
-        rightCamera.rotation = centerCamera.rotation;
-        break;
-      case VRCameras.LEFT_RIGHT:
-        Vector3 centerPosition = Vector3.Lerp(leftCamera.position, rightCamera.position, 0.5f);
-        Quaternion centerRotation = Quaternion.Slerp(leftCamera.rotation, rightCamera.rotation, 0.5f);
-
-        // Shift forward
-        Vector3 moveForward = centerRotation * Vector3.forward * forward;
-        transform.position += moveForward;
-
-        // Align non-tracked camera
-        centerCamera.position = centerPosition + moveForward;
-        centerCamera.rotation = centerRotation;
-        break;
-      }
-    }
-  }
-  
   void UpdateTimeWarp () {
     long latestTime = history [history.Count - 1].leapTime;
     long rewindTime = _latestImageTimestamp - (long)(rewindAdjust * frameLatency.value);

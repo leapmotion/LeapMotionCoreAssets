@@ -35,14 +35,13 @@ public class LeapCameraCorrection : MonoBehaviour {
 
 #if UNITY_EDITOR
   void Reset() {
-    _eye = gameObject.name.ToLower().Contains("left") ? LeapImageRetriever.EYE.LEFT : LeapImageRetriever.EYE.RIGHT;
-  }
-
-  void OnValidate() {
-    foreach (LeapCameraCorrection corrector in FindObjectsOfType<LeapCameraCorrection>()) {
-      corrector._overrideIPD = _overrideIPD;
-      corrector._pushForward = _pushForward;
-      UnityEditor.EditorUtility.SetDirty(corrector);
+    string lowercaseName = gameObject.name.ToLower();
+    if (lowercaseName.Contains("left")) {
+      _eye = LeapImageRetriever.EYE.LEFT;
+    } else if (lowercaseName.Contains("right")) {
+      _eye = LeapImageRetriever.EYE.RIGHT;
+    } else {
+      _eye = LeapImageRetriever.EYE.LEFT_TO_RIGHT;
     }
   }
 #endif
