@@ -11,7 +11,8 @@ public class EnableDepthBuffer : MonoBehaviour {
   void Awake() {
     GetComponent<Camera>().depthTextureMode = _depthTextureMode;
 
-    if (SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.Depth)) {
+    if (SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.Depth) &&
+        _depthTextureMode != DepthTextureMode.None) {
       Shader.EnableKeyword(DEPTH_TEXTURE_VARIANT_NAME);
     } else {
       Shader.DisableKeyword(DEPTH_TEXTURE_VARIANT_NAME);
