@@ -29,15 +29,18 @@ public class LeapImageRetriever : MonoBehaviour {
     LOW_LATENCY
   }
 
-  public EYE retrievedEye = (EYE)(-1);
-  private int frameEye = 0;
+  public EYE retrievedEye = EYE.LEFT;
+  
   [Tooltip ("Should the image match the tracked hand, or should it be displayed as fast as possible")]
-  public SYNC_MODE
-    syncMode = SYNC_MODE.SYNC_WITH_HANDS;
+  public SYNC_MODE syncMode = SYNC_MODE.SYNC_WITH_HANDS;
+
   public float gammaCorrection = 1.0f;
+  
+  public HandController handController;
+
   private int _missedImages = 0;
   private Controller _controller;
-  public HandController handController;
+  private int frameEye = 0;
 
   //ImageList to use during rendering.  Can either be updated in OnPreRender or in Update
   private ImageList _imageList;
