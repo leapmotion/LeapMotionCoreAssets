@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.Collections;
+using System.Collections.Generic;
 
 [CustomEditor(typeof(HMRConfigurationManager))]
 public class HMRConfigurationManagerEditor : Editor {
@@ -41,6 +42,12 @@ public class HMRConfigurationManagerEditor : Editor {
       }
 
       return handController;
+    }
+  }
+
+  private IEnumerable<LeapCameraCorrection> _cameraCorrections {
+    get {
+      return ((HMRConfigurationManager)target).GetComponentsInChildren<LeapCameraCorrection>();
     }
   }
 
@@ -203,12 +210,12 @@ public class HMRConfigurationManagerEditor : Editor {
   }
 
   private void setPosition(float value) {
-    _aligner.tweenPosition = value;
+    //_aligner.tweenPosition = value;
     EditorUtility.SetDirty(_aligner);
   }
 
   private void setForward(float value) {
-    _aligner.tweenForward = value;
+    //_aligner.tweenForward = value;
     EditorUtility.SetDirty(_aligner);
   }
 
