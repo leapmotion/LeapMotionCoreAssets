@@ -76,6 +76,8 @@ public class HandControllerEditor : Editor {
   public override void OnInspectorGUI() {
     SerializedProperty properties = serializedObject.GetIterator();
 
+    EditorGUI.BeginChangeCheck();
+
     bool useEnterChildren = true;
     while (properties.NextVisible(useEnterChildren)) {
       useEnterChildren = false;
@@ -113,7 +115,9 @@ public class HandControllerEditor : Editor {
       }
     }
 
-    serializedObject.ApplyModifiedProperties();
+    if (EditorGUI.EndChangeCheck()) {
+      serializedObject.ApplyModifiedProperties();
+    }
   }
 
   private void drawHandProperty(SerializedProperty property, string seperateText, string combinedText) {
