@@ -25,6 +25,9 @@ public struct LMHeadMountedRigConfiguration  {
   private bool _enableCenterCamera;
 
   [SerializeField]
+  private int _cameraClearFlags;
+
+  [SerializeField]
   private float _tweenTimewarp;
 
   [SerializeField]
@@ -43,6 +46,7 @@ public struct LMHeadMountedRigConfiguration  {
   public bool enableLeftAndRightCameras { get { return _enableLeftAndRightCameras; } }
   public bool enableLeftAndRightImageRetrievers { get { return _enableLeftAndRightImageRetrievers; } }
   public bool enableCenterCamera { get { return _enableCenterCamera; } }
+  public int cameraClearFlags { get { return _cameraClearFlags; } }
   public float tweenTimewarp { get { return _tweenTimewarp; } }
   public float tweenPosition { get { return _tweenPosition; } }
   public float tweenForward { get { return _tweenForward; } }
@@ -51,7 +55,7 @@ public struct LMHeadMountedRigConfiguration  {
     string name,
     bool backgroundQuad, 
     HandModel leftHandModel, HandModel rightHandModel,
-    bool leftAndRightCameras, bool leftAndRightImageRetrievers, bool centerCamera,
+    bool leftAndRightCameras, bool leftAndRightImageRetrievers, bool centerCamera, int clearFlags,
     float timewarp, float position, float forward) {
       _configurationName = name;
       _enableBackgroundQuad = backgroundQuad;
@@ -60,6 +64,7 @@ public struct LMHeadMountedRigConfiguration  {
       _enableLeftAndRightCameras = leftAndRightCameras;
       _enableLeftAndRightImageRetrievers = leftAndRightImageRetrievers;
       _enableCenterCamera = centerCamera;
+      _cameraClearFlags = clearFlags;
       _tweenTimewarp = timewarp;
       _tweenPosition = position;
       _tweenForward = forward;

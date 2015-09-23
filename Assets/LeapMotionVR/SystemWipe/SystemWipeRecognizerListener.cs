@@ -20,10 +20,6 @@ public class SystemWipeRecognizerListener : MonoBehaviour {
   public static SystemWipeRecognizerListener Instance;
   
   private SystemWipeInfo m_latestWipeInfo;
-  
-  private bool m_wipeInfoDirty = false;
-  
-  private object wipeInfoLock = new object();
 
   /// <summary>
   /// Singleton pattern
@@ -37,21 +33,7 @@ public class SystemWipeRecognizerListener : MonoBehaviour {
     }
   }
   
-  void Update() {
-    // This code is not used in synchronous querying
-    //
-    /*
-    lock(wipeInfoLock) {
-      if( m_wipeInfoDirty) {
-        EventHandler<SystemWipeArgs> handler = SystemWipeUpdate;
-        
-        if ( handler != null ) {
-          handler(this, new SystemWipeArgs(m_latestWipeInfo));
-        }
-        m_wipeInfoDirty = false;
-      }
-    }*/
-    
+  void Update() {    
     // Synchronous access:
     //
     
@@ -76,23 +58,12 @@ public class SystemWipeRecognizerListener : MonoBehaviour {
       }
     }
   }
-  /*
-  void SystemWipeInfoCallback(Leap.Util.SystemWipeInfo info)
-  {
-    //Debug.Log("Swipe " + info.Status + " " + info.Direction + " " + info.Progress);
-    lock(wipeInfoLock) {
-      m_wipeInfoDirty = true;
-      m_latestWipeInfo = info;
-    }
-  }*/
   
   // Called before the body's first Update() and, if you Disable the body it's called again before the first following Update().
   void OnEnable()
   {
     // Callback delegate doesn't work as it is. We use synchronous querying in Update() instead.
-    
-    //systemWipeInfoDelegate = new Leap.Util.SystemWipeRecognizerNative.CallbackSystemWipeInfoDelegate(SystemWipeInfoCallback);
-    //Leap.Util.SystemWipeRecognizerNative.SetSystemWipeRecognizerCallback(Marshal.GetFunctionPointerForDelegate(systemWipeInfoDelegate));
+
     
     Leap.Util.SystemWipeRecognizerNative.EnableSystemWipeRecognizer();
   }

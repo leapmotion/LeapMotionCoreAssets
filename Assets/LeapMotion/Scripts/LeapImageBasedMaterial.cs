@@ -2,8 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class LeapImageBasedMaterial : MonoBehaviour {
-  [AdvancedModeOnly]
+public class LeapImageBasedMaterial : MonoBehaviour
+{
   public ImageMode imageMode = ImageMode.STEREO;
 
   public enum ImageMode {
