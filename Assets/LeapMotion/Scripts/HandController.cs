@@ -137,7 +137,7 @@ public class HandController : MonoBehaviour {
   }
 
   /** Initalizes the hand and tool lists and recording, if enabled.*/
-  void Start() {
+  protected virtual void Start() {
     // Initialize hand lookup tables.
     hand_graphics_ = new Dictionary<int, HandModel>();
     hand_physics_ = new Dictionary<int, HandModel>();
