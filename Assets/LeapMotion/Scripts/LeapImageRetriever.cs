@@ -286,8 +286,6 @@ public class LeapImageRetriever : MonoBehaviour {
       _imageList = frame.Images;
     }
 
-    frameEye = 0;
-
     //DEBUG
     if (Input.GetKeyDown(KeyCode.Keypad0)) {
       retrievedEye = EYE.LEFT;
@@ -301,6 +299,10 @@ public class LeapImageRetriever : MonoBehaviour {
     if (Input.GetKeyDown(KeyCode.Keypad3)) {
       retrievedEye = EYE.RIGHT_TO_LEFT;
     }
+  }
+
+  void OnPreCull() {
+    frameEye = 0;
   }
 
   void OnPreRender() {

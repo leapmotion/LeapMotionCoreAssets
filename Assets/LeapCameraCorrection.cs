@@ -7,8 +7,6 @@ using System.Collections;
 [RequireComponent(typeof(Camera))]
 public class LeapCameraCorrection : MonoBehaviour {
 
-  public static event Action<Transform> OnCameraFinalTransform;
-
   [SerializeField]
   private LeapImageRetriever.EYE _eye = LeapImageRetriever.EYE.RIGHT;
 
@@ -28,7 +26,6 @@ public class LeapCameraCorrection : MonoBehaviour {
     }
   }
 
-  private static bool _hasLaunchedFinalTransformEvent = false;
   private Matrix4x4 _finalCenterMatrix;
   private LeapDeviceInfo _deviceInfo;
   private int _preRenderIndex = 0;
@@ -54,18 +51,6 @@ public class LeapCameraCorrection : MonoBehaviour {
     }
 
     _deviceInfo = new LeapDeviceInfo(LeapDeviceType.Dragonfly);
-    //_deviceInfo = controller.GetDeviceInfo();
-  }
-
-  void Update() {
-    if (Input.GetKeyDown(KeyCode.A)) {
-      _overrideIPD = !_overrideIPD;
-      _pushForward = !_pushForward;
-    }
-
-    _hasLaunchedFinalTransformEvent = false;
-
-    _preRenderIndex = 0;
   }
 
   void OnPreCull() {
@@ -75,13 +60,9 @@ public class LeapCameraCorrection : MonoBehaviour {
     }
 #endif
 
+    _preRenderIndex = 0;
     _camera.ResetWorldToCameraMatrix();
     _finalCenterMatrix = _camera.worldToCameraMatrix;
-
-    if (!_hasLaunchedFinalTransformEvent && OnCameraFinalTransform != null) {
-      OnCameraFinalTransform(transform);
-      _hasLaunchedFinalTransformEvent = true;
-    }
   }
 
   void OnPreRender() {
