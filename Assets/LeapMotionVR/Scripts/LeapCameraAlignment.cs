@@ -59,10 +59,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   [System.NonSerialized]
   public SmoothedFloat imageLatency;
 
-  // HACK: Non-peripheral devices sometimes self-identify as peripherals
-  public bool overrideDeviceType = false;
-  public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Invalid;
-
   protected enum VRCameras {
     NONE = 0,
     CENTER = 1,
@@ -255,7 +251,7 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
-    deviceInfo = (overrideDeviceType) ? new LeapDeviceInfo(overrideDeviceTypeWith) : handController.GetDeviceInfo ();
+    deviceInfo = handController.GetDeviceInfo ();
     if (deviceInfo.type == LeapDeviceType.Invalid) {
       Debug.LogWarning ("Invalid Leap Device -> enabled = false");
       enabled = false;

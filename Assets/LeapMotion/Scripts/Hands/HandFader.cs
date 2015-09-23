@@ -2,7 +2,6 @@
 using UnityEngine;
 using System.Collections;
 
-
 public class HandFader : MonoBehaviour {
   public float confidenceSmoothing = 10.0f;
   public AnimationCurve confidenceCurve;
