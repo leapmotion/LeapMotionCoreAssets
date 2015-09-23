@@ -204,12 +204,12 @@ public class HMRConfigurationManagerEditor : Editor {
   }
 
   private void setPosition(float value) {
-    //_aligner.tweenPosition = value;
+    _aligner.tweenPosition = value;
     EditorUtility.SetDirty(_aligner);
   }
 
   private void setForward(float value) {
-    //_aligner.tweenForward = value;
+    _aligner.tweenForward = value;
     EditorUtility.SetDirty(_aligner);
   }
 
