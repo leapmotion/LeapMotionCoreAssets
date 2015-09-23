@@ -218,6 +218,30 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
+#if UNITY_EDITOR
+  void Reset() {
+    string lowercaseName = gameObject.name.ToLower();
+    if (lowercaseName.Contains("right")) {
+      retrievedEye = EYE.RIGHT;
+    } else if (lowercaseName.Contains("left")) {
+      retrievedEye = EYE.LEFT;
+    } else {
+      retrievedEye = EYE.LEFT_TO_RIGHT;
+    }
+
+    handController = FindObjectOfType<HandController>();
+  }
+
+  void OnValidate() {
+    foreach (var retriever in FindObjectsOfType<LeapImageRetriever>()) {
+      retriever.gammaCorrection = gammaCorrection;
+      retriever.syncMode = syncMode;
+      retriever.handController = handController;
+      UnityEditor.EditorUtility.SetDirty(retriever);
+    }
+  }
+#endif
+
   void Start() {
     if (handController == null) {
       Debug.LogWarning("Cannot use LeapImageRetriever if there is no HandController!");
