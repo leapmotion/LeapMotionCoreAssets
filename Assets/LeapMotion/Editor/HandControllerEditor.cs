@@ -74,7 +74,8 @@ public class HandControllerEditor : Editor {
   }
 
   public override void OnInspectorGUI() {
-    SerializedProperty properties = serializedObject.GetIterator();
+    serializedObject.Update();
+    SerializedProperty properties = serializedObject.GetIterator(); 
 
     EditorGUI.BeginChangeCheck();
 
@@ -121,7 +122,8 @@ public class HandControllerEditor : Editor {
   }
 
   private void drawHandProperty(SerializedProperty property, string seperateText, string combinedText) {
-    string contentText = controller.separateLeftRight ? seperateText : combinedText;
+    bool seperate = serializedObject.FindProperty("separateLeftRight").boolValue;
+    string contentText = seperate ? seperateText : combinedText;
     if (contentText == null) {
       return;
     }
@@ -130,7 +132,8 @@ public class HandControllerEditor : Editor {
   }
 
   private void drawRecorderProperty(SerializedProperty property) {
-    if (controller.enableRecordPlayback) {
+    bool display = serializedObject.FindProperty("enableRecordPlayback").boolValue;
+    if (display) {
       EditorGUILayout.PropertyField(property);
     }
   }
