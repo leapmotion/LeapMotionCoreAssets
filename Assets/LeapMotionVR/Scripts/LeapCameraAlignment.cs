@@ -30,17 +30,9 @@ public class LeapCameraAlignment : MonoBehaviour {
   public Transform[] counterAligned;
 
   [Header("Alignment Settings (Advanced Mode)")]
-  [Range(0,2)]
-  public float tweenRewind = 0f;
 
   [Range(0,2)]
   public float tweenTimeWarp = 0f;
-  
-  [Range(0,2)]
-  public float tweenPosition = 1f;
-  
-  [Range(0,2)]
-  public float tweenForward = 1f;
   
   // Manual Time Alignment
   [SerializeField]
