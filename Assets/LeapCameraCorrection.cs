@@ -15,6 +15,9 @@ public class LeapCameraCorrection : MonoBehaviour {
   [SerializeField]
   private bool _pushForward = true;
 
+  public bool OverrideIPD { get { return _overrideIPD; } set { _overrideIPD = value; } }
+  public bool PushForward { get { return _pushForward; } set { _pushForward = value; } }
+
   private Camera _cachedCamera;
   private Camera _camera {
     get {
@@ -80,12 +83,12 @@ public class LeapCameraCorrection : MonoBehaviour {
     _preRenderIndex++;
 
     Matrix4x4 offsetMatrix;
-    
-    if(_overrideIPD){
+
+    if (_overrideIPD) {
       offsetMatrix = _finalCenterMatrix;
       Vector3 ipdOffset = (isLeft ? 1 : -1) * transform.right * _deviceInfo.baseline * 0.5f;
       offsetMatrix *= Matrix4x4.TRS(ipdOffset, Quaternion.identity, Vector3.one);
-    } else{
+    } else {
       offsetMatrix = _camera.worldToCameraMatrix;
     }
 

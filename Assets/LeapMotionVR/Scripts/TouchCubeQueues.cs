@@ -19,12 +19,13 @@ public class TouchCubeQueues : MonoBehaviour {
   public GameObject helpMenuCanvas;
   public GameObject noAlignmentCanvas;
   public GameObject alignedViewsCanvas;
-  public GameObject rewindViewsCanvas;
   public GameObject warpImagesCanvas;
 
+  private LeapCameraCorrection[] _cameraCorrectionScripts;
   private int demoStage = 0;
 
   void Start () {
+    _cameraCorrectionScripts = FindObjectsOfType<LeapCameraCorrection>();
     ResetState ();
   }
 	
@@ -36,29 +37,21 @@ public class TouchCubeQueues : MonoBehaviour {
     switch (demoStage) {
     case 0: // No Alignment
       helpMenuCanvas.SetActive(false);
-      alignment.tweenRewind = 0f;
       alignment.tweenTimeWarp = 0f;
-      alignment.tweenPosition = 0f;
-      alignment.tweenForward = 0f;
+      setOverrideIPD(false);
+      setPushForward(false);
       noAlignmentCanvas.SetActive(true);
       demoStage++;
       break;
     case 1: // IPD Alignment
       noAlignmentCanvas.SetActive(false);
-      alignment.tweenPosition = 1f;
-      alignment.tweenForward = 1f;
+      setOverrideIPD(true);
+      setPushForward(true);
       alignedViewsCanvas.SetActive(true);
       demoStage++;
       break;
-    case 2: // IPD Alignment + Rewind
-      alignedViewsCanvas.SetActive(false);
-      alignment.tweenRewind = 1f;
-      rewindViewsCanvas.SetActive(true);
-      demoStage++;
-      break;
     case 3: // IPD Alignment + TimeWarp
-      rewindViewsCanvas.SetActive(false);
-      alignment.tweenRewind = 0f;
+      alignedViewsCanvas.SetActive(false);
       alignment.tweenTimeWarp = 1f;
       warpImagesCanvas.SetActive(true);
       demoStage++;
@@ -70,15 +63,25 @@ public class TouchCubeQueues : MonoBehaviour {
     }
 	}
 
+  private void setPushForward(bool pushForward) {
+    foreach (var correction in _cameraCorrectionScripts) {
+      correction.PushForward = pushForward;
+    }
+  }
+
+  private void setOverrideIPD(bool overrideIPD) {
+    foreach (var correction in _cameraCorrectionScripts) {
+      correction.OverrideIPD = overrideIPD;
+    }
+  }
+
   public void ResetState() {
     helpMenuCanvas.SetActive(true);
     noAlignmentCanvas.SetActive (false);
     alignedViewsCanvas.SetActive (false);
-    rewindViewsCanvas.SetActive (false);
     warpImagesCanvas.SetActive (false);
-    alignment.tweenRewind = 0f;
     alignment.tweenTimeWarp = 1f;
-    alignment.tweenPosition = 1f;
-    alignment.tweenForward = 1f;
+    setOverrideIPD(true);
+    setPushForward(true);
   }
 }

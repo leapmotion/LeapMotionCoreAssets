@@ -195,7 +195,6 @@ public class HMRConfigurationManagerEditor : Editor {
     EditorUtility.SetDirty(left);
     EditorUtility.SetDirty(center);
     EditorUtility.SetDirty(right);
-
   }
 
   private void setTimewarp(float value) {
