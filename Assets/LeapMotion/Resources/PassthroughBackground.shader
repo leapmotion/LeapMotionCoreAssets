@@ -1,10 +1,5 @@
 ﻿Shader "LeapMotion/Passthrough/Background" {
   Properties {
-    _LeapGlobalColorSpaceGamma ("Color Space Gamma", Float) = 1.0
-    _hView ("Horizontal View Degrees", Float) = 60.0
-    _vView ("Vertical View Degrees", Float) = 60.0
-    _useTimeWarp ("Use Time Warp", Int) = 0
-    //_dbgTest("Original, Reprojected, R-O, O-R, Black", Int) = 0
   }
 
   SubShader {

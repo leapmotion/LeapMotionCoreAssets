@@ -1,6 +1,5 @@
 ﻿Shader "LeapMotion/Passthrough/Foreground" {
   Properties {
-    _LeapGlobalColorSpaceGamma ("Color Space Gamma", Float) = 1.0
   }
 
   SubShader {

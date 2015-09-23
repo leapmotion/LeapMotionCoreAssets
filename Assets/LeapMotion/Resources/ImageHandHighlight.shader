@@ -4,7 +4,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
     _Fade            ("Fade", Range(0, 1))             = 0.0
     _Extrude         ("Extrude", Float)                = 0.008
     _Intersection    ("Intersection Threshold", Float) = 0.035
-    _IntersectionEffectBrightness ("Intersection Brightness", Range (0, 2000)) = 100
+    _IntersectPow    ("Intersection Brightness", Range (0, 2000)) = 100
 
     _MinThreshold    ("Min Threshold", Float)     = 0.1
     _MaxThreshold    ("Max Threshold", Float)     = 0.2
@@ -24,7 +24,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
   uniform float     _Fade;
   uniform float     _Extrude;
   uniform float     _Intersection;
-  uniform float     _IntersectionEffectBrightness;
+  uniform float     _IntersectPow;
   uniform float     _MinThreshold;
   uniform float     _MaxThreshold;
   uniform float     _GlowThreshold;
@@ -83,7 +83,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
     float sceneZ = LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(projPos)));
     float partZ = projPos.z;
     float diff = smoothstep(_Intersection, 0, sceneZ - partZ);
-    float4 linearColor = pow(_Color, _LeapGlobalColorSpaceGamma) * _IntersectionEffectBrightness;
+    float4 linearColor = pow(_Color, _LeapGlobalColorSpaceGamma) * _IntersectPow;
     return float4(lerp(handGlow.rgb, linearColor.rgb, diff), handGlow.a * (1 - diff));
   }
   #endif
