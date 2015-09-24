@@ -12,6 +12,7 @@ public class LeapImageRetrieverEditor : Editor {
     };
 
   public override void OnInspectorGUI() {
+    serializedObject.Update();
     SerializedProperty properties = serializedObject.GetIterator();
 
     bool useEnterChildren = true;

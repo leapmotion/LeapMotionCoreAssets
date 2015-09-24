@@ -85,6 +85,7 @@ public class HMRConfigurationManagerEditor : Editor {
   }
 
   public override void OnInspectorGUI() {
+    serializedObject.Update();
     HMRConfigurationManager configManager = (HMRConfigurationManager)target;
     configManager.validateConfigurationsLabeled();
     EditorGUI.BeginChangeCheck();
