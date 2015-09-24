@@ -23,34 +23,34 @@
 #define FUDGE_CONSTANT  (1 / (1 - FUDGE_THRESHOLD))
 ////////////////////////////////////////////////////////////////////////                                       
 
-sampler2D _LeapTexture;
-sampler2D _LeapDistortion;
+sampler2D _LeapGlobalTexture;
+sampler2D _LeapGlobalDistortion;
 
-float4 _LeapProjection;
-float _LeapGammaCorrectionExponent;
+float4 _LeapGlobalProjection;
+float _LeapGlobalGammaCorrectionExponent;
 
 // Virtual Camera Parameters
-float _VirtualCameraH; //degrees
-float _VirtualCameraV; //degrees
-float4x4 _InverseView;
+float _LeapGlobalVirtualCameraH; //degrees
+float _LeapGlobalVirtualCameraV; //degrees
+float4x4 _LeapGlobalInverseView;
 
 // Global Coordinate Transformation of viewer from Image.Timestamp to Controller.Now
-float4x4 _ViewerImageToNow;
+float4x4 _LeapGlobalViewerImageToNow;
 
 float2 LeapGetUndistortedUV(float4 screenPos){
   float2 uv = (screenPos.xy / screenPos.w) * 2 - float2(1,1);
-  float2 tangent = (uv + _LeapProjection.xy) / _LeapProjection.zw;
+  float2 tangent = (uv + _LeapGlobalProjection.xy) / _LeapGlobalProjection.zw;
   float2 distortionUV = 0.125 * tangent + float2(0.5, 0.5);
 
-  float4 distortionAmount = tex2D(_LeapDistortion, distortionUV);
+  float4 distortionAmount = tex2D(_LeapGlobalDistortion, distortionUV);
   return float2(DecodeFloatRG(distortionAmount.xy), DecodeFloatRG(distortionAmount.zw)) * 2.3 - float2(0.6, 0.6);
 }
 
 float LeapRawBrightnessUV(float2 uv){
   #if LEAP_FORMAT_IR
-    return tex2D(_LeapTexture, uv).a;
+    return tex2D(_LeapGlobalTexture, uv).a;
   #else
-    float4 rawColor = tex2D(_LeapTexture, uv);
+    float4 rawColor = tex2D(_LeapGlobalTexture, uv);
 
     float ir;
     ir = dot(rawColor, float4(G_BLEED, B_BLEED, R_BLEED, IR_BLEED));
@@ -70,10 +70,10 @@ float3 LeapRawColorUV(float2 uv){
 
     uv.y = clamp(uv.y, 0.01, 0.99);
 
-    input_lf.a = tex2D(_LeapTexture, uv).a;
-    input_lf.r = tex2D(_LeapTexture, uv + R_OFFSET).b;
-    input_lf.g = tex2D(_LeapTexture, uv + G_OFFSET).r;
-    input_lf.b = tex2D(_LeapTexture, uv + B_OFFSET).g;
+    input_lf.a = tex2D(_LeapGlobalTexture, uv).a;
+    input_lf.r = tex2D(_LeapGlobalTexture, uv + R_OFFSET).b;
+    input_lf.g = tex2D(_LeapGlobalTexture, uv + G_OFFSET).r;
+    input_lf.b = tex2D(_LeapGlobalTexture, uv + B_OFFSET).g;
 
     float4 output_lf       = mul(TRANSFORMATION, input_lf);
     float4 output_lf_fudge = mul(CONSERVATIVE,   input_lf);
@@ -97,11 +97,11 @@ float4 LeapRawColorBrightnessUV(float2 uv){
 
     uv.y = clamp(uv.y, 0.01, 0.99);
 
-    float4 noOffset = tex2D(_LeapTexture, uv);
+    float4 noOffset = tex2D(_LeapGlobalTexture, uv);
     input_lf.a = noOffset.a;
-    input_lf.r = tex2D(_LeapTexture, uv + R_OFFSET).b;
-    input_lf.g = tex2D(_LeapTexture, uv + G_OFFSET).r;
-    input_lf.b = tex2D(_LeapTexture, uv + B_OFFSET).g;
+    input_lf.r = tex2D(_LeapGlobalTexture, uv + R_OFFSET).b;
+    input_lf.g = tex2D(_LeapGlobalTexture, uv + G_OFFSET).r;
+    input_lf.b = tex2D(_LeapGlobalTexture, uv + B_OFFSET).g;
 
     float4 output_lf       = mul(TRANSFORMATION, input_lf);
     float4 output_lf_fudge = mul(CONSERVATIVE,   input_lf);
@@ -126,11 +126,11 @@ float4 WarpScreenPosition(float4 sp) {
   //range (-1,1), x is horizontal, y is vertical, origin is center
       
   // Map window coordinates to world coordinates
-  float4 viewDir = float4(tan(radians(_VirtualCameraH) / 2.0)*window.x, tan(radians(_VirtualCameraV) / 2.0)*window.y, 1.0, 0.0);
-  float4 worldDir = mul(_InverseView, viewDir);
+  float4 viewDir = float4(tan(radians(_LeapGlobalVirtualCameraH) / 2.0)*window.x, tan(radians(_LeapGlobalVirtualCameraV) / 2.0)*window.y, 1.0, 0.0);
+  float4 worldDir = mul(_LeapGlobalInverseView, viewDir);
       
   // Apply time warping
-  worldDir = mul(_ViewerImageToNow, worldDir);
+  worldDir = mul(_LeapGlobalViewerImageToNow, worldDir);
       
   // Return to pixel coordinates
   return ComputeScreenPos(mul(UNITY_MATRIX_VP, worldDir));
@@ -149,27 +149,27 @@ float4 LeapRawColorBrightness(float4 screenPos){
 }
 
 float LeapBrightnessUV(float2 uv){
-  return pow(LeapRawBrightnessUV(uv), _LeapGammaCorrectionExponent);
+  return pow(LeapRawBrightnessUV(uv), _LeapGlobalGammaCorrectionExponent);
 }
 
 float3 LeapColorUV(float2 uv){
-  return pow(LeapRawColorUV(uv), _LeapGammaCorrectionExponent);
+  return pow(LeapRawColorUV(uv), _LeapGlobalGammaCorrectionExponent);
 }
 
 float4 LeapColorBrightnessUV(float2 uv){
-  return pow(LeapRawColorBrightnessUV(uv), _LeapGammaCorrectionExponent);
+  return pow(LeapRawColorBrightnessUV(uv), _LeapGlobalGammaCorrectionExponent);
 }
 
 float LeapBrightness(float4 screenPos){
-  return pow(LeapRawBrightness(screenPos), _LeapGammaCorrectionExponent);
+  return pow(LeapRawBrightness(screenPos), _LeapGlobalGammaCorrectionExponent);
 }
 
 float3 LeapColor(float4 screenPos){
-  return pow(LeapRawColor(screenPos), _LeapGammaCorrectionExponent);
+  return pow(LeapRawColor(screenPos), _LeapGlobalGammaCorrectionExponent);
 }
 
 float4 LeapColorBrightness(float4 screenPos){
-  return pow(LeapRawColorBrightness(screenPos), _LeapGammaCorrectionExponent);
+  return pow(LeapRawColorBrightness(screenPos), _LeapGlobalGammaCorrectionExponent);
 }
 
 float3 LeapRawColorWarp(float4 screenPos){
@@ -181,9 +181,9 @@ float4 LeapRawColorBrightnessWarp(float4 screenPos){
 }
 
 float3 LeapColorWarp(float4 screenPos){
-  return pow(LeapRawColorBrightnessWarp(screenPos), _LeapGammaCorrectionExponent);
+  return pow(LeapRawColorBrightnessWarp(screenPos), _LeapGlobalGammaCorrectionExponent);
 }
 
 float4 LeapColorBrightnessWarp(float4 screenPos){
-  return pow(LeapRawColorBrightnessWarp(screenPos), _LeapGammaCorrectionExponent);
+  return pow(LeapRawColorBrightnessWarp(screenPos), _LeapGlobalGammaCorrectionExponent);
 }

@@ -92,6 +92,7 @@ public class HMRConfigurationManagerEditor : Editor {
   }
 
   public override void OnInspectorGUI() {
+    serializedObject.Update();
     HMRConfigurationManager configManager = (HMRConfigurationManager)target;
     configManager.validateConfigurationsLabeled();
     EditorGUI.BeginChangeCheck();
@@ -140,18 +141,12 @@ public class HMRConfigurationManagerEditor : Editor {
 
   private void setBackgroundQuadEnabled(bool enabled) {
     Renderer backgroundQuadRenderer = _backgroundQuad.GetComponent<Renderer>();
-    LeapImageBasedMaterial backgroundQuadMatrialScript = _backgroundQuad.GetComponent<LeapImageBasedMaterial>();
 
     if (backgroundQuadRenderer == null) {
       throw new UnityEngine.MissingComponentException("The object " + _backgroundQuad.gameObject.name + " is missing a " + backgroundQuadRenderer.GetType().ToString() + " component.");
     }
 
-    if (backgroundQuadMatrialScript == null) {
-      throw new UnityEngine.MissingComponentException("The object " + _backgroundQuad.gameObject.name + " is missing a " + backgroundQuadMatrialScript.GetType().ToString() + " component.");
-    }
-
     _backgroundQuad.GetComponent<Renderer>().enabled = enabled;
-    _backgroundQuad.GetComponent<LeapImageBasedMaterial>().enabled = enabled;
 
     EditorUtility.SetDirty(_backgroundQuad);
   }

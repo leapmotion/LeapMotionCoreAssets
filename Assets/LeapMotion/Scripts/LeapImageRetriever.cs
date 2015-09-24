@@ -15,7 +15,6 @@ using Leap;
 public class LeapImageRetriever : MonoBehaviour {
   public const string IR_SHADER_VARIANT_NAME = "LEAP_FORMAT_IR";
   public const string RGB_SHADER_VARIANT_NAME = "LEAP_FORMAT_RGB";
-  public const string DEPTH_TEXTURE_VARIANT_NAME = "USE_DEPTH_TEXTURE";
   public const int IMAGE_WARNING_WAIT = 10;
 
   public enum EYE {
@@ -30,23 +29,22 @@ public class LeapImageRetriever : MonoBehaviour {
     LOW_LATENCY
   }
 
-  public EYE retrievedEye = (EYE)(-1);
-  private int frameEye = 0;
+  public EYE retrievedEye = EYE.LEFT;
+  
   [Tooltip ("Should the image match the tracked hand, or should it be displayed as fast as possible")]
-  public SYNC_MODE
-    syncMode = SYNC_MODE.SYNC_WITH_HANDS;
+  public SYNC_MODE syncMode = SYNC_MODE.SYNC_WITH_HANDS;
+
   public float gammaCorrection = 1.0f;
+  
+  public HandController handController;
+
   private int _missedImages = 0;
   private Controller _controller;
-  public HandController handController;
+  private int frameEye = 0;
 
   //ImageList to use during rendering.  Can either be updated in OnPreRender or in Update
   private ImageList _imageList;
   private Camera _cachedCamera;
-
-  //Holders for Image Based Materials
-  private static List<LeapImageBasedMaterial> _registeredImageBasedMaterials = new List<LeapImageBasedMaterial>();
-  private static List<LeapImageBasedMaterial> _imageBasedMaterialsToInit = new List<LeapImageBasedMaterial>();
 
   // Intermediate arrays
   private EyeTextureData[] _eyeTextureData = new EyeTextureData[2]; // left and right data
@@ -62,59 +60,39 @@ public class LeapImageRetriever : MonoBehaviour {
     public Image.FormatType formatType = Image.FormatType.INFRARED;
   }
 
-  public static void registerImageBasedMaterial(LeapImageBasedMaterial imageBasedMaterial) {
-    _registeredImageBasedMaterials.Add(imageBasedMaterial);
-    _imageBasedMaterialsToInit.Add(imageBasedMaterial);
-  }
-
-  public static void unregisterImageBasedMaterial(LeapImageBasedMaterial imageBasedMaterial) {
-    _registeredImageBasedMaterials.Remove(imageBasedMaterial);
-  }
-
-  private void initImageBasedMaterial(LeapImageBasedMaterial imageBasedMaterial, Image referenceImage) {
-    Material material = imageBasedMaterial.GetComponent<Renderer>().material;
-
-    switch (referenceImage.Format) {
+  private void resetGlobalShaderVariants(EyeTextureData eyeTextureData) {
+    switch (eyeTextureData.formatType) {
       case Image.FormatType.INFRARED:
-        material.EnableKeyword(IR_SHADER_VARIANT_NAME);
-        material.DisableKeyword(RGB_SHADER_VARIANT_NAME);
+        Shader.DisableKeyword(RGB_SHADER_VARIANT_NAME);
+        Shader.EnableKeyword(IR_SHADER_VARIANT_NAME);
         break;
       case (Image.FormatType)4:
-        material.EnableKeyword(RGB_SHADER_VARIANT_NAME);
-        material.DisableKeyword(IR_SHADER_VARIANT_NAME);
+        Shader.DisableKeyword(IR_SHADER_VARIANT_NAME);
+        Shader.EnableKeyword(RGB_SHADER_VARIANT_NAME);
         break;
       default:
-        Debug.LogWarning("Unexpected format type " + referenceImage.Format);
+        Debug.LogWarning("Unexpected format type " + eyeTextureData.formatType);
         break;
-    }
-
-    if (SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.Depth)) {
-      material.EnableKeyword(DEPTH_TEXTURE_VARIANT_NAME);
-    } else {
-      material.DisableKeyword(DEPTH_TEXTURE_VARIANT_NAME);
     }
   }
 
-  private void updateImageBasedMaterial(LeapImageBasedMaterial imageBasedMaterial, EyeTextureData eyeTextureData) {
-    Material material = imageBasedMaterial.cachedMaterial;
-    material.SetTexture("_LeapTexture", eyeTextureData.mainTexture);
+  private void updateGlobalShaderProperties(EyeTextureData eyeTextureData) {
+    Shader.SetGlobalTexture("_LeapGlobalTexture", eyeTextureData.mainTexture);
+    Shader.SetGlobalTexture("_LeapGlobalDistortion", eyeTextureData.distortion);
 
     Vector4 projection = new Vector4();
-
     projection.x = _cachedCamera.projectionMatrix[0, 2];
     projection.y = 0f;
     projection.z = _cachedCamera.projectionMatrix[0, 0];
     projection.w = _cachedCamera.projectionMatrix[1, 1];
-    material.SetVector("_LeapProjection", projection);
+    Shader.SetGlobalVector("_LeapGlobalProjection", projection);
 
-    imageBasedMaterial.cachedMaterial.SetFloat("_LeapGammaCorrectionExponent", 1.0f / gammaCorrection);
-
-    material.SetTexture("_LeapDistortion", eyeTextureData.distortion);
+    Shader.SetGlobalFloat("_LeapGlobalGammaCorrectionExponent", 1.0f / gammaCorrection);
 
     // Set camera parameters
-    material.SetFloat("_VirtualCameraV", _cachedCamera.fieldOfView);
-    material.SetFloat("_VirtualCameraH", Mathf.Rad2Deg * Mathf.Atan(Mathf.Tan(Mathf.Deg2Rad * _cachedCamera.fieldOfView / 2f) * _cachedCamera.aspect) * 2f);
-    material.SetMatrix("_InverseView", _cachedCamera.worldToCameraMatrix.inverse);
+    Shader.SetGlobalFloat("_LeapGlobalVirtualCameraV", _cachedCamera.fieldOfView);
+    Shader.SetGlobalFloat("_LeapGlobalVirtualCameraH", Mathf.Rad2Deg * Mathf.Atan(Mathf.Tan(Mathf.Deg2Rad * _cachedCamera.fieldOfView / 2f) * _cachedCamera.aspect) * 2f);
+    Shader.SetGlobalMatrix("_LeapGlobalInverseView", _cachedCamera.worldToCameraMatrix.inverse);
   }
 
   private TextureFormat getTextureFormat(Image image) {
@@ -159,9 +137,11 @@ public class LeapImageRetriever : MonoBehaviour {
       textureData.mainTexture = new Texture2D(image.Width, image.Height, format, false, true);
       textureData.mainTexture.wrapMode = TextureWrapMode.Clamp;
       textureData.mainTexture.filterMode = FilterMode.Bilinear;
+      textureData.formatType = image.Format;
       _mainTextureIntermediateArray = new byte[width * height * bytesPerPixel(format)];
 
-      forceReInit();
+      _forceDistortionRecalc = true;
+      resetGlobalShaderVariants(textureData);
     }
 
     Marshal.Copy(image.DataPointer(), _mainTextureIntermediateArray, 0, _mainTextureIntermediateArray.Length);
@@ -265,6 +245,12 @@ public class LeapImageRetriever : MonoBehaviour {
       return;
     }
 
+    float gamma = 1f;
+    if (QualitySettings.activeColorSpace != ColorSpace.Linear) {
+      gamma = -Mathf.Log10(Mathf.GammaToLinearSpace(0.1f));
+    }
+    Shader.SetGlobalFloat("_LeapGlobalColorSpaceGamma", gamma);
+
     _eyeTextureData[0] = new EyeTextureData();
     _eyeTextureData[1] = new EyeTextureData();
 
@@ -278,26 +264,14 @@ public class LeapImageRetriever : MonoBehaviour {
     Frame frame = _controller.Frame();
 
     _forceDistortionRecalc = false;
+    
+    //Force a distortion recalculation if a hand has entered the frame when previously there were no hands
     if (frame.Hands.Count != 0 && _controller.Frame(1).Hands.Count == 0) {
       _forceDistortionRecalc = true;
     }
 
     if (syncMode == SYNC_MODE.SYNC_WITH_HANDS) {
       _imageList = frame.Images;
-    }
-
-    //DEBUG
-    if (Input.GetKeyDown(KeyCode.Keypad0)) {
-      retrievedEye = EYE.LEFT;
-    }
-    if (Input.GetKeyDown(KeyCode.Keypad1)) {
-      retrievedEye = EYE.RIGHT;
-    }
-    if (Input.GetKeyDown(KeyCode.Keypad2)) {
-      retrievedEye = EYE.LEFT_TO_RIGHT;
-    }
-    if (Input.GetKeyDown(KeyCode.Keypad3)) {
-      retrievedEye = EYE.RIGHT_TO_LEFT;
     }
   }
 
@@ -342,27 +316,15 @@ public class LeapImageRetriever : MonoBehaviour {
     ensureMainTextureUpdated(referenceImage, eyeTextureData);
     ensureDistortionUpdated(referenceImage, eyeTextureData);
 
-    for (int i = _imageBasedMaterialsToInit.Count - 1; i >= 0; i--) {
-      LeapImageBasedMaterial material = _imageBasedMaterialsToInit[i];
-      initImageBasedMaterial(material, referenceImage);
-      _imageBasedMaterialsToInit.RemoveAt(i);
-    }
-
-    foreach (LeapImageBasedMaterial material in _registeredImageBasedMaterials) {
-      if (material.imageMode == LeapImageBasedMaterial.ImageMode.STEREO ||
-        (material.imageMode == LeapImageBasedMaterial.ImageMode.LEFT_ONLY && imageEye == 0) ||
-        (material.imageMode == LeapImageBasedMaterial.ImageMode.RIGHT_ONLY && imageEye == 1)) {
-        updateImageBasedMaterial(material, eyeTextureData);
-      }
-    }
+    updateGlobalShaderProperties(eyeTextureData);
 
     frameEye++;
   }
 
   private void forceReInit() {
-    _imageBasedMaterialsToInit.Clear();
-    _imageBasedMaterialsToInit.AddRange(_registeredImageBasedMaterials);
     _forceDistortionRecalc = true;
+
+    
   }
 
   /// <returns>The time at which the current image was recorded, in microseconds</returns>
