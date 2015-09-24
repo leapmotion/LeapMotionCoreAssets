@@ -9,9 +9,13 @@ public class RewindGameObject : MonoBehaviour {
   };
   public CameraType cameraType;
   public LeapCameraAlignment cameraAlignment;
-	
-	// this.LateUpdate must be called after cameraAlignment.lateUpdate
-  void LateUpdate () {
-    cameraAlignment.RelativeRewind (transform, (int)cameraType);
-	}
+
+  // this.LateUpdate must be called after cameraAlignment.lateUpdate
+  void LateUpdate() {
+    Vector3 rewoundPos;
+    Quaternion rewoundRot;
+    cameraAlignment.RelativeRewind((int)cameraType, out rewoundPos, out rewoundRot);
+    transform.position = rewoundPos;
+    transform.rotation = rewoundRot;
+  }
 }
