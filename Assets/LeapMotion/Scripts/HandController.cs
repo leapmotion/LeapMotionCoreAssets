@@ -44,10 +44,10 @@ public class HandController : MonoBehaviour {
   public bool separateLeftRight = false;
   /** The GameObject containing graphics to use for the left hand or both hands if separateLeftRight is false. */
   public HandModel leftGraphicsModel;
-  /** The GameObject containing colliders to use for the left hand or both hands if separateLeftRight is false. */
-  public HandModel leftPhysicsModel;
   /** The graphics hand model to use for the right hand. */
   public HandModel rightGraphicsModel;
+  /** The GameObject containing colliders to use for the left hand or both hands if separateLeftRight is false. */
+  public HandModel leftPhysicsModel;
   /** The physics hand model to use for the right hand. */
   public HandModel rightPhysicsModel;
 

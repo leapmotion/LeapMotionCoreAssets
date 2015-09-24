@@ -17,6 +17,10 @@ public class LeapImageRetriever : MonoBehaviour {
   public const string RGB_SHADER_VARIANT_NAME = "LEAP_FORMAT_RGB";
   public const int IMAGE_WARNING_WAIT = 10;
 
+  public static event Action<CameraParams> OnValidCameraParams;
+  public static event Action OnLeftPreRender;
+  public static event Action OnRightPreRender;
+
   public enum EYE {
     LEFT = 0,
     RIGHT = 1,
@@ -27,6 +31,18 @@ public class LeapImageRetriever : MonoBehaviour {
   public enum SYNC_MODE {
     SYNC_WITH_HANDS,
     LOW_LATENCY
+  }
+
+  public struct CameraParams {
+    public readonly Matrix4x4 ProjectionMatrix;
+    public readonly int Width;
+    public readonly int Height;
+
+    public CameraParams(Camera camera) {
+      ProjectionMatrix = camera.projectionMatrix;
+      Width = camera.pixelWidth;
+      Height = camera.pixelHeight;
+    }
   }
 
   public EYE retrievedEye = EYE.LEFT;
@@ -53,6 +69,8 @@ public class LeapImageRetriever : MonoBehaviour {
 
   //Used to recalculate the distortion every time a hand enters the frame.  Used because there is no way to tell if the device has flipped (which changes the distortion)
   private bool _forceDistortionRecalc = false;
+
+  private bool _hasFiredCameraParams = false;
 
   private class EyeTextureData {
     public Texture2D mainTexture = null;
@@ -284,6 +302,12 @@ public class LeapImageRetriever : MonoBehaviour {
       _imageList = _controller.Images;
     }
 
+    if (!_hasFiredCameraParams && OnValidCameraParams != null) {
+      CameraParams cameraParams = new CameraParams(_cachedCamera);
+      OnValidCameraParams(cameraParams);
+      _hasFiredCameraParams = true;
+    }
+
     int imageEye = frameEye;
     switch (retrievedEye) {
       case EYE.LEFT:
@@ -297,6 +321,17 @@ public class LeapImageRetriever : MonoBehaviour {
         break;
       default:
         break;
+    }
+
+    bool isLeft = imageEye == 0;
+    if (isLeft) {
+      if (OnLeftPreRender != null) {
+        OnLeftPreRender();
+      }
+    } else {
+      if (OnRightPreRender != null) {
+        OnRightPreRender();
+      }
     }
 
     Image referenceImage = _imageList[imageEye];
