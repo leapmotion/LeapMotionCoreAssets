@@ -4,7 +4,7 @@ using System;
 using System.Collections;
 
 [RequireComponent(typeof(Camera))]
-public class LeapCameraCorrection : MonoBehaviour {
+public class LeapCameraDisplacement : MonoBehaviour {
 
   [SerializeField]
   private LeapImageRetriever.EYE _eye = LeapImageRetriever.EYE.RIGHT;

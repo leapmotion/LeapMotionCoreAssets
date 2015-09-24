@@ -45,9 +45,9 @@ public class HMRConfigurationManagerEditor : Editor {
     }
   }
 
-  private IEnumerable<LeapCameraCorrection> _cameraCorrections {
+  private IEnumerable<LeapCameraDisplacement> _cameraCorrections {
     get {
-      return ((HMRConfigurationManager)target).GetComponentsInChildren<LeapCameraCorrection>();
+      return ((HMRConfigurationManager)target).GetComponentsInChildren<LeapCameraDisplacement>();
     }
   }
 
