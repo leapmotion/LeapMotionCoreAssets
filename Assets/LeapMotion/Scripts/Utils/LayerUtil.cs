@@ -21,14 +21,16 @@ public static class LayerUtil {
   /// <returns></returns>
   public static int GetLayerIndex(string layerName, bool allowAssignEmpty = true) {
     int index;
-    if(_nameToLayerIndex.TryGetValue(layerName, out index)){
+    if (_nameToLayerIndex.TryGetValue(layerName, out index)) {
       return index;
     }
 
     index = LayerMask.NameToLayer(layerName);
     if (index == -1 && allowAssignEmpty) {
-      index = assignLayerNewIndex(layerName);
+      index = getFreeIndex();
     }
+
+    _nameToLayerIndex[layerName] = index;
 
     return index;
   }
@@ -49,10 +51,9 @@ public static class LayerUtil {
     return 1 << index;
   }
 
-  private static int assignLayerNewIndex(string layerName) {
+  private static int getFreeIndex() {
     for (int i = 8; i < 32; i++) {
       if (LayerMask.LayerToName(i) == "" && !_nameToLayerIndex.ContainsValue(i)) {
-        _nameToLayerIndex[layerName] = i;
         return i;
       }
     }
