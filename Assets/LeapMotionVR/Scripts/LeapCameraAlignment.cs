@@ -23,8 +23,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   protected Transform rightCamera;
   [SerializeField]
   protected Transform centerCamera;
-  [System.NonSerialized]
-  public List<LeapImageBasedMaterial> warpedImages;
 
   [Header("Counter-Aligned Targets (Advanced Mode)")]
   public Transform[] counterAligned;
@@ -60,10 +58,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   public SmoothedFloat frameLatency;
   [System.NonSerialized]
   public SmoothedFloat imageLatency;
-
-  // HACK: Non-peripheral devices sometimes self-identify as peripherals
-  public bool overrideDeviceType = false;
-  public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Invalid;
 
   protected enum VRCameras {
     NONE = 0,
@@ -187,8 +181,6 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
 
   void Awake () {
-    warpedImages = new List<LeapImageBasedMaterial>();
-
     history = new List<TransformData> ();
     imageLatency = new SmoothedFloat () {
       delay = latencySmoothing
@@ -197,7 +189,6 @@ public class LeapCameraAlignment : MonoBehaviour {
     frameLatency = new SmoothedFloat () {
       delay = latencySmoothing
     };
-
   }
 
   void Start () {
@@ -260,7 +251,7 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
-    deviceInfo = (overrideDeviceType) ? new LeapDeviceInfo(overrideDeviceTypeWith) : handController.GetDeviceInfo ();
+    deviceInfo = handController.GetDeviceInfo ();
     if (deviceInfo.type == LeapDeviceType.Invalid) {
       Debug.LogWarning ("Invalid Leap Device -> enabled = false");
       enabled = false;
@@ -512,10 +503,8 @@ public class LeapCameraAlignment : MonoBehaviour {
     // Apply only a rotation ~ assume all objects are infinitely distant
     Quaternion rotateImageToNow = centerCamera.rotation * Quaternion.Inverse(past.rotation);
     Matrix4x4 ImageToNow = Matrix4x4.TRS(Vector3.zero, rotateImageToNow, Vector3.one);
-    
-    foreach (LeapImageBasedMaterial image in warpedImages) {
-      image.GetComponent<Renderer>().material.SetMatrix("_ViewerImageToNow", ImageToNow);
-    }
+
+    Shader.SetGlobalMatrix("_LeapGlobalViewerImageToNow", ImageToNow);
 
     // Counter-rotate objects to align with Time Warp
     foreach (Transform child in counterAligned) {

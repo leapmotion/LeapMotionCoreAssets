@@ -44,10 +44,10 @@ public class HandController : MonoBehaviour {
   public bool separateLeftRight = false;
   /** The GameObject containing graphics to use for the left hand or both hands if separateLeftRight is false. */
   public HandModel leftGraphicsModel;
-  /** The GameObject containing colliders to use for the left hand or both hands if separateLeftRight is false. */
-  public HandModel leftPhysicsModel;
   /** The graphics hand model to use for the right hand. */
   public HandModel rightGraphicsModel;
+  /** The GameObject containing colliders to use for the left hand or both hands if separateLeftRight is false. */
+  public HandModel leftPhysicsModel;
   /** The physics hand model to use for the right hand. */
   public HandModel rightPhysicsModel;
 
@@ -55,6 +55,7 @@ public class HandController : MonoBehaviour {
   public ToolModel toolModel;
 
   /** Set true if the Leap Motion hardware is mounted on an HMD; otherwise, leave false. */
+  [Space]
   public bool isHeadMounted = false;
   /** Reverses the z axis. */
   public bool mirrorZAxis = false;
@@ -65,8 +66,16 @@ public class HandController : MonoBehaviour {
   /** The scale factors for hand movement. Set greater than 1 to give the hands a greater range of motion. */
   public Vector3 handMovementScale = Vector3.one;
 
+  /** If enabled, do not query the controller to determine device type, but instead always return a specific device. */
+  [Space]
+  public bool overrideDeviceType = false;
+
+  /** If overrideDeviceType is enabled, the hand controller will return a device of this type. */
+  public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Peripheral;
+
   // Recording parameters.
   /** Set true to enable recording. */
+  [Space]
   public bool enableRecordPlayback = false;
   /** The file to record or playback from. */
   public TextAsset recordingAsset;
@@ -464,6 +473,10 @@ public class HandController : MonoBehaviour {
 
   /** Returns information describing the device hardware. */
   public LeapDeviceInfo GetDeviceInfo() {
+    if (overrideDeviceType) {
+      return new LeapDeviceInfo(overrideDeviceTypeWith);
+    }
+
     DeviceList devices = leap_controller_.Devices;  
     if (devices.Count == 1) {
       LeapDeviceInfo info = new LeapDeviceInfo(LeapDeviceType.Invalid);
