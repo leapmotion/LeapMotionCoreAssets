@@ -75,7 +75,7 @@ public class HandControllerEditor : Editor {
 
   public override void OnInspectorGUI() {
     serializedObject.Update();
-    SerializedProperty properties = serializedObject.GetIterator(); 
+    SerializedProperty properties = serializedObject.GetIterator();
 
     EditorGUI.BeginChangeCheck();
 
