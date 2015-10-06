@@ -40,6 +40,9 @@ public class HandController : MonoBehaviour {
   /** How much smoothing to use when calculating the FixedUpdate offset. */
   protected const float FIXED_UPDATE_OFFSET_SMOOTHING_DELAY = 0.1f;
 
+  /** There always should be exactly one main HandController in the scene, which is reffered to by the HandController.Main getter. */
+  public bool isMain = false;
+
   /** Whether to use a separate model for left and right hands (true); or mirror the same model for both hands (false). */
   public bool separateLeftRight = false;
   /** The GameObject containing graphics to use for the left hand or both hands if separateLeftRight is false. */
