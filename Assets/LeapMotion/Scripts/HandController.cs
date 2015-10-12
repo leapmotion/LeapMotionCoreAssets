@@ -55,7 +55,7 @@ public class HandController : MonoBehaviour {
   public ToolModel toolModel;
 
   /** Set true if the Leap Motion hardware is mounted on an HMD; otherwise, leave false. */
-  [Space]
+  [Space(8)]
   public bool isHeadMounted = false;
   /** Reverses the z axis. */
   public bool mirrorZAxis = false;
@@ -67,7 +67,7 @@ public class HandController : MonoBehaviour {
   public Vector3 handMovementScale = Vector3.one;
 
   /** If enabled, do not query the controller to determine device type, but instead always return a specific device. */
-  [Space]
+  [Space(8)]
   public bool overrideDeviceType = false;
 
   /** If overrideDeviceType is enabled, the hand controller will return a device of this type. */
@@ -75,7 +75,7 @@ public class HandController : MonoBehaviour {
 
   // Recording parameters.
   /** Set true to enable recording. */
-  [Space]
+  [Space(8)]
   public bool enableRecordPlayback = false;
   /** The file to record or playback from. */
   public TextAsset recordingAsset;
