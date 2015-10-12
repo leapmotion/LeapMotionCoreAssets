@@ -21,13 +21,6 @@ public class LeapImageRetriever : MonoBehaviour {
   public static event Action OnLeftPreRender;
   public static event Action OnRightPreRender;
 
-  public enum EYE {
-    LEFT = 0,
-    RIGHT = 1,
-    LEFT_TO_RIGHT = 2,
-    RIGHT_TO_LEFT = 3
-  }
-
   public enum SYNC_MODE {
     SYNC_WITH_HANDS,
     LOW_LATENCY
@@ -45,7 +38,7 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-  public EYE retrievedEye = EYE.LEFT;
+  public EyeType eyeType;
   
   [Tooltip ("Should the image match the tracked hand, or should it be displayed as fast as possible")]
   public SYNC_MODE syncMode = SYNC_MODE.SYNC_WITH_HANDS;
@@ -218,15 +211,7 @@ public class LeapImageRetriever : MonoBehaviour {
 
 #if UNITY_EDITOR
   void Reset() {
-    string lowercaseName = gameObject.name.ToLower();
-    if (lowercaseName.Contains("right")) {
-      retrievedEye = EYE.RIGHT;
-    } else if (lowercaseName.Contains("left")) {
-      retrievedEye = EYE.LEFT;
-    } else {
-      retrievedEye = EYE.LEFT_TO_RIGHT;
-    }
-
+    eyeType = new EyeType(gameObject.name);
     handController = FindObjectOfType<HandController>();
   }
 
@@ -298,6 +283,8 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   void OnPreRender() {
+    eyeType.BeginCamera();
+
     if (syncMode == SYNC_MODE.LOW_LATENCY) {
       _imageList = _controller.Images;
     }
@@ -308,34 +295,18 @@ public class LeapImageRetriever : MonoBehaviour {
       _hasFiredCameraParams = true;
     }
 
-    int imageEye = frameEye;
-    switch (retrievedEye) {
-      case EYE.LEFT:
-        imageEye = 0;
-        break;
-      case EYE.RIGHT:
-        imageEye = 1;
-        break;
-      case EYE.RIGHT_TO_LEFT:
-        imageEye = 1 - imageEye;
-        break;
-      default:
-        break;
-    }
+    int imageIndex;
 
-    bool isLeft = imageEye == 0;
-    if (isLeft) {
-      if (OnLeftPreRender != null) {
-        OnLeftPreRender();
-      }
+    if (eyeType.IsLeftEye) {
+      imageIndex = 0;
+      if (OnLeftPreRender != null) OnLeftPreRender();
     } else {
-      if (OnRightPreRender != null) {
-        OnRightPreRender();
-      }
+      imageIndex = 1;
+      if (OnRightPreRender != null) OnRightPreRender();
     }
 
-    Image referenceImage = _imageList[imageEye];
-    EyeTextureData eyeTextureData = _eyeTextureData[imageEye];
+    Image referenceImage = _imageList[imageIndex];
+    EyeTextureData eyeTextureData = _eyeTextureData[imageIndex];
 
     if (referenceImage.Width == 0 || referenceImage.Height == 0) {
       _missedImages++;

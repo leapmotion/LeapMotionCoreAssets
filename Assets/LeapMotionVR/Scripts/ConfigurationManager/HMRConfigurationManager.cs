@@ -21,16 +21,6 @@ public class HMRConfigurationManager : MonoBehaviour {
   public Camera _centerCamera;
   public LeapCameraAlignment _aligner;
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
-
   public void validateConfigurationsLabeled() {
     validateEnoughConfigurations();
     string[] enumNames = System.Enum.GetNames(typeof(HMRConfiguration));

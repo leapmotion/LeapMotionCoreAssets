@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Serialization;
 using System.Collections;
 
 [System.Serializable]
@@ -16,13 +17,10 @@ public struct LMHeadMountedRigConfiguration  {
   private HandModel _rightHandGraphicsModel;
 
   [SerializeField]
-  private bool _enableLeftAndRightCameras;
+  private bool _seperateLeftRightCameras;
 
   [SerializeField]
-  private bool _enableLeftAndRightImageRetrievers;
-  
-  [SerializeField]
-  private bool _enableCenterCamera;
+  private bool _enableImageRetrievers;
 
   [SerializeField]
   private int _cameraClearFlags;
@@ -31,10 +29,7 @@ public struct LMHeadMountedRigConfiguration  {
   private float _tweenTimewarp;
 
   [SerializeField]
-  private float _tweenPosition;
-
-  [SerializeField]
-  private float _tweenForward;
+  private bool _overrideCameraPos;
 
   public string configurationName { 
     get { return _configurationName; }
@@ -43,30 +38,26 @@ public struct LMHeadMountedRigConfiguration  {
   public bool enableBackgroundQuad { get { return _enableBackgroundQuad; } }
   public HandModel leftHandGraphicsModel { get { return _leftHandGraphicsModel; } }
   public HandModel rightHandGraphicsModel { get { return _rightHandGraphicsModel; } }
-  public bool enableLeftAndRightCameras { get { return _enableLeftAndRightCameras; } }
-  public bool enableLeftAndRightImageRetrievers { get { return _enableLeftAndRightImageRetrievers; } }
-  public bool enableCenterCamera { get { return _enableCenterCamera; } }
+  public bool seperateLeftRightCameras { get { return _seperateLeftRightCameras; } }
+  public bool enableImageRetrievers { get { return _enableImageRetrievers; } }
   public int cameraClearFlags { get { return _cameraClearFlags; } }
   public float tweenTimewarp { get { return _tweenTimewarp; } }
-  public float tweenPosition { get { return _tweenPosition; } }
-  public float tweenForward { get { return _tweenForward; } }
+  public bool overrideEyePos { get { return _overrideCameraPos; } }
 
   public LMHeadMountedRigConfiguration(
     string name,
     bool backgroundQuad, 
     HandModel leftHandModel, HandModel rightHandModel,
-    bool leftAndRightCameras, bool leftAndRightImageRetrievers, bool centerCamera, int clearFlags,
-    float timewarp, float position, float forward) {
+    bool seperateLeftRightCameras, bool enableImageRetrievers, bool centerCamera, int clearFlags,
+    float timewarp, bool overrideCameraPos) {
       _configurationName = name;
       _enableBackgroundQuad = backgroundQuad;
       _leftHandGraphicsModel = leftHandModel;
       _rightHandGraphicsModel = rightHandModel;
-      _enableLeftAndRightCameras = leftAndRightCameras;
-      _enableLeftAndRightImageRetrievers = leftAndRightImageRetrievers;
-      _enableCenterCamera = centerCamera;
+      _seperateLeftRightCameras = seperateLeftRightCameras;
+      _enableImageRetrievers = enableImageRetrievers;
       _cameraClearFlags = clearFlags;
       _tweenTimewarp = timewarp;
-      _tweenPosition = position;
-      _tweenForward = forward;
+      _overrideCameraPos = overrideCameraPos;
   }
 }

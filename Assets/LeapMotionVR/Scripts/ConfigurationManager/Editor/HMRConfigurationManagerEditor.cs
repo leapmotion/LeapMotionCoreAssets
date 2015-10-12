@@ -76,6 +76,17 @@ public class HMRConfigurationManagerEditor : Editor {
     return camera;
   }
 
+  private LeapCameraDisplacement getCameraDisplacementForEye(UnityEngine.VR.VRNode eyeNode) {
+    Camera cameraForEye = getCameraObjectForEye(eyeNode);
+    LeapCameraDisplacement displacement = cameraForEye.GetComponent<LeapCameraDisplacement>();
+
+    if (displacement == null) {
+      displacement = cameraForEye.gameObject.AddComponent<LeapCameraDisplacement>();
+    }
+
+    return displacement;
+  }
+
   private LeapImageRetriever getImageRetreiverForEye(UnityEngine.VR.VRNode eyeNode) {
     Camera cameraForEye = getCameraObjectForEye(eyeNode);
     LeapImageRetriever imageRetrieverForEye = cameraForEye.gameObject.GetComponent<LeapImageRetriever>();
@@ -129,13 +140,12 @@ public class HMRConfigurationManagerEditor : Editor {
 
     setBackgroundQuadEnabled(configuration.enableBackgroundQuad);
     setGraphicsModels(configuration.leftHandGraphicsModel, configuration.rightHandGraphicsModel);
-    setLeftAndRightCamerasEnabled(configuration.enableLeftAndRightCameras);
-    setLeftAndRightImageRetrieversEnabled(configuration.enableLeftAndRightImageRetrievers);
-    setCenterCameraEnabled(configuration.enableCenterCamera);
+
+    setupCameraObjects(configuration.seperateLeftRightCameras);
+    setImageRetrieversEnabled(configuration.enableImageRetrievers);
     setCameraClearFlags((CameraClearFlags)configuration.cameraClearFlags);
     setTimewarp(configuration.tweenTimewarp);
-    setPosition(configuration.tweenPosition);
-    setForward(configuration.tweenForward);
+    setOverrideEyes(configuration.overrideEyePos);
     Debug.Log("Switched to configuration: " + configuration.configurationName);
   }
 
@@ -157,6 +167,20 @@ public class HMRConfigurationManagerEditor : Editor {
     EditorUtility.SetDirty(_handController);
   }
 
+  private void setupCameraObjects(bool seperateLeftRightCameras) {
+    GameObject left = getCameraObjectForEye(UnityEngine.VR.VRNode.LeftEye).gameObject;
+    GameObject right = getCameraObjectForEye(UnityEngine.VR.VRNode.RightEye).gameObject;
+    GameObject center = getCameraObjectForEye(UnityEngine.VR.VRNode.CenterEye).gameObject;
+
+    left.SetActive(seperateLeftRightCameras);
+    right.SetActive(seperateLeftRightCameras);
+    center.SetActive(!seperateLeftRightCameras);
+
+    EditorUtility.SetDirty(left);
+    EditorUtility.SetDirty(right);
+    EditorUtility.SetDirty(center);
+  }
+
   private void setLeftAndRightCamerasEnabled(bool enabled) {
     Camera left = getCameraObjectForEye(UnityEngine.VR.VRNode.LeftEye);
     Camera right = getCameraObjectForEye(UnityEngine.VR.VRNode.RightEye);
@@ -168,20 +192,17 @@ public class HMRConfigurationManagerEditor : Editor {
     EditorUtility.SetDirty(right);
   }
 
-  private void setLeftAndRightImageRetrieversEnabled(bool enabled) {
+  private void setImageRetrieversEnabled(bool enabled) {
     LeapImageRetriever left = getImageRetreiverForEye(UnityEngine.VR.VRNode.LeftEye);
-    LeapImageRetriever right = getImageRetreiverForEye(UnityEngine.VR.VRNode.RightEye);  
+    LeapImageRetriever right = getImageRetreiverForEye(UnityEngine.VR.VRNode.RightEye);
+    LeapImageRetriever center = getImageRetreiverForEye(UnityEngine.VR.VRNode.CenterEye);  
     
     left.enabled = enabled;
     right.enabled = enabled;
+    center.enabled = enabled;
 
     EditorUtility.SetDirty(left);
     EditorUtility.SetDirty(right);
-  }
-
-  private void setCenterCameraEnabled(bool enabled) {
-    Camera center = getCameraObjectForEye(UnityEngine.VR.VRNode.CenterEye);
-    center.enabled = enabled;
     EditorUtility.SetDirty(center);
   }
 
@@ -204,14 +225,18 @@ public class HMRConfigurationManagerEditor : Editor {
     EditorUtility.SetDirty(_aligner);
   }
 
-  private void setPosition(float value) {
-    //_aligner.tweenPosition = value;
-    EditorUtility.SetDirty(_aligner);
-  }
+  private void setOverrideEyes(bool overrideEyes) {
+    LeapCameraDisplacement left = getCameraDisplacementForEye(UnityEngine.VR.VRNode.LeftEye);
+    LeapCameraDisplacement right = getCameraDisplacementForEye(UnityEngine.VR.VRNode.RightEye);
+    LeapCameraDisplacement center = getCameraDisplacementForEye(UnityEngine.VR.VRNode.CenterEye);
 
-  private void setForward(float value) {
-    //_aligner.tweenForward = value;
-    EditorUtility.SetDirty(_aligner);
+    left.OverrideEyePosition = overrideEyes;
+    right.OverrideEyePosition = overrideEyes;
+    center.OverrideEyePosition = overrideEyes;
+
+    EditorUtility.SetDirty(left);
+    EditorUtility.SetDirty(right);
+    EditorUtility.SetDirty(center);
   }
 
   private LMHeadMountedRigConfiguration deserializeHeadMountedRig(SerializedProperty headMountedRigProperty) {
