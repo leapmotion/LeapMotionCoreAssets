@@ -3,7 +3,7 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 
-[CustomEditor(typeof(LeapCameraAlignment))]
+[CustomEditor(typeof(LeapTemporalWarping))]
 public class LeapCameraAlignmentEditor : Editor {
 
   private List<string> BasicModePropertyNames = new List<string>() {

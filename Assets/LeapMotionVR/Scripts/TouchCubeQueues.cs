@@ -13,7 +13,7 @@ using System.Collections.Generic;
 /// </remarks>
 public class TouchCubeQueues : MonoBehaviour {
   public KeyCode queueKey = KeyCode.Return;
-  public LeapCameraAlignment alignment;
+  public LeapTemporalWarping alignment;
   public GameObject headMount;
   [Header("Messages")]
   public GameObject helpMenuCanvas;

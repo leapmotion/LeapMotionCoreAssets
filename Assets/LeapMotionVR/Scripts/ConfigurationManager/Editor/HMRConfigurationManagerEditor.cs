@@ -5,12 +5,12 @@ using System.Collections.Generic;
 
 [CustomEditor(typeof(HMRConfigurationManager))]
 public class HMRConfigurationManagerEditor : Editor {
-  private LeapCameraAlignment _cachedAligner;
+  private LeapTemporalWarping _cachedAligner;
 
-  private LeapCameraAlignment _aligner {
+  private LeapTemporalWarping _aligner {
     get {
       if (_cachedAligner == null) {
-        _cachedAligner = ((HMRConfigurationManager)target).GetComponentInChildren<LeapCameraAlignment>();
+        _cachedAligner = ((HMRConfigurationManager)target).GetComponentInChildren<LeapTemporalWarping>();
 
         if (_cachedAligner == null) {
           throw new UnityEngine.MissingComponentException("Cannot find LeapCameraAlignment component in children of " + ((HMRConfigurationManager)target).gameObject.name);

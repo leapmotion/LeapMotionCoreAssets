@@ -8,7 +8,7 @@ using Leap;
 /// <summary>
 /// Implements spatial alignment of cameras and synchronization with images
 /// </summary>
-public class LeapCameraAlignment : MonoBehaviour {
+public class LeapTemporalWarping : MonoBehaviour {
 
   private const long MAX_LATENCY = 200000;
 

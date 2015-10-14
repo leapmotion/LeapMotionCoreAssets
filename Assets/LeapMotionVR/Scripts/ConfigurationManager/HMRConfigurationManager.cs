@@ -19,7 +19,7 @@ public class HMRConfigurationManager : MonoBehaviour {
   public Camera _leftCamera;
   public Camera _rightCamera;
   public Camera _centerCamera;
-  public LeapCameraAlignment _aligner;
+  public LeapTemporalWarping _aligner;
 
   public void validateConfigurationsLabeled() {
     validateEnoughConfigurations();

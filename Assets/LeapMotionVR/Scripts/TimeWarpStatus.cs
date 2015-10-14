@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 
 public class TimeWarpStatus : MonoBehaviour {
-  public LeapCameraAlignment cameraAlignment;
+  public LeapTemporalWarping cameraAlignment;
 
   protected Text textField;
 
