@@ -12,7 +12,7 @@ public class LeapTemporalWarping : MonoBehaviour {
 
   private const long MAX_LATENCY = 200000;
 
-  public enum RewindAnchor {
+  public enum WarpedAnchor {
     CENTER,
     LEFT,
     RIGHT,
@@ -91,26 +91,31 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   /// <summary>
-  /// Provides the position of a Leap Anchor at the time the current Images were taken.
+  /// Provides the position of a Leap Anchor at a given Leap Time.  Cannot extrapolate.
   /// </summary>
-  public void GetRewoundTransform(RewindAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation) {
-    TransformData past = TransformAtTime(getLatestImageTimestamp() - rewindAdjust);
+  public void GetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation, long leapTime) {
+    TransformData past = TransformAtTime(leapTime);
 
     // Rewind position and rotation
     rewoundLocalRotation = past.localRotation;
     rewoundLocalPosition = past.localPosition + past.localRotation * Vector3.forward * deviceInfo.focalPlaneOffset;
 
     switch (anchor) {
-      case RewindAnchor.CENTER: return;
-      case RewindAnchor.LEFT:
+      case WarpedAnchor.CENTER: return;
+      case WarpedAnchor.LEFT:
         rewoundLocalPosition += past.localRotation * Vector3.left * deviceInfo.baseline * 0.5f;
         return;
-      case RewindAnchor.RIGHT:
+      case WarpedAnchor.RIGHT:
         rewoundLocalPosition += past.localRotation * Vector3.right * deviceInfo.baseline * 0.5F;
         return;
       default:
         throw new Exception("Unexpected Rewind Type " + anchor);
     }
+  }
+
+  
+  public void GetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation) {
+    GetWarpedTransform(anchor, out rewoundLocalPosition, out rewoundLocalRotation, getLatestImageTimestamp() - rewindAdjust);
   }
 
   protected void Start() {
