@@ -221,7 +221,7 @@ public class HMRConfigurationManagerEditor : Editor {
   }
 
   private void setTimewarp(float value) {
-    _aligner.tweenTimeWarp = value;
+    //_aligner.tweenTimeWarp = value;
     EditorUtility.SetDirty(_aligner);
   }
 
@@ -255,12 +255,14 @@ public class HMRConfigurationManagerEditor : Editor {
 
     Debug.Log("deserilized clear flag: " + clearFlags.ToString() + " : " + (int)clearFlags);
 
+    return new LMHeadMountedRigConfiguration();
+    /*
     return new LMHeadMountedRigConfiguration(
       configurationName,
       enableBackgroundQuad,
       leftHandGraphicsModel, rightHandGraphicsModel,
       enableLeftAndRightCameras, enableLeftAndRightImageRetrievers,
       enableCenterCamera, (int)clearFlags,
-      tweenTimewarp, tweenPosition, tweenForward);
+      tweenTimewarp, tweenPosition, tweenForward); */
   }
 }

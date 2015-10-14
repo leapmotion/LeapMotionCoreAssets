@@ -24,6 +24,7 @@ public class TouchCubeQueues : MonoBehaviour {
   private LeapCameraDisplacement[] _cameraCorrectionScripts;
   private int demoStage = 0;
 
+  /*
   void Start () {
     _cameraCorrectionScripts = FindObjectsOfType<LeapCameraDisplacement>();
     ResetState ();
@@ -84,4 +85,5 @@ public class TouchCubeQueues : MonoBehaviour {
     setOverrideIPD(true);
     setPushForward(true);
   }
+   */
 }
