@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.VR;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Leap;
@@ -8,55 +9,14 @@ using Leap;
 /// Implements spatial alignment of cameras and synchronization with images
 /// </summary>
 public class LeapCameraAlignment : MonoBehaviour {
-  protected LeapImageRetriever imageRetriever;
-  protected HandController handController;
 
-  // Spatial recalibration
-  [Header("HMD Realignment")]
-  [SerializeField]
-  protected KeyCode recenter = KeyCode.R;
+  private const long MAX_LATENCY = 200000;
 
-  [Header("Alignment Targets (Advanced Mode)")]
-  [SerializeField]
-  protected Camera leftCamera;
-  [SerializeField]
-  protected Camera rightCamera;
-  [SerializeField]
-  protected Camera centerCamera;
-
-  [Header("Counter-Aligned Targets (Advanced Mode)")]
-  public Transform[] counterAligned;
-
-  [Header("Alignment Settings (Advanced Mode)")]
-
-  [Range(0, 2)]
-  public float tweenTimeWarp = 0f;
-
-  // Manual Time Alignment
-  [SerializeField]
-  private bool _allowManualTimeAlignment;
-  [SerializeField]
-  protected KeyCode unlockHold = KeyCode.RightShift;
-  [SerializeField]
-  protected KeyCode moreRewind = KeyCode.LeftArrow;
-  [SerializeField]
-  protected KeyCode lessRewind = KeyCode.RightArrow;
-  [System.NonSerialized]
-  public float rewindAdjust = 0f; //Frame fraction
-
-  // Automatic Time Alignment
-  public float latencySmoothing = 1f; //State delay in seconds
-  [System.NonSerialized]
-  public SmoothedFloat frameLatency;
-  [System.NonSerialized]
-  public SmoothedFloat imageLatency;
-
-  protected enum VRCameras {
-    NONE = 0,
-    CENTER = 1,
-    LEFT_RIGHT = 2
+  public enum RewindAnchor {
+    CENTER,
+    LEFT,
+    RIGHT,
   }
-  protected VRCameras hasCameras = VRCameras.NONE;
 
   protected struct UserEyeAlignment {
     public bool use;
@@ -65,12 +25,10 @@ public class LeapCameraAlignment : MonoBehaviour {
     public float eyeHeight;
   }
 
-  protected UserEyeAlignment eyeAlignment;
-
   protected struct TransformData {
     public long leapTime; // microseconds
-    public Vector3 position; //meters
-    public Quaternion rotation;
+    public Vector3 localPosition; //meters
+    public Quaternion localRotation;
 
     public static TransformData Lerp(TransformData from, TransformData to, long time) {
       if (from.leapTime == to.leapTime) {
@@ -79,187 +37,93 @@ public class LeapCameraAlignment : MonoBehaviour {
       float fraction = (float)(time - from.leapTime) / (float)(to.leapTime - from.leapTime);
       return new TransformData() {
         leapTime = time,
-        position = Vector3.Lerp(from.position, to.position, fraction),
-        rotation = Quaternion.Slerp(from.rotation, to.rotation, fraction)
+        localPosition = Vector3.Lerp(from.localPosition, to.localPosition, fraction),
+        localRotation = Quaternion.Slerp(from.localRotation, to.localRotation, fraction)
       };
     }
   }
 
-  private long lastFrame = 0;
-  private long maxLatency = 200000; //microseconds
-  protected List<TransformData> history;
+  // Spatial recalibration
+  [SerializeField]
+  private KeyCode recenter = KeyCode.R;
 
-  protected LeapDeviceInfo deviceInfo;
+  [Tooltip("Transforms that should be counter-rotated to match with the Time warp that is applied.  These should be direct children of the VR tracking space.")]
+  [SerializeField]
+  private Transform[] counterWarped;
 
-  private long _latestImageTimestamp {
-    get {
-      if (imageRetriever != null) {
-        return imageRetriever.ImageNow();
-      } else if (handController != null) {
-        ImageList images = handController.GetFrame().Images;
-        if (images.Count > 0) {
-          return images[0].Timestamp;
+  [Tooltip("Allows smooth enabling or disabling of the Time-warp feature.  Feature is completely enabled at 1, and completely disabled at 0.")]
+  [Range(0, 1)]
+  [SerializeField]
+  private float tweenTimeWarp = 0f;
+
+  // Manual Time Alignment
+  [Tooltip("Allow manual adjustment of the rewind time.")]
+  [SerializeField]
+  private bool allowManualTimeAlignment;
+
+  [SerializeField]
+  private KeyCode unlockHold = KeyCode.RightShift;
+
+  [SerializeField]
+  private KeyCode moreRewind = KeyCode.LeftArrow;
+
+  [SerializeField]
+  private KeyCode lessRewind = KeyCode.RightArrow;
+
+  private HandController handController;
+  private LeapDeviceInfo deviceInfo;
+  private UserEyeAlignment eyeAlignment;
+
+  private List<TransformData> history = new List<TransformData>();
+  private long rewindAdjust = 0; //Miliseconds
+
+  private long getLatestImageTimestamp() {
+    using (ImageList list = handController.GetFrame().Images) {
+      if (list.Count > 0) {
+        using (Image image = list[0]) {
+          return image.Timestamp;
         }
+      } else {
+        Debug.LogWarning("Could not find any images!");
+        return 0;
       }
-
-      Debug.LogWarning("Could not calculate valid timestamp. Returning 0.");
-      return 0;
     }
   }
 
   /// <summary>
-  /// Estimates the transform of this gameObject at the specified time
+  /// Provides the position of a Leap Anchor at the time the current Images were taken.
   /// </summary>
-  /// <returns>
-  /// A transform with leapTime == time only if interpolation was possible
-  /// </returns>
-  protected TransformData TransformAtTime(long time) {
-    if (history.Count < 1) {
-      Debug.LogWarning("NO HISTORY!");
-      return new TransformData() {
-        leapTime = 0,
-        position = Vector3.zero,
-        rotation = Quaternion.identity
-      };
-    }
-    if (history[0].leapTime >= time) {
-      // Expect this when using LOW LATENCY image retrieval, which can yield negative latency estimates due to incorrect clock synchronization
-      //if (history [0].leapTime > time) Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
-      return history[0];
-    }
-    int t = 1;
-    while (t < history.Count &&
-           history[t].leapTime <= time) {
-      t++;
-    }
-    if (!(t < history.Count)) {
-      // Expect this for initial frames which will have a very low frame rate
-      if (history[history.Count - 1].leapTime < time) Debug.LogWarning("NO INTERPOLATION: Using most recent time = " + history[history.Count - 1].leapTime + " < time = " + time);
-      return history[history.Count - 1];
-    }
-
-    return TransformData.Lerp(history[t - 1], history[t], time);
-  }
-
-  /// <summary>
-  /// Rewinds position of target relative to most recent point in history
-  /// </summary>
-  /// <remarks>
-  /// This method applies the same time difference logic using for time alignment,
-  /// but ignores the tweening settings
-  /// </remarks>
-  /// <param name="isLeftCenterRight">
-  /// Applies a left camera alignment if < 0,
-  /// applies a right camera alignment if > 0, 
-  /// and applies no alignment if == 0.
-  /// </param>
-  public void RelativeRewind(int isLeftCenterRight, out Vector3 rewoundPosition, out Quaternion rewoundRotation) {
-    TransformData past = TransformAtTime(_latestImageTimestamp - (long)(rewindAdjust * frameLatency.value));
+  public void GetRewoundTransform(RewindAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation) {
+    TransformData past = TransformAtTime(getLatestImageTimestamp() - rewindAdjust);
 
     // Rewind position and rotation
-    rewoundRotation = past.rotation;
-    rewoundPosition = past.position + past.rotation * Vector3.forward * deviceInfo.focalPlaneOffset;
+    rewoundLocalRotation = past.localRotation;
+    rewoundLocalPosition = past.localPosition + past.localRotation * Vector3.forward * deviceInfo.focalPlaneOffset;
 
-    if (isLeftCenterRight < 0) {
-      // Apply the left camera alignment
-      rewoundPosition += past.rotation * Vector3.left * deviceInfo.baseline * 0.5f;
-    }
-    if (isLeftCenterRight > 0) {
-      // Apply the right camera alignment
-      rewoundPosition += past.rotation * Vector3.right * deviceInfo.baseline * 0.5f;
-    }
-  }
-
-  /// <summary>
-  /// If we are using a single center eye, leftEye and rightEye will both be assigned to centerEye.
-  /// Otherwise the left camera will be assigned to leftEye, and the right camera will be assigned
-  /// to rightEye
-  /// </summary>
-  /// <param name="leftEye"></param>
-  /// <param name="rightEye"></param>
-  public void GetLeftRightConsistant(out Camera leftEye, out Camera rightEye) {
-    switch (hasCameras) {
-      case VRCameras.CENTER:
-        leftEye = centerCamera;
-        rightEye = centerCamera;
-        break;
-      case VRCameras.LEFT_RIGHT:
-        leftEye = leftCamera;
-        rightEye = rightCamera;
-        break;
-      case VRCameras.NONE:
-        leftEye = null;
-        rightEye = null;
-        break;
+    switch (anchor) {
+      case RewindAnchor.CENTER: return;
+      case RewindAnchor.LEFT:
+        rewoundLocalPosition += past.localRotation * Vector3.left * deviceInfo.baseline * 0.5f;
+        return;
+      case RewindAnchor.RIGHT:
+        rewoundLocalPosition += past.localRotation * Vector3.right * deviceInfo.baseline * 0.5F;
+        return;
       default:
-        throw new System.Exception("Unexpected VRCameras type " + hasCameras);
+        throw new Exception("Unexpected Rewind Type " + anchor);
     }
   }
 
-  public Camera GetCenterEye() {
-    return centerCamera;
-  }
-
-  void Awake() {
-    history = new List<TransformData>();
-    imageLatency = new SmoothedFloat() {
-      delay = latencySmoothing
-    };
-
-    frameLatency = new SmoothedFloat() {
-      delay = latencySmoothing
-    };
-  }
-
-  void Start() {
+  protected void Start() {
     HandController[] allControllers = FindObjectsOfType<HandController>();
     foreach (HandController controller in allControllers) {
       if (controller.isActiveAndEnabled) {
         handController = controller;
+        break;
       }
     }
+
     if (handController == null) {
       Debug.LogWarning("Camera alignment requires an active HandController in the scene -> enabled = false");
-      enabled = false;
-      return;
-    }
-
-    if (centerCamera != null && centerCamera.isActiveAndEnabled) {
-      hasCameras = VRCameras.CENTER;
-    } else if (leftCamera != null && leftCamera.isActiveAndEnabled &&
-               rightCamera != null && rightCamera.isActiveAndEnabled) {
-      hasCameras = VRCameras.LEFT_RIGHT;
-    } else {
-      hasCameras = VRCameras.NONE;
-      Debug.LogWarning("Either a central Camera for both eyes, or a Left and Right cameras must be referenced -> enabled = false");
-      enabled = false;
-      return;
-    }
-
-    LeapImageRetriever[] allRetrievers = FindObjectsOfType<LeapImageRetriever>();
-    foreach (LeapImageRetriever retriever in allRetrievers) {
-      if (retriever.isActiveAndEnabled) {
-        imageRetriever = retriever;
-      }
-    }
-    /*if (imageRetriever == null) {
-      Debug.LogWarning ("Camera alignment requires an active LeapImageRetriever in the scene -> enabled = false");
-      enabled = false;
-      return;
-    }*/
-
-
-
-    if (transform.parent == null) {
-      Debug.LogWarning("Alignment requires a parent object to define the location of the player in the world. enabled -> false");
-      enabled = false;
-      return;
-    }
-
-    if (transform != leftCamera.transform.parent ||
-        transform != centerCamera.transform.parent ||
-        transform != rightCamera.transform.parent) {
-      Debug.LogWarning("LeapCameraAlignment must be a component of the parent of the camera tranasforms -> enabled = false");
       enabled = false;
       return;
     }
@@ -271,44 +135,71 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
-    if (VRDevice.isPresent &&
-        VRSettings.loadedDevice == VRDeviceType.Oculus) {
-      eyeAlignment = new UserEyeAlignment() {
-        use = true,
-        ipd = OVRPlugin.ipd,
-        eyeDepth = OVRPlugin.eyeDepth,
-        eyeHeight = OVRPlugin.eyeHeight
-      };
-      Debug.Log("Unity VR Support with Oculus");
-    } else {
-      eyeAlignment = new UserEyeAlignment() {
-        use = false,
-        ipd = 0f,
-        eyeDepth = 0f,
-        eyeHeight = 0f
-      };
-      Debug.Log("Two-camera stereoscopic alignment");
-    }
+    disallowPeripheralTimewarp();
   }
 
-  void Update() {
-    disallowPeripheralTimewarp();
+  protected void Update() {
+    if (Input.GetKeyDown(recenter)) {
+      InputTracking.Recenter();
+    }
 
-    if (_allowManualTimeAlignment) {
-      if (unlockHold == KeyCode.None ||
-          Input.GetKey(unlockHold)) {
-        // Manual Time Alignment
+    // Manual Time Alignment
+    if (allowManualTimeAlignment) {
+      if (unlockHold == KeyCode.None || Input.GetKey(unlockHold)) {
         if (Input.GetKeyDown(moreRewind)) {
-          rewindAdjust += 0.1f;
+          rewindAdjust += 1;
         }
         if (Input.GetKeyDown(lessRewind)) {
-          rewindAdjust -= 0.1f;
+          rewindAdjust -= 1;
         }
       }
     }
+  }
 
-    if (Input.GetKeyDown(recenter)) {
-      InputTracking.Recenter();
+  //We use LateUpdate because it is the last time we can modify the transforms of objects
+  protected void LateUpdate() {
+    UpdateHistory();
+    UpdateTimeWarp();
+  }
+
+  private void UpdateHistory() {
+    // Add current position and rotation to history
+    // NOTE: history.Add can be retrieved as history[history.Count-1]
+    long lastFrame = 0;
+    if (history.Count >= 1) {
+      lastFrame = history[history.Count - 1].leapTime;
+    }
+
+    long leapNow = handController.GetLeapController().Now();
+
+    history.Add(new TransformData() {
+      leapTime = leapNow,
+      localPosition = InputTracking.GetLocalPosition(VRNode.CenterEye),
+      localRotation = InputTracking.GetLocalRotation(VRNode.CenterEye)
+    });
+
+    // Reduce history length
+    while (history.Count > 0 &&
+           MAX_LATENCY < leapNow - history[0].leapTime) {
+      history.RemoveAt(0);
+    }
+  }
+
+  private void UpdateTimeWarp() {
+    long latestTime = history[history.Count - 1].leapTime;
+    long rewindTime = getLatestImageTimestamp() - rewindAdjust;
+    long lerpedTime = longLerp(latestTime, rewindTime, tweenTimeWarp);
+    TransformData past = TransformAtTime(lerpedTime);
+
+    // Apply only a rotation ~ assume all objects are infinitely distant
+    Quaternion rotateImageToNow = InputTracking.GetLocalRotation(VRNode.CenterEye) * Quaternion.Inverse(past.localRotation);
+    Matrix4x4 ImageToNow = Matrix4x4.TRS(Vector3.zero, rotateImageToNow, Vector3.one);
+
+    Shader.SetGlobalMatrix("_LeapGlobalViewerImageToNow", ImageToNow);
+
+    // Counter-rotate objects to align with Time Warp
+    foreach (Transform child in counterWarped) {
+      child.localRotation = Quaternion.Inverse(rotateImageToNow);
     }
   }
 
@@ -322,121 +213,42 @@ public class LeapCameraAlignment : MonoBehaviour {
     }
   }
 
-  // IMPORTANT: This method MUST be called after OVRManager.LateUpdate.
-  // FIXME Use EnableUpdateOrdering script to ensure correct call order -> Declare relative script ordering
-  void LateUpdate() {
-    if (!(IsFinite(leftCamera.transform.position) && IsFinite(leftCamera.transform.rotation) &&
-          IsFinite(centerCamera.transform.position) && IsFinite(centerCamera.transform.rotation) &&
-          IsFinite(rightCamera.transform.position) && IsFinite(rightCamera.transform.rotation))) {
-      // Uninitialized camera positions
-      Debug.LogWarning("Uninitialized transforms -> skip alignment");
-      return;
+  /// <summary>
+  /// Estimates the transform of this gameObject at the specified time
+  /// </summary>
+  /// <returns>
+  /// A transform with leapTime == time only if interpolation was possible
+  /// </returns>
+  private TransformData TransformAtTime(long time) {
+    if (history.Count == 0) {
+      return new TransformData() {
+        leapTime = 0,
+        localPosition = Vector3.zero,
+        localRotation = Quaternion.identity
+      };
     }
 
-    // IMPORTANT: UpdateHistory must happen first, before any transforms are modified.
-    UpdateHistory();
+    if (history[0].leapTime >= time) {
+      // Expect this when using LOW LATENCY image retrieval, which can yield negative latency estimates due to incorrect clock synchronization
+      //if (history [0].leapTime > time) Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
+      return history[0];
+    }
 
-    UpdateTimeWarp();
+    int t = 1;
+    while (t < history.Count &&
+           history[t].leapTime <= time) {
+      t++;
+    }
+
+    if (!(t < history.Count)) {
+      // Expect this for initial frames which will have a very low frame rate
+      return history[history.Count - 1];
+    }
+
+    return TransformData.Lerp(history[t - 1], history[t], time);
   }
 
-  void UpdateHistory() {
-    if (eyeAlignment.use) {
-      // Revert the tracking space transform
-      transform.localPosition = Vector3.zero;
-      transform.localRotation = Quaternion.identity;
-      transform.localScale = Vector3.one;
-    }
-
-    // Add current position and rotation to history
-    // NOTE: history.Add can be retrieved as history[history.Count-1]
-    if (history.Count >= 1) {
-      lastFrame = history[history.Count - 1].leapTime;
-    } else {
-      lastFrame = 0;
-    }
-    long timeFrame = handController.GetLeapController().Now();
-    switch (hasCameras) {
-      case VRCameras.CENTER:
-        history.Add(new TransformData() {
-          leapTime = timeFrame,
-          position = centerCamera.transform.position,
-          rotation = centerCamera.transform.rotation
-        });
-        break;
-      case VRCameras.LEFT_RIGHT:
-        history.Add(new TransformData() {
-          leapTime = timeFrame,
-          position = Vector3.Lerp(leftCamera.transform.position, rightCamera.transform.position, 0.5f),
-          rotation = Quaternion.Slerp(leftCamera.transform.rotation, rightCamera.transform.rotation, 0.5f)
-        });
-        break;
-      default: //case VRCameras.NONE:
-        history.Add(new TransformData() {
-          leapTime = timeFrame,
-          position = Vector3.zero,
-          rotation = Quaternion.identity
-        });
-        break;
-    }
-
-    // Update smoothed averages of latency and frame rate
-    long deltaFrame = timeFrame - lastFrame;
-    long deltaImage = timeFrame - _latestImageTimestamp;
-    if (deltaFrame + deltaImage < maxLatency) {
-      frameLatency.Update((float)deltaFrame, Time.deltaTime);
-      imageLatency.Update((float)deltaImage, Time.deltaTime);
-      //Debug.Log ("Leap deltaTime = " + ((float)deltaTime / 1000f) + " ms");
-      //Debug.Log ("Unity deltaTime = " + (Time.deltaTime * 1000f) + " ms");
-      // RESULT: Leap & Unity deltaTime measurements are consistent within error tolerance.
-      // Leap deltaTime will be used, since it references the same clock as images.
-    } else {
-      // Expect high latency during initial frames or after pausing
-      //Debug.Log("Maximum latency exceeded: " + ((float)(deltaFrame + deltaImage) / 1000f) + " ms -> reset latency estimates");
-      frameLatency.value = 0f;
-      imageLatency.value = 0f;
-      frameLatency.reset = true;
-      imageLatency.reset = true;
-    }
-
-    // Reduce history length
-    while (history.Count > 0 &&
-           maxLatency < timeFrame - history[0].leapTime) {
-      //Debug.Log ("Removing oldest from history.Count = " + history.Count);
-      history.RemoveAt(0);
-    }
-  }
-
-  void UpdateTimeWarp() {
-    long latestTime = history[history.Count - 1].leapTime;
-    long rewindTime = _latestImageTimestamp - (long)(rewindAdjust * frameLatency.value);
-    long tweenAddition = (long)((1f - tweenTimeWarp) * (float)(latestTime - rewindTime));
-    TransformData past = TransformAtTime(rewindTime + tweenAddition);
-
-    // Apply only a rotation ~ assume all objects are infinitely distant
-    Quaternion rotateImageToNow = centerCamera.transform.rotation * Quaternion.Inverse(past.rotation);
-    Matrix4x4 ImageToNow = Matrix4x4.TRS(Vector3.zero, rotateImageToNow, Vector3.one);
-
-    Shader.SetGlobalMatrix("_LeapGlobalViewerImageToNow", ImageToNow);
-
-    // Counter-rotate objects to align with Time Warp
-    foreach (Transform child in counterAligned) {
-      child.localRotation = Quaternion.Inverse(rotateImageToNow);
-    }
-  }
-
-  bool IsFinite(float f) {
-    return !(float.IsInfinity(f) || float.IsNaN(f));
-  }
-
-  bool IsFinite(Vector3 v) {
-    return IsFinite(v.x) && IsFinite(v.y) && IsFinite(v.z);
-  }
-
-  bool IsFinite(Quaternion q) {
-    return IsFinite(q.w) && IsFinite(q.x) && IsFinite(q.y) && IsFinite(q.z);
-  }
-
-  bool IsFinite(TransformData t) {
-    return IsFinite(t.position) && IsFinite(t.rotation);
+  private long longLerp(long a, long b, float percent) {
+    return a + (long)((b - a) * percent);
   }
 }

@@ -17,6 +17,7 @@ public class LeapImageRetriever : MonoBehaviour {
   public const string RGB_SHADER_VARIANT_NAME = "LEAP_FORMAT_RGB";
   public const int IMAGE_WARNING_WAIT = 10;
 
+  public static event Action<long> OnGrabImages;
   public static event Action<CameraParams> OnValidCameraParams;
   public static event Action OnLeftPreRender;
   public static event Action OnRightPreRender;
@@ -275,6 +276,11 @@ public class LeapImageRetriever : MonoBehaviour {
 
     if (syncMode == SYNC_MODE.SYNC_WITH_HANDS) {
       _imageList = frame.Images;
+      if (_imageList.Count != 0) {
+        using (Image image = _imageList[0]) {
+          OnGrabImages(image.Timestamp);
+        }
+      }
     }
   }
 
@@ -287,6 +293,11 @@ public class LeapImageRetriever : MonoBehaviour {
 
     if (syncMode == SYNC_MODE.LOW_LATENCY) {
       _imageList = _controller.Images;
+      if (_imageList.Count != 0) {
+        using (Image image = _imageList[0]) {
+          OnGrabImages(image.Timestamp);
+        }
+      }
     }
 
     if (!_hasFiredCameraParams && OnValidCameraParams != null) {
@@ -329,26 +340,5 @@ public class LeapImageRetriever : MonoBehaviour {
 
   private void forceReInit() {
     _forceDistortionRecalc = true;
-
-    
-  }
-
-  /// <returns>The time at which the current image was recorded, in microseconds</returns>
-  public long ImageNow() {
-    if (_imageList == null) {
-      Debug.LogWarning("Images have not been initialized -> defaulting to LeapNow");
-      return LeapNow();
-    }
-
-    if (_imageList.IsEmpty) {
-      Debug.LogWarning("ImageNow has no images -> defaulting to LeapNow");
-      return LeapNow();
-    }
-    return _imageList[0].Timestamp;
-  }
-
-  /// <returns>The current time using the same clock as GetImageNow</returns>
-  public long LeapNow() {
-    return _controller.Now();
   }
 }

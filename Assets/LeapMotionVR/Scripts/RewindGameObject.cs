@@ -14,7 +14,7 @@ public class RewindGameObject : MonoBehaviour {
   void LateUpdate() {
     Vector3 rewoundPos;
     Quaternion rewoundRot;
-    cameraAlignment.RelativeRewind((int)cameraType, out rewoundPos, out rewoundRot);
+    cameraAlignment.GetRewoundTransform((int)cameraType, out rewoundPos, out rewoundRot);
     transform.position = rewoundPos;
     transform.rotation = rewoundRot;
   }

@@ -108,6 +108,9 @@ public class HandController : MonoBehaviour {
   protected Dictionary<int, ToolModel> tools_;
 
   private bool flag_initialized_ = false;
+  private int curr_frame_count = -1;
+  private Frame curr_frame = null;
+
   private long prev_graphics_id_ = 0;
   private long prev_physics_id_ = 0;
 
@@ -359,7 +362,13 @@ public class HandController : MonoBehaviour {
     if (enableRecordPlayback && (recorder_.state == RecorderState.Playing || recorder_.state == RecorderState.Paused))
       return recorder_.GetCurrentFrame();
 
-    return leap_controller_.Frame();
+    //Ensure that we update curr_frame every Update cycle.  curr_frame stays the same until the next Update.
+    if (curr_frame == null || curr_frame_count != Time.frameCount) {
+      curr_frame = leap_controller_.Frame();
+      curr_frame_count = Time.frameCount;
+    }
+
+    return curr_frame;
   }
 
   /**
@@ -414,13 +423,16 @@ public class HandController : MonoBehaviour {
 
       //If we reach an invalid frame, terminate the search
       if (!historyFrame.IsValid) {
+        historyFrame.Dispose();
         break;
       }
 
       if (Mathf.Abs(historyFrame.Timestamp - correctedTimestamp) < Mathf.Abs(closestFrame.Timestamp - correctedTimestamp)) {
+        closestFrame.Dispose();
         closestFrame = historyFrame;
       } else {
         //Since frames are always reported in order, we can terminate the search once we stop finding a closer frame
+        historyFrame.Dispose();
         break;
       }
     }
