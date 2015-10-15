@@ -6,6 +6,10 @@ using System.Collections;
 [RequireComponent(typeof(Camera))]
 public class LeapCameraDisplacement : MonoBehaviour {
 
+  //Called whenever the center camera is assigned it's final transform for the current frame.
+  public static event Action<Transform> OnFinalCenterCamera;
+  private static bool _hasDispatchedFinalCenterCameraEvent = false;
+
   [SerializeField]
   private EyeType _eyeType;
 
@@ -38,6 +42,10 @@ public class LeapCameraDisplacement : MonoBehaviour {
     _deviceInfo = new LeapDeviceInfo(LeapDeviceType.Dragonfly);
   }
 
+  void Update() {
+    _hasDispatchedFinalCenterCameraEvent = false;
+  }
+
   void OnPreCull() {
 #if UNITY_EDITOR
     if (!Application.isPlaying) {
@@ -48,6 +56,11 @@ public class LeapCameraDisplacement : MonoBehaviour {
     _preRenderIndex = 0;
     _camera.ResetWorldToCameraMatrix();
     _finalCenterMatrix = _camera.worldToCameraMatrix;
+
+    if (!_hasDispatchedFinalCenterCameraEvent && OnFinalCenterCamera != null) {
+      OnFinalCenterCamera(transform);
+      _hasDispatchedFinalCenterCameraEvent = true;
+    }
   }
 
   void OnPreRender() {
@@ -66,7 +79,8 @@ public class LeapCameraDisplacement : MonoBehaviour {
       offsetMatrix = _finalCenterMatrix;
       Vector3 ipdOffset = (_eyeType.IsLeftEye ? 1 : -1) * transform.right * _deviceInfo.baseline * 0.5f;
       Vector3 forwardOffset = -transform.forward * _deviceInfo.focalPlaneOffset;
-      offsetMatrix *= Matrix4x4.TRS(ipdOffset + forwardOffset, Quaternion.identity, Vector3.one);
+      offsetMatrix *= Matrix4x4.TRS(ipdOffset, Quaternion.identity, Vector3.one);
+      offsetMatrix *= Matrix4x4.TRS(forwardOffset, Quaternion.identity, Vector3.one);
     } else {
       offsetMatrix = _camera.worldToCameraMatrix;
     }
