@@ -155,17 +155,20 @@ public class HandController : MonoBehaviour {
 
 #if UNITY_EDITOR
   void Reset() {
+    //If we have been reset, the default should be to make ourselves main if there are no others that are main
     HandController[] controllers = Resources.FindObjectsOfTypeAll<HandController>();
     for (int i = 0; i < controllers.Length; i++) {
       HandController other = controllers[i];
       if (other == this) continue;
       if (UnityEditor.PrefabUtility.GetPrefabType(other.gameObject) == UnityEditor.PrefabType.Prefab) continue;
 
+      //If we find another Hand Controller that is already main, we don't need to make ourselves main
       if (other.isMain) {
         return;
       }
     }
 
+    //Make ourselves the main Hand Controller since we found no others that were main.
     isMain = true;
     UnityEditor.EditorUtility.SetDirty(this);
   }
@@ -177,10 +180,15 @@ public class HandController : MonoBehaviour {
         return;
       }
 
+      //We are going to loop through all other Hand Controllers and make them not the main Hand Controller
       HandController[] controllers = Resources.FindObjectsOfTypeAll<HandController>();
       for (int i = 0; i < controllers.Length; i++) {
         HandController other = controllers[i];
+
+        //We ignore ourselves
         if (other == this) continue;
+
+        //We ignore any Hand Controller on a prefab (FindObjectsOfTypeAll gets prefabs too!)
         if (UnityEditor.PrefabUtility.GetPrefabType(other.gameObject) == UnityEditor.PrefabType.Prefab) continue;
 
         if (other.isMain) {
