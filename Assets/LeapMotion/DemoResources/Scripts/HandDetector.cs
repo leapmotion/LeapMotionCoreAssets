@@ -4,8 +4,6 @@ using Leap;
 
 public class HandDetector : MonoBehaviour {
 
-  public HandController leap_controller_;
-
   HandModel GetHand(Collider other)
   {
     HandModel hand_model = null;
@@ -47,7 +45,7 @@ public class HandDetector : MonoBehaviour {
     if (hand_model != null)
     {
       int handID = hand_model.GetLeapHand().Id;
-      HandModel[] hand_models = leap_controller_.GetAllGraphicsHands();
+      HandModel[] hand_models = HandController.Main.GetAllGraphicsHands();
       for (int i = 0; i < hand_models.Length; ++i)
       {
         if (hand_models[i].GetLeapHand().Id == handID)

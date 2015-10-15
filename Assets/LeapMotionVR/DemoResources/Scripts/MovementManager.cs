@@ -3,7 +3,6 @@ using System.Collections;
 
 public class MovementManager : MonoBehaviour {
   public GameObject leapMotionOVRController = null;
-  public HandController handController = null;
 
   [Range(1.0f, 100.0f)]
   public float _mouseLookSensitivity;
@@ -31,17 +30,17 @@ public class MovementManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void LateUpdate () {
-    if (leapMotionOVRController == null || handController == null)
+    if (leapMotionOVRController == null || HandController.Main == null)
       return;
 
     // Move forward if both palms are facing outwards! Whoot!
-    HandModel[] hands = handController.GetAllGraphicsHands();
+    HandModel[] hands = HandController.Main.GetAllGraphicsHands();
     if (hands.Length > 1)
     {
-      Vector3 direction0 = (hands[0].GetPalmPosition() - handController.transform.position).normalized;
+      Vector3 direction0 = (hands[0].GetPalmPosition() - HandController.Main.transform.position).normalized;
       Vector3 normal0 = hands[0].GetPalmNormal().normalized;
 
-      Vector3 direction1 = (hands[1].GetPalmPosition() - handController.transform.position).normalized;
+      Vector3 direction1 = (hands[1].GetPalmPosition() - HandController.Main.transform.position).normalized;
       Vector3 normal1 = hands[1].GetPalmNormal().normalized;
 
       if (Vector3.Dot(direction0, normal0) > direction0.sqrMagnitude * 0.5f && Vector3.Dot(direction1, normal1) > direction1.sqrMagnitude * 0.5f)

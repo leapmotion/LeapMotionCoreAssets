@@ -6,8 +6,6 @@ using System.Collections.Generic;
 public class QuickSwitcher : MonoBehaviour {
 
 	public bool m_enabled = false;
-  [SerializeField]
-  private HandController m_handController;
 	[SerializeField]
 	private float m_minProgressToStartTransition;
 	[SerializeField]
@@ -93,7 +91,7 @@ public class QuickSwitcher : MonoBehaviour {
 		m_lastLockedState = TransitionState.ON;
 		m_from = m_startPosition;
 		m_to = m_wipeOutPosition;
-    m_handController.gameObject.SetActive(false);
+    HandController.Main.gameObject.SetActive(false);
 	}
 
 	private void onOffPosition() {
@@ -102,7 +100,7 @@ public class QuickSwitcher : MonoBehaviour {
 		m_lastLockedState = TransitionState.OFF;
 		m_from = m_wipeOutPosition;
 		m_to = m_startPosition;
-    m_handController.gameObject.SetActive(true);
+    HandController.Main.gameObject.SetActive(true);
 	}
 
 	public void TweenToOnPosition() {

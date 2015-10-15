@@ -13,16 +13,10 @@ public class RecordingControls : MonoBehaviour {
   public KeyCode pausePlaybackKey = KeyCode.P;
   public KeyCode stopPlaybackKey = KeyCode.S;
 
-  private HandController _controller;
-
-  void Start() {
-    _controller = FindObjectOfType<HandController>();
-  }
-
   void Update() {
     if (controlsGui != null) controlsGui.text = header + "\n";
 
-    switch (_controller.GetLeapRecorder().state) {
+    switch (HandController.Main.GetLeapRecorder().state) {
       case RecorderState.Recording:
         allowEndRecording();
         break;
@@ -44,8 +38,8 @@ public class RecordingControls : MonoBehaviour {
   private void allowBeginRecording() {
     if (controlsGui != null) controlsGui.text += beginRecordingKey + " - Begin Recording\n";
     if (Input.GetKeyDown(beginRecordingKey)) {
-      _controller.ResetRecording();
-      _controller.Record();
+      HandController.Main.ResetRecording();
+      HandController.Main.Record();
       recordingGui.text = "";
     }
   }
@@ -53,14 +47,14 @@ public class RecordingControls : MonoBehaviour {
   private void allowBeginPlayback() {
     if (controlsGui != null) controlsGui.text += beginPlaybackKey + " - Begin Playback\n";
     if (Input.GetKeyDown(beginPlaybackKey)) {
-      _controller.PlayRecording();
+      HandController.Main.PlayRecording();
     }
   }
 
   private void allowEndRecording() {
     if (controlsGui != null) controlsGui.text += endRecordingKey + " - End Recording\n";
     if (Input.GetKeyDown(endRecordingKey)) {
-      string savedPath = _controller.FinishAndSaveRecording();
+      string savedPath = HandController.Main.FinishAndSaveRecording();
       recordingGui.text = "Recording saved to:\n" + savedPath;
     }
   }
@@ -68,14 +62,14 @@ public class RecordingControls : MonoBehaviour {
   private void allowPausePlayback() {
     if (controlsGui != null) controlsGui.text += pausePlaybackKey + " - Pause Playback\n";
     if (Input.GetKeyDown(pausePlaybackKey)) {
-      _controller.PauseRecording();
+      HandController.Main.PauseRecording();
     }
   }
 
   private void allowStopPlayback() {
     if (controlsGui != null) controlsGui.text += stopPlaybackKey + " - Stop Playback\n";
     if (Input.GetKeyDown(stopPlaybackKey)) {
-      _controller.StopRecording();
+      HandController.Main.StopRecording();
     }
   }
 }
