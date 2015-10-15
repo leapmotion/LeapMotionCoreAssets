@@ -160,6 +160,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   protected void LateUpdate() {
+    updateHistory();
     updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
   }
 
@@ -179,6 +180,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   private void onFinalCenterCamera(Transform centerCamera) {
+    updateHistory();
     updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
   }
 
