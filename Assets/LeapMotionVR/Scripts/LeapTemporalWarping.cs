@@ -207,9 +207,9 @@ public class LeapTemporalWarping : MonoBehaviour {
     Quaternion referenceRotation = Quaternion.Slerp(centerEyeRotation, past.localRotation, tweenTimeWarp);
     Quaternion rotateImageToNow = centerEyeRotation * Quaternion.Inverse(referenceRotation);
 
-    Matrix4x4 ImageToNow = Matrix4x4.TRS(Vector3.zero, rotateImageToNow, Vector3.one);
+    Matrix4x4 ImageToNow = Matrix4x4.TRS(Vector3.zero, rotateImageToNow, Vector3.one).inverse;
 
-    Shader.SetGlobalMatrix("_LeapGlobalViewerImageToNow", ImageToNow);
+    Shader.SetGlobalMatrix("_LeapGlobalWarpedOffset", ImageToNow);
 
     transform.rotation = referenceRotation;
   }

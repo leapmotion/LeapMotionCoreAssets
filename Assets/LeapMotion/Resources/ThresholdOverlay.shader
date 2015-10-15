@@ -44,9 +44,10 @@
     uniform float _Fade;
 
     float4 frag (frag_in i) : COLOR {
-      float4 colorBrightness = LeapRawColorBrightnessWarp(i.screenPos);
-      float alpha = _Fade * smoothstep(_Min, _Max, colorBrightness.a);
-      return float4(pow(colorBrightness.rgb, _LeapGlobalGammaCorrectionExponent)*alpha, alpha);
+      float3 color = LeapColor(i.screenPos);
+      float brightness = LeapBrightness(i.screenPos);
+      float alpha = _Fade * smoothstep(_Min, _Max, brightness);
+      return float4(color, alpha);
     }
 
     ENDCG
