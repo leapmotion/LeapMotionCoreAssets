@@ -63,11 +63,6 @@ public class LeapImageRetriever : MonoBehaviour {
 
   private int _missedImages = 0;
   private Controller _controller;
-  private int frameEye = 0;
-
-  //ImageList to use during rendering.  Can either be updated in OnPreRender or in Update
-  private ImageList _imageList;
-  private ImageList _rawImageList;
   private Camera _cachedCamera;
 
   private EyeTextureData[] _eyeTextureData = new EyeTextureData[2]; // left and right data
@@ -283,70 +278,71 @@ public class LeapImageRetriever : MonoBehaviour {
     _controller.SetPolicy(Controller.PolicyFlag.POLICY_IMAGES);
   }
 
-  void Update() {
-    if (_controller == null) {
-      return;
-    }
-
-    Frame frame = _controller.Frame();
-
-    if (syncMode == SYNC_MODE.SYNC_WITH_HANDS) {
-      _imageList = frame.Images;
-      _rawImageList = frame.RawImages;
-    }
-  }
-
   void OnPreCull() {
-    frameEye = 0;
+    eyeType.Reset();
   }
 
   void OnPreRender() {
     eyeType.BeginCamera();
 
-    if (syncMode == SYNC_MODE.LOW_LATENCY) {
-      _imageList = _controller.Images;
-      _rawImageList = _controller.RawImages;
+    ImageList mainList, rawList;
+    switch (syncMode) {
+      case SYNC_MODE.LOW_LATENCY:
+        mainList = _controller.Images;
+        rawList = _controller.RawImages;
+        break;
+      case SYNC_MODE.SYNC_WITH_HANDS:
+        mainList = HandController.Main.GetFrame().Images;
+        rawList = HandController.Main.GetFrame().RawImages;
+        break;
+      default:
+        throw new Exception("Unexpected Sync Mode " + syncMode + "!");
     }
 
-    if (_imageList == null || _imageList.Count == 0 || _rawImageList == null || _rawImageList.Count == 0) {
-      _missedImages++;
-      if (_missedImages == IMAGE_WARNING_WAIT) {
-        Debug.LogWarning("Can't find any images. " +
-          "Make sure you enabled 'Allow Images' in the Leap Motion Settings, " +
-          "you are on tracking version 2.1+ and " +
-          "your Leap Motion device is plugged in.");
+    using(mainList)
+    using(rawList){
+      if (mainList == null || mainList.Count == 0 || rawList == null || rawList.Count == 0) {
+        _missedImages++;
+        if (_missedImages == IMAGE_WARNING_WAIT) {
+          Debug.LogWarning("Can't find any images. " +
+            "Make sure you enabled 'Allow Images' in the Leap Motion Settings, " +
+            "you are on tracking version 2.1+ and " +
+            "your Leap Motion device is plugged in.");
+        }
+        return;
       }
-      return;
+
+      if (!_hasFiredCameraParams && OnValidCameraParams != null) {
+        CameraParams cameraParams = new CameraParams(_cachedCamera);
+        OnValidCameraParams(cameraParams);
+        _hasFiredCameraParams = true;
+      }
+
+      int imageIndex;
+
+      if (eyeType.IsLeftEye) {
+        imageIndex = 0;
+        if (OnLeftPreRender != null) OnLeftPreRender();
+      } else {
+        imageIndex = 1;
+        if (OnRightPreRender != null) OnRightPreRender();
+      }
+
+      using(Image referenceImage = mainList[imageIndex])
+      using (Image referenceRawImage = rawList[imageIndex]) {
+        EyeTextureData eyeTextureData = _eyeTextureData[imageIndex];
+
+        if (eyeTextureData.CheckStale(referenceImage, referenceRawImage)) {
+          eyeTextureData.Reconstruct(referenceImage, referenceRawImage);
+        }
+
+        eyeTextureData.UpdateTextures(referenceImage, referenceRawImage);
+
+        updateGlobalShaderProperties(eyeTextureData);
+      }
     }
 
-    if (!_hasFiredCameraParams && OnValidCameraParams != null) {
-      CameraParams cameraParams = new CameraParams(_cachedCamera);
-      OnValidCameraParams(cameraParams);
-      _hasFiredCameraParams = true;
-    }
-
-    int imageIndex;
-
-    if (eyeType.IsLeftEye) {
-      imageIndex = 0;
-      if (OnLeftPreRender != null) OnLeftPreRender();
-    } else {
-      imageIndex = 1;
-      if (OnRightPreRender != null) OnRightPreRender();
-    }
-
-    Image referenceImage = _imageList[imageIndex];
-    Image referenceRawImage = _rawImageList[imageIndex];
-    EyeTextureData eyeTextureData = _eyeTextureData[imageIndex];
-
-    if (eyeTextureData.CheckStale(referenceImage, referenceRawImage)) {
-      eyeTextureData.Reconstruct(referenceImage, referenceRawImage);
-    }
-
-    eyeTextureData.UpdateTextures(referenceImage, referenceRawImage);
-
-    updateGlobalShaderProperties(eyeTextureData);
-
-    frameEye++;
+    mainList.Dispose();
+    rawList.Dispose();
   }
 }
