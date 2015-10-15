@@ -235,7 +235,7 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   private void updateGlobalShaderProperties(EyeTextureData eyeTextureData) {
-    Shader.SetGlobalTexture("_LeapGlobalMainTexture", eyeTextureData.mainTexture.texture);
+    Shader.SetGlobalTexture("_LeapGlobalBrightnessTexture", eyeTextureData.mainTexture.texture);
     Shader.SetGlobalTexture("_LeapGlobalDistortion", eyeTextureData.distortion.texture);
 
     if (eyeTextureData.rawTexture.texture != null) {
