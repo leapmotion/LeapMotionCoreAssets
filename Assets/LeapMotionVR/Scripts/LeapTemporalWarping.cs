@@ -185,7 +185,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   private void updateTimeWarp(Quaternion centerEyeRotation) {
     //Get the transform at the time when the latest image was captured
     long rewindTime = 0;
-    if (!tryLatestImageTimestamp(out rewindAdjust)) {
+    if (!tryLatestImageTimestamp(out rewindTime)) {
       return;
     }
 
