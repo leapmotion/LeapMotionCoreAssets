@@ -18,13 +18,6 @@ public class LeapTemporalWarping : MonoBehaviour {
     RIGHT,
   }
 
-  protected struct UserEyeAlignment {
-    public bool use;
-    public float ipd;
-    public float eyeDepth;
-    public float eyeHeight;
-  }
-
   protected struct TransformData {
     public long leapTime; // microseconds
     public Vector3 localPosition; //meters
@@ -67,7 +60,6 @@ public class LeapTemporalWarping : MonoBehaviour {
   private KeyCode lessRewind = KeyCode.RightArrow;
 
   private LeapDeviceInfo deviceInfo;
-  private UserEyeAlignment eyeAlignment;
 
   private List<TransformData> history = new List<TransformData>();
   private long rewindAdjust = 0; //Miliseconds
