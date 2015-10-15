@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 [CustomEditor(typeof(LeapTemporalWarping))]
-public class LeapCameraAlignmentEditor : Editor {
+public class LeapTemporalWarpingEditor : Editor {
 
   private List<string> BasicModePropertyNames = new List<string>() {
     "m_Script",

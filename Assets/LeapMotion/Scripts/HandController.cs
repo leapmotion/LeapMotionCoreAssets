@@ -54,6 +54,7 @@ public class HandController : MonoBehaviour {
   public bool isMain = false;
 
   /** Whether to use a separate model for left and right hands (true); or mirror the same model for both hands (false). */
+  [Space(8)]
   public bool separateLeftRight = false;
   /** The GameObject containing graphics to use for the left hand or both hands if separateLeftRight is false. */
   public HandModel leftGraphicsModel;

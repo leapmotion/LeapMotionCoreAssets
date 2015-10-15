@@ -59,7 +59,7 @@ public class LeapImageRetriever : MonoBehaviour {
   private Color32[] _distortionIntermediateArray = null;
 
   //Used to recalculate the distortion every time a hand enters the frame.  Used because there is no way to tell if the device has flipped (which changes the distortion)
-  private bool _forceDistortionRecalc = false;
+  private bool _shouldReinitDistortion = false;
 
   private bool _hasFiredCameraParams = false;
 
@@ -149,7 +149,7 @@ public class LeapImageRetriever : MonoBehaviour {
       textureData.formatType = image.Format;
       _mainTextureIntermediateArray = new byte[width * height * bytesPerPixel(format)];
 
-      _forceDistortionRecalc = true;
+      _shouldReinitDistortion = true;
       resetGlobalShaderVariants(textureData);
     }
 
@@ -174,24 +174,24 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   private void ensureDistortionUpdated(Image image, EyeTextureData textureData) {
-    int width = image.DistortionWidth / 2;
-    int height = image.DistortionHeight;
+    if (textureData.distortion == null || textureData.formatType != image.Format) {
+      _shouldReinitDistortion = true;
+    }
 
-    if (textureData.distortion == null || textureData.distortion.width != width || textureData.distortion.height != height || textureData.formatType != image.Format) {
+    if (_shouldReinitDistortion) {
+      int width = image.DistortionWidth / 2;
+      int height = image.DistortionHeight;
+
       if (textureData.distortion != null) {
         DestroyImmediate(textureData.distortion);
       }
 
       _distortionIntermediateArray = new Color32[width * height];
       textureData.distortion = new Texture2D(width, height, TextureFormat.RGBA32, false, true);
+      textureData.distortion.filterMode = FilterMode.Bilinear;
       textureData.distortion.wrapMode = TextureWrapMode.Clamp;
-
       textureData.formatType = image.Format;
 
-      _forceDistortionRecalc = true;
-    }
-
-    if (_forceDistortionRecalc) {
       float[] distortionData = image.Distortion;
 
       // Move distortion data to distortion texture
@@ -239,13 +239,6 @@ public class LeapImageRetriever : MonoBehaviour {
     }
 
     Frame frame = _controller.Frame();
-
-    _forceDistortionRecalc = false;
-    
-    //Force a distortion recalculation if a hand has entered the frame when previously there were no hands
-    if (frame.Hands.Count != 0 && _controller.Frame(1).Hands.Count == 0) {
-      _forceDistortionRecalc = true;
-    }
 
     if (syncMode == SYNC_MODE.SYNC_WITH_HANDS) {
       _imageList = frame.Images;
@@ -302,6 +295,6 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   private void forceReInit() {
-    _forceDistortionRecalc = true;
+    _shouldReinitDistortion = true;
   }
 }
