@@ -4,6 +4,7 @@
 * Available at http://www.apache.org/licenses/LICENSE-2.0.html                 *
 \******************************************************************************/
 using UnityEngine;
+using UnityEngine.Rendering;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -34,14 +35,18 @@ public class LeapImageRetriever : MonoBehaviour {
     public CameraParams(Camera camera) {
       ProjectionMatrix = camera.projectionMatrix;
 
-      if (SystemInfo.graphicsDeviceVersion.ToLower().Contains("direct3d")) {
-        for (int i = 0; i < 4; i++) {
-          ProjectionMatrix[1, i] = -ProjectionMatrix[1, i];
-        }
-        // Scale and bias from OpenGL -> D3D depth range
-        for (int i = 0; i < 4; i++) {
-          ProjectionMatrix[2, i] = ProjectionMatrix[2, i] * 0.5f + ProjectionMatrix[3, i] * 0.5f;
-        }
+      switch (SystemInfo.graphicsDeviceType) {
+        case GraphicsDeviceType.Direct3D9:
+        case GraphicsDeviceType.Direct3D11:
+        case GraphicsDeviceType.Direct3D12:
+          for (int i = 0; i < 4; i++) {
+            ProjectionMatrix[1, i] = -ProjectionMatrix[1, i];
+          }
+          // Scale and bias from OpenGL -> D3D depth range
+          for (int i = 0; i < 4; i++) {
+            ProjectionMatrix[2, i] = ProjectionMatrix[2, i] * 0.5f + ProjectionMatrix[3, i] * 0.5f;
+          }
+          break;
       }
 
       Width = camera.pixelWidth;
