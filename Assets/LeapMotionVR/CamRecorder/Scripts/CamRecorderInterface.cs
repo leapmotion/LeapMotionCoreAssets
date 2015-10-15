@@ -25,7 +25,6 @@ public class CamRecorderInterface : MonoBehaviour {
 
   public bool m_enableFrameTimeStamp = true;
   public Text frameTimeStamp;
-  public HandController handController;
 
   public bool showFrameTimeStamp {
     get {
@@ -131,8 +130,8 @@ public class CamRecorderInterface : MonoBehaviour {
     }
 
     if (showFrameTimeStamp &&
-        handController != null) {
-      frameTimeStamp.text = handController.GetFrame().Id.ToString();
+        HandController.Main != null) {
+          frameTimeStamp.text = HandController.Main.GetFrame().Id.ToString();
     }
   }
 }

@@ -19,10 +19,9 @@ public class HandCycler : MonoBehaviour {
   }
 
   protected void SetNewHands() {
-    HandController controller = GetComponent<HandController>();
-    controller.leftGraphicsModel = leftHands[hand_index_];
-    controller.rightGraphicsModel = rightHands[hand_index_];
-    controller.DestroyAllHands();
+    HandController.Main.leftGraphicsModel = leftHands[hand_index_];
+    HandController.Main.rightGraphicsModel = rightHands[hand_index_];
+    HandController.Main.DestroyAllHands();
   }
 
   void OnGUI() {

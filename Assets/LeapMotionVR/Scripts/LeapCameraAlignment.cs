@@ -9,7 +9,6 @@ using Leap;
 /// </summary>
 public class LeapCameraAlignment : MonoBehaviour {
   protected LeapImageRetriever imageRetriever;
-  protected HandController handController;
 
   // Spatial recalibration
   [Header("HMD Realignment")]
@@ -103,10 +102,8 @@ public class LeapCameraAlignment : MonoBehaviour {
     get {
       if (imageRetriever != null) {
         return imageRetriever.ImageNow();
-      }
-
-      else if (handController != null) {
-        ImageList images = handController.GetFrame().Images;
+      } else if (HandController.Main != null) {
+        ImageList images = HandController.Main.GetFrame().Images;
         if (images.Count > 0) {
           return images[0].Timestamp;
         }
@@ -192,14 +189,8 @@ public class LeapCameraAlignment : MonoBehaviour {
   }
 
   void Start () {
-    HandController[] allControllers = FindObjectsOfType<HandController> ();
-    foreach (HandController controller in allControllers) {
-      if (controller.isActiveAndEnabled) {
-        handController = controller;
-      }
-    }
-    if (handController == null) {
-      Debug.LogWarning ("Camera alignment requires an active HandController in the scene -> enabled = false");
+    if (HandController.Main == null) {
+      Debug.LogWarning ("Camera alignment could not find a Main HandController in the scene -> enabled = false");
       enabled = false;
       return;
     }
@@ -251,7 +242,7 @@ public class LeapCameraAlignment : MonoBehaviour {
       return;
     }
 
-    deviceInfo = handController.GetDeviceInfo ();
+    deviceInfo = HandController.Main.GetDeviceInfo();
     if (deviceInfo.type == LeapDeviceType.Invalid) {
       Debug.LogWarning ("Invalid Leap Device -> enabled = false");
       enabled = false;
@@ -303,7 +294,7 @@ public class LeapCameraAlignment : MonoBehaviour {
   /// Temporary solution until timecodes on peripheral is fixed.
   /// </summary>
   private void disallowPeripheralTimewarp() {
-    DeviceList devices = handController.GetLeapController().Devices;
+    DeviceList devices = HandController.Main.GetLeapController().Devices;
     if (devices.Count > 0 && devices[0].Type == Device.DeviceType.TYPE_PERIPHERAL) {
       tweenTimeWarp = 0;
     }
@@ -344,7 +335,7 @@ public class LeapCameraAlignment : MonoBehaviour {
     } else {
       lastFrame = 0;
     }
-    long timeFrame = handController.GetLeapController().Now();
+    long timeFrame = HandController.Main.GetLeapController().Now();
     switch (hasCameras) {
     case VRCameras.CENTER:
       history.Add (new TransformData () {
