@@ -54,7 +54,7 @@ public class RecordingControls : MonoBehaviour {
   private void allowEndRecording() {
     if (controlsGui != null) controlsGui.text += endRecordingKey + " - End Recording\n";
     if (Input.GetKeyDown(endRecordingKey)) {
-      string savedPath = _controller.FinishAndSaveRecording();
+      string savedPath = HandController.Main.FinishAndSaveRecording();
       recordingGui.text = "Recording saved to:\n" + savedPath;
     }
   }
