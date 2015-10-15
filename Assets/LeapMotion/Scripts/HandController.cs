@@ -5,6 +5,7 @@
 \******************************************************************************/
 
 using UnityEngine;
+using System.Linq;
 using System.Collections.Generic;
 using Leap;
 
@@ -28,6 +29,16 @@ using Leap;
 * provides a variety of hands that you can use in conjunction with the hand controller. 
 */
 public class HandController : MonoBehaviour {
+
+  protected static HandController _main;
+  public static HandController Main {
+    get {
+      if (_main == null) {
+        Debug.LogWarning("Could not find an active main Hand Controller.  It may not exist, or may not have been enabled yet.");
+      }
+      return _main;
+    }
+  }
 
   // Reference distance from thumb base to pinky base in mm.
   protected const float GIZMO_SCALE = 5.0f;
@@ -142,10 +153,55 @@ public class HandController : MonoBehaviour {
     leap_controller_.SetPolicyFlags(policy_flags);
   }
 
+#if UNITY_EDITOR
+  void Reset() {
+    HandController[] controllers = Resources.FindObjectsOfTypeAll<HandController>();
+    for (int i = 0; i < controllers.Length; i++) {
+      HandController other = controllers[i];
+      if (other == this) continue;
+      if (UnityEditor.PrefabUtility.GetPrefabType(other.gameObject) == UnityEditor.PrefabType.Prefab) continue;
+
+      if (other.isMain) {
+        return;
+      }
+    }
+
+    isMain = true;
+    UnityEditor.EditorUtility.SetDirty(this);
+  }
+
+  void OnValidate() {
+    if (isMain) {
+      //If we are a prefab, we do not need to validate
+      if (UnityEditor.PrefabUtility.GetPrefabType(gameObject) == UnityEditor.PrefabType.PrefabInstance) {
+        return;
+      }
+
+      HandController[] controllers = Resources.FindObjectsOfTypeAll<HandController>();
+      for (int i = 0; i < controllers.Length; i++) {
+        HandController other = controllers[i];
+        if (other == this) continue;
+        if (UnityEditor.PrefabUtility.GetPrefabType(other.gameObject) == UnityEditor.PrefabType.Prefab) continue;
+
+        if (other.isMain) {
+          other.isMain = false;
+          UnityEditor.EditorUtility.SetDirty(other);
+        }
+      }
+    }
+  }
+#endif
+
   /** Creates a new Leap Controller object. */
   void Awake() {
     leap_controller_ = new Controller();
     recorder_ = new LeapRecorder();
+  }
+
+  void OnEnable() {
+    if (isMain) {
+      _main = this;
+    }
   }
 
   /** Initalizes the hand and tool lists and recording, if enabled.*/
@@ -549,10 +605,18 @@ public class HandController : MonoBehaviour {
   }
 
   void OnDisable() {
+    if (isMain) {
+      _main = null;
+    }
+
     DestroyAllHands();
   }
 
   void OnDestroy() {
+    if (isMain) {
+      _main = null;
+    }
+
     DestroyAllHands();
   }
 
