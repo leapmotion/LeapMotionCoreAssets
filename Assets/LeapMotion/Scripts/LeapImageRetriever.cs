@@ -209,37 +209,9 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-#if UNITY_EDITOR
   void Reset() {
     eyeType = new EyeType(gameObject.name);
-    handController = FindObjectOfType<HandController>();
   }
-
-  void OnValidate() {
-    foreach (var retriever in FindObjectsOfType<LeapImageRetriever>()) {
-      bool anyChange = false;
-
-      if (retriever.gammaCorrection != gammaCorrection) {
-        retriever.gammaCorrection = gammaCorrection;
-        anyChange = true;
-      }
-
-      if (retriever.syncMode != syncMode) {
-        retriever.syncMode = syncMode;
-        anyChange = true;
-      }
-
-      if (retriever.handController != handController && handController != null) {
-        retriever.handController = handController;
-        anyChange = true;
-      }
-
-      if (anyChange) {
-        UnityEditor.EditorUtility.SetDirty(retriever);
-      }
-    }
-  }
-#endif
 
   void Start() {
     if (handController == null) {
@@ -264,6 +236,10 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   void Update() {
+    if (_controller == null) {
+      return;
+    }
+
     Frame frame = _controller.Frame();
 
     _forceDistortionRecalc = false;
@@ -289,6 +265,17 @@ public class LeapImageRetriever : MonoBehaviour {
       _imageList = _controller.Images;
     }
 
+    if (_imageList == null || _imageList.Count == 0) {
+      _missedImages++;
+      if (_missedImages == IMAGE_WARNING_WAIT) {
+        Debug.LogWarning("Can't find any images. " +
+          "Make sure you enabled 'Allow Images' in the Leap Motion Settings, " +
+          "you are on tracking version 2.1+ and " +
+          "your Leap Motion device is plugged in.");
+      }
+      return;
+    }
+
     if (!_hasFiredCameraParams && OnValidCameraParams != null) {
       CameraParams cameraParams = new CameraParams(_cachedCamera);
       OnValidCameraParams(cameraParams);
@@ -307,17 +294,6 @@ public class LeapImageRetriever : MonoBehaviour {
 
     Image referenceImage = _imageList[imageIndex];
     EyeTextureData eyeTextureData = _eyeTextureData[imageIndex];
-
-    if (referenceImage.Width == 0 || referenceImage.Height == 0) {
-      _missedImages++;
-      if (_missedImages == IMAGE_WARNING_WAIT) {
-        Debug.LogWarning("Can't find any images. " +
-          "Make sure you enabled 'Allow Images' in the Leap Motion Settings, " +
-          "you are on tracking version 2.1+ and " +
-          "your Leap Motion device is plugged in.");
-      }
-      return;
-    }
 
     ensureMainTextureUpdated(referenceImage, eyeTextureData);
     ensureDistortionUpdated(referenceImage, eyeTextureData);

@@ -47,10 +47,6 @@ public class LeapTemporalWarping : MonoBehaviour {
   [SerializeField]
   private KeyCode recenter = KeyCode.R;
 
-  [Tooltip("Transforms that should be counter-rotated to match with the Time warp that is applied.  These should be direct children of the VR tracking space.")]
-  [SerializeField]
-  private Transform[] counterWarped;
-
   [Tooltip("Allows smooth enabling or disabling of the Time-warp feature.  Feature is completely enabled at 1, and completely disabled at 0.")]
   [Range(0, 1)]
   [SerializeField]
@@ -148,6 +144,10 @@ public class LeapTemporalWarping : MonoBehaviour {
   protected void Update() {
     updateHistory();
 
+    if (Input.GetKeyDown(KeyCode.Space)) {
+      tweenTimeWarp = 1 - tweenTimeWarp;
+    }
+
     if (Input.GetKeyDown(recenter)) {
       InputTracking.Recenter();
     }
@@ -185,7 +185,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   private void onFinalCenterCamera(Transform centerCamera) {
-    updateTimeWarp(centerCamera.localRotation);
+    updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
   }
 
   private void updateTimeWarp(Quaternion centerEyeRotation) {
@@ -194,19 +194,14 @@ public class LeapTemporalWarping : MonoBehaviour {
     TransformData past = TransformAtTime(rewindTime);
 
     //Apply only a rotation ~ assume all objects are infinitely distant
-    Quaternion rotateImageToNow = centerEyeRotation * Quaternion.Inverse(past.localRotation);
-
-    //Tween the rotation towards zero if we have time warp off.
-    rotateImageToNow = Quaternion.Slerp(rotateImageToNow, Quaternion.identity, 1 - tweenTimeWarp);
+    Quaternion referenceRotation = Quaternion.Slerp(centerEyeRotation, past.localRotation, tweenTimeWarp);
+    Quaternion rotateImageToNow = centerEyeRotation * Quaternion.Inverse(referenceRotation);
 
     Matrix4x4 ImageToNow = Matrix4x4.TRS(Vector3.zero, rotateImageToNow, Vector3.one);
 
     Shader.SetGlobalMatrix("_LeapGlobalViewerImageToNow", ImageToNow);
 
-    // Counter-rotate objects to align with Time Warp
-    foreach (Transform child in counterWarped) {
-      child.localRotation = Quaternion.Inverse(rotateImageToNow);
-    }
+    transform.rotation = referenceRotation;
   }
 
   /// <summary>
