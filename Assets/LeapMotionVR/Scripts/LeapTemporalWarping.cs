@@ -69,6 +69,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   private LeapDeviceInfo deviceInfo;
   private UserEyeAlignment eyeAlignment;
 
+  private Matrix4x4 _projectionMatrix;
   private List<TransformData> history = new List<TransformData>();
   private long rewindAdjust = 0; //Miliseconds
 
@@ -82,7 +83,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   private bool tryLatestImageTimestamp(out long timestamp) {
-    using (ImageList list = HandController.Main.GetFrame().Images) {
+    using (ImageList list = HandController.Main.GetFrame().RawImages) {
       if (list.Count > 0) {
         using (Image image = list[0]) {
           timestamp = image.Timestamp;
@@ -138,6 +139,7 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
 
     LeapCameraDisplacement.OnFinalCenterCamera += onFinalCenterCamera;
+    LeapImageRetriever.OnValidCameraParams += onValidCameraParams;
 
     deviceInfo = HandController.Main.GetDeviceInfo();
     if (deviceInfo.type == LeapDeviceType.Invalid) {
@@ -190,6 +192,12 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
   }
 
+  private void onValidCameraParams(LeapImageRetriever.CameraParams cameraParams) {
+    _projectionMatrix = cameraParams.ProjectionMatrix;
+    LeapImageRetriever.OnValidCameraParams -= onValidCameraParams;
+    Debug.Log("asd");
+  }
+
   private void onFinalCenterCamera(Transform centerCamera) {
     updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
   }
@@ -197,7 +205,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   private void updateTimeWarp(Quaternion centerEyeRotation) {
     //Get the transform at the time when the latest image was captured
     long rewindTime = 0;
-    if (!tryLatestImageTimestamp(out rewindAdjust)) {
+    if (!tryLatestImageTimestamp(out rewindTime)) {
       return;
     }
 
@@ -205,11 +213,11 @@ public class LeapTemporalWarping : MonoBehaviour {
 
     //Apply only a rotation ~ assume all objects are infinitely distant
     Quaternion referenceRotation = Quaternion.Slerp(centerEyeRotation, past.localRotation, tweenTimeWarp);
-    Quaternion rotateImageToNow = centerEyeRotation * Quaternion.Inverse(referenceRotation);
 
-    Matrix4x4 ImageToNow = Matrix4x4.TRS(Vector3.zero, rotateImageToNow, Vector3.one).inverse;
+    Quaternion quatWarp = Quaternion.Inverse(centerEyeRotation) * referenceRotation;
+    Matrix4x4 matWarp = _projectionMatrix * Matrix4x4.TRS(Vector3.zero, quatWarp, Vector3.one) * _projectionMatrix.inverse;
 
-    Shader.SetGlobalMatrix("_LeapGlobalWarpedOffset", ImageToNow);
+    Shader.SetGlobalMatrix("_LeapGlobalWarpedOffset", matWarp);
 
     transform.rotation = referenceRotation;
   }

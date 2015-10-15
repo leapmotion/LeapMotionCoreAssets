@@ -104,8 +104,6 @@ public class LeapImageRetriever : MonoBehaviour {
     }
 
     private TextureFormat getTextureFormat(Image image) {
-      Debug.Log(image.Format);
-
       switch (image.Format) {
         case Image.FormatType.INFRARED:
           return TextureFormat.Alpha8;
