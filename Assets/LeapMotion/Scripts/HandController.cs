@@ -173,7 +173,7 @@ public class HandController : MonoBehaviour {
   void OnValidate() {
     if (isMain) {
       //If we are a prefab, we do not need to validate
-      if (UnityEditor.PrefabUtility.GetPrefabType(gameObject) == UnityEditor.PrefabType.PrefabInstance) {
+      if (UnityEditor.PrefabUtility.GetPrefabType(gameObject) == UnityEditor.PrefabType.Prefab) {
         return;
       }
 
