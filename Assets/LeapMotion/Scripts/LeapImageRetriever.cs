@@ -33,6 +33,17 @@ public class LeapImageRetriever : MonoBehaviour {
 
     public CameraParams(Camera camera) {
       ProjectionMatrix = camera.projectionMatrix;
+
+      if (SystemInfo.graphicsDeviceVersion.ToLower().Contains("direct3d")) {
+        for (int i = 0; i < 4; i++) {
+          ProjectionMatrix[1, i] = -ProjectionMatrix[1, i];
+        }
+        // Scale and bias from OpenGL -> D3D depth range
+        for (int i = 0; i < 4; i++) {
+          ProjectionMatrix[2, i] = ProjectionMatrix[2, i] * 0.5f + ProjectionMatrix[3, i] * 0.5f;
+        }
+      }
+
       Width = camera.pixelWidth;
       Height = camera.pixelHeight;
     }
