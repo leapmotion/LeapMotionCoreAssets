@@ -66,7 +66,6 @@ public class LeapTemporalWarping : MonoBehaviour {
   [SerializeField]
   private KeyCode lessRewind = KeyCode.RightArrow;
 
-  private HandController handController;
   private LeapDeviceInfo deviceInfo;
   private UserEyeAlignment eyeAlignment;
 
@@ -74,7 +73,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   private long rewindAdjust = 0; //Miliseconds
 
   private long getLatestImageTimestamp() {
-    using (ImageList list = handController.GetFrame().Images) {
+    using (ImageList list = HandController.Main.GetFrame().Images) {
       if (list.Count > 0) {
         using (Image image = list[0]) {
           return image.Timestamp;
@@ -115,30 +114,20 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   protected void Start() {
-    HandController[] allControllers = FindObjectsOfType<HandController>();
-    foreach (HandController controller in allControllers) {
-      if (controller.isActiveAndEnabled) {
-        handController = controller;
-        break;
-      }
-    }
-
-    if (handController == null) {
-      Debug.LogWarning("Camera alignment requires an active HandController in the scene -> enabled = false");
+    if (HandController.Main == null) {
+      Debug.LogWarning("Camera alignment requires an active main HandController in the scene -> enabled = false");
       enabled = false;
       return;
     }
 
     LeapCameraDisplacement.OnFinalCenterCamera += onFinalCenterCamera;
 
-    deviceInfo = handController.GetDeviceInfo();
+    deviceInfo = HandController.Main.GetDeviceInfo();
     if (deviceInfo.type == LeapDeviceType.Invalid) {
       Debug.LogWarning("Invalid Leap Device -> enabled = false");
       enabled = false;
       return;
     }
-
-    disallowPeripheralTimewarp();
   }
 
   protected void Update() {
@@ -170,7 +159,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   private void updateHistory() {
-    long leapNow = handController.GetLeapController().Now();
+    long leapNow = HandController.Main.GetLeapController().Now();
     history.Add(new TransformData() {
       leapTime = leapNow,
       localPosition = InputTracking.GetLocalPosition(VRNode.CenterEye),
@@ -202,16 +191,6 @@ public class LeapTemporalWarping : MonoBehaviour {
     Shader.SetGlobalMatrix("_LeapGlobalViewerImageToNow", ImageToNow);
 
     transform.rotation = referenceRotation;
-  }
-
-  /// <summary>
-  /// Temporary solution until timecodes on peripheral is fixed.
-  /// </summary>
-  private void disallowPeripheralTimewarp() {
-    DeviceList devices = handController.GetLeapController().Devices;
-    if (devices.Count > 0 && devices[0].Type == Device.DeviceType.TYPE_PERIPHERAL) {
-      tweenTimeWarp = 0;
-    }
   }
 
   /// <summary>

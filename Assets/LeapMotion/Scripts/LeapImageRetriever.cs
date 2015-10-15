@@ -44,8 +44,6 @@ public class LeapImageRetriever : MonoBehaviour {
   public SYNC_MODE syncMode = SYNC_MODE.SYNC_WITH_HANDS;
 
   public float gammaCorrection = 1.0f;
-  
-  public HandController handController;
 
   private int _missedImages = 0;
   private Controller _controller;
@@ -214,8 +212,8 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   void Start() {
-    if (handController == null) {
-      Debug.LogWarning("Cannot use LeapImageRetriever if there is no HandController!");
+    if (HandController.Main == null) {
+      Debug.LogWarning("Cannot use LeapImageRetriever if there is no main HandController!");
       enabled = false;
       return;
     }
@@ -231,7 +229,7 @@ public class LeapImageRetriever : MonoBehaviour {
 
     _cachedCamera = GetComponent<Camera>();
 
-    _controller = handController.GetLeapController();
+    _controller = HandController.Main.GetLeapController();
     _controller.SetPolicy(Controller.PolicyFlag.POLICY_IMAGES);
   }
 
