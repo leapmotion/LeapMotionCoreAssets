@@ -55,7 +55,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
     float3 norm   = mul ((float3x3)UNITY_MATRIX_IT_MV, v.normal);
     o.vertex.xy += TransformViewToProjection(norm.xy) * _Extrude;
 
-    o.screenPos = ComputeScreenPos(o.vertex);
+    o.screenPos = LeapGetWarpedScreenPos(o.vertex);
 
 #ifdef USE_DEPTH_TEXTURE
     o.projPos = o.screenPos;

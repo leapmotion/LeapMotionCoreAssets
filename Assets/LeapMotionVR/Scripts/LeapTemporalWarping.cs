@@ -195,7 +195,6 @@ public class LeapTemporalWarping : MonoBehaviour {
   private void onValidCameraParams(LeapImageRetriever.CameraParams cameraParams) {
     _projectionMatrix = cameraParams.ProjectionMatrix;
     LeapImageRetriever.OnValidCameraParams -= onValidCameraParams;
-    Debug.Log("asd");
   }
 
   private void onFinalCenterCamera(Transform centerCamera) {

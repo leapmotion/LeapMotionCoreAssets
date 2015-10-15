@@ -41,7 +41,7 @@ float2 LeapGetUndistortedUV(float4 screenPos){
   return float2(DecodeFloatRG(distortionAmount.xy), DecodeFloatRG(distortionAmount.zw)) * 2.3 - float2(0.6, 0.6);
 }
 
-float4 LeapGetWarpedScreenPosition(float4 transformedVertex){
+float4 LeapGetWarpedScreenPos(float4 transformedVertex){
   float4 warpedPosition = mul(_LeapGlobalWarpedOffset, transformedVertex);
   return ComputeScreenPos(warpedPosition);
 }
