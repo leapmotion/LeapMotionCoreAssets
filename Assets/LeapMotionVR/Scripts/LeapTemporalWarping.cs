@@ -81,15 +81,16 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
   }
 
-  private long getLatestImageTimestamp() {
+  private bool tryLatestImageTimestamp(out long timestamp) {
     using (ImageList list = HandController.Main.GetFrame().Images) {
       if (list.Count > 0) {
         using (Image image = list[0]) {
-          return image.Timestamp;
+          timestamp = image.Timestamp;
+          return true;
         }
       } else {
-        Debug.LogWarning("Could not find any images!");
-        return 0;
+        timestamp = 0;
+        return false;
       }
     }
   }
@@ -118,8 +119,15 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   
-  public void GetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation) {
-    GetWarpedTransform(anchor, out rewoundLocalPosition, out rewoundLocalRotation, getLatestImageTimestamp() - rewindAdjust);
+  public bool TryGetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation) {
+    long timestamp;
+    if (tryLatestImageTimestamp(out timestamp)) {
+      GetWarpedTransform(anchor, out rewoundLocalPosition, out rewoundLocalRotation, timestamp - rewindAdjust);
+      return true;
+    }
+    rewoundLocalPosition = Vector3.zero;
+    rewoundLocalRotation = Quaternion.identity;
+    return false;
   }
 
   protected void Start() {
@@ -188,7 +196,11 @@ public class LeapTemporalWarping : MonoBehaviour {
 
   private void updateTimeWarp(Quaternion centerEyeRotation) {
     //Get the transform at the time when the latest image was captured
-    long rewindTime = getLatestImageTimestamp() - rewindAdjust;
+    long rewindTime = 0;
+    if (!tryLatestImageTimestamp(out rewindAdjust)) {
+      return;
+    }
+
     TransformData past = TransformAtTime(rewindTime);
 
     //Apply only a rotation ~ assume all objects are infinitely distant
