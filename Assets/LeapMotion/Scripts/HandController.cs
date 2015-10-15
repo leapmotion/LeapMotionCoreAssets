@@ -235,6 +235,17 @@ public class HandController : MonoBehaviour {
     }
   }
 
+  /* Calling this sets this Hand Controller as the main Hand Controller.  If there was a previous main 
+   * Hand Controller it is demoted and is no longer the main Hand Controller.
+   */
+  public void SetMain() {
+    if (_main != null) {
+      _main.isMain = false;
+    }
+    isMain = true;
+    _main = this;
+  }
+
   /**
   * Turns off collisions between the specified GameObject and all hands.
   * Subject to the limitations of Unity Physics.IgnoreCollisions(). 
