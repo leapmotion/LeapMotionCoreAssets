@@ -21,7 +21,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   protected struct TransformData {
     public long leapTime; // microseconds
     public Vector3 localPosition; //meters
-    public Quaternion localRotation;
+    public Quaternion localRotation; //magic
 
     public static TransformData Lerp(TransformData from, TransformData to, long time) {
       if (from.leapTime == to.leapTime) {
@@ -62,7 +62,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   private LeapDeviceInfo deviceInfo;
 
   private List<TransformData> history = new List<TransformData>();
-  private long rewindAdjust = 0; //Miliseconds
+  private long rewindAdjust = 0; //Microseconds
 
   public float TweenTimeWarp {
     get {
@@ -142,10 +142,6 @@ public class LeapTemporalWarping : MonoBehaviour {
   protected void Update() {
     updateHistory();
 
-    if (Input.GetKeyDown(KeyCode.Space)) {
-      tweenTimeWarp = 1 - tweenTimeWarp;
-    }
-
     if (Input.GetKeyDown(recenter)) {
       InputTracking.Recenter();
     }
@@ -154,10 +150,10 @@ public class LeapTemporalWarping : MonoBehaviour {
     if (allowManualTimeAlignment) {
       if (unlockHold == KeyCode.None || Input.GetKey(unlockHold)) {
         if (Input.GetKeyDown(moreRewind)) {
-          rewindAdjust += 1;
+          rewindAdjust += 1000;
         }
         if (Input.GetKeyDown(lessRewind)) {
-          rewindAdjust -= 1;
+          rewindAdjust -= 1000;
         }
       }
     }
