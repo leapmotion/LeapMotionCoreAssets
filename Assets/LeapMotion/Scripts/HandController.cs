@@ -674,4 +674,16 @@ public class HandController : MonoBehaviour {
       recorder_.NextFrame();
     }
   }
+
+  public Vector3 ToUnitySpace(Vector vector) {
+    return transform.TransformPoint(vector.ToUnityScaled());
+  }
+
+  public Vector3 ToUnityDir(Vector direction) {
+    return transform.TransformDirection(direction.ToUnity());
+  }
+
+  public Quaternion ToUnityRot(Matrix basis) {
+    return transform.rotation * basis.Rotation(false);
+  }
 }
