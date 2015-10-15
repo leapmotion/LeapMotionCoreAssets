@@ -219,7 +219,6 @@ public class LeapTemporalWarping : MonoBehaviour {
 
     if (history[0].leapTime >= time) {
       // Expect this when using LOW LATENCY image retrieval, which can yield negative latency estimates due to incorrect clock synchronization
-      //if (history [0].leapTime > time) Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
       return history[0];
     }
 
