@@ -6,51 +6,42 @@ using System.Collections.Generic;
 
 [CustomEditor(typeof(HMRConfigurationManager))]
 public class HMRConfigurationManagerEditor : Editor {
-  private LeapTemporalWarping _cachedTemporalWarping;
   private HMRConfigurationManager _manager;
 
   private LeapTemporalWarping _aligner {
     get {
-      if (_cachedTemporalWarping == null) {
-        _cachedTemporalWarping = _manager.GetComponentInChildren<LeapTemporalWarping>();
-
-        if (_cachedTemporalWarping == null) {
-          throw new UnityEngine.MissingComponentException("Cannot find LeapCameraAlignment component in children of " + _manager.gameObject.name);
-        }
+      if (_manager._aligner == null) {
+        Debug.LogWarning("Cannot _aligner component on " + _manager.gameObject.name + " is null.");
       }
 
-      return _cachedTemporalWarping;
+      return _manager._aligner;
     }
   }
 
   private GameObject _backgroundQuad {
     get {
-      GameObject backgroundQuad = _manager._backgroundQuad; 
-
-      if (backgroundQuad == null) {
-        throw new System.NullReferenceException("The _backgroundQuad field on " + ((HMRConfigurationManager)target).gameObject.name + " is null.");
+      if (_manager._backgroundQuad == null) {
+        Debug.LogWarning("The _backgroundQuad field on " + _manager.name + " is null.");
       }
 
-      return backgroundQuad;
+      return _manager._backgroundQuad;
     }
   }
 
   private HandController _handController {
     get {
-      HandController handController = _manager._handController;
-
-      if (handController == null) {
-        throw new System.NullReferenceException("The _handController field on " + ((HMRConfigurationManager)target).gameObject.name + " is null.");
+      if (_manager._handController == null) {
+        Debug.LogWarning("The _handController field on " + _manager.name + " is null.");
       }
 
-      return handController;
+      return _manager._handController;
     }
   }
 
   private IEnumerable<Camera> vrCameras {
     get{
       foreach (Camera childCamera in _manager.GetComponentsInChildren<Camera>()) {
-        if (childCamera.enabled && childCamera.targetTexture != null) {
+        if (childCamera.enabled && childCamera.targetTexture == null) {
           yield return childCamera;
         }
       }
@@ -72,11 +63,11 @@ public class HMRConfigurationManagerEditor : Editor {
   private IEnumerable<LeapCameraDisplacement> cameraDisplacements {
     get {
       foreach (Camera vrCamera in vrCameras) {
-        LeapCameraDisplacement retriever = vrCamera.GetComponent<LeapCameraDisplacement>();
-        if (retriever == null) {
-          retriever = vrCamera.gameObject.AddComponent<LeapCameraDisplacement>();
+        LeapCameraDisplacement displacement = vrCamera.GetComponent<LeapCameraDisplacement>();
+        if (displacement == null) {
+          displacement = vrCamera.gameObject.AddComponent<LeapCameraDisplacement>();
         }
-        yield return retriever;
+        yield return displacement;
       }
     }
   }

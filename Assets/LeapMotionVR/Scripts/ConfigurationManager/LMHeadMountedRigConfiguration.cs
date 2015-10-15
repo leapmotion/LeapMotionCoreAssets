@@ -50,7 +50,7 @@ public struct LMHeadMountedRigConfiguration {
     config._enableImageRetrievers = property.FindPropertyRelative("_enableImageRetrievers").boolValue;
     config._cameraClearFlags = (CameraClearFlags)property.FindPropertyRelative("_cameraClearFlags").intValue;
     config._tweenTimewarp = property.FindPropertyRelative("_tweenTimewarp").floatValue;
-    config._overrideEyePos = property.FindPropertyRelative("_overrideCameraPos").boolValue;
+    config._overrideEyePos = property.FindPropertyRelative("_overrideEyePos").boolValue;
     return config;
   }
 #endif
