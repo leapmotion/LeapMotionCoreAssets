@@ -16,9 +16,6 @@ public class HMRConfigurationManager : MonoBehaviour {
 
   public GameObject _backgroundQuad;
   public HandController _handController;
-  public Camera _leftCamera;
-  public Camera _rightCamera;
-  public Camera _centerCamera;
   public LeapTemporalWarping _aligner;
 
   public void validateConfigurationsLabeled() {
@@ -26,8 +23,8 @@ public class HMRConfigurationManager : MonoBehaviour {
     string[] enumNames = System.Enum.GetNames(typeof(HMRConfiguration));
 
     for (int i = 0; i < _headMountedConfigurations.Length; i++) {
-      if (_headMountedConfigurations[i].configurationName == enumNames[i]) { continue; }
-      _headMountedConfigurations[i].configurationName = enumNames[i];
+      if (_headMountedConfigurations[i].ConfigurationName == enumNames[i]) { continue; }
+      _headMountedConfigurations[i].ConfigurationName = enumNames[i];
     }
   }
 

@@ -1,9 +1,12 @@
 ﻿using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine.Serialization;
 using System.Collections;
 
 [System.Serializable]
-public struct LMHeadMountedRigConfiguration  {
+public struct LMHeadMountedRigConfiguration {
   [SerializeField]
   private string _configurationName;
 
@@ -17,47 +20,38 @@ public struct LMHeadMountedRigConfiguration  {
   private HandModel _rightHandGraphicsModel;
 
   [SerializeField]
-  private bool _seperateLeftRightCameras;
-
-  [SerializeField]
   private bool _enableImageRetrievers;
 
   [SerializeField]
-  private int _cameraClearFlags;
+  private CameraClearFlags _cameraClearFlags;
 
   [SerializeField]
   private float _tweenTimewarp;
 
   [SerializeField]
-  private bool _overrideCameraPos;
+  private bool _overrideEyePos;
 
-  public string configurationName { 
-    get { return _configurationName; }
-    set { _configurationName = value; }
-  }
-  public bool enableBackgroundQuad { get { return _enableBackgroundQuad; } }
-  public HandModel leftHandGraphicsModel { get { return _leftHandGraphicsModel; } }
-  public HandModel rightHandGraphicsModel { get { return _rightHandGraphicsModel; } }
-  public bool seperateLeftRightCameras { get { return _seperateLeftRightCameras; } }
-  public bool enableImageRetrievers { get { return _enableImageRetrievers; } }
-  public int cameraClearFlags { get { return _cameraClearFlags; } }
-  public float tweenTimewarp { get { return _tweenTimewarp; } }
-  public bool overrideEyePos { get { return _overrideCameraPos; } }
+  public string ConfigurationName { get { return _configurationName; } set { _configurationName = value; } }
+  public bool EnableBackgroundQuad { get { return _enableBackgroundQuad; } }
+  public HandModel LeftHandGraphicsModel { get { return _leftHandGraphicsModel; } }
+  public HandModel RightHandGraphicsModel { get { return _rightHandGraphicsModel; } }
+  public bool EnableImageRetrievers { get { return _enableImageRetrievers; } }
+  public CameraClearFlags CameraClearFlags { get { return _cameraClearFlags; } }
+  public float TweenTimewarp { get { return _tweenTimewarp; } }
+  public bool OverrideEyePos { get { return _overrideEyePos; } }
 
-  public LMHeadMountedRigConfiguration(
-    string name,
-    bool backgroundQuad, 
-    HandModel leftHandModel, HandModel rightHandModel,
-    bool seperateLeftRightCameras, bool enableImageRetrievers, bool centerCamera, int clearFlags,
-    float timewarp, bool overrideCameraPos) {
-      _configurationName = name;
-      _enableBackgroundQuad = backgroundQuad;
-      _leftHandGraphicsModel = leftHandModel;
-      _rightHandGraphicsModel = rightHandModel;
-      _seperateLeftRightCameras = seperateLeftRightCameras;
-      _enableImageRetrievers = enableImageRetrievers;
-      _cameraClearFlags = clearFlags;
-      _tweenTimewarp = timewarp;
-      _overrideCameraPos = overrideCameraPos;
+#if UNITY_EDITOR
+  public static LMHeadMountedRigConfiguration Deserialize(SerializedProperty property) {
+    LMHeadMountedRigConfiguration config = new LMHeadMountedRigConfiguration();
+    config._configurationName = property.FindPropertyRelative("_configurationName").stringValue;
+    config._enableBackgroundQuad = property.FindPropertyRelative("_enableBackgroundQuad").boolValue;
+    config._leftHandGraphicsModel = property.FindPropertyRelative("_leftHandGraphicsModel").objectReferenceValue as HandModel;
+    config._rightHandGraphicsModel = property.FindPropertyRelative("_rightHandGraphicsModel").objectReferenceValue as HandModel;
+    config._enableImageRetrievers = property.FindPropertyRelative("_enableImageRetrievers").boolValue;
+    config._cameraClearFlags = (CameraClearFlags)property.FindPropertyRelative("_cameraClearFlags").intValue;
+    config._tweenTimewarp = property.FindPropertyRelative("_tweenTimewarp").floatValue;
+    config._overrideEyePos = property.FindPropertyRelative("_overrideCameraPos").boolValue;
+    return config;
   }
+#endif
 }

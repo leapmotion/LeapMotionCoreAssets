@@ -1,29 +1,31 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
 [CustomEditor(typeof(HMRConfigurationManager))]
 public class HMRConfigurationManagerEditor : Editor {
-  private LeapTemporalWarping _cachedAligner;
+  private LeapTemporalWarping _cachedTemporalWarping;
+  private HMRConfigurationManager _manager;
 
   private LeapTemporalWarping _aligner {
     get {
-      if (_cachedAligner == null) {
-        _cachedAligner = ((HMRConfigurationManager)target).GetComponentInChildren<LeapTemporalWarping>();
+      if (_cachedTemporalWarping == null) {
+        _cachedTemporalWarping = _manager.GetComponentInChildren<LeapTemporalWarping>();
 
-        if (_cachedAligner == null) {
-          throw new UnityEngine.MissingComponentException("Cannot find LeapCameraAlignment component in children of " + ((HMRConfigurationManager)target).gameObject.name);
+        if (_cachedTemporalWarping == null) {
+          throw new UnityEngine.MissingComponentException("Cannot find LeapCameraAlignment component in children of " + _manager.gameObject.name);
         }
       }
 
-      return _cachedAligner;
+      return _cachedTemporalWarping;
     }
   }
 
   private GameObject _backgroundQuad {
     get {
-      GameObject backgroundQuad = ((HMRConfigurationManager)target)._backgroundQuad; 
+      GameObject backgroundQuad = _manager._backgroundQuad; 
 
       if (backgroundQuad == null) {
         throw new System.NullReferenceException("The _backgroundQuad field on " + ((HMRConfigurationManager)target).gameObject.name + " is null.");
@@ -35,7 +37,7 @@ public class HMRConfigurationManagerEditor : Editor {
 
   private HandController _handController {
     get {
-      HandController handController = ((HMRConfigurationManager)target)._handController;
+      HandController handController = _manager._handController;
 
       if (handController == null) {
         throw new System.NullReferenceException("The _handController field on " + ((HMRConfigurationManager)target).gameObject.name + " is null.");
@@ -45,67 +47,47 @@ public class HMRConfigurationManagerEditor : Editor {
     }
   }
 
-  private IEnumerable<LeapCameraDisplacement> _cameraCorrections {
+  private IEnumerable<Camera> vrCameras {
+    get{
+      foreach (Camera childCamera in _manager.GetComponentsInChildren<Camera>()) {
+        if (childCamera.enabled && childCamera.targetTexture != null) {
+          yield return childCamera;
+        }
+      }
+    }
+  }
+
+  private IEnumerable<LeapImageRetriever> imageRetrievers {
     get {
-      return ((HMRConfigurationManager)target).GetComponentsInChildren<LeapCameraDisplacement>();
+      foreach (Camera vrCamera in vrCameras) {
+        LeapImageRetriever retriever = vrCamera.GetComponent<LeapImageRetriever>();
+        if (retriever == null) {
+          retriever = vrCamera.gameObject.AddComponent<LeapImageRetriever>();
+        }
+        yield return retriever;
+      }
     }
   }
 
-  private Camera getCameraObjectForEye(UnityEngine.VR.VRNode cameraNode) {
-    Camera camera;
-
-    switch (cameraNode) {
-      case UnityEngine.VR.VRNode.CenterEye:
-      case UnityEngine.VR.VRNode.Head:
-        camera = ((HMRConfigurationManager)target)._centerCamera;
-        break;
-      case UnityEngine.VR.VRNode.LeftEye:
-        camera = ((HMRConfigurationManager)target)._leftCamera;
-        break;
-      case UnityEngine.VR.VRNode.RightEye:
-        camera = ((HMRConfigurationManager)target)._rightCamera;
-        break;
-      default:
-        throw new System.ArgumentOutOfRangeException("No understoof VRNode provided.");
+  private IEnumerable<LeapCameraDisplacement> cameraDisplacements {
+    get {
+      foreach (Camera vrCamera in vrCameras) {
+        LeapCameraDisplacement retriever = vrCamera.GetComponent<LeapCameraDisplacement>();
+        if (retriever == null) {
+          retriever = vrCamera.gameObject.AddComponent<LeapCameraDisplacement>();
+        }
+        yield return retriever;
+      }
     }
-
-    if (camera == null) {
-      throw new System.NullReferenceException("The camera reference for the " + cameraNode.ToString() + "is missing on " + ((HMRConfigurationManager)target).gameObject.name);
-    }
-
-    return camera;
   }
 
-  private LeapCameraDisplacement getCameraDisplacementForEye(UnityEngine.VR.VRNode eyeNode) {
-    Camera cameraForEye = getCameraObjectForEye(eyeNode);
-    LeapCameraDisplacement displacement = cameraForEye.GetComponent<LeapCameraDisplacement>();
-
-    if (displacement == null) {
-      displacement = cameraForEye.gameObject.AddComponent<LeapCameraDisplacement>();
-    }
-
-    return displacement;
-  }
-
-  private LeapImageRetriever getImageRetreiverForEye(UnityEngine.VR.VRNode eyeNode) {
-    Camera cameraForEye = getCameraObjectForEye(eyeNode);
-    LeapImageRetriever imageRetrieverForEye = cameraForEye.gameObject.GetComponent<LeapImageRetriever>();
-
-    if (cameraForEye == null) {
-      throw new System.NullReferenceException("Could not resolve the camera for the given eye: " + eyeNode.ToString());
-    }
-
-    if (imageRetrieverForEye == null) {
-      throw new UnityEngine.MissingComponentException("Could not find LeapImageRetriever component adjacent to camera on " + cameraForEye.gameObject.name + " for the given eye: " + eyeNode.ToString());
-    }
-
-    return imageRetrieverForEye;
+  public void OnEnable() {
+    _manager = target as HMRConfigurationManager;
   }
 
   public override void OnInspectorGUI() {
     serializedObject.Update();
-    HMRConfigurationManager configManager = (HMRConfigurationManager)target;
-    configManager.validateConfigurationsLabeled();
+    _manager.validateConfigurationsLabeled();
     EditorGUI.BeginChangeCheck();
     EditorGUILayout.PropertyField(serializedObject.FindProperty("_configuration"), new GUIContent("Selected Configuration"));
     serializedObject.ApplyModifiedProperties();
@@ -123,146 +105,72 @@ public class HMRConfigurationManagerEditor : Editor {
     if (selectedConfiguration == HMRConfigurationManager.HMRConfiguration.VR_WORLD_VR_HANDS) {
       EditorGUILayout.LabelField("Hands to use for VR Hands (References Hand Controller)", EditorStyles.boldLabel);
       EditorGUI.BeginChangeCheck();
-      configManager._handController.leftGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Left Hand Graphics Model", configManager._handController.leftGraphicsModel, typeof(HandModel), false);
-      configManager._handController.rightGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Right Hand Graphics Model", configManager._handController.rightGraphicsModel, typeof(HandModel), false);
+      _manager._handController.leftGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Left Hand Graphics Model", _manager._handController.leftGraphicsModel, typeof(HandModel), true);
+      _manager._handController.rightGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Right Hand Graphics Model", _manager._handController.rightGraphicsModel, typeof(HandModel), true);
       if (EditorGUI.EndChangeCheck()) {
-        EditorUtility.SetDirty(configManager._handController.leftGraphicsModel);
-        EditorUtility.SetDirty(configManager._handController.rightGraphicsModel);
+        EditorUtility.SetDirty(_manager._handController.leftGraphicsModel);
+        EditorUtility.SetDirty(_manager._handController.rightGraphicsModel);
       }
-      
     }
   }
 
   private void applySelectedConfiguration() {
     int selectedConfigurationIndex = serializedObject.FindProperty("_configuration").enumValueIndex;
     SerializedProperty serializedConfiguration = serializedObject.FindProperty("_headMountedConfigurations").GetArrayElementAtIndex((int)selectedConfigurationIndex);
-    LMHeadMountedRigConfiguration configuration = deserializeHeadMountedRig(serializedConfiguration);
+    LMHeadMountedRigConfiguration configuration = LMHeadMountedRigConfiguration.Deserialize(serializedConfiguration);
 
-    setBackgroundQuadEnabled(configuration.enableBackgroundQuad);
-    setGraphicsModels(configuration.leftHandGraphicsModel, configuration.rightHandGraphicsModel);
+    setBackgroundQuadEnabled(configuration.EnableBackgroundQuad);
+    setGraphicsModels(configuration.LeftHandGraphicsModel, configuration.RightHandGraphicsModel);
+    setImageRetrieversEnabled(configuration.EnableImageRetrievers);
+    setCameraClearFlags(configuration.CameraClearFlags);
+    setTimewarp(configuration.TweenTimewarp);
+    setOverrideEyes(configuration.OverrideEyePos);
 
-    setupCameraObjects(configuration.seperateLeftRightCameras);
-    setImageRetrieversEnabled(configuration.enableImageRetrievers);
-    setCameraClearFlags((CameraClearFlags)configuration.cameraClearFlags);
-    setTimewarp(configuration.tweenTimewarp);
-    setOverrideEyes(configuration.overrideEyePos);
-    Debug.Log("Switched to configuration: " + configuration.configurationName);
+    Debug.Log("Switched to configuration: " + configuration.ConfigurationName);
   }
 
   private void setBackgroundQuadEnabled(bool enabled) {
     Renderer backgroundQuadRenderer = _backgroundQuad.GetComponent<Renderer>();
 
     if (backgroundQuadRenderer == null) {
-      throw new UnityEngine.MissingComponentException("The object " + _backgroundQuad.gameObject.name + " is missing a " + backgroundQuadRenderer.GetType().ToString() + " component.");
+      Debug.LogWarning("The object " + _backgroundQuad.gameObject.name + " is missing a Renderer.");
+      return;
     }
 
-    _backgroundQuad.GetComponent<Renderer>().enabled = enabled;
-
-    EditorUtility.SetDirty(_backgroundQuad);
+    updateValue(backgroundQuadRenderer, backgroundQuadRenderer.enabled, enabled, v => backgroundQuadRenderer.enabled = v);
   }
 
   private void setGraphicsModels(HandModel leftHandGraphicsModel, HandModel rightHandGraphicsModel) {
-    _handController.leftGraphicsModel = leftHandGraphicsModel;
-    _handController.rightGraphicsModel = rightHandGraphicsModel;
-    EditorUtility.SetDirty(_handController);
-  }
-
-  private void setupCameraObjects(bool seperateLeftRightCameras) {
-    GameObject left = getCameraObjectForEye(UnityEngine.VR.VRNode.LeftEye).gameObject;
-    GameObject right = getCameraObjectForEye(UnityEngine.VR.VRNode.RightEye).gameObject;
-    GameObject center = getCameraObjectForEye(UnityEngine.VR.VRNode.CenterEye).gameObject;
-
-    left.SetActive(seperateLeftRightCameras);
-    right.SetActive(seperateLeftRightCameras);
-    center.SetActive(!seperateLeftRightCameras);
-
-    EditorUtility.SetDirty(left);
-    EditorUtility.SetDirty(right);
-    EditorUtility.SetDirty(center);
-  }
-
-  private void setLeftAndRightCamerasEnabled(bool enabled) {
-    Camera left = getCameraObjectForEye(UnityEngine.VR.VRNode.LeftEye);
-    Camera right = getCameraObjectForEye(UnityEngine.VR.VRNode.RightEye);
-
-    left.enabled = enabled;
-    EditorUtility.SetDirty(left);
-    
-    right.enabled = enabled;
-    EditorUtility.SetDirty(right);
+    updateValue(_handController, _handController.leftGraphicsModel, leftHandGraphicsModel, v => _handController.leftGraphicsModel = v);
+    updateValue(_handController, _handController.rightGraphicsModel, rightHandGraphicsModel, v => _handController.rightGraphicsModel = v);
   }
 
   private void setImageRetrieversEnabled(bool enabled) {
-    LeapImageRetriever left = getImageRetreiverForEye(UnityEngine.VR.VRNode.LeftEye);
-    LeapImageRetriever right = getImageRetreiverForEye(UnityEngine.VR.VRNode.RightEye);
-    LeapImageRetriever center = getImageRetreiverForEye(UnityEngine.VR.VRNode.CenterEye);  
-    
-    left.enabled = enabled;
-    right.enabled = enabled;
-    center.enabled = enabled;
-
-    EditorUtility.SetDirty(left);
-    EditorUtility.SetDirty(right);
-    EditorUtility.SetDirty(center);
+    foreach (LeapImageRetriever retriever in imageRetrievers) {
+      updateValue(retriever, retriever.enabled, enabled, e => retriever.enabled = e);
+    }
   }
 
   private void setCameraClearFlags(CameraClearFlags cameraClearFlags) {
-    Camera left = getCameraObjectForEye(UnityEngine.VR.VRNode.LeftEye);
-    Camera center = getCameraObjectForEye(UnityEngine.VR.VRNode.CenterEye);
-    Camera right = getCameraObjectForEye(UnityEngine.VR.VRNode.RightEye);
-
-    left.clearFlags = cameraClearFlags;
-    center.clearFlags = cameraClearFlags;
-    right.clearFlags = cameraClearFlags;
-
-    EditorUtility.SetDirty(left);
-    EditorUtility.SetDirty(center);
-    EditorUtility.SetDirty(right);
+    foreach (Camera camera in vrCameras) {
+      updateValue(camera, camera.clearFlags, cameraClearFlags, v => camera.clearFlags = v);
+    }
   }
 
   private void setTimewarp(float value) {
-    //_aligner.tweenTimeWarp = value;
-    EditorUtility.SetDirty(_aligner);
+    updateValue(_aligner, _aligner.TweenTimeWarp, value, v => _aligner.TweenTimeWarp = v);
   }
 
   private void setOverrideEyes(bool overrideEyes) {
-    LeapCameraDisplacement left = getCameraDisplacementForEye(UnityEngine.VR.VRNode.LeftEye);
-    LeapCameraDisplacement right = getCameraDisplacementForEye(UnityEngine.VR.VRNode.RightEye);
-    LeapCameraDisplacement center = getCameraDisplacementForEye(UnityEngine.VR.VRNode.CenterEye);
-
-    left.OverrideEyePosition = overrideEyes;
-    right.OverrideEyePosition = overrideEyes;
-    center.OverrideEyePosition = overrideEyes;
-
-    EditorUtility.SetDirty(left);
-    EditorUtility.SetDirty(right);
-    EditorUtility.SetDirty(center);
+    foreach (LeapCameraDisplacement displacement in cameraDisplacements) {
+      updateValue(displacement, displacement.OverrideEyePosition, overrideEyes, v => displacement.OverrideEyePosition = v);
+    }
   }
 
-  private LMHeadMountedRigConfiguration deserializeHeadMountedRig(SerializedProperty headMountedRigProperty) {
-    string configurationName = headMountedRigProperty.FindPropertyRelative("_configurationName").stringValue;
-    bool enableBackgroundQuad = headMountedRigProperty.FindPropertyRelative("_enableBackgroundQuad").boolValue;
-    HandModel leftHandGraphicsModel = headMountedRigProperty.FindPropertyRelative("_leftHandGraphicsModel").objectReferenceValue as HandModel;
-    HandModel rightHandGraphicsModel = headMountedRigProperty.FindPropertyRelative("_rightHandGraphicsModel").objectReferenceValue as HandModel;
-    bool enableLeftAndRightCameras = headMountedRigProperty.FindPropertyRelative("_enableLeftAndRightCameras").boolValue;
-    bool enableLeftAndRightImageRetrievers = headMountedRigProperty.FindPropertyRelative("_enableLeftAndRightImageRetrievers").boolValue;
-    bool enableCenterCamera = headMountedRigProperty.FindPropertyRelative("_enableCenterCamera").boolValue;
-    CameraClearFlags clearFlags = (CameraClearFlags)headMountedRigProperty.FindPropertyRelative("_cameraClearFlags").intValue;
-    float tweenTimewarp = headMountedRigProperty.FindPropertyRelative("_tweenTimewarp").floatValue;
-    float tweenPosition = headMountedRigProperty.FindPropertyRelative("_tweenPosition").floatValue;
-    float tweenForward = headMountedRigProperty.FindPropertyRelative("_tweenForward").floatValue;
-
-
-    Debug.Log("deserilized clear flag: " + clearFlags.ToString() + " : " + (int)clearFlags);
-
-    return new LMHeadMountedRigConfiguration();
-    /*
-    return new LMHeadMountedRigConfiguration(
-      configurationName,
-      enableBackgroundQuad,
-      leftHandGraphicsModel, rightHandGraphicsModel,
-      enableLeftAndRightCameras, enableLeftAndRightImageRetrievers,
-      enableCenterCamera, (int)clearFlags,
-      tweenTimewarp, tweenPosition, tweenForward); */
+  private void updateValue<T>(UnityEngine.Object obj, T currValue, T destValue, Action<T> setter) {
+    if (!currValue.Equals(destValue)) {
+      EditorUtility.SetDirty(obj);
+      setter(destValue);
+    }
   }
 }

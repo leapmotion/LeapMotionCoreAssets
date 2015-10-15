@@ -72,6 +72,15 @@ public class LeapTemporalWarping : MonoBehaviour {
   private List<TransformData> history = new List<TransformData>();
   private long rewindAdjust = 0; //Miliseconds
 
+  public float TweenTimeWarp {
+    get {
+      return tweenTimeWarp;
+    }
+    set {
+      tweenTimeWarp = Mathf.Clamp01(value);
+    }
+  }
+
   private long getLatestImageTimestamp() {
     using (ImageList list = HandController.Main.GetFrame().Images) {
       if (list.Count > 0) {
