@@ -14,7 +14,6 @@ using System.Collections.Generic;
 public class TouchCubeQueues : MonoBehaviour {
   public KeyCode queueKey = KeyCode.Return;
   public LeapTemporalWarping alignment;
-  public GameObject headMount;
   [Header("Messages")]
   public GameObject helpMenuCanvas;
   public GameObject noAlignmentCanvas;
@@ -24,7 +23,6 @@ public class TouchCubeQueues : MonoBehaviour {
   private LeapCameraDisplacement[] _cameraCorrectionScripts;
   private int demoStage = 0;
 
-  /*
   void Start () {
     _cameraCorrectionScripts = FindObjectsOfType<LeapCameraDisplacement>();
     ResetState ();
@@ -38,22 +36,21 @@ public class TouchCubeQueues : MonoBehaviour {
     switch (demoStage) {
     case 0: // No Alignment
       helpMenuCanvas.SetActive(false);
-      alignment.tweenTimeWarp = 0f;
-      setOverrideIPD(false);
-      setPushForward(false);
+      alignment.TweenTimeWarp = 0f;
+      setOverridePos(false);
       noAlignmentCanvas.SetActive(true);
       demoStage++;
       break;
     case 1: // IPD Alignment
       noAlignmentCanvas.SetActive(false);
-      setOverrideIPD(true);
-      setPushForward(true);
+      setOverridePos(true);
+      setOverridePos(true);
       alignedViewsCanvas.SetActive(true);
       demoStage++;
       break;
-    case 3: // IPD Alignment + TimeWarp
+    case 2: // IPD Alignment + TimeWarp
       alignedViewsCanvas.SetActive(false);
-      alignment.tweenTimeWarp = 1f;
+      alignment.TweenTimeWarp = 1f;
       warpImagesCanvas.SetActive(true);
       demoStage++;
       break;
@@ -64,15 +61,9 @@ public class TouchCubeQueues : MonoBehaviour {
     }
 	}
 
-  private void setPushForward(bool pushForward) {
+  private void setOverridePos(bool overridePos) {
     foreach (var correction in _cameraCorrectionScripts) {
-      correction.PushForward = pushForward;
-    }
-  }
-
-  private void setOverrideIPD(bool overrideIPD) {
-    foreach (var correction in _cameraCorrectionScripts) {
-      correction.OverrideIPD = overrideIPD;
+      correction.OverrideEyePosition = overridePos;;
     }
   }
 
@@ -81,9 +72,7 @@ public class TouchCubeQueues : MonoBehaviour {
     noAlignmentCanvas.SetActive (false);
     alignedViewsCanvas.SetActive (false);
     warpImagesCanvas.SetActive (false);
-    alignment.tweenTimeWarp = 1f;
-    setOverrideIPD(true);
-    setPushForward(true);
+    alignment.TweenTimeWarp = 1f;
+    setOverridePos(true);
   }
-   */
 }

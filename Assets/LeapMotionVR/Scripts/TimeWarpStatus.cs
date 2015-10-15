@@ -27,7 +27,7 @@ public class TimeWarpStatus : MonoBehaviour {
 
     //string statusText = "IMAGE LATENCY: " + (cameraAlignment.imageLatency.value / 1000f).ToString("#00.0") + " ms\n";
     //statusText += "LEAP RENDER: " + (cameraAlignment.frameLatency.value / 1000f).ToString ("#00.0") + " ms\n";
-    //statusText += "REWIND ADJUST: " + (cameraAlignment.rewindAdjust).ToString ("#00.0") + " frames\n";
+    //string statusText += "REWIND ADJUST: " + (cameraAlignment.rewindAdjust).ToString ("#00.0") + " frames\n";
 
     //textField.text = statusText;
 	}

@@ -18,17 +18,10 @@ public class LeapTemporalWarping : MonoBehaviour {
     RIGHT,
   }
 
-  protected struct UserEyeAlignment {
-    public bool use;
-    public float ipd;
-    public float eyeDepth;
-    public float eyeHeight;
-  }
-
   protected struct TransformData {
     public long leapTime; // microseconds
     public Vector3 localPosition; //meters
-    public Quaternion localRotation;
+    public Quaternion localRotation; //magic
 
     public static TransformData Lerp(TransformData from, TransformData to, long time) {
       if (from.leapTime == to.leapTime) {
@@ -67,11 +60,10 @@ public class LeapTemporalWarping : MonoBehaviour {
   private KeyCode lessRewind = KeyCode.RightArrow;
 
   private LeapDeviceInfo deviceInfo;
-  private UserEyeAlignment eyeAlignment;
 
   private Matrix4x4 _projectionMatrix;
   private List<TransformData> history = new List<TransformData>();
-  private long rewindAdjust = 0; //Miliseconds
+  private long rewindAdjust = 0; //Microseconds
 
   public float TweenTimeWarp {
     get {
@@ -152,10 +144,6 @@ public class LeapTemporalWarping : MonoBehaviour {
   protected void Update() {
     updateHistory();
 
-    if (Input.GetKeyDown(KeyCode.Space)) {
-      tweenTimeWarp = 1 - tweenTimeWarp;
-    }
-
     if (Input.GetKeyDown(recenter)) {
       InputTracking.Recenter();
     }
@@ -164,16 +152,17 @@ public class LeapTemporalWarping : MonoBehaviour {
     if (allowManualTimeAlignment) {
       if (unlockHold == KeyCode.None || Input.GetKey(unlockHold)) {
         if (Input.GetKeyDown(moreRewind)) {
-          rewindAdjust += 1;
+          rewindAdjust += 1000;
         }
         if (Input.GetKeyDown(lessRewind)) {
-          rewindAdjust -= 1;
+          rewindAdjust -= 1000;
         }
       }
     }
   }
 
   protected void LateUpdate() {
+    updateHistory();
     updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
   }
 
@@ -198,12 +187,13 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   private void onFinalCenterCamera(Transform centerCamera) {
+    updateHistory();
     updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
   }
 
   private void updateTimeWarp(Quaternion centerEyeRotation) {
     //Get the transform at the time when the latest image was captured
-    long rewindTime = 0;
+    long rewindTime;
     if (!tryLatestImageTimestamp(out rewindTime)) {
       return;
     }
@@ -238,7 +228,6 @@ public class LeapTemporalWarping : MonoBehaviour {
 
     if (history[0].leapTime >= time) {
       // Expect this when using LOW LATENCY image retrieval, which can yield negative latency estimates due to incorrect clock synchronization
-      //if (history [0].leapTime > time) Debug.LogWarning("NO INTERPOLATION: Using earliest time = " + history[0].leapTime + " > time = " + time);
       return history[0];
     }
 
