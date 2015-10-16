@@ -266,21 +266,22 @@ public class LeapImageRetriever : MonoBehaviour {
     _controller.SetPolicy(Controller.PolicyFlag.POLICY_IMAGES);
   }
 
-#if UNITY_EDITOR
-  void Update() {
-    eyeType.UpdateOrderGivenComponent(this);
-  }
-#endif
 
-  void OnPreCull() {
+  void Update() {
 #if UNITY_EDITOR
-    if (!Application.isPlaying) {
-      return;
-    }
+    eyeType.UpdateOrderGivenComponent(this);
 #endif
 
     eyeType.Reset();
   }
+
+#if UNITY_EDITOR
+  void OnPreCull() {
+    if (!Application.isPlaying) {
+      return;
+    }
+  }
+#endif
 
   void OnPreRender() {
 #if UNITY_EDITOR
