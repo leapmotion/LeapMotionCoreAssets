@@ -106,7 +106,6 @@ public class LeapTemporalWarping : MonoBehaviour {
   private Matrix4x4 _projectionMatrix;
   private List<TransformData> history = new List<TransformData>();
   
-
   /// <summary>
   /// Provides the position of a Leap Anchor at a given Leap Time.  Cannot extrapolate.
   /// </summary>
@@ -129,7 +128,6 @@ public class LeapTemporalWarping : MonoBehaviour {
         throw new Exception("Unexpected Rewind Type " + anchor);
     }
   }
-
 
   public bool TryGetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation) {
     long timestamp;
