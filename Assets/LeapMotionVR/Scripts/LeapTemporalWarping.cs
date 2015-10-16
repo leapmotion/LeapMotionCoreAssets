@@ -132,40 +132,51 @@ public class LeapTemporalWarping : MonoBehaviour {
 
   private LeapDeviceInfo deviceInfo;
 
+  private Transform _trackingAnchor;
   private Matrix4x4 _projectionMatrix;
   private List<TransformData> history = new List<TransformData>();
   
   /// <summary>
   /// Provides the position of a Leap Anchor at a given Leap Time.  Cannot extrapolate.
   /// </summary>
-  public void GetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation, long leapTime) {
+  public bool TryGetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundPosition, out Quaternion rewoundRotation, long leapTime) {
+    if (_trackingAnchor == null) {
+      rewoundPosition = Vector3.one;
+      rewoundRotation = Quaternion.identity; 
+      return false;
+    }
+
     TransformData past = transformAtTime(leapTime);
 
     // Rewind position and rotation
-    rewoundLocalRotation = past.localRotation;
-    rewoundLocalPosition = past.localPosition + past.localRotation * Vector3.forward * deviceInfo.focalPlaneOffset;
+    rewoundRotation = _trackingAnchor.rotation * past.localRotation;
+    rewoundPosition = _trackingAnchor.TransformPoint(past.localPosition) + rewoundRotation * Vector3.forward * deviceInfo.focalPlaneOffset;
 
     switch (anchor) {
-      case WarpedAnchor.CENTER: return;
+      case WarpedAnchor.CENTER: 
+        break;
       case WarpedAnchor.LEFT:
-        rewoundLocalPosition += past.localRotation * Vector3.left * deviceInfo.baseline * 0.5f;
-        return;
+        rewoundPosition += rewoundRotation * Vector3.left * deviceInfo.baseline * 0.5f;
+        break;
       case WarpedAnchor.RIGHT:
-        rewoundLocalPosition += past.localRotation * Vector3.right * deviceInfo.baseline * 0.5F;
-        return;
+        rewoundPosition += rewoundRotation * Vector3.right * deviceInfo.baseline * 0.5F;
+        break;
       default:
         throw new Exception("Unexpected Rewind Type " + anchor);
     }
+
+    return true;
   }
 
-  public bool TryGetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation) {
+  public bool TryGetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundPosition, out Quaternion rewoundRotation) {
     long timestamp;
     if (tryLatestImageTimestamp(out timestamp)) {
-      GetWarpedTransform(anchor, out rewoundLocalPosition, out rewoundLocalRotation, timestamp);
-      return true;
+      if (TryGetWarpedTransform(anchor, out rewoundPosition, out rewoundRotation, timestamp)) {
+        return true;
+      }
     }
-    rewoundLocalPosition = Vector3.zero;
-    rewoundLocalRotation = Quaternion.identity;
+    rewoundPosition = Vector3.zero;
+    rewoundRotation = Quaternion.identity;
     return false;
   }
 
@@ -219,6 +230,7 @@ public class LeapTemporalWarping : MonoBehaviour {
 
   private void onValidCameraParams(LeapImageRetriever.CameraParams cameraParams) {
     _projectionMatrix = cameraParams.ProjectionMatrix;
+    _trackingAnchor = cameraParams.TrackingAnchor;
     LeapImageRetriever.OnValidCameraParams -= onValidCameraParams;
   }
 
@@ -238,8 +250,12 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   private void updateTemporalWarping() {
-    Vector3 currCenterLocalPos = InputTracking.GetLocalPosition(VRNode.CenterEye);
-    Quaternion currCenterLocalRot = InputTracking.GetLocalRotation(VRNode.CenterEye);
+    if (_trackingAnchor == null) {
+      return;
+    }
+
+    Vector3 currCenterPos = _trackingAnchor.TransformPoint(InputTracking.GetLocalPosition(VRNode.CenterEye));
+    Quaternion currCenterRot = _trackingAnchor.rotation * InputTracking.GetLocalRotation(VRNode.CenterEye);
 
     //Get the transform at the time when the latest image was captured
     long rewindTime;
@@ -248,17 +264,19 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
 
     TransformData past = transformAtTime(rewindTime);
+    Vector3 pastCenterPos = _trackingAnchor.TransformPoint(past.localPosition);
+    Quaternion pastCenterRot = _trackingAnchor.rotation * past.localRotation;
 
     //Apply only a rotation ~ assume all objects are infinitely distant
-    Quaternion referenceRotation = Quaternion.Slerp(currCenterLocalRot, past.localRotation, tweenImageWarping);
+    Quaternion referenceRotation = Quaternion.Slerp(currCenterRot, pastCenterRot, tweenImageWarping);
 
-    Quaternion quatWarp = Quaternion.Inverse(currCenterLocalRot) * referenceRotation;
+    Quaternion quatWarp = Quaternion.Inverse(currCenterRot) * referenceRotation;
     Matrix4x4 matWarp = _projectionMatrix * Matrix4x4.TRS(Vector3.zero, quatWarp, Vector3.one) * _projectionMatrix.inverse;
 
     Shader.SetGlobalMatrix("_LeapGlobalWarpedOffset", matWarp);
 
-    transform.position = Vector3.Lerp(currCenterLocalPos, past.localPosition, tweenPositionalWarping);
-    transform.rotation = Quaternion.Slerp(currCenterLocalRot, past.localRotation, tweenRotationalWarping);
+    transform.position = Vector3.Lerp(currCenterPos, pastCenterPos, tweenPositionalWarping);
+    transform.rotation = Quaternion.Slerp(currCenterRot, pastCenterRot, tweenRotationalWarping);
 
     transform.position += transform.forward * deviceInfo.focalPlaneOffset;
   }
