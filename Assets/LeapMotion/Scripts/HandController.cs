@@ -39,6 +39,13 @@ public class HandController : MonoBehaviour {
     }
   }
 
+  protected static List<HandController> _all = new List<HandController>();
+  public static List<HandController> All {
+    get {
+      return _all;
+    }
+  }
+
   // Reference distance from thumb base to pinky base in mm.
   protected const float GIZMO_SCALE = 5.0f;
   /** Conversion factor for millimeters to meters. */
@@ -120,6 +127,33 @@ public class HandController : MonoBehaviour {
   protected Dictionary<int, HandModel> hand_physics_;
   /** The list of all tool objects owned by this HandController.*/
   protected Dictionary<int, ToolModel> tools_;
+
+  protected bool graphicsEnabled = true;
+  protected bool physicsEnabled = true;
+
+  public bool GraphicsEnabled {
+    get {
+      return graphicsEnabled;
+    }
+    set {
+      graphicsEnabled = value;
+      if (!graphicsEnabled) {
+        DestroyGraphicsHands();
+      }
+    }
+  }
+
+  public bool PhysicsEnabled {
+    get {
+      return physicsEnabled;
+    }
+    set {
+      physicsEnabled = value;
+      if (!physicsEnabled) {
+        DestroyPhysicsHands();
+      }
+    }
+  }
 
   private bool flag_initialized_ = false;
   private int curr_frame_count = -1;
@@ -213,6 +247,7 @@ public class HandController : MonoBehaviour {
     if (isMain) {
       _main = this;
     }
+    _all.Add(this);
   }
 
   /** Initalizes the hand and tool lists and recording, if enabled.*/
@@ -275,7 +310,7 @@ public class HandController : MonoBehaviour {
     if (handHandler != null) {
       handHandler(hand_model);
     }
-    
+
     return hand_model;
   }
 
@@ -286,7 +321,7 @@ public class HandController : MonoBehaviour {
   protected void DestroyHand(HandModel hand_model) {
     handEvent handHandler = onDestroyHand;
     if (handHandler != null) {
-      handHandler (hand_model);
+      handHandler(hand_model);
     }
     if (destroyHands)
       Destroy(hand_model.gameObject);
@@ -529,7 +564,8 @@ public class HandController : MonoBehaviour {
     if (frame != null && !flag_initialized_) {
       InitializeFlags();
     }
-    if (frame.Id != prev_graphics_id_) {
+
+    if (frame.Id != prev_graphics_id_ && graphicsEnabled) {
       UpdateHandModels(hand_graphics_, frame.Hands, leftGraphicsModel, rightGraphicsModel);
       prev_graphics_id_ = frame.Id;
     }
@@ -549,7 +585,7 @@ public class HandController : MonoBehaviour {
 
     Frame frame = GetFixedFrame();
 
-    if (frame.Id != prev_physics_id_) {
+    if (frame.Id != prev_physics_id_ && physicsEnabled) {
       UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
       UpdateToolModels(tools_, frame.Tools, toolModel);
       prev_physics_id_ = frame.Id;
@@ -567,7 +603,7 @@ public class HandController : MonoBehaviour {
       return new LeapDeviceInfo(overrideDeviceTypeWith);
     }
 
-    DeviceList devices = leap_controller_.Devices;  
+    DeviceList devices = leap_controller_.Devices;
     if (devices.Count == 1) {
       LeapDeviceInfo info = new LeapDeviceInfo(LeapDeviceType.Invalid);
       // TODO: DeviceList does not tell us the device type. Dragonfly serial starts with "LE" and peripheral starts with "LP"
@@ -592,8 +628,7 @@ public class HandController : MonoBehaviour {
       info.trackingRange = devices[0].Range / 1000f;
       info.serialID = devices[0].SerialNumber;
       return info;
-    }
-    else if (devices.Count > 1) {
+    } else if (devices.Count > 1) {
       return new LeapDeviceInfo(LeapDeviceType.Peripheral);
     }
     return new LeapDeviceInfo(LeapDeviceType.Invalid);
@@ -621,12 +656,20 @@ public class HandController : MonoBehaviour {
 
   /** Destroys all hands owned by this HandController instance. */
   public void DestroyAllHands() {
+    DestroyGraphicsHands();
+    DestroyPhysicsHands();
+  }
+
+  public void DestroyGraphicsHands() {
     if (hand_graphics_ != null) {
       foreach (HandModel model in hand_graphics_.Values)
         Destroy(model.gameObject);
 
       hand_graphics_.Clear();
     }
+  }
+
+  public void DestroyPhysicsHands() {
     if (hand_physics_ != null) {
       foreach (HandModel model in hand_physics_.Values)
         Destroy(model.gameObject);
@@ -639,6 +682,8 @@ public class HandController : MonoBehaviour {
     if (isMain) {
       _main = null;
     }
+
+    _all.Remove(this);
 
     DestroyAllHands();
   }
