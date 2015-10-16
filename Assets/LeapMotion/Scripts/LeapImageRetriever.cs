@@ -4,6 +4,10 @@
 * Available at http://www.apache.org/licenses/LICENSE-2.0.html                 *
 \******************************************************************************/
 using UnityEngine;
+using UnityEngine.Rendering;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,6 +16,8 @@ using Leap;
 
 // To use the LeapImageRetriever you must be on version 2.1+
 // and enable "Allow Images" in the Leap Motion settings.
+[RequireComponent(typeof(Camera))]
+[ExecuteInEditMode]
 public class LeapImageRetriever : MonoBehaviour {
   public const string IR_SHADER_VARIANT_NAME = "LEAP_FORMAT_IR";
   public const string RGB_SHADER_VARIANT_NAME = "LEAP_FORMAT_RGB";
@@ -39,8 +45,8 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   public EyeType eyeType;
-  
-  [Tooltip ("Should the image match the tracked hand, or should it be displayed as fast as possible")]
+
+  [Tooltip("Should the image match the tracked hand, or should it be displayed as fast as possible")]
   public SYNC_MODE syncMode = SYNC_MODE.SYNC_WITH_HANDS;
 
   public float gammaCorrection = 1.0f;
@@ -207,11 +213,14 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-  void Reset() {
-    eyeType = new EyeType(gameObject.name);
-  }
-
   void Start() {
+#if UNITY_EDITOR
+    //We ExecuteInEditMode so make sure to guard all callbacks that shouldn't be called at edit time
+    if (!Application.isPlaying) {
+      return;
+    }
+#endif
+
     if (HandController.Main == null) {
       Debug.LogWarning("Cannot use LeapImageRetriever if there is no main HandController!");
       enabled = false;
@@ -234,6 +243,14 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   void Update() {
+#if UNITY_EDITOR
+    eyeType.UpdateOrderGivenComponent(this);
+
+    if (!Application.isPlaying) {
+      return;
+    }
+#endif
+
     if (_controller == null) {
       return;
     }
@@ -246,10 +263,22 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   void OnPreCull() {
-    frameEye = 0;
+#if UNITY_EDITOR
+    if (!Application.isPlaying) {
+      return;
+    }
+#endif
+
+    eyeType.Reset();
   }
 
   void OnPreRender() {
+#if UNITY_EDITOR
+    if (!Application.isPlaying) {
+      return;
+    }
+#endif
+
     eyeType.BeginCamera();
 
     if (syncMode == SYNC_MODE.LOW_LATENCY) {

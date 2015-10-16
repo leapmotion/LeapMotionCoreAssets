@@ -1,14 +1,21 @@
 ﻿using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using System;
 using System.Collections;
 
 [System.Serializable]
 public class EyeType {
+  private const string TARGET_EYE_PROPERTY_NAME = "m_TargetEye";
+  private const int TARGET_EYE_LEFT_INDEX = 1;
+  private const int TARGET_EYE_RIGHT_INDEX = 2;
+  private const int TARGET_EYE_CENTER_INDEX = 3;
 
   public enum OrderType{
-    LEFT = 0,
-    RIGHT = 1,
-    CENTER = 2
+    LEFT = TARGET_EYE_LEFT_INDEX,
+    RIGHT = TARGET_EYE_RIGHT_INDEX,
+    CENTER = TARGET_EYE_CENTER_INDEX
   }
 
   [SerializeField]
@@ -44,20 +51,30 @@ public class EyeType {
     }
   }
 
-  public EyeType(string name) {
-    string lower = name.ToLower();
-    if (lower.Contains("left")) {
-      _orderType = OrderType.LEFT;
-    } else if (lower.Contains("right")) {
-      _orderType = OrderType.RIGHT;
-    } else {
-      _orderType = OrderType.CENTER;
-    }
-  }
-
   public EyeType(OrderType type) {
     _orderType = type;
   }
+
+#if UNITY_EDITOR
+  public void UpdateOrderGivenComponent(Component component) {
+    if (Application.isPlaying) {
+      return;
+    }
+
+    Camera camera = component.GetComponent<Camera>();
+    if (camera == null) {
+      camera = component.gameObject.AddComponent<Camera>();
+    }
+
+    SerializedObject obj = new SerializedObject(camera);
+    SerializedProperty targetEyeProp = obj.FindProperty(TARGET_EYE_PROPERTY_NAME);
+    OrderType newOrder = (OrderType)targetEyeProp.intValue;
+    if (_orderType != newOrder) {
+      _orderType = newOrder;
+      EditorUtility.SetDirty(component);
+    }
+  }
+#endif
 
   public void BeginCamera() {
     if (!_hasBegun) {

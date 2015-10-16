@@ -4,8 +4,8 @@ using System;
 using System.Collections;
 
 [RequireComponent(typeof(Camera))]
+[ExecuteInEditMode]
 public class LeapCameraDisplacement : MonoBehaviour {
-
   //Called whenever the center camera is assigned it's final transform for the current frame.
   public static event Action<Transform> OnFinalCenterCamera;
   private static bool _hasDispatchedFinalCenterCameraEvent = false;
@@ -32,18 +32,16 @@ public class LeapCameraDisplacement : MonoBehaviour {
   private LeapDeviceInfo _deviceInfo;
   private int _preRenderIndex = 0;
 
-#if UNITY_EDITOR
-  void Reset() {
-    _eyeType = new EyeType(gameObject.name);
-  }
-#endif
-
   void Start() {
     _deviceInfo = new LeapDeviceInfo(LeapDeviceType.Dragonfly);
   }
 
   void Update() {
     _hasDispatchedFinalCenterCameraEvent = false;
+
+#if UNITY_EDITOR
+    _eyeType.UpdateOrderGivenComponent(this);
+#endif
   }
 
   void OnPreCull() {
