@@ -228,12 +228,10 @@ public class LeapTemporalWarping : MonoBehaviour {
     transform.rotation = referenceRotation;
   }
 
-  /// <summary>
-  /// Estimates the transform of this gameObject at the specified time
-  /// </summary>
-  /// <returns>
-  /// A transform with leapTime == time only if interpolation was possible
-  /// </returns>
+  /* Returns the VR Center Eye Transform information interpolated to the given leap timestamp.  If the desired
+   * timestamp is outside of the recorded range, interpolation will fail and the returned transform will not
+   * have the desired time.
+   */
   private TransformData TransformAtTime(long time) {
     if (history.Count == 0) {
       return new TransformData() {
