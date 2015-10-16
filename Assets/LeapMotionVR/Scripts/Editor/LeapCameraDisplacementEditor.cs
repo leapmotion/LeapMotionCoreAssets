@@ -8,7 +8,6 @@ public class LeapCameraDisplacementEditor : Editor {
 
   private List<string> BasicModePropertyNames = new List<string>() {
       "m_Script",
-      "handController",
     };
 
   public override void OnInspectorGUI() {
