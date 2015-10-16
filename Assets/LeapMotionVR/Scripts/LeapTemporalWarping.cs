@@ -19,8 +19,13 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   public enum SyncMode {
-    SYNC_WITH_HANDS,
-    LOW_LATENCY
+    /* SyncWithHands causes both Images and the Transform to be updated at the same time during LateUpdate.  This causes
+     * the images to line up properly, but the images will lag behind the virtual world, causing drift. */
+    SYNC_WITH_HANDS,  
+    /* LowLatency causes the Images to be warped directly prior to rendering, causing them to line up better with virtual
+     * objects.  Since transforms cannot be modified at this point in the update step, the Transform will still be updated
+     * during LateUpdate, causing a misalignment between images and leap space. */
+    LOW_LATENCY        
   }
 
   protected struct TransformData {
@@ -42,6 +47,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   // Spatial recalibration
+  [Tooltip("Key to recenter the VR tracking space.")]
   [SerializeField]
   private KeyCode recenter = KeyCode.R;
 
@@ -50,6 +56,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   [SerializeField]
   private float tweenTimeWarp = 0f;
 
+  [Tooltip("Controls when this script synchronizes the time warp of images.  Use LowLatency for AR, and SyncWithHands for VR.")]
   [SerializeField]
   private SyncMode syncMode = SyncMode.LOW_LATENCY;
 
@@ -66,11 +73,6 @@ public class LeapTemporalWarping : MonoBehaviour {
 
   [SerializeField]
   private KeyCode lessRewind = KeyCode.RightArrow;
-
-  private LeapDeviceInfo deviceInfo;
-
-  private List<TransformData> history = new List<TransformData>();
-  private long rewindAdjust = 0; //Microseconds
 
   public float TweenTimeWarp {
     get {
@@ -90,19 +92,10 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
   }
 
-  private bool tryLatestImageTimestamp(out long timestamp) {
-    using (ImageList list = HandController.Main.GetFrame().Images) {
-      if (list.Count > 0) {
-        using (Image image = list[0]) {
-          timestamp = image.Timestamp;
-          return true;
-        }
-      } else {
-        timestamp = 0;
-        return false;
-      }
-    }
-  }
+  private LeapDeviceInfo deviceInfo;
+
+  private List<TransformData> history = new List<TransformData>();
+  private long rewindAdjust = 0; //Microseconds
 
   /// <summary>
   /// Provides the position of a Leap Anchor at a given Leap Time.  Cannot extrapolate.
@@ -127,7 +120,7 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
   }
 
-  
+
   public bool TryGetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation) {
     long timestamp;
     if (tryLatestImageTimestamp(out timestamp)) {
@@ -253,6 +246,20 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
 
     return TransformData.Lerp(history[t - 1], history[t], time);
+  }
+
+  private bool tryLatestImageTimestamp(out long timestamp) {
+    using (ImageList list = HandController.Main.GetFrame().Images) {
+      if (list.Count > 0) {
+        using (Image image = list[0]) {
+          timestamp = image.Timestamp;
+          return true;
+        }
+      } else {
+        timestamp = 0;
+        return false;
+      }
+    }
   }
 
   private long longLerp(long a, long b, float percent) {
