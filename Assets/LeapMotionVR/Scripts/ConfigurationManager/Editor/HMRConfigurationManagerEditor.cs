@@ -18,13 +18,21 @@ public class HMRConfigurationManagerEditor : Editor {
     }
   }
 
-  private GameObject _backgroundQuad {
+  private Renderer _backgroundQuadRenderer {
     get {
       if (_manager._backgroundQuad == null) {
         Debug.LogWarning("The _backgroundQuad field on " + _manager.name + " is null.");
+        return null;
       }
 
-      return _manager._backgroundQuad;
+      Renderer backgroundQuadRenderer = _manager._backgroundQuad.GetComponent<Renderer>();
+
+      if (backgroundQuadRenderer == null) {
+        Debug.LogWarning("The object " + _manager._backgroundQuad.gameObject.name + " is missing a Renderer.");
+        return null;
+      }
+
+      return backgroundQuadRenderer;
     }
   }
 
@@ -108,59 +116,37 @@ public class HMRConfigurationManagerEditor : Editor {
   private void applySelectedConfiguration() {
     int selectedConfigurationIndex = serializedObject.FindProperty("_configuration").enumValueIndex;
     SerializedProperty serializedConfiguration = serializedObject.FindProperty("_headMountedConfigurations").GetArrayElementAtIndex((int)selectedConfigurationIndex);
-    LMHeadMountedRigConfiguration configuration = LMHeadMountedRigConfiguration.Deserialize(serializedConfiguration);
+    LMHeadMountedRigConfiguration config = LMHeadMountedRigConfiguration.Deserialize(serializedConfiguration);
 
-    setBackgroundQuadEnabled(configuration.EnableBackgroundQuad);
-    setGraphicsModels(configuration.LeftHandGraphicsModel, configuration.RightHandGraphicsModel);
-    setImageRetrieversEnabled(configuration.EnableImageRetrievers);
-    setCameraClearFlags(configuration.CameraClearFlags);
-    setTimewarp(configuration.TweenTimewarp);
-    setTemporalSynMode(configuration.TemporalSynMode);
-    setOverrideEyes(configuration.OverrideEyePos);
+    //Update background quad
+    updateValue(_backgroundQuadRenderer, _backgroundQuadRenderer.enabled, config.EnableBackgroundQuad, v => _backgroundQuadRenderer.enabled = v);
 
-    Debug.Log("Switched to configuration: " + configuration.ConfigurationName);
-  }
+    //Set graphical models
+    updateValue(_handController, _handController.leftGraphicsModel, config.LeftHandGraphicsModel, v => _handController.leftGraphicsModel = v);
+    updateValue(_handController, _handController.rightGraphicsModel, config.RightHandGraphicsModel, v => _handController.rightGraphicsModel = v);
 
-  private void setBackgroundQuadEnabled(bool enabled) {
-    Renderer backgroundQuadRenderer = _backgroundQuad.GetComponent<Renderer>();
-
-    if (backgroundQuadRenderer == null) {
-      Debug.LogWarning("The object " + _backgroundQuad.gameObject.name + " is missing a Renderer.");
-      return;
-    }
-
-    updateValue(backgroundQuadRenderer, backgroundQuadRenderer.enabled, enabled, v => backgroundQuadRenderer.enabled = v);
-  }
-
-  private void setGraphicsModels(HandModel leftHandGraphicsModel, HandModel rightHandGraphicsModel) {
-    updateValue(_handController, _handController.leftGraphicsModel, leftHandGraphicsModel, v => _handController.leftGraphicsModel = v);
-    updateValue(_handController, _handController.rightGraphicsModel, rightHandGraphicsModel, v => _handController.rightGraphicsModel = v);
-  }
-
-  private void setImageRetrieversEnabled(bool enabled) {
+    //Enable/Disable image retrievers
     foreach (LeapImageRetriever retriever in imageRetrievers) {
-      updateValue(retriever, retriever.enabled, enabled, e => retriever.enabled = e);
+      updateValue(retriever, retriever.enabled, config.EnableImageRetrievers, e => retriever.enabled = e);
     }
-  }
 
-  private void setCameraClearFlags(CameraClearFlags cameraClearFlags) {
+    //Update camera clear flags
     foreach (Camera camera in vrCameras) {
-      updateValue(camera, camera.clearFlags, cameraClearFlags, v => camera.clearFlags = v);
+      updateValue(camera, camera.clearFlags, config.CameraClearFlags, v => camera.clearFlags = v);
     }
-  }
 
-  private void setTimewarp(float value) {
-    updateValue(_aligner, _aligner.TweenImageWarping, value, v => _aligner.TweenImageWarping = v);
-  }
+    //Update temporal alignment script
+    updateValue(_aligner, _aligner.TweenImageWarping, config.TweenImageWarping, v => _aligner.TweenImageWarping = v);
+    updateValue(_aligner, _aligner.TweenRotationalWarping, config.TweenRotationalWarping, v => _aligner.TweenRotationalWarping = v);
+    updateValue(_aligner, _aligner.TweenPositionalWarping, config.TweenPositionalWarping, v => _aligner.TweenPositionalWarping = v);
+    updateValue(_aligner, _aligner.TemporalSyncMode, config.TemporalSynMode, v => _aligner.TemporalSyncMode = v);
 
-  private void setTemporalSynMode(LeapTemporalWarping.SyncMode syncMode) {
-    updateValue(_aligner, _aligner.TemporalSyncMode, syncMode, v => _aligner.TemporalSyncMode = v);
-  }
-
-  private void setOverrideEyes(bool overrideEyes) {
+    //Update Override Eye Position
     foreach (LeapCameraDisplacement displacement in cameraDisplacements) {
-      updateValue(displacement, displacement.OverrideEyePosition, overrideEyes, v => displacement.OverrideEyePosition = v);
+      updateValue(displacement, displacement.OverrideEyePosition, config.OverrideEyePos, v => displacement.OverrideEyePosition = v);
     }
+
+    Debug.Log("Switched to configuration: " + config.ConfigurationName);
   }
 
   private void updateValue<T>(UnityEngine.Object obj, T currValue, T destValue, Action<T> setter) {

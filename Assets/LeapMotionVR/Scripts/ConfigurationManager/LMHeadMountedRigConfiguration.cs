@@ -25,8 +25,17 @@ public struct LMHeadMountedRigConfiguration {
   [SerializeField]
   private CameraClearFlags _cameraClearFlags;
 
+  [Range(0, 1)]
   [SerializeField]
-  private float _tweenTimewarp;
+  private float _tweenImageWarping;
+
+  [Range(0, 1)]
+  [SerializeField]
+  private float _tweenRotationalWarping;
+
+  [Range(0, 1)]
+  [SerializeField]
+  private float _tweenPositionalWarping;
 
   [SerializeField]
   private LeapTemporalWarping.SyncMode _temporalSyncMode;
@@ -40,7 +49,9 @@ public struct LMHeadMountedRigConfiguration {
   public HandModel RightHandGraphicsModel { get { return _rightHandGraphicsModel; } }
   public bool EnableImageRetrievers { get { return _enableImageRetrievers; } }
   public CameraClearFlags CameraClearFlags { get { return _cameraClearFlags; } }
-  public float TweenTimewarp { get { return _tweenTimewarp; } }
+  public float TweenImageWarping { get { return _tweenImageWarping; } }
+  public float TweenRotationalWarping { get { return _tweenRotationalWarping; } }
+  public float TweenPositionalWarping { get { return _tweenPositionalWarping; } }
   public LeapTemporalWarping.SyncMode TemporalSynMode { get { return _temporalSyncMode; } }
   public bool OverrideEyePos { get { return _overrideEyePos; } }
 
@@ -53,7 +64,9 @@ public struct LMHeadMountedRigConfiguration {
     config._rightHandGraphicsModel = property.FindPropertyRelative("_rightHandGraphicsModel").objectReferenceValue as HandModel;
     config._enableImageRetrievers = property.FindPropertyRelative("_enableImageRetrievers").boolValue;
     config._cameraClearFlags = (CameraClearFlags)property.FindPropertyRelative("_cameraClearFlags").intValue;
-    config._tweenTimewarp = property.FindPropertyRelative("_tweenTimewarp").floatValue;
+    config._tweenImageWarping = property.FindPropertyRelative("_tweenImageWarping").floatValue;
+    config._tweenRotationalWarping = property.FindPropertyRelative("_tweenRotationalWarping").floatValue;
+    config._tweenPositionalWarping = property.FindPropertyRelative("_tweenPositionalWarping").floatValue;
     config._temporalSyncMode = (LeapTemporalWarping.SyncMode)property.FindPropertyRelative("_temporalSyncMode").intValue;
     config._overrideEyePos = property.FindPropertyRelative("_overrideEyePos").boolValue;
     return config;
