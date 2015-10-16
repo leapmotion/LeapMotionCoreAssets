@@ -18,6 +18,11 @@ public class LeapTemporalWarping : MonoBehaviour {
     RIGHT,
   }
 
+  public enum SyncMode {
+    SYNC_WITH_HANDS,
+    LOW_LATENCY
+  }
+
   protected struct TransformData {
     public long leapTime; // microseconds
     public Vector3 localPosition; //meters
@@ -44,6 +49,9 @@ public class LeapTemporalWarping : MonoBehaviour {
   [Range(0, 1)]
   [SerializeField]
   private float tweenTimeWarp = 0f;
+
+  [SerializeField]
+  private SyncMode syncMode = SyncMode.LOW_LATENCY;
 
   // Manual Time Alignment
   [Tooltip("Allow manual adjustment of the rewind time.")]
@@ -163,7 +171,10 @@ public class LeapTemporalWarping : MonoBehaviour {
 
   private void onFinalCenterCamera(Transform centerCamera) {
     updateHistory();
-    updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
+
+    if (syncMode == SyncMode.LOW_LATENCY) {
+      updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
+    }
   }
 
   private void updateHistory() {
