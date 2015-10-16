@@ -193,17 +193,27 @@ public class LeapImageRetriever : MonoBehaviour {
 
   private class EyeTextureData {
     public LeapTextureData mainTexture = new LeapTextureData();
+    public LeapTextureData rawTexture = new LeapTextureData();
     public LeapDistortionData distortion = new LeapDistortionData();
 
-    public bool CheckStale(Image mainImage) {
-      return mainTexture.CheckStale(mainImage) || distortion.CheckStale();
+    public bool CheckStale(Image mainImage, Image rawImage) {
+      if (mainTexture.CheckStale(mainImage) || distortion.CheckStale()) {
+        return true;
+      }
+
+      //Only need to check with the raw texture if we are in color mode
+      if (rawImage.Format == Image.FormatType.IBRG) {
+        return rawTexture.CheckStale(rawImage);
+      }
+
+      return false;
     }
 
-    public void Reconstruct(Image mainImage) {
+    public void Reconstruct(Image mainImage, Image rawImage) {
       mainTexture.Reconstruct(mainImage);
       distortion.Reconstruct(mainImage);
 
-      switch (mainImage.Format) {
+      switch (rawImage.Format) {
         case Image.FormatType.INFRARED:
           Shader.DisableKeyword(RGB_SHADER_VARIANT_NAME);
           Shader.EnableKeyword(IR_SHADER_VARIANT_NAME);
@@ -211,21 +221,27 @@ public class LeapImageRetriever : MonoBehaviour {
         case (Image.FormatType)4:
           Shader.DisableKeyword(IR_SHADER_VARIANT_NAME);
           Shader.EnableKeyword(RGB_SHADER_VARIANT_NAME);
+          rawTexture.Reconstruct(rawImage); //Only need raw texture for Dragonfly
           break;
         default:
-          Debug.LogWarning("Unexpected format type " + mainImage.Format);
+          Debug.LogWarning("Unexpected format type " + rawTexture.formatType);
           break;
       }
     }
 
-    public void UpdateTextures(Image mainImage) {
+    public void UpdateTextures(Image mainImage, Image rawImage) {
       mainTexture.UpdateTexture(mainImage);
+      rawTexture.UpdateTexture(rawImage);
     }
   }
 
   private void updateGlobalShaderProperties(EyeTextureData eyeTextureData) {
-    Shader.SetGlobalTexture("_LeapGlobalMainTexture", eyeTextureData.mainTexture.texture);
+    Shader.SetGlobalTexture("_LeapGlobalBrightnessTexture", eyeTextureData.mainTexture.texture);
     Shader.SetGlobalTexture("_LeapGlobalDistortion", eyeTextureData.distortion.texture);
+
+    if (eyeTextureData.rawTexture.texture != null) {
+      Shader.SetGlobalTexture("_LeapGlobalRawTexture", eyeTextureData.rawTexture.texture);
+    }
 
     Vector4 projection = new Vector4();
     projection.x = _cachedCamera.projectionMatrix[0, 2];
@@ -236,6 +252,7 @@ public class LeapImageRetriever : MonoBehaviour {
 
     Shader.SetGlobalFloat("_LeapGlobalGammaCorrectionExponent", 1.0f / gammaCorrection);
   }
+
 
   void Start() {
 #if UNITY_EDITOR
@@ -292,20 +309,23 @@ public class LeapImageRetriever : MonoBehaviour {
 
     eyeType.BeginCamera();
 
-    ImageList mainList;
+    ImageList mainList, rawList;
     switch (syncMode) {
       case SYNC_MODE.LOW_LATENCY:
         mainList = _controller.Images;
+        rawList = _controller.RawImages;
         break;
       case SYNC_MODE.SYNC_WITH_HANDS:
         mainList = HandController.Main.GetFrame().Images;
+        rawList = HandController.Main.GetFrame().RawImages;
         break;
       default:
         throw new Exception("Unexpected Sync Mode " + syncMode + "!");
     }
 
-    using (mainList) {
-      if (mainList == null || mainList.Count == 0) {
+    using (mainList)
+    using (rawList) {
+      if (mainList == null || mainList.Count == 0 || rawList == null || rawList.Count == 0) {
         _missedImages++;
         if (_missedImages == IMAGE_WARNING_WAIT) {
           Debug.LogWarning("Can't find any images. " +
@@ -332,19 +352,22 @@ public class LeapImageRetriever : MonoBehaviour {
         if (OnRightPreRender != null) OnRightPreRender();
       }
 
-      using (Image referenceImage = mainList[imageIndex]) {
+      using (Image referenceImage = mainList[imageIndex])
+      using (Image referenceRawImage = rawList[imageIndex]) {
         EyeTextureData eyeTextureData = _eyeTextureData[imageIndex];
 
-        if (eyeTextureData.CheckStale(referenceImage)) {
-          eyeTextureData.Reconstruct(referenceImage);
+        if (eyeTextureData.CheckStale(referenceImage, referenceRawImage)) {
+          eyeTextureData.Reconstruct(referenceImage, referenceRawImage);
         }
 
-        eyeTextureData.UpdateTextures(referenceImage);
+        eyeTextureData.UpdateTextures(referenceImage, referenceRawImage);
 
         updateGlobalShaderProperties(eyeTextureData);
       }
     }
 
     mainList.Dispose();
+    rawList.Dispose();
   }
+
 }
