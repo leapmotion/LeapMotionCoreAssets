@@ -110,7 +110,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   /// Provides the position of a Leap Anchor at a given Leap Time.  Cannot extrapolate.
   /// </summary>
   public void GetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation, long leapTime) {
-    TransformData past = TransformAtTime(leapTime);
+    TransformData past = transformAtTime(leapTime);
 
     // Rewind position and rotation
     rewoundLocalRotation = past.localRotation;
@@ -215,7 +215,7 @@ public class LeapTemporalWarping : MonoBehaviour {
       return;
     }
 
-    TransformData past = TransformAtTime(rewindTime);
+    TransformData past = transformAtTime(rewindTime);
 
     //Apply only a rotation ~ assume all objects are infinitely distant
     Quaternion referenceRotation = Quaternion.Slerp(centerEyeRotation, past.localRotation, tweenTimeWarp);
@@ -232,7 +232,7 @@ public class LeapTemporalWarping : MonoBehaviour {
    * timestamp is outside of the recorded range, interpolation will fail and the returned transform will not
    * have the desired time.
    */
-  private TransformData TransformAtTime(long time) {
+  private TransformData transformAtTime(long time) {
     if (history.Count == 0) {
       return new TransformData() {
         leapTime = 0,
