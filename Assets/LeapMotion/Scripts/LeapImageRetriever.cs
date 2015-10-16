@@ -51,8 +51,6 @@ public class LeapImageRetriever : MonoBehaviour {
   public SYNC_MODE syncMode = SYNC_MODE.SYNC_WITH_HANDS;
 
   public float gammaCorrection = 1.0f;
-  
-  public HandController handController;
 
   private int _missedImages = 0;
   private Controller _controller;
@@ -226,8 +224,6 @@ public class LeapImageRetriever : MonoBehaviour {
     } else {
       retrievedEye = EYE.LEFT_TO_RIGHT;
     }
-
-    handController = FindObjectOfType<HandController>();
   }
 
   void OnValidate() {
@@ -244,11 +240,6 @@ public class LeapImageRetriever : MonoBehaviour {
         anyChange = true;
       }
 
-      if (retriever.handController != handController && handController != null) {
-        retriever.handController = handController;
-        anyChange = true;
-      }
-
       if (anyChange) {
         UnityEditor.EditorUtility.SetDirty(retriever);
       }
@@ -257,8 +248,8 @@ public class LeapImageRetriever : MonoBehaviour {
 #endif
 
   void Start() {
-    if (handController == null) {
-      Debug.LogWarning("Cannot use LeapImageRetriever if there is no HandController!");
+    if (HandController.Main == null) {
+      Debug.LogWarning("Could not find Main Hand Controller.  Cannot use LeapImageRetriever if there is no Main Hand Controller!");
       enabled = false;
       return;
     }
@@ -274,7 +265,7 @@ public class LeapImageRetriever : MonoBehaviour {
 
     _cachedCamera = GetComponent<Camera>();
 
-    _controller = handController.GetLeapController();
+    _controller = HandController.Main.GetLeapController();
     _controller.SetPolicy(Controller.PolicyFlag.POLICY_IMAGES);
   }
 

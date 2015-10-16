@@ -11,7 +11,6 @@ public class BugReporter : MonoBehaviour {
   public KeyCode unlockStart = KeyCode.LeftShift;
   public KeyCode changeState = KeyCode.Tab;
 
-  public HandController handController;
   public UImage progressStatus;
   public UImage progressBar;
   public Text progressText;
@@ -117,8 +116,8 @@ public class BugReporter : MonoBehaviour {
   
   private void ReadyTriggered()
   {
-    handController.ResetRecording();
-    handController.StopRecording();
+    HandController.Main.ResetRecording();
+    HandController.Main.StopRecording();
     if (synchronizeRecorder != null &&
         synchronizeRecorder.camRecorder != null) {
       synchronizeRecorder.m_hideInstructions = false;
@@ -138,8 +137,8 @@ public class BugReporter : MonoBehaviour {
   {
     saving_triggered_ = false;
     leap_controller_.BugReport.BeginRecording();
-    handController.ResetRecording();
-    handController.Record();
+    HandController.Main.ResetRecording();
+    HandController.Main.Record();
     if (synchronizeRecorder != null &&
         synchronizeRecorder.camRecorder != null) {
       synchronizeRecorder.m_hideInstructions = true;
@@ -160,12 +159,12 @@ public class BugReporter : MonoBehaviour {
       return;
 
     if (saveReplayFrames) {
-      replayPath = handController.FinishAndSaveRecording ();
+      replayPath = HandController.Main.FinishAndSaveRecording();
     } else {
-      handController.StopRecording ();
+      HandController.Main.StopRecording();
       replayPath = "";
     }
-    handController.PlayRecording();
+    HandController.Main.PlayRecording();
     if (synchronizeRecorder != null &&
         synchronizeRecorder.camRecorder != null) {
       synchronizeRecorder.camRecorder.StopRecording();
@@ -208,7 +207,7 @@ public class BugReporter : MonoBehaviour {
 
   void Init()
   {
-    handController.enableRecordPlayback = true;
+    HandController.Main.enableRecordPlayback = true;
 
     ReadyTriggered();
 
@@ -220,13 +219,13 @@ public class BugReporter : MonoBehaviour {
 
   void Start()
   {
-    if (handController == null)
+    if (HandController.Main == null)
     {
-      Debug.LogWarning("HandController reference is null. Bug Recording -> Inactive");
+      Debug.LogWarning("No Main HandController. Bug Recording -> Inactive");
       gameObject.SetActive(false);
       return;
     }
-    leap_controller_ = handController.GetLeapController();
+    leap_controller_ = HandController.Main.GetLeapController();
     if (leap_controller_ == null)
     {
       Debug.LogWarning("Leap Controller was not found. Bug Recording -> Blocked until found");
@@ -239,7 +238,7 @@ public class BugReporter : MonoBehaviour {
 	// Update is called once per frame
 	void Update() {
     if (leap_controller_ == null) {
-      leap_controller_ = handController.GetLeapController();
+      leap_controller_ = HandController.Main.GetLeapController();
       if (leap_controller_ != null) {
         InterfaceEnabled = m_interfaceEnabled;
         Init();
