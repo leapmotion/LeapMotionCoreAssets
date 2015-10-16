@@ -140,8 +140,6 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   protected void Update() {
-    updateHistory();
-
     if (Input.GetKeyDown(recenter)) {
       InputTracking.Recenter();
     }
@@ -160,6 +158,10 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   protected void LateUpdate() {
+    updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
+  }
+
+  private void onFinalCenterCamera(Transform centerCamera) {
     updateHistory();
     updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
   }
@@ -177,11 +179,6 @@ public class LeapTemporalWarping : MonoBehaviour {
            MAX_LATENCY < leapNow - history[0].leapTime) {
       history.RemoveAt(0);
     }
-  }
-
-  private void onFinalCenterCamera(Transform centerCamera) {
-    updateHistory();
-    updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
   }
 
   private void updateTimeWarp(Quaternion centerEyeRotation) {
