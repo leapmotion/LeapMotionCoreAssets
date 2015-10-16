@@ -273,8 +273,4 @@ public class LeapTemporalWarping : MonoBehaviour {
       }
     }
   }
-
-  private long longLerp(long a, long b, float percent) {
-    return a + (long)((b - a) * percent);
-  }
 }
