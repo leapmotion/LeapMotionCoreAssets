@@ -87,8 +87,7 @@ public class LeapCameraDisplacement : MonoBehaviour {
       offsetMatrix = _finalCenterMatrix;
       Vector3 ipdOffset = (_eyeType.IsLeftEye ? 1 : -1) * transform.right * _deviceInfo.baseline * 0.5f;
       Vector3 forwardOffset = -transform.forward * _deviceInfo.focalPlaneOffset;
-      offsetMatrix *= Matrix4x4.TRS(ipdOffset, Quaternion.identity, Vector3.one);
-      offsetMatrix *= Matrix4x4.TRS(forwardOffset, Quaternion.identity, Vector3.one);
+      offsetMatrix *= Matrix4x4.TRS(ipdOffset + forwardOffset, Quaternion.identity, Vector3.one);
     } else {
       offsetMatrix = _camera.worldToCameraMatrix;
     }
