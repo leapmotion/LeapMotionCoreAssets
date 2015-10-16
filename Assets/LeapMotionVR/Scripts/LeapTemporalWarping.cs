@@ -51,10 +51,20 @@ public class LeapTemporalWarping : MonoBehaviour {
   [SerializeField]
   private KeyCode recenter = KeyCode.R;
 
-  [Tooltip("Allows smooth enabling or disabling of the Time-warp feature.  Feature is completely enabled at 1, and completely disabled at 0.")]
+  [Tooltip("Allows smooth enabling or disabling of the Image-Warping feature.  Usually should match rotation warping.")]
   [Range(0, 1)]
   [SerializeField]
-  private float tweenTimeWarp = 0f;
+  private float tweenImageWarping = 0f;
+
+  [Tooltip("Allows smooth enabling or disabling of the Rotational warping of Leap Space.  Usually should match image warping.")]
+  [Range(0, 1)]
+  [SerializeField]
+  private float tweenRotationalWarping = 0f;
+
+  [Tooltip("Allows smooth enabling or disabling of the Positional warping of Leap Space.  Usually should be disabled when using image warping.")]
+  [Range(0, 1)]
+  [SerializeField]
+  private float tweenPositionalWarping = 0f;
 
   [Tooltip("Controls when this script synchronizes the time warp of images.  Use LowLatency for AR, and SyncWithHands for VR.")]
   [SerializeField]
@@ -77,12 +87,30 @@ public class LeapTemporalWarping : MonoBehaviour {
   [SerializeField]
   private KeyCode lessRewind = KeyCode.RightArrow;
 
-  public float TweenTimeWarp {
+  public float TweenImageWarping {
     get {
-      return tweenTimeWarp;
+      return tweenImageWarping;
     }
     set {
-      tweenTimeWarp = Mathf.Clamp01(value);
+      tweenImageWarping = Mathf.Clamp01(value);
+    }
+  }
+
+  public float TweenRotationalWarping {
+    get {
+      return tweenRotationalWarping;
+    }
+    set {
+      tweenRotationalWarping = Mathf.Clamp01(value);
+    }
+  }
+
+  public float TweenPositionalWarping {
+    get {
+      return tweenPositionalWarping;
+    }
+    set {
+      tweenPositionalWarping = Mathf.Clamp01(value);
     }
   }
 
@@ -177,14 +205,14 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   protected void LateUpdate() {
-    updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
+    updateTimeWarp();
   }
 
   private void onFinalCenterCamera(Transform centerCamera) {
     updateHistory();
 
     if (syncMode == SyncMode.LOW_LATENCY) {
-      updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
+      updateTimeWarp();
     }
   }
 
@@ -208,7 +236,10 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
   }
 
-  private void updateTimeWarp(Quaternion centerEyeRotation) {
+  private void updateTimeWarp() {
+    Vector3 currCenterLocalPos = InputTracking.GetLocalPosition(VRNode.CenterEye);
+    Quaternion currCenterLocalRot = InputTracking.GetLocalRotation(VRNode.CenterEye);
+
     //Get the transform at the time when the latest image was captured
     long rewindTime;
     if (!tryLatestImageTimestamp(out rewindTime)) {
@@ -218,14 +249,17 @@ public class LeapTemporalWarping : MonoBehaviour {
     TransformData past = transformAtTime(rewindTime);
 
     //Apply only a rotation ~ assume all objects are infinitely distant
-    Quaternion referenceRotation = Quaternion.Slerp(centerEyeRotation, past.localRotation, tweenTimeWarp);
+    Quaternion referenceRotation = Quaternion.Slerp(currCenterLocalRot, past.localRotation, tweenImageWarping);
 
-    Quaternion quatWarp = Quaternion.Inverse(centerEyeRotation) * referenceRotation;
+    Quaternion quatWarp = Quaternion.Inverse(currCenterLocalRot) * referenceRotation;
     Matrix4x4 matWarp = _projectionMatrix * Matrix4x4.TRS(Vector3.zero, quatWarp, Vector3.one) * _projectionMatrix.inverse;
 
     Shader.SetGlobalMatrix("_LeapGlobalWarpedOffset", matWarp);
 
-    transform.rotation = referenceRotation;
+    transform.position = Vector3.Lerp(currCenterLocalPos, past.localPosition, tweenPositionalWarping);
+    transform.rotation = Quaternion.Slerp(currCenterLocalRot, past.localRotation, tweenRotationalWarping);
+
+    transform.position += transform.forward * deviceInfo.focalPlaneOffset;
   }
 
   /* Returns the VR Center Eye Transform information interpolated to the given leap timestamp.  If the desired

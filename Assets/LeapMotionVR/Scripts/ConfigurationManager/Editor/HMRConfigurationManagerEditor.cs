@@ -150,7 +150,7 @@ public class HMRConfigurationManagerEditor : Editor {
   }
 
   private void setTimewarp(float value) {
-    updateValue(_aligner, _aligner.TweenTimeWarp, value, v => _aligner.TweenTimeWarp = v);
+    updateValue(_aligner, _aligner.TweenImageWarping, value, v => _aligner.TweenImageWarping = v);
   }
 
   private void setTemporalSynMode(LeapTemporalWarping.SyncMode syncMode) {

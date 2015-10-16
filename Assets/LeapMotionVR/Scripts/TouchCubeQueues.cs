@@ -36,7 +36,7 @@ public class TouchCubeQueues : MonoBehaviour {
     switch (demoStage) {
     case 0: // No Alignment
       helpMenuCanvas.SetActive(false);
-      alignment.TweenTimeWarp = 0f;
+      alignment.TweenImageWarping = 0f;
       setOverridePos(false);
       noAlignmentCanvas.SetActive(true);
       demoStage++;
@@ -50,7 +50,7 @@ public class TouchCubeQueues : MonoBehaviour {
       break;
     case 2: // IPD Alignment + TimeWarp
       alignedViewsCanvas.SetActive(false);
-      alignment.TweenTimeWarp = 1f;
+      alignment.TweenImageWarping = 1f;
       warpImagesCanvas.SetActive(true);
       demoStage++;
       break;
@@ -72,7 +72,7 @@ public class TouchCubeQueues : MonoBehaviour {
     noAlignmentCanvas.SetActive (false);
     alignedViewsCanvas.SetActive (false);
     warpImagesCanvas.SetActive (false);
-    alignment.TweenTimeWarp = 1f;
+    alignment.TweenImageWarping = 1f;
     setOverridePos(true);
   }
 }
