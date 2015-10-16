@@ -75,6 +75,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   [SerializeField]
   private bool allowManualTimeAlignment;
 
+  [Tooltip("Timestamps and other uncertanties can lead to sub-optimal alignment, this value can be tuned to get desired alignment.")]
   [SerializeField]
   private int warpingAdjustment = 20; //Milliseconds
 
