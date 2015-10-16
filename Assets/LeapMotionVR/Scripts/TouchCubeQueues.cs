@@ -48,7 +48,7 @@ public class TouchCubeQueues : MonoBehaviour {
       alignedViewsCanvas.SetActive(true);
       demoStage++;
       break;
-    case 2: // IPD Alignment + TimeWarp
+    case 2: // IPD Alignment + temporal warping
       alignedViewsCanvas.SetActive(false);
       alignment.TweenImageWarping = 1f;
       warpImagesCanvas.SetActive(true);
