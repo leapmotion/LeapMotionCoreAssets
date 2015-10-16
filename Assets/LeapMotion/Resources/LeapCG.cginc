@@ -23,7 +23,8 @@
 #define FUDGE_CONSTANT  (1 / (1 - FUDGE_THRESHOLD))
 ////////////////////////////////////////////////////////////////////////                                       
 
-sampler2D _LeapGlobalMainTexture;
+sampler2D _LeapGlobalBrightnessTexture;
+sampler2D _LeapGlobalRawTexture;
 sampler2D _LeapGlobalDistortion;
 
 float4 _LeapGlobalProjection;
@@ -46,7 +47,7 @@ float4 LeapGetWarpedScreenPos(float4 transformedVertex){
 }
 
 float LeapBrightnessUV(float2 uv){
-    return tex2D(_LeapGlobalMainTexture, uv).a;
+    return tex2D(_LeapGlobalBrightnessTexture, uv).a;
 }
 
 float LeapBrightness(float4 screenPos){
@@ -55,17 +56,17 @@ float LeapBrightness(float4 screenPos){
 
 float3 LeapRawColorUV(float2 uv){
   #if LEAP_FORMAT_IR
-    float color = tex2D(_LeapGlobalMainTexture, uv).a;
+    float color = tex2D(_LeapGlobalRawTexture, uv).a;
     return float3(color, color, color);
   #else
     float4 input_lf;
 
     uv.y = clamp(uv.y, 0.01, 0.99);
 
-    input_lf.a = tex2D(_LeapGlobalMainTexture, uv).a;
-    input_lf.r = tex2D(_LeapGlobalMainTexture, uv + R_OFFSET).b;
-    input_lf.g = tex2D(_LeapGlobalMainTexture, uv + G_OFFSET).r;
-    input_lf.b = tex2D(_LeapGlobalMainTexture, uv + B_OFFSET).g;
+    input_lf.a = tex2D(_LeapGlobalRawTexture, uv).a;
+    input_lf.r = tex2D(_LeapGlobalRawTexture, uv + R_OFFSET).b;
+    input_lf.g = tex2D(_LeapGlobalRawTexture, uv + G_OFFSET).r;
+    input_lf.b = tex2D(_LeapGlobalRawTexture, uv + B_OFFSET).g;
 
     float4 output_lf       = mul(TRANSFORMATION, input_lf);
     float4 output_lf_fudge = mul(CONSERVATIVE,   input_lf);
