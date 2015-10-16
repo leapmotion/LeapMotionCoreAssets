@@ -18,6 +18,16 @@ public class LeapTemporalWarping : MonoBehaviour {
     RIGHT,
   }
 
+  public enum SyncMode {
+    /* SyncWithHands causes both Images and the Transform to be updated at the same time during LateUpdate.  This causes
+     * the images to line up properly, but the images will lag behind the virtual world, causing drift. */
+    SYNC_WITH_HANDS,  
+    /* LowLatency causes the Images to be warped directly prior to rendering, causing them to line up better with virtual
+     * objects.  Since transforms cannot be modified at this point in the update step, the Transform will still be updated
+     * during LateUpdate, causing a misalignment between images and leap space. */
+    LOW_LATENCY        
+  }
+
   protected struct TransformData {
     public long leapTime; // microseconds
     public Vector3 localPosition; //meters
@@ -37,6 +47,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   // Spatial recalibration
+  [Tooltip("Key to recenter the VR tracking space.")]
   [SerializeField]
   private KeyCode recenter = KeyCode.R;
 
@@ -44,6 +55,10 @@ public class LeapTemporalWarping : MonoBehaviour {
   [Range(0, 1)]
   [SerializeField]
   private float tweenTimeWarp = 0f;
+
+  [Tooltip("Controls when this script synchronizes the time warp of images.  Use LowLatency for AR, and SyncWithHands for VR.")]
+  [SerializeField]
+  private SyncMode syncMode = SyncMode.LOW_LATENCY;
 
   // Manual Time Alignment
   [Tooltip("Allow manual adjustment of the rewind time.")]
@@ -59,12 +74,6 @@ public class LeapTemporalWarping : MonoBehaviour {
   [SerializeField]
   private KeyCode lessRewind = KeyCode.RightArrow;
 
-  private LeapDeviceInfo deviceInfo;
-
-  private Matrix4x4 _projectionMatrix;
-  private List<TransformData> history = new List<TransformData>();
-  private long rewindAdjust = 0; //Microseconds
-
   public float TweenTimeWarp {
     get {
       return tweenTimeWarp;
@@ -74,19 +83,20 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
   }
 
-  private bool tryLatestImageTimestamp(out long timestamp) {
-    using (ImageList list = HandController.Main.GetFrame().RawImages) {
-      if (list.Count > 0) {
-        using (Image image = list[0]) {
-          timestamp = image.Timestamp;
-          return true;
-        }
-      } else {
-        timestamp = 0;
-        return false;
-      }
+  public SyncMode TemporalSyncMode {
+    get {
+      return syncMode;
+    }
+    set {
+      syncMode = value;
     }
   }
+
+  private LeapDeviceInfo deviceInfo;
+
+  private Matrix4x4 _projectionMatrix;
+  private List<TransformData> history = new List<TransformData>();
+  private long rewindAdjust = 0; //Microseconds
 
   /// <summary>
   /// Provides the position of a Leap Anchor at a given Leap Time.  Cannot extrapolate.
@@ -111,7 +121,7 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
   }
 
-  
+
   public bool TryGetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation) {
     long timestamp;
     if (tryLatestImageTimestamp(out timestamp)) {
@@ -142,8 +152,6 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   protected void Update() {
-    updateHistory();
-
     if (Input.GetKeyDown(recenter)) {
       InputTracking.Recenter();
     }
@@ -162,8 +170,20 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   protected void LateUpdate() {
-    updateHistory();
     updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
+  }
+
+  private void onFinalCenterCamera(Transform centerCamera) {
+    updateHistory();
+
+    if (syncMode == SyncMode.LOW_LATENCY) {
+      updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
+    }
+  }
+
+  private void onValidCameraParams(LeapImageRetriever.CameraParams cameraParams) {
+    _projectionMatrix = cameraParams.ProjectionMatrix;
+    LeapImageRetriever.OnValidCameraParams -= onValidCameraParams;
   }
 
   private void updateHistory() {
@@ -179,16 +199,6 @@ public class LeapTemporalWarping : MonoBehaviour {
            MAX_LATENCY < leapNow - history[0].leapTime) {
       history.RemoveAt(0);
     }
-  }
-
-  private void onValidCameraParams(LeapImageRetriever.CameraParams cameraParams) {
-    _projectionMatrix = cameraParams.ProjectionMatrix;
-    LeapImageRetriever.OnValidCameraParams -= onValidCameraParams;
-  }
-
-  private void onFinalCenterCamera(Transform centerCamera) {
-    updateHistory();
-    updateTimeWarp(InputTracking.GetLocalRotation(VRNode.CenterEye));
   }
 
   private void updateTimeWarp(Quaternion centerEyeRotation) {
@@ -243,6 +253,20 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
 
     return TransformData.Lerp(history[t - 1], history[t], time);
+  }
+
+  private bool tryLatestImageTimestamp(out long timestamp) {
+    using (ImageList list = HandController.Main.GetFrame().Images) {
+      if (list.Count > 0) {
+        using (Image image = list[0]) {
+          timestamp = image.Timestamp;
+          return true;
+        }
+      } else {
+        timestamp = 0;
+        return false;
+      }
+    }
   }
 
   private long longLerp(long a, long b, float percent) {

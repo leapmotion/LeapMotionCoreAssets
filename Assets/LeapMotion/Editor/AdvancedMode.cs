@@ -3,5 +3,5 @@ using System.Collections;
 
 public static class AdvancedMode {
 
-  public static bool _advancedModeEnabled = false;
+  public static bool _advancedModeEnabled = true;
 }

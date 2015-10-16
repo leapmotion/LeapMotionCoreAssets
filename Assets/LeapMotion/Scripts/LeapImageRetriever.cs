@@ -13,6 +13,8 @@ using Leap;
 
 // To use the LeapImageRetriever you must be on version 2.1+
 // and enable "Allow Images" in the Leap Motion settings.
+[RequireComponent(typeof(Camera))]
+[ExecuteInEditMode]
 public class LeapImageRetriever : MonoBehaviour {
   public const string IR_SHADER_VARIANT_NAME = "LEAP_FORMAT_IR";
   public const string RGB_SHADER_VARIANT_NAME = "LEAP_FORMAT_RGB";
@@ -54,7 +56,7 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-  public EyeType eyeType;
+  public EyeType eyeType = new EyeType(EyeType.OrderType.CENTER);
 
   [Tooltip("Should the image match the tracked hand, or should it be displayed as fast as possible")]
   public SYNC_MODE syncMode = SYNC_MODE.SYNC_WITH_HANDS;
@@ -252,11 +254,14 @@ public class LeapImageRetriever : MonoBehaviour {
     Shader.SetGlobalFloat("_LeapGlobalGammaCorrectionExponent", 1.0f / gammaCorrection);
   }
 
-  void Reset() {
-    eyeType = new EyeType(gameObject.name);
-  }
-
   void Start() {
+#if UNITY_EDITOR
+    //We ExecuteInEditMode so make sure to guard all callbacks that shouldn't be called at edit time
+    if (!Application.isPlaying) {
+      return;
+    }
+#endif
+
     if (HandController.Main == null) {
       Debug.LogWarning("Cannot use LeapImageRetriever if there is no main HandController!");
       enabled = false;
@@ -278,11 +283,29 @@ public class LeapImageRetriever : MonoBehaviour {
     _controller.SetPolicy(Controller.PolicyFlag.POLICY_IMAGES);
   }
 
+#if UNITY_EDITOR
+  void Update() {
+    eyeType.UpdateOrderGivenComponent(this);
+#endif
+  }
+
   void OnPreCull() {
+#if UNITY_EDITOR
+    if (!Application.isPlaying) {
+      return;
+    }
+#endif
+
     eyeType.Reset();
   }
 
   void OnPreRender() {
+#if UNITY_EDITOR
+    if (!Application.isPlaying) {
+      return;
+    }
+#endif
+
     eyeType.BeginCamera();
 
     ImageList mainList, rawList;
