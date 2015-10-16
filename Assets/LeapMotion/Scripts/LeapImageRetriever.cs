@@ -30,11 +30,13 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   public struct CameraParams {
+    public readonly Transform TrackingAnchor; 
     public readonly Matrix4x4 ProjectionMatrix;
     public readonly int Width;
     public readonly int Height;
 
     public CameraParams(Camera camera) {
+      TrackingAnchor = camera.transform.parent;
       ProjectionMatrix = camera.projectionMatrix;
 
       switch (SystemInfo.graphicsDeviceType) {
