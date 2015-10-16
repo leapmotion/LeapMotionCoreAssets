@@ -115,6 +115,7 @@ public class HMRConfigurationManagerEditor : Editor {
     setImageRetrieversEnabled(configuration.EnableImageRetrievers);
     setCameraClearFlags(configuration.CameraClearFlags);
     setTimewarp(configuration.TweenTimewarp);
+    setTemporalSynMode(configuration.TemporalSynMode);
     setOverrideEyes(configuration.OverrideEyePos);
 
     Debug.Log("Switched to configuration: " + configuration.ConfigurationName);
@@ -150,6 +151,10 @@ public class HMRConfigurationManagerEditor : Editor {
 
   private void setTimewarp(float value) {
     updateValue(_aligner, _aligner.TweenTimeWarp, value, v => _aligner.TweenTimeWarp = v);
+  }
+
+  private void setTemporalSynMode(LeapTemporalWarping.SyncMode syncMode) {
+    updateValue(_aligner, _aligner.TemporalSyncMode, syncMode, v => _aligner.TemporalSyncMode = v);
   }
 
   private void setOverrideEyes(bool overrideEyes) {

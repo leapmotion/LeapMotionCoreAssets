@@ -81,6 +81,15 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
   }
 
+  public SyncMode TemporalSyncMode {
+    get {
+      return syncMode;
+    }
+    set {
+      syncMode = value;
+    }
+  }
+
   private bool tryLatestImageTimestamp(out long timestamp) {
     using (ImageList list = HandController.Main.GetFrame().Images) {
       if (list.Count > 0) {

@@ -29,6 +29,9 @@ public struct LMHeadMountedRigConfiguration {
   private float _tweenTimewarp;
 
   [SerializeField]
+  private LeapTemporalWarping.SyncMode _temporalSyncMode;
+
+  [SerializeField]
   private bool _overrideEyePos;
 
   public string ConfigurationName { get { return _configurationName; } set { _configurationName = value; } }
@@ -38,6 +41,7 @@ public struct LMHeadMountedRigConfiguration {
   public bool EnableImageRetrievers { get { return _enableImageRetrievers; } }
   public CameraClearFlags CameraClearFlags { get { return _cameraClearFlags; } }
   public float TweenTimewarp { get { return _tweenTimewarp; } }
+  public LeapTemporalWarping.SyncMode TemporalSynMode { get { return _temporalSyncMode; } }
   public bool OverrideEyePos { get { return _overrideEyePos; } }
 
 #if UNITY_EDITOR
@@ -50,6 +54,7 @@ public struct LMHeadMountedRigConfiguration {
     config._enableImageRetrievers = property.FindPropertyRelative("_enableImageRetrievers").boolValue;
     config._cameraClearFlags = (CameraClearFlags)property.FindPropertyRelative("_cameraClearFlags").intValue;
     config._tweenTimewarp = property.FindPropertyRelative("_tweenTimewarp").floatValue;
+    config._temporalSyncMode = (LeapTemporalWarping.SyncMode)property.FindPropertyRelative("_temporalSyncMode").intValue;
     config._overrideEyePos = property.FindPropertyRelative("_overrideEyePos").boolValue;
     return config;
   }
