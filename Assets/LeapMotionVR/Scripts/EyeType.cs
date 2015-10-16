@@ -88,6 +88,4 @@ public class EyeType {
   public void Reset() {
     _hasBegun = false;
   }
-
-  
 }
