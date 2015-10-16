@@ -33,15 +33,25 @@ public class LeapCameraDisplacement : MonoBehaviour {
   private int _preRenderIndex = 0;
 
   void Start() {
+#if UNITY_EDITOR
+    if (!Application.isPlaying) {
+      return;
+    }
+#endif
+
     _deviceInfo = new LeapDeviceInfo(LeapDeviceType.Dragonfly);
   }
 
   void Update() {
-    _hasDispatchedFinalCenterCameraEvent = false;
-
 #if UNITY_EDITOR
     _eyeType.UpdateOrderGivenComponent(this);
+
+    if (!Application.isPlaying) {
+      return;
+    }
 #endif
+
+    _hasDispatchedFinalCenterCameraEvent = false;
   }
 
   void OnPreCull() {
