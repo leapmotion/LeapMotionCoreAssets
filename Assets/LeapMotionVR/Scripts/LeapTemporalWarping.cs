@@ -76,7 +76,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   private bool allowManualTimeAlignment;
 
   [SerializeField]
-  private int rewindAdjust = 0; //Milliseconds
+  private int warpingAdjustment = 20; //Milliseconds
 
   [SerializeField]
   private KeyCode unlockHold = KeyCode.RightShift;
@@ -125,7 +125,7 @@ public class LeapTemporalWarping : MonoBehaviour {
 
   public float RewindAdjust {
     get {
-      return rewindAdjust;
+      return warpingAdjustment;
     }
   }
 
@@ -195,10 +195,10 @@ public class LeapTemporalWarping : MonoBehaviour {
     if (allowManualTimeAlignment) {
       if (unlockHold == KeyCode.None || Input.GetKey(unlockHold)) {
         if (Input.GetKeyDown(moreRewind)) {
-          rewindAdjust += 1;
+          warpingAdjustment += 1;
         }
         if (Input.GetKeyDown(lessRewind)) {
-          rewindAdjust -= 1;
+          warpingAdjustment -= 1;
         }
       }
     }
@@ -298,7 +298,7 @@ public class LeapTemporalWarping : MonoBehaviour {
     using (ImageList list = HandController.Main.GetFrame().Images) {
       if (list.Count > 0) {
         using (Image image = list[0]) {
-          timestamp = image.Timestamp - rewindAdjust * 1000;
+          timestamp = image.Timestamp - warpingAdjustment * 1000;
           return true;
         }
       } else {
