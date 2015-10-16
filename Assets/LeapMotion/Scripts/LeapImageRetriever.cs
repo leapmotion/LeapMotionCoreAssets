@@ -286,8 +286,8 @@ public class LeapImageRetriever : MonoBehaviour {
 #if UNITY_EDITOR
   void Update() {
     eyeType.UpdateOrderGivenComponent(this);
-#endif
   }
+#endif
 
   void OnPreCull() {
 #if UNITY_EDITOR

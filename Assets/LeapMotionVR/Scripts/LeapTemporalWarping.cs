@@ -66,6 +66,9 @@ public class LeapTemporalWarping : MonoBehaviour {
   private bool allowManualTimeAlignment;
 
   [SerializeField]
+  private int rewindAdjust = 0; //Milliseconds
+
+  [SerializeField]
   private KeyCode unlockHold = KeyCode.RightShift;
 
   [SerializeField]
@@ -92,11 +95,17 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
   }
 
+  public float RewindAdjust {
+    get {
+      return rewindAdjust;
+    }
+  }
+
   private LeapDeviceInfo deviceInfo;
 
   private Matrix4x4 _projectionMatrix;
   private List<TransformData> history = new List<TransformData>();
-  private long rewindAdjust = 0; //Microseconds
+  
 
   /// <summary>
   /// Provides the position of a Leap Anchor at a given Leap Time.  Cannot extrapolate.
@@ -125,7 +134,7 @@ public class LeapTemporalWarping : MonoBehaviour {
   public bool TryGetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundLocalPosition, out Quaternion rewoundLocalRotation) {
     long timestamp;
     if (tryLatestImageTimestamp(out timestamp)) {
-      GetWarpedTransform(anchor, out rewoundLocalPosition, out rewoundLocalRotation, timestamp - rewindAdjust);
+      GetWarpedTransform(anchor, out rewoundLocalPosition, out rewoundLocalRotation, timestamp);
       return true;
     }
     rewoundLocalPosition = Vector3.zero;
@@ -160,10 +169,10 @@ public class LeapTemporalWarping : MonoBehaviour {
     if (allowManualTimeAlignment) {
       if (unlockHold == KeyCode.None || Input.GetKey(unlockHold)) {
         if (Input.GetKeyDown(moreRewind)) {
-          rewindAdjust += 1000;
+          rewindAdjust += 1;
         }
         if (Input.GetKeyDown(lessRewind)) {
-          rewindAdjust -= 1000;
+          rewindAdjust -= 1;
         }
       }
     }
@@ -259,7 +268,7 @@ public class LeapTemporalWarping : MonoBehaviour {
     using (ImageList list = HandController.Main.GetFrame().Images) {
       if (list.Count > 0) {
         using (Image image = list[0]) {
-          timestamp = image.Timestamp;
+          timestamp = image.Timestamp - rewindAdjust * 1000;
           return true;
         }
       } else {
