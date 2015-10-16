@@ -205,14 +205,14 @@ public class LeapTemporalWarping : MonoBehaviour {
   }
 
   protected void LateUpdate() {
-    updateTimeWarp();
+    updateTemporalWarping();
   }
 
   private void onFinalCenterCamera(Transform centerCamera) {
     updateHistory();
 
     if (syncMode == SyncMode.LOW_LATENCY) {
-      updateTimeWarp();
+      updateTemporalWarping();
     }
   }
 
@@ -236,7 +236,7 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
   }
 
-  private void updateTimeWarp() {
+  private void updateTemporalWarping() {
     Vector3 currCenterLocalPos = InputTracking.GetLocalPosition(VRNode.CenterEye);
     Quaternion currCenterLocalRot = InputTracking.GetLocalRotation(VRNode.CenterEye);
 
