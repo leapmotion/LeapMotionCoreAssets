@@ -29,17 +29,26 @@ using Leap;
 */
 public class HandController : MonoBehaviour {
 
-  protected static HandController _main;
+  
+  protected static List<HandController> _mains = new List<HandController>();
+
+  /* The HandController.Main property returns an instance of a HandController with it's isMain property set
+   * to true.  If there are multiple main Hand Controllers this method will choose one in an undefined way.
+   */
   public static HandController Main {
     get {
-      if (_main == null) {
-        Debug.LogWarning("Could not find an active main Hand Controller.  It may not exist, or may not have been enabled yet.");
+      if (_mains.Count == 0) {
+        Debug.LogWarning("Could not find an active main Hand Controller.  One may not exist, or may not have been enabled yet.");
+        return null;
       }
-      return _main;
+      return _mains[0];
     }
   }
 
   protected static List<HandController> _all = new List<HandController>();
+
+  /* Returns a list of all currently active HandController instances.
+   */
   public static List<HandController> All {
     get {
       return _all;
@@ -58,7 +67,7 @@ public class HandController : MonoBehaviour {
   protected const float FIXED_UPDATE_OFFSET_SMOOTHING_DELAY = 0.1f;
 
   /** There always should be exactly one main HandController in the scene, which is reffered to by the HandController.Main getter. */
-  public bool isMain = false;
+  public bool isMain = true;
 
   /** Whether to use a separate model for left and right hands (true); or mirror the same model for both hands (false). */
   [Space(8)]
@@ -190,53 +199,6 @@ public class HandController : MonoBehaviour {
     leap_controller_.SetPolicyFlags(policy_flags);
   }
 
-#if UNITY_EDITOR
-  void Reset() {
-    //If we have been reset, the default should be to make ourselves main if there are no others that are main
-    HandController[] controllers = Resources.FindObjectsOfTypeAll<HandController>();
-    for (int i = 0; i < controllers.Length; i++) {
-      HandController other = controllers[i];
-      if (other == this) continue;
-      if (UnityEditor.PrefabUtility.GetPrefabType(other.gameObject) == UnityEditor.PrefabType.Prefab) continue;
-
-      //If we find another Hand Controller that is already main, we don't need to make ourselves main
-      if (other.isMain) {
-        return;
-      }
-    }
-
-    //Make ourselves the main Hand Controller since we found no others that were main.
-    isMain = true;
-    UnityEditor.EditorUtility.SetDirty(this);
-  }
-
-  void OnValidate() {
-    if (isMain) {
-      //If we are a prefab, we do not need to validate
-      if (UnityEditor.PrefabUtility.GetPrefabType(gameObject) == UnityEditor.PrefabType.Prefab) {
-        return;
-      }
-
-      //We are going to loop through all other Hand Controllers and make them not the main Hand Controller
-      HandController[] controllers = Resources.FindObjectsOfTypeAll<HandController>();
-      for (int i = 0; i < controllers.Length; i++) {
-        HandController other = controllers[i];
-
-        //We ignore ourselves
-        if (other == this) continue;
-
-        //We ignore any Hand Controller on a prefab (FindObjectsOfTypeAll gets prefabs too!)
-        if (UnityEditor.PrefabUtility.GetPrefabType(other.gameObject) == UnityEditor.PrefabType.Prefab) continue;
-
-        if (other.isMain) {
-          other.isMain = false;
-          UnityEditor.EditorUtility.SetDirty(other);
-        }
-      }
-    }
-  }
-#endif
-
   /** Creates a new Leap Controller object. */
   void Awake() {
     leap_controller_ = new Controller();
@@ -245,7 +207,7 @@ public class HandController : MonoBehaviour {
 
   void OnEnable() {
     if (isMain) {
-      _main = this;
+      _mains.Add(this);
     }
     _all.Add(this);
   }
@@ -277,12 +239,15 @@ public class HandController : MonoBehaviour {
   /* Calling this sets this Hand Controller as the main Hand Controller.  If there was a previous main 
    * Hand Controller it is demoted and is no longer the main Hand Controller.
    */
-  public void SetMain() {
-    if (_main != null) {
-      _main.isMain = false;
+  public void SetMain(bool shouldBeMain) {
+    if (isMain != shouldBeMain) {
+      isMain = shouldBeMain;
+      if (isMain) {
+        _mains.Add(this);
+      } else {
+        _mains.Remove(this);
+      }
     }
-    isMain = true;
-    _main = this;
   }
 
   /**
@@ -680,7 +645,7 @@ public class HandController : MonoBehaviour {
 
   void OnDisable() {
     if (isMain) {
-      _main = null;
+      _mains.Remove(this);
     }
 
     _all.Remove(this);
@@ -689,10 +654,6 @@ public class HandController : MonoBehaviour {
   }
 
   void OnDestroy() {
-    if (isMain) {
-      _main = null;
-    }
-
     DestroyAllHands();
   }
 
