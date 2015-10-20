@@ -27,9 +27,6 @@ public class LeapImageRetriever : MonoBehaviour {
 
   public EyeType eyeType = new EyeType(EyeType.OrderType.CENTER);
 
-  [Tooltip("Should the image match the tracked hand, or should it be displayed as fast as possible")]
-  public SYNC_MODE syncMode = SYNC_MODE.SYNC_WITH_HANDS;
-
   public float gammaCorrection = 1.0f;
 
   private int _missedImages = 0;
@@ -237,9 +234,37 @@ public class LeapImageRetriever : MonoBehaviour {
   void Update() {
 #if UNITY_EDITOR
     eyeType.UpdateOrderGivenComponent(this);
+
+    if (!Application.isPlaying) {
+      return;
+    }
 #endif
 
     eyeType.Reset();
+
+    using (ImageList list = HandController.Main.GetFrame().Images) {
+      if (list == null || list.Count == 0) {
+        _missedImages++;
+        if (_missedImages == IMAGE_WARNING_WAIT) {
+          Debug.LogWarning("Can't find any images. " +
+            "Make sure you enabled 'Allow Images' in the Leap Motion Settings, " +
+            "you are on tracking version 2.1+ and " +
+            "your Leap Motion device is plugged in.");
+        }
+        return;
+      }
+
+      for(int imageIndex = 0; imageIndex <= 1; imageIndex++){
+        EyeTextureData eyeTextureData = _eyeTextureData[imageIndex];
+        using(Image image = list[imageIndex]){
+          if(eyeTextureData.CheckStale(image)){
+            eyeTextureData.Reconstruct(image);
+          }
+          eyeTextureData.UpdateTextures(image);
+        }
+      }
+
+    }
   }
 
 #if UNITY_EDITOR
@@ -259,45 +284,7 @@ public class LeapImageRetriever : MonoBehaviour {
 
     eyeType.BeginCamera();
 
-    ImageList mainList;
-    switch (syncMode) {
-      case SYNC_MODE.LOW_LATENCY:
-        mainList = _controller.Images;
-        break;
-      case SYNC_MODE.SYNC_WITH_HANDS:
-        mainList = HandController.Main.GetFrame().Images;
-        break;
-      default:
-        throw new Exception("Unexpected Sync Mode " + syncMode + "!");
-    }
-
-    using (mainList) {
-      if (mainList == null || mainList.Count == 0) {
-        _missedImages++;
-        if (_missedImages == IMAGE_WARNING_WAIT) {
-          Debug.LogWarning("Can't find any images. " +
-            "Make sure you enabled 'Allow Images' in the Leap Motion Settings, " +
-            "you are on tracking version 2.1+ and " +
-            "your Leap Motion device is plugged in.");
-        }
-        return;
-      }
-
-      int imageIndex = eyeType.IsLeftEye ? 0 : 1;
-
-      using (Image referenceImage = mainList[imageIndex]) {
-        EyeTextureData eyeTextureData = _eyeTextureData[imageIndex];
-
-        if (eyeTextureData.CheckStale(referenceImage)) {
-          eyeTextureData.Reconstruct(referenceImage);
-        }
-
-        eyeTextureData.UpdateTextures(referenceImage);
-
-        updateGlobalShaderProperties(eyeTextureData);
-      }
-    }
-
-    mainList.Dispose();
+    EyeTextureData eyeTextureData = eyeType.IsLeftEye ? _eyeTextureData[0] : _eyeTextureData[1];
+    updateGlobalShaderProperties(eyeTextureData);
   }
 }
