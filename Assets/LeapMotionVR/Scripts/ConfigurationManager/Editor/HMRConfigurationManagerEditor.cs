@@ -68,12 +68,12 @@ public class HMRConfigurationManagerEditor : Editor {
     }
   }
 
-  private IEnumerable<LeapCameraDisplacement> cameraDisplacements {
+  private IEnumerable<LeapCameraControl> cameraDisplacements {
     get {
       foreach (Camera vrCamera in vrCameras) {
-        LeapCameraDisplacement displacement = vrCamera.GetComponent<LeapCameraDisplacement>();
+        LeapCameraControl displacement = vrCamera.GetComponent<LeapCameraControl>();
         if (displacement == null) {
-          displacement = vrCamera.gameObject.AddComponent<LeapCameraDisplacement>();
+          displacement = vrCamera.gameObject.AddComponent<LeapCameraControl>();
         }
         yield return displacement;
       }
@@ -142,7 +142,7 @@ public class HMRConfigurationManagerEditor : Editor {
     updateValue(_aligner, _aligner.TemporalSyncMode, config.TemporalSynMode, v => _aligner.TemporalSyncMode = v);
 
     //Update Override Eye Position
-    foreach (LeapCameraDisplacement displacement in cameraDisplacements) {
+    foreach (LeapCameraControl displacement in cameraDisplacements) {
       updateValue(displacement, displacement.OverrideEyePosition, config.OverrideEyePos, v => displacement.OverrideEyePosition = v);
     }
 
