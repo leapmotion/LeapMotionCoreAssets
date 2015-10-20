@@ -165,10 +165,7 @@ public class HMRConfigurationManagerEditor : Editor {
 
   private void updateGameobject(GameObject obj, bool active) {
     if (obj.activeSelf != active) {
-      obj.hideFlags = active ? HideFlags.None : HideFlags.HideInHierarchy;
       obj.SetActive(active);
-      EditorApplication.DirtyHierarchyWindowSorting();
-      EditorApplication.RepaintHierarchyWindow();
     }
   }
 
