@@ -7,6 +7,7 @@ using System.Collections.Generic;
 [CustomEditor(typeof(HMRConfigurationManager))]
 public class HMRConfigurationManagerEditor : Editor {
   private HMRConfigurationManager _manager;
+  private string[] _configNames;
 
   private LeapTemporalWarping _aligner {
     get {
@@ -18,21 +19,14 @@ public class HMRConfigurationManagerEditor : Editor {
     }
   }
 
-  private Renderer _backgroundQuadRenderer {
+  private GameObject _backgroundQuad {
     get {
       if (_manager._backgroundQuad == null) {
         Debug.LogWarning("The _backgroundQuad field on " + _manager.name + " is null.");
         return null;
       }
 
-      Renderer backgroundQuadRenderer = _manager._backgroundQuad.GetComponent<Renderer>();
-
-      if (backgroundQuadRenderer == null) {
-        Debug.LogWarning("The object " + _manager._backgroundQuad.gameObject.name + " is missing a Renderer.");
-        return null;
-      }
-
-      return backgroundQuadRenderer;
+      return _manager._backgroundQuad;
     }
   }
 
@@ -68,12 +62,12 @@ public class HMRConfigurationManagerEditor : Editor {
     }
   }
 
-  private IEnumerable<LeapCameraDisplacement> cameraDisplacements {
+  private IEnumerable<LeapCameraControl> cameraControls {
     get {
       foreach (Camera vrCamera in vrCameras) {
-        LeapCameraDisplacement displacement = vrCamera.GetComponent<LeapCameraDisplacement>();
+        LeapCameraControl displacement = vrCamera.GetComponent<LeapCameraControl>();
         if (displacement == null) {
-          displacement = vrCamera.gameObject.AddComponent<LeapCameraDisplacement>();
+          displacement = vrCamera.gameObject.AddComponent<LeapCameraControl>();
         }
         yield return displacement;
       }
@@ -82,44 +76,64 @@ public class HMRConfigurationManagerEditor : Editor {
 
   public void OnEnable() {
     _manager = target as HMRConfigurationManager;
+
+    SerializedProperty configArray = serializedObject.FindProperty("_headMountedConfigurations");
+    _configNames = new string[configArray.arraySize];
+    for (int i = 0; i < configArray.arraySize; i++) {
+      _configNames[i] = configArray.GetArrayElementAtIndex(i).FindPropertyRelative("_configurationName").stringValue;
+    }
   }
 
   public override void OnInspectorGUI() {
     serializedObject.Update();
-    _manager.validateConfigurationsLabeled();
+
     EditorGUI.BeginChangeCheck();
-    EditorGUILayout.PropertyField(serializedObject.FindProperty("_configuration"), new GUIContent("Selected Configuration"));
-    serializedObject.ApplyModifiedProperties();
-    if (EditorGUI.EndChangeCheck()) {
-      applySelectedConfiguration();
+
+    SerializedProperty configIndexProp = serializedObject.FindProperty("_configurationIndex");
+    configIndexProp.intValue = EditorGUILayout.Popup("Selected Configuration", configIndexProp.intValue, _configNames);
+
+    SerializedProperty configArray = serializedObject.FindProperty("_headMountedConfigurations");
+
+    if (configArray.arraySize == 0) {
+      Debug.LogWarning("HMR Configuration Manager has no configurations!");
+      return;
     }
+
+    if (configIndexProp.intValue >= configArray.arraySize) {
+      Debug.LogWarning("HMR Configuration Index was out of bounds!  Reseting configuration to default.");
+      configIndexProp.intValue = 0;
+      serializedObject.ApplyModifiedProperties();
+      return;
+    }
+
+    SerializedProperty configProp = configArray.GetArrayElementAtIndex(configIndexProp.intValue);
+    LMHeadMountedRigConfiguration config = LMHeadMountedRigConfiguration.Deserialize(configProp);
+
+    if (EditorGUI.EndChangeCheck()) {
+      serializedObject.ApplyModifiedProperties();
+      applySelectedConfiguration(config);
+    }
+
     EditorGUILayout.Space();
     if (GUILayout.Button("Reapply Selected Configuration")) {
-      applySelectedConfiguration();
+      applySelectedConfiguration(config);
     }
     EditorGUILayout.Space();
-    int selectedConfigurationIndex = serializedObject.FindProperty("_configuration").enumValueIndex;
-    HMRConfigurationManager.HMRConfiguration selectedConfiguration = (HMRConfigurationManager.HMRConfiguration)selectedConfigurationIndex;
 
-    if (selectedConfiguration == HMRConfigurationManager.HMRConfiguration.VR_WORLD_VR_HANDS) {
-      EditorGUILayout.LabelField("Hands to use for VR Hands (References Hand Controller)", EditorStyles.boldLabel);
+    if (config.ShowHandGraphicField) {
+      EditorGUILayout.LabelField("Hands to use (References Hand Controller)", EditorStyles.boldLabel);
       EditorGUI.BeginChangeCheck();
       _manager._handController.leftGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Left Hand Graphics Model", _manager._handController.leftGraphicsModel, typeof(HandModel), true);
       _manager._handController.rightGraphicsModel = (HandModel)EditorGUILayout.ObjectField("Right Hand Graphics Model", _manager._handController.rightGraphicsModel, typeof(HandModel), true);
       if (EditorGUI.EndChangeCheck()) {
-        EditorUtility.SetDirty(_manager._handController.leftGraphicsModel);
-        EditorUtility.SetDirty(_manager._handController.rightGraphicsModel);
+        EditorUtility.SetDirty(_manager._handController);
       }
     }
   }
 
-  private void applySelectedConfiguration() {
-    int selectedConfigurationIndex = serializedObject.FindProperty("_configuration").enumValueIndex;
-    SerializedProperty serializedConfiguration = serializedObject.FindProperty("_headMountedConfigurations").GetArrayElementAtIndex((int)selectedConfigurationIndex);
-    LMHeadMountedRigConfiguration config = LMHeadMountedRigConfiguration.Deserialize(serializedConfiguration);
-
+  private void applySelectedConfiguration(LMHeadMountedRigConfiguration config) {
     //Update background quad
-    updateValue(_backgroundQuadRenderer, _backgroundQuadRenderer.enabled, config.EnableBackgroundQuad, v => _backgroundQuadRenderer.enabled = v);
+    updateGameobject(_backgroundQuad, config.EnableBackgroundQuad);
 
     //Set graphical models
     updateValue(_handController, _handController.leftGraphicsModel, config.LeftHandGraphicsModel, v => _handController.leftGraphicsModel = v);
@@ -142,11 +156,17 @@ public class HMRConfigurationManagerEditor : Editor {
     updateValue(_aligner, _aligner.TemporalSyncMode, config.TemporalSynMode, v => _aligner.TemporalSyncMode = v);
 
     //Update Override Eye Position
-    foreach (LeapCameraDisplacement displacement in cameraDisplacements) {
-      updateValue(displacement, displacement.OverrideEyePosition, config.OverrideEyePos, v => displacement.OverrideEyePosition = v);
+    foreach (LeapCameraControl cameraControl in cameraControls) {
+      updateValue(cameraControl, cameraControl.OverrideEyePosition, config.OverrideEyePos, v => cameraControl.OverrideEyePosition = v);
     }
 
     Debug.Log("Switched to configuration: " + config.ConfigurationName);
+  }
+
+  private void updateGameobject(GameObject obj, bool active) {
+    if (obj.activeSelf != active) {
+      obj.SetActive(active);
+    }
   }
 
   private void updateValue<T>(UnityEngine.Object obj, T currValue, T destValue, Action<T> setter) {

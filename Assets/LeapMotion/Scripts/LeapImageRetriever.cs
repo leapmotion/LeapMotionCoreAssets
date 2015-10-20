@@ -20,42 +20,9 @@ public class LeapImageRetriever : MonoBehaviour {
   public const string RGB_SHADER_VARIANT_NAME = "LEAP_FORMAT_RGB";
   public const int IMAGE_WARNING_WAIT = 10;
 
-  public static event Action<CameraParams> OnValidCameraParams;
-  public static event Action OnLeftPreRender;
-  public static event Action OnRightPreRender;
-
   public enum SYNC_MODE {
     SYNC_WITH_HANDS,
     LOW_LATENCY
-  }
-
-  public struct CameraParams {
-    public readonly Transform TrackingAnchor; 
-    public readonly Matrix4x4 ProjectionMatrix;
-    public readonly int Width;
-    public readonly int Height;
-
-    public CameraParams(Camera camera) {
-      TrackingAnchor = camera.transform.parent;
-      ProjectionMatrix = camera.projectionMatrix;
-
-      switch (SystemInfo.graphicsDeviceType) {
-        case GraphicsDeviceType.Direct3D9:
-        case GraphicsDeviceType.Direct3D11:
-        case GraphicsDeviceType.Direct3D12:
-          for (int i = 0; i < 4; i++) {
-            ProjectionMatrix[1, i] = -ProjectionMatrix[1, i];
-          }
-          // Scale and bias from OpenGL -> D3D depth range
-          for (int i = 0; i < 4; i++) {
-            ProjectionMatrix[2, i] = ProjectionMatrix[2, i] * 0.5f + ProjectionMatrix[3, i] * 0.5f;
-          }
-          break;
-      }
-
-      Width = camera.pixelWidth;
-      Height = camera.pixelHeight;
-    }
   }
 
   public EyeType eyeType = new EyeType(EyeType.OrderType.CENTER);
@@ -70,8 +37,6 @@ public class LeapImageRetriever : MonoBehaviour {
   private Camera _cachedCamera;
 
   private EyeTextureData[] _eyeTextureData = new EyeTextureData[2]; // left and right data
-
-  private bool _hasFiredCameraParams = false;
 
   private class LeapTextureData {
     public Texture2D texture = null;
@@ -338,21 +303,7 @@ public class LeapImageRetriever : MonoBehaviour {
         return;
       }
 
-      if (!_hasFiredCameraParams && OnValidCameraParams != null) {
-        CameraParams cameraParams = new CameraParams(_cachedCamera);
-        OnValidCameraParams(cameraParams);
-        _hasFiredCameraParams = true;
-      }
-
-      int imageIndex;
-
-      if (eyeType.IsLeftEye) {
-        imageIndex = 0;
-        if (OnLeftPreRender != null) OnLeftPreRender();
-      } else {
-        imageIndex = 1;
-        if (OnRightPreRender != null) OnRightPreRender();
-      }
+      int imageIndex = eyeType.IsLeftEye ? 0 : 1;
 
       using (Image referenceImage = mainList[imageIndex])
       using (Image referenceRawImage = rawList[imageIndex]) {

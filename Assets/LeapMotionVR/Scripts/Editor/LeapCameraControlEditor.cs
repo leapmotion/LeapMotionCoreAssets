@@ -3,8 +3,8 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 
-[CustomEditor(typeof(LeapCameraDisplacement))]
-public class LeapCameraDisplacementEditor : Editor {
+[CustomEditor(typeof(LeapCameraControl))]
+public class LeapCameraControlEditor : Editor {
 
   private List<string> BasicModePropertyNames = new List<string>() {
       "m_Script",

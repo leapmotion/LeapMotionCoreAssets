@@ -14,6 +14,9 @@ public struct LMHeadMountedRigConfiguration {
   private bool _enableBackgroundQuad;
 
   [SerializeField]
+  private bool _showHandGraphicField;
+
+  [SerializeField]
   private HandModel _leftHandGraphicsModel;
 
   [SerializeField]
@@ -45,6 +48,7 @@ public struct LMHeadMountedRigConfiguration {
 
   public string ConfigurationName { get { return _configurationName; } set { _configurationName = value; } }
   public bool EnableBackgroundQuad { get { return _enableBackgroundQuad; } }
+  public bool ShowHandGraphicField { get { return _showHandGraphicField; } }
   public HandModel LeftHandGraphicsModel { get { return _leftHandGraphicsModel; } }
   public HandModel RightHandGraphicsModel { get { return _rightHandGraphicsModel; } }
   public bool EnableImageRetrievers { get { return _enableImageRetrievers; } }

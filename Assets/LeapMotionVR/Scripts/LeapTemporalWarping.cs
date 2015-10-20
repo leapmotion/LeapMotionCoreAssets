@@ -187,8 +187,8 @@ public class LeapTemporalWarping : MonoBehaviour {
       return;
     }
 
-    LeapCameraDisplacement.OnFinalCenterCamera += onFinalCenterCamera;
-    LeapImageRetriever.OnValidCameraParams += onValidCameraParams;
+    //Get a callback right as rendering begins for this frame so we can update the history and warping.
+    LeapCameraControl.OnValidCameraParams += onValidCameraParams;
 
     deviceInfo = HandController.Main.GetDeviceInfo();
     if (deviceInfo.type == LeapDeviceType.Invalid) {
@@ -220,18 +220,15 @@ public class LeapTemporalWarping : MonoBehaviour {
     updateTemporalWarping();
   }
 
-  private void onFinalCenterCamera(Transform centerCamera) {
+  private void onValidCameraParams(LeapCameraControl.CameraParams cameraParams) {
+    _projectionMatrix = cameraParams.ProjectionMatrix;
+    _trackingAnchor = cameraParams.TrackingAnchor;
+
     updateHistory();
 
     if (syncMode == SyncMode.LOW_LATENCY) {
       updateTemporalWarping();
     }
-  }
-
-  private void onValidCameraParams(LeapImageRetriever.CameraParams cameraParams) {
-    _projectionMatrix = cameraParams.ProjectionMatrix;
-    _trackingAnchor = cameraParams.TrackingAnchor;
-    LeapImageRetriever.OnValidCameraParams -= onValidCameraParams;
   }
 
   private void updateHistory() {

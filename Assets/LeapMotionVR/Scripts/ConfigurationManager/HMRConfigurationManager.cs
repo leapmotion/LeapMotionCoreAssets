@@ -2,14 +2,9 @@
 using System.Collections;
 
 public class HMRConfigurationManager : MonoBehaviour {
-  public enum HMRConfiguration {
-    VR_WORLD_VR_HANDS = 0,
-    VR_WORLD_AR_HANDS = 1,
-    AR_WORLD_AR_HANDS = 2
-  }
 
   [SerializeField]
-  private HMRConfiguration _configuration;
+  private int _configurationIndex;
 
   [SerializeField]
   private LMHeadMountedRigConfiguration[] _headMountedConfigurations;
@@ -17,24 +12,4 @@ public class HMRConfigurationManager : MonoBehaviour {
   public GameObject _backgroundQuad;
   public HandController _handController;
   public LeapTemporalWarping _aligner;
-
-  public void validateConfigurationsLabeled() {
-    validateEnoughConfigurations();
-    string[] enumNames = System.Enum.GetNames(typeof(HMRConfiguration));
-
-    for (int i = 0; i < _headMountedConfigurations.Length; i++) {
-      if (_headMountedConfigurations[i].ConfigurationName == enumNames[i]) { continue; }
-      _headMountedConfigurations[i].ConfigurationName = enumNames[i];
-    }
-  }
-
-  private void validateEnoughConfigurations() {
-    string[] enumNames = System.Enum.GetNames(typeof(HMRConfiguration));
-
-    if (enumNames.Length > _headMountedConfigurations.Length) {
-      LMHeadMountedRigConfiguration[] configs = new LMHeadMountedRigConfiguration[enumNames.Length];
-      System.Array.Copy(_headMountedConfigurations, configs, _headMountedConfigurations.Length);
-      _headMountedConfigurations = configs;
-    }
-  }
 }

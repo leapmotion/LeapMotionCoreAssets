@@ -20,11 +20,11 @@ public class TouchCubeQueues : MonoBehaviour {
   public GameObject alignedViewsCanvas;
   public GameObject warpImagesCanvas;
 
-  private LeapCameraDisplacement[] _cameraCorrectionScripts;
+  private LeapCameraControl[] _cameraCorrectionScripts;
   private int demoStage = 0;
 
   void Start () {
-    _cameraCorrectionScripts = FindObjectsOfType<LeapCameraDisplacement>();
+    _cameraCorrectionScripts = FindObjectsOfType<LeapCameraControl>();
     ResetState ();
   }
 	
