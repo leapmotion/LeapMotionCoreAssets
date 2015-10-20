@@ -93,6 +93,19 @@ public class HMRConfigurationManagerEditor : Editor {
     configIndexProp.intValue = EditorGUILayout.Popup("Selected Configuration", configIndexProp.intValue, _configNames);
 
     SerializedProperty configArray = serializedObject.FindProperty("_headMountedConfigurations");
+
+    if (configArray.arraySize == 0) {
+      Debug.LogWarning("HMR Configuration Manager has no configurations!");
+      return;
+    }
+
+    if (configIndexProp.intValue >= configArray.arraySize) {
+      Debug.LogWarning("HMR Configuration Index was out of bounds!  Reseting configuration to default.");
+      configIndexProp.intValue = 0;
+      serializedObject.ApplyModifiedProperties();
+      return;
+    }
+
     SerializedProperty configProp = configArray.GetArrayElementAtIndex(configIndexProp.intValue);
     LMHeadMountedRigConfiguration config = LMHeadMountedRigConfiguration.Deserialize(configProp);
 
