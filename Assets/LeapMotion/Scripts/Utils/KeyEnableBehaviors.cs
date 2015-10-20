@@ -2,8 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class KeyEnableMonoBehaviors : MonoBehaviour {
-  public List<MonoBehaviour> targets;
+public class KeyEnableBehaviors : MonoBehaviour {
+  public List<Behaviour> targets;
   [Header("Controls")]
   public KeyCode unlockHold = KeyCode.None;
   public KeyCode toggle = KeyCode.Space;
