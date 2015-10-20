@@ -17,7 +17,7 @@ public class LeapCameraControl : MonoBehaviour {
   public static event Action OnRightPreRender;
 
   [SerializeField]
-  private EyeType _eyeType;
+  private EyeType _eyeType = new EyeType(EyeType.OrderType.CENTER);
 
   [SerializeField]
   private bool _overrideEyePosition = true;
