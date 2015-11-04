@@ -9,7 +9,7 @@ public class HMRConfigurationManagerEditor : Editor {
   private HMRConfigurationManager _manager;
   private string[] _configNames;
 
-  private LeapTemporalWarping _aligner {
+  private LeapVRTemporalWarping _aligner {
     get {
       if (_manager._aligner == null) {
         Debug.LogWarning("Cannot _aligner component on " + _manager.gameObject.name + " is null.");
@@ -62,12 +62,12 @@ public class HMRConfigurationManagerEditor : Editor {
     }
   }
 
-  private IEnumerable<LeapCameraControl> cameraControls {
+  private IEnumerable<LeapVRCameraControl> cameraControls {
     get {
       foreach (Camera vrCamera in vrCameras) {
-        LeapCameraControl displacement = vrCamera.GetComponent<LeapCameraControl>();
+        LeapVRCameraControl displacement = vrCamera.GetComponent<LeapVRCameraControl>();
         if (displacement == null) {
-          displacement = vrCamera.gameObject.AddComponent<LeapCameraControl>();
+          displacement = vrCamera.gameObject.AddComponent<LeapVRCameraControl>();
         }
         yield return displacement;
       }
@@ -156,7 +156,7 @@ public class HMRConfigurationManagerEditor : Editor {
     updateValue(_aligner, _aligner.TemporalSyncMode, config.TemporalSynMode, v => _aligner.TemporalSyncMode = v);
 
     //Update Override Eye Position
-    foreach (LeapCameraControl cameraControl in cameraControls) {
+    foreach (LeapVRCameraControl cameraControl in cameraControls) {
       updateValue(cameraControl, cameraControl.OverrideEyePosition, config.OverrideEyePos, v => cameraControl.OverrideEyePosition = v);
     }
 

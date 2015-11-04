@@ -8,7 +8,7 @@ using Leap;
 /// <summary>
 /// Implements spatial alignment of cameras and synchronization with images
 /// </summary>
-public class LeapTemporalWarping : MonoBehaviour {
+public class LeapVRTemporalWarping : MonoBehaviour {
 
   private const long MAX_LATENCY = 200000;
 
@@ -188,7 +188,7 @@ public class LeapTemporalWarping : MonoBehaviour {
     }
 
     //Get a callback right as rendering begins for this frame so we can update the history and warping.
-    LeapCameraControl.OnValidCameraParams += onValidCameraParams;
+    LeapVRCameraControl.OnValidCameraParams += onValidCameraParams;
 
     deviceInfo = HandController.Main.GetDeviceInfo();
     if (deviceInfo.type == LeapDeviceType.Invalid) {
@@ -220,7 +220,7 @@ public class LeapTemporalWarping : MonoBehaviour {
     updateTemporalWarping();
   }
 
-  private void onValidCameraParams(LeapCameraControl.CameraParams cameraParams) {
+  private void onValidCameraParams(LeapVRCameraControl.CameraParams cameraParams) {
     _projectionMatrix = cameraParams.ProjectionMatrix;
     _trackingAnchor = cameraParams.TrackingAnchor;
 

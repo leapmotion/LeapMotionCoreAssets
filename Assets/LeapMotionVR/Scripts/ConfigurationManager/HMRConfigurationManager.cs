@@ -11,5 +11,5 @@ public class HMRConfigurationManager : MonoBehaviour {
 
   public GameObject _backgroundQuad;
   public HandController _handController;
-  public LeapTemporalWarping _aligner;
+  public LeapVRTemporalWarping _aligner;
 }

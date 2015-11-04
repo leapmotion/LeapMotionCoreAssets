@@ -13,18 +13,18 @@ using System.Collections.Generic;
 /// </remarks>
 public class TouchCubeQueues : MonoBehaviour {
   public KeyCode queueKey = KeyCode.Return;
-  public LeapTemporalWarping alignment;
+  public LeapVRTemporalWarping alignment;
   [Header("Messages")]
   public GameObject helpMenuCanvas;
   public GameObject noAlignmentCanvas;
   public GameObject alignedViewsCanvas;
   public GameObject warpImagesCanvas;
 
-  private LeapCameraControl[] _cameraCorrectionScripts;
+  private LeapVRCameraControl[] _cameraCorrectionScripts;
   private int demoStage = 0;
 
   void Start () {
-    _cameraCorrectionScripts = FindObjectsOfType<LeapCameraControl>();
+    _cameraCorrectionScripts = FindObjectsOfType<LeapVRCameraControl>();
     ResetState ();
   }
 	

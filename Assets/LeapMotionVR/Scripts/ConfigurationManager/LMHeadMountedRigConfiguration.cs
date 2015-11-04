@@ -41,7 +41,7 @@ public struct LMHeadMountedRigConfiguration {
   private float _tweenPositionalWarping;
 
   [SerializeField]
-  private LeapTemporalWarping.SyncMode _temporalSyncMode;
+  private LeapVRTemporalWarping.SyncMode _temporalSyncMode;
 
   [SerializeField]
   private bool _overrideEyePos;
@@ -56,7 +56,7 @@ public struct LMHeadMountedRigConfiguration {
   public float TweenImageWarping { get { return _tweenImageWarping; } }
   public float TweenRotationalWarping { get { return _tweenRotationalWarping; } }
   public float TweenPositionalWarping { get { return _tweenPositionalWarping; } }
-  public LeapTemporalWarping.SyncMode TemporalSynMode { get { return _temporalSyncMode; } }
+  public LeapVRTemporalWarping.SyncMode TemporalSynMode { get { return _temporalSyncMode; } }
   public bool OverrideEyePos { get { return _overrideEyePos; } }
 
 #if UNITY_EDITOR
@@ -71,7 +71,7 @@ public struct LMHeadMountedRigConfiguration {
     config._tweenImageWarping = property.FindPropertyRelative("_tweenImageWarping").floatValue;
     config._tweenRotationalWarping = property.FindPropertyRelative("_tweenRotationalWarping").floatValue;
     config._tweenPositionalWarping = property.FindPropertyRelative("_tweenPositionalWarping").floatValue;
-    config._temporalSyncMode = (LeapTemporalWarping.SyncMode)property.FindPropertyRelative("_temporalSyncMode").intValue;
+    config._temporalSyncMode = (LeapVRTemporalWarping.SyncMode)property.FindPropertyRelative("_temporalSyncMode").intValue;
     config._overrideEyePos = property.FindPropertyRelative("_overrideEyePos").boolValue;
     return config;
   }

@@ -6,7 +6,7 @@ using System.Collections;
 
 [RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
-public class LeapCameraControl : MonoBehaviour {
+public class LeapVRCameraControl : MonoBehaviour {
   //When using VR, the cameras do not have valid parameters until the first frame begins rendering, 
   //so if you need valid parameters for initialization, you can use this callback to get notified 
   //when they become available.

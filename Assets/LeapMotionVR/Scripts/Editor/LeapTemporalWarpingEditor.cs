@@ -3,7 +3,7 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 
-[CustomEditor(typeof(LeapTemporalWarping))]
+[CustomEditor(typeof(LeapVRTemporalWarping))]
 public class LeapTemporalWarpingEditor : Editor {
 
   private List<string> BasicModePropertyNames = new List<string>() {

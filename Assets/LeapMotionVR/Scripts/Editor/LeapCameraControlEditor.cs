@@ -3,7 +3,7 @@ using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
 
-[CustomEditor(typeof(LeapCameraControl))]
+[CustomEditor(typeof(LeapVRCameraControl))]
 public class LeapCameraControlEditor : Editor {
 
   private List<string> BasicModePropertyNames = new List<string>() {

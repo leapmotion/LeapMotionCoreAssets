@@ -4,7 +4,7 @@ using Leap;
 using System.Collections;
 
 public class TemporalWarpingStatus : MonoBehaviour {
-  public LeapTemporalWarping cameraAlignment;
+  public LeapVRTemporalWarping cameraAlignment;
 
   protected Text textField;
 
