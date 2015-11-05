@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
-using UnityEngine.VR;
 using UnityEngine.Rendering;
 using System;
-using System.Collections;
 
 [RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
