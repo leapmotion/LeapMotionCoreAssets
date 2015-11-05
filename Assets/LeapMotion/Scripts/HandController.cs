@@ -7,6 +7,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Leap;
+using System;
 
 /**
 * The Controller object that instantiates hands and tools to represent the hands and tools tracked
@@ -28,8 +29,6 @@ using Leap;
 * provides a variety of hands that you can use in conjunction with the hand controller. 
 */
 public class HandController : MonoBehaviour {
-
-  
   protected static List<HandController> _mains = new List<HandController>();
 
   /* The HandController.Main property returns an instance of a HandController with it's isMain property set
@@ -223,11 +222,6 @@ public class HandController : MonoBehaviour {
     tools_ = new Dictionary<int, ToolModel>();
 
     smoothedFixedUpdateOffset_.delay = FIXED_UPDATE_OFFSET_SMOOTHING_DELAY;
-
-    if (leap_controller_ == null) {
-      Debug.LogWarning(
-          "Cannot connect to controller. Make sure you have Leap Motion v2.0+ installed");
-    }
 
     if (enableRecordPlayback && recordingAsset != null)
       recorder_.Load(recordingAsset);
@@ -424,6 +418,12 @@ public class HandController : MonoBehaviour {
 
   /** Returns the Leap Controller instance. */
   public Controller GetLeapController() {
+#if UNITY_EDITOR
+    //Do a null check to deal with hot reloading
+    if(leap_controller_ == null) {
+      leap_controller_ = new Controller();
+    }
+#endif
     return leap_controller_;
   }
 
@@ -472,7 +472,7 @@ public class HandController : MonoBehaviour {
         curr_image_frame = null;
       }
 
-      curr_image_frame = leap_controller_.Frame();
+      curr_image_frame = GetLeapController().Frame();
       curr_frame = GetImagelessFrame(curr_image_frame, false);
       curr_frame_count = Time.frameCount;
     }
@@ -524,9 +524,9 @@ public class HandController : MonoBehaviour {
     float correctedTimestamp = (Time.fixedTime + smoothedFixedUpdateOffset_.value) * S_TO_NS;
 
     //Search the leap history for a frame with a timestamp closest to the corrected timestamp
-    Frame closestFrame = leap_controller_.Frame();
+    Frame closestFrame = GetLeapController().Frame();
     for (int searchHistoryIndex = 1; searchHistoryIndex < 60; searchHistoryIndex++) {
-      Frame historyFrame = leap_controller_.Frame(searchHistoryIndex);
+      Frame historyFrame = GetLeapController().Frame(searchHistoryIndex);
 
       //If we reach an invalid frame, terminate the search
       if (!historyFrame.IsValid) {
@@ -549,9 +549,6 @@ public class HandController : MonoBehaviour {
 
   /** Updates the graphics objects. */
   protected virtual void Update() {
-    if (leap_controller_ == null)
-      return;
-
     UpdateRecorder();
     Frame frame = GetFrame();
 
@@ -570,12 +567,9 @@ public class HandController : MonoBehaviour {
 
   /** Updates the physics objects */
   protected virtual void FixedUpdate() {
-    if (leap_controller_ == null)
-      return;
-
     //All FixedUpdates of a frame happen before Update, so only the last of these calculations is passed
     //into Update for smoothing.
-    using (var latestFrame = leap_controller_.Frame()) {
+    using (var latestFrame = GetLeapController().Frame()) {
       perFrameFixedUpdateOffset_ = latestFrame.Timestamp * NS_TO_S - Time.fixedTime;
     }
 
@@ -590,7 +584,7 @@ public class HandController : MonoBehaviour {
 
   /** True, if the Leap Motion hardware is plugged in and this application is connected to the Leap Motion service. */
   public bool IsConnected() {
-    return leap_controller_.IsConnected;
+    return GetLeapController().IsConnected;
   }
 
   /** Returns information describing the device hardware. */
@@ -599,7 +593,7 @@ public class HandController : MonoBehaviour {
       return new LeapDeviceInfo(overrideDeviceTypeWith);
     }
 
-    DeviceList devices = leap_controller_.Devices;
+    DeviceList devices = GetLeapController().Devices;
     if (devices.Count == 1) {
       LeapDeviceInfo info = new LeapDeviceInfo(LeapDeviceType.Invalid);
       // TODO: DeviceList does not tell us the device type. Dragonfly serial starts with "LE" and peripheral starts with "LP"
@@ -737,7 +731,7 @@ public class HandController : MonoBehaviour {
     recorder_.loop = recorderLoop;
 
     if (recorder_.state == RecorderState.Recording) {
-      recorder_.AddFrame(leap_controller_.Frame());
+      recorder_.AddFrame(GetLeapController().Frame());
     } else if (recorder_.state == RecorderState.Playing) {
       recorder_.NextFrame();
     }

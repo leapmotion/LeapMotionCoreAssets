@@ -83,6 +83,7 @@ public class LeapImageRetriever : MonoBehaviour {
       _combinedTexture.wrapMode = TextureWrapMode.Clamp;
       _combinedTexture.filterMode = FilterMode.Bilinear;
       _combinedTexture.name = globalShaderName;
+      _combinedTexture.hideFlags = HideFlags.DontSave;
 
       _intermediateArray = new byte[combinedWidth * combinedHeight * bytesPerPixel(format)];
 
@@ -100,7 +101,8 @@ public class LeapImageRetriever : MonoBehaviour {
       switch (image.Format) {
         case Image.FormatType.INFRARED:
           return TextureFormat.Alpha8;
-        case (Image.FormatType)4:
+        case Image.FormatType.IBRG:
+        case (Image.FormatType)4:       //Hack, Dragonfly still reports a weird format type
           return TextureFormat.RGBA32;
         default:
           throw new System.Exception("Unexpected image format " + image.Format + "!");
@@ -122,7 +124,6 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   public class LeapDistortionData {
-    private const string GLOBAL_SHADER_NAME = "_LeapGlobalDistortion";
     private Texture2D _combinedTexture = null;
 
     public Texture2D CombinedTexture {
@@ -135,7 +136,7 @@ public class LeapImageRetriever : MonoBehaviour {
       return _combinedTexture == null;
     }
 
-    public void Reconstruct(Image leftImage, Image rightImage) {
+    public void Reconstruct(Image leftImage, Image rightImage, string shaderName) {
       int combinedWidth = leftImage.DistortionWidth / 2;
       int combinedHeight = leftImage.DistortionHeight * 2;
 
@@ -147,6 +148,7 @@ public class LeapImageRetriever : MonoBehaviour {
       _combinedTexture = new Texture2D(combinedWidth, combinedHeight, TextureFormat.RGBA32, false, true);
       _combinedTexture.filterMode = FilterMode.Bilinear;
       _combinedTexture.wrapMode = TextureWrapMode.Clamp;
+      _combinedTexture.hideFlags = HideFlags.DontSave;
 
       addDistortionData(leftImage, colorArray, 0);
       addDistortionData(rightImage, colorArray, colorArray.Length / 2);
@@ -156,7 +158,7 @@ public class LeapImageRetriever : MonoBehaviour {
       _combinedTexture.SetPixels32(colorArray);
       _combinedTexture.Apply();
 
-      Shader.SetGlobalTexture(GLOBAL_SHADER_NAME, _combinedTexture);
+      Shader.SetGlobalTexture(shaderName, _combinedTexture);
     }
 
     private void addDistortionData(Image image, Color32[] colors, int startIndex) {
@@ -191,10 +193,22 @@ public class LeapImageRetriever : MonoBehaviour {
     private const string RGB_SHADER_VARIANT_NAME = "LEAP_FORMAT_RGB";
     private const string GLOBAL_BRIGHT_TEXTURE_NAME = "_LeapGlobalBrightnessTexture";
     private const string GLOBAL_RAW_TEXTURE_NAME = "_LeapGlobalRawTexture";
+    private const string GLOBAL_DISTORTION_TEXTURE_NAME = "_LeapGlobalDistortion";
 
     public readonly LeapTextureData BrightTexture;
     public readonly LeapTextureData RawTexture;
     public readonly LeapDistortionData Distortion;
+
+    public static void ResetGlobalShaderValues() {
+      Texture2D empty = new Texture2D(1, 1, TextureFormat.ARGB32, false, false);
+      empty.name = "EmptyTexture";
+      empty.hideFlags = HideFlags.DontSave;
+      empty.SetPixel(0, 0, new Color(0, 0, 0, 0));
+
+      Shader.SetGlobalTexture(GLOBAL_BRIGHT_TEXTURE_NAME, empty);
+      Shader.SetGlobalTexture(GLOBAL_RAW_TEXTURE_NAME, empty);
+      Shader.SetGlobalTexture(GLOBAL_DISTORTION_TEXTURE_NAME, empty);
+    }
 
     public EyeTextureData() {
       BrightTexture = new LeapTextureData();
@@ -212,7 +226,7 @@ public class LeapImageRetriever : MonoBehaviour {
       BrightTexture.Reconstruct(leftBright, rightBright, GLOBAL_BRIGHT_TEXTURE_NAME);
       RawTexture.Reconstruct(leftRaw, rightRaw, GLOBAL_RAW_TEXTURE_NAME);
 
-      Distortion.Reconstruct(leftRaw, rightRaw);
+      Distortion.Reconstruct(leftRaw, rightRaw, GLOBAL_DISTORTION_TEXTURE_NAME);
 
       switch (leftRaw.Format) {
         case Image.FormatType.INFRARED:
@@ -239,6 +253,8 @@ public class LeapImageRetriever : MonoBehaviour {
   void OnValidate() {
     if (Application.isPlaying) {
       ApplyGammaCorrectionValues();
+    } else {
+      EyeTextureData.ResetGlobalShaderValues();
     }
   }
 #endif
