@@ -35,7 +35,6 @@ uniform float2 _LeapGlobalStereoUVOffset;
 uniform float4x4 _LeapGlobalWarpedOffset;
 
 
-
 /*** LEAP UTILITY ***/
 
 float2 LeapGetUndistortedUVWithOffset(float4 screenPos, float2 uvOffset){
@@ -45,7 +44,7 @@ float2 LeapGetUndistortedUVWithOffset(float4 screenPos, float2 uvOffset){
 
   float4 distortionAmount = tex2D(_LeapGlobalDistortion, distortionUV);
   float2 leapUV = float2(DecodeFloatRG(distortionAmount.xy), DecodeFloatRG(distortionAmount.zw)) * 2.3 - float2(0.6, 0.6);
-  return saturate(leapUV) * float2(1.0, 0.5) + uvOffset;
+  return saturate(leapUV) * float2(1.0, 0.5 - CAMERA_DELTA.y) + uvOffset;
 }
 
 float2 LeapGetLeftUndistortedUV(float4 screenPos){
@@ -95,8 +94,6 @@ float3 LeapGetUVRawColor(float2 uv){
     return float3(color, color, color);
   #else
     float4 input_lf;
-
-    uv.y = clamp(uv.y, 0.01, 0.99);
 
     input_lf.a = tex2D(_LeapGlobalRawTexture, uv).a;
     input_lf.r = tex2D(_LeapGlobalRawTexture, uv + R_OFFSET).b;
