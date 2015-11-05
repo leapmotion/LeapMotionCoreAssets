@@ -7,6 +7,10 @@ using System.Collections;
 [RequireComponent(typeof(Camera))]
 [ExecuteInEditMode]
 public class LeapVRCameraControl : MonoBehaviour {
+  public const string GLOBAL_EYE_UV_OFFSET_NAME = "_LeapGlobalStereoUVOffset";
+  private static Vector2 LEFT_EYE_UV_OFFSET = new Vector2(0, 0);
+  private static Vector2 RIGHT_EYE_UV_OFFSET = new Vector2(0, 0.5f);
+
   //When using VR, the cameras do not have valid parameters until the first frame begins rendering, 
   //so if you need valid parameters for initialization, you can use this callback to get notified 
   //when they become available.
@@ -69,8 +73,13 @@ public class LeapVRCameraControl : MonoBehaviour {
     _camera.ResetWorldToCameraMatrix();
     _finalCenterMatrix = _camera.worldToCameraMatrix;
 
-    if (!_hasDispatchedValidCameraParams && OnValidCameraParams != null) {
+    if (!_hasDispatchedValidCameraParams) {
       CameraParams cameraParams = new CameraParams(_cachedCamera);
+
+      //Image retriever applies the values on it's own, but it might have applied them too early
+      //We force a re-apply now that the cameras have correct projection matrices
+      LeapImageRetriever.Instance.ApplyCameraProjectionValues();
+
       OnValidCameraParams(cameraParams);
       _hasDispatchedValidCameraParams = true;
     }
@@ -86,8 +95,10 @@ public class LeapVRCameraControl : MonoBehaviour {
     _eyeType.BeginCamera();
 
     if (_eyeType.IsLeftEye) {
+      Shader.SetGlobalVector(GLOBAL_EYE_UV_OFFSET_NAME, LEFT_EYE_UV_OFFSET);
       if (OnLeftPreRender != null) OnLeftPreRender();
     } else {
+      Shader.SetGlobalVector(GLOBAL_EYE_UV_OFFSET_NAME, RIGHT_EYE_UV_OFFSET);
       if (OnRightPreRender != null) OnRightPreRender();
     }
 

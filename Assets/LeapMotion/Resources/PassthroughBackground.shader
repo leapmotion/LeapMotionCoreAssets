@@ -1,7 +1,4 @@
 ﻿Shader "LeapMotion/Passthrough/Background" {
-  Properties {
-  }
-
   SubShader {
     Tags {"Queue"="Background" "IgnoreProjector"="True"}
 
@@ -35,7 +32,7 @@
     }
 
     float4 frag (frag_in i) : COLOR {
-      return float4(LeapColor(i.screenPos), 1);
+      return float4(LeapGetStereoColor(i.screenPos), 1);
     }
 
     ENDCG

@@ -23,22 +23,41 @@
 #define FUDGE_CONSTANT  (1 / (1 - FUDGE_THRESHOLD))
 ////////////////////////////////////////////////////////////////////////                                       
 
-sampler2D _LeapGlobalBrightnessTexture;
-sampler2D _LeapGlobalRawTexture;
-sampler2D _LeapGlobalDistortion;
+uniform sampler2D _LeapGlobalBrightnessTexture;
+uniform sampler2D _LeapGlobalRawTexture;
+uniform sampler2D _LeapGlobalDistortion;
 
-float4 _LeapGlobalProjection;
-float _LeapGlobalGammaCorrectionExponent;
+uniform float4 _LeapGlobalProjection;
+uniform float _LeapGlobalGammaCorrectionExponent;
 
-float4x4 _LeapGlobalWarpedOffset;
+uniform float2 _LeapGlobalStereoUVOffset;
 
-float2 LeapGetUndistortedUV(float4 screenPos){
-  float2 uv = (screenPos.xy / screenPos.w) * 2 - float2(1,1);
-  float2 tangent = (uv + _LeapGlobalProjection.xy) / _LeapGlobalProjection.zw;
-  float2 distortionUV = 0.125 * tangent + float2(0.5, 0.5);
+uniform float4x4 _LeapGlobalWarpedOffset;
+
+
+
+/*** LEAP UTILITY ***/
+
+float2 LeapGetUndistortedUVWithOffset(float4 screenPos, float2 uvOffset){
+  float2 screenUV = (screenPos.xy / screenPos.w) * 2 - float2(1,1);
+  float2 tangent = (screenUV + _LeapGlobalProjection.xy) / _LeapGlobalProjection.zw;
+  float2 distortionUV = saturate(0.125 * tangent + float2(0.5, 0.5)) * float2(1, 0.5) + uvOffset;
 
   float4 distortionAmount = tex2D(_LeapGlobalDistortion, distortionUV);
-  return float2(DecodeFloatRG(distortionAmount.xy), DecodeFloatRG(distortionAmount.zw)) * 2.3 - float2(0.6, 0.6);
+  float2 leapUV = float2(DecodeFloatRG(distortionAmount.xy), DecodeFloatRG(distortionAmount.zw)) * 2.3 - float2(0.6, 0.6);
+  return saturate(leapUV) * float2(1.0, 0.5) + uvOffset;
+}
+
+float2 LeapGetLeftUndistortedUV(float4 screenPos){
+  return LeapGetUndistortedUVWithOffset(screenPos, float2(0.0, 0.0));
+}
+
+float2 LeapGetRightUndistortedUV(float4 screenPos){
+  return LeapGetUndistortedUVWithOffset(screenPos, float2(0.0, 0.5));
+}
+
+float2 LeapGetStereoUndistortedUV(float4 screenPos){
+  return LeapGetUndistortedUVWithOffset(screenPos, _LeapGlobalStereoUVOffset);
 }
 
 float4 LeapGetWarpedScreenPos(float4 transformedVertex){
@@ -46,15 +65,31 @@ float4 LeapGetWarpedScreenPos(float4 transformedVertex){
   return ComputeScreenPos(warpedPosition);
 }
 
-float LeapBrightnessUV(float2 uv){
+
+
+/*** LEAP BRIGHTNESS ***/
+
+float LeapGetUVBrightness(float2 uv){
     return tex2D(_LeapGlobalBrightnessTexture, uv).a;
 }
 
-float LeapBrightness(float4 screenPos){
-  return LeapBrightnessUV(LeapGetUndistortedUV(screenPos));
+float LeapGetLeftBrightness(float4 screenPos){
+  return LeapGetUVBrightness(LeapGetLeftUndistortedUV(screenPos));
 }
 
-float3 LeapRawColorUV(float2 uv){
+float LeapGetRightBrightness(float4 screenPos){
+  return LeapGetUVBrightness(LeapGetRightUndistortedUV(screenPos));
+}
+
+float LeapGetStereoBrightness(float4 screenPos){
+  return LeapGetUVBrightness(LeapGetStereoUndistortedUV(screenPos));
+}
+
+
+
+/*** LEAP RAW COLOR ***/
+
+float3 LeapGetUVRawColor(float2 uv){
   #if LEAP_FORMAT_IR
     float color = tex2D(_LeapGlobalRawTexture, uv).a;
     return float3(color, color, color);
@@ -81,14 +116,34 @@ float3 LeapRawColorUV(float2 uv){
   #endif
 }
 
-float3 LeapRawColor(float4 screenPos){
-  return LeapRawColorUV(LeapGetUndistortedUV(screenPos));
+float3 LeapGetLeftRawColor(float4 screenPos){
+  return LeapGetUVRawColor(LeapGetLeftUndistortedUV(screenPos));
 }
 
-float3 LeapColorUV(float2 uv){
-  return pow(LeapRawColorUV(uv), _LeapGlobalGammaCorrectionExponent);
+float3 LeapGetRightRawColor(float4 screenPos){
+  return LeapGetUVRawColor(LeapGetRightUndistortedUV(screenPos));
 }
 
-float3 LeapColor(float4 screenPos){
-  return pow(LeapRawColor(screenPos), _LeapGlobalGammaCorrectionExponent);
+float3 LeapGetStereoRawColor(float4 screenPos){
+  return LeapGetUVRawColor(LeapGetStereoUndistortedUV(screenPos));
+}
+
+
+
+/*** LEAP COLOR ***/
+
+float3 LeapGetUVColor(float2 uv){
+  return pow(LeapGetUVRawColor(uv), _LeapGlobalGammaCorrectionExponent);
+}
+
+float3 LeapGetLeftColor(float4 screenPos){
+  return pow(LeapGetLeftRawColor(screenPos), _LeapGlobalGammaCorrectionExponent);
+}
+
+float3 LeapGetRightColor(float4 screenPos){
+  return pow(LeapGetRightRawColor(screenPos), _LeapGlobalGammaCorrectionExponent);
+}
+
+float3 LeapGetStereoColor(float4 screenPos){
+  return pow(LeapGetStereoRawColor(screenPos), _LeapGlobalGammaCorrectionExponent);
 }

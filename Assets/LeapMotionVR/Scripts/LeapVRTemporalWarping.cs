@@ -311,7 +311,7 @@ public class LeapVRTemporalWarping : MonoBehaviour {
   }
 
   private bool tryLatestImageTimestamp(out long timestamp) {
-    using (ImageList list = HandController.Main.GetFrame().Images) {
+    using (ImageList list = HandController.Main.GetImageFrame().Images) {
       if (list.Count > 0) {
         using (Image image = list[0]) {
           timestamp = image.Timestamp - warpingAdjustment * 1000;

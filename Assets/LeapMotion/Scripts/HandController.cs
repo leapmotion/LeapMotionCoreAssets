@@ -165,7 +165,9 @@ public class HandController : MonoBehaviour {
   }
 
   private bool flag_initialized_ = false;
+
   private int curr_frame_count = -1;
+  private Frame curr_image_frame = null;
   private Frame curr_frame = null;
 
   private long prev_graphics_id_ = 0;
@@ -435,18 +437,45 @@ public class HandController : MonoBehaviour {
   *
   * If the recorder object is playing a recording, then the frame is taken from the recording.
   * Otherwise, the frame comes from the Leap Motion Controller itself.
+  * 
+  * The returned frame does not contain any image data, use GetImageFrame() for that.
   */
   public virtual Frame GetFrame() {
     if (enableRecordPlayback && (recorder_.state == RecorderState.Playing || recorder_.state == RecorderState.Paused))
       return recorder_.GetCurrentFrame();
 
+    ensureFramesUpToDate();
+    return curr_frame;
+  }
+
+  /* Returns the latest frame object. 
+   * 
+   * This method returns a frame object that contains Image data.  It is the users responsibility to make sure
+   * they dispose any objects they obtain from this frame, since it is linked to the images and could result
+   * in large memory increase if they are not disposed of properly.  
+   * 
+   * If the recorder object is playing a recording, then this method will return null.
+   */
+  public virtual Frame GetImageFrame() {
+    if (enableRecordPlayback && (recorder_.state == RecorderState.Playing || recorder_.state == RecorderState.Paused))
+      return null;
+
+    ensureFramesUpToDate();
+    return curr_image_frame;
+  }
+
+  protected virtual void ensureFramesUpToDate() {
     //Ensure that we update curr_frame every Update cycle.  curr_frame stays the same until the next Update.
-    if (curr_frame == null || curr_frame_count != Time.frameCount) {
-      curr_frame = leap_controller_.Frame();
+    if (curr_frame == null || curr_image_frame == null || Time.frameCount != curr_frame_count) {
+      if (curr_image_frame != null) {
+        curr_image_frame.Dispose();
+        curr_image_frame = null;
+      }
+
+      curr_image_frame = leap_controller_.Frame();
+      curr_frame = GetImagelessFrame(curr_image_frame, false);
       curr_frame_count = Time.frameCount;
     }
-
-    return curr_frame;
   }
 
   /**
@@ -515,7 +544,7 @@ public class HandController : MonoBehaviour {
       }
     }
 
-    return closestFrame;
+    return GetImagelessFrame(closestFrame, true);
   }
 
   /** Updates the graphics objects. */
@@ -546,7 +575,9 @@ public class HandController : MonoBehaviour {
 
     //All FixedUpdates of a frame happen before Update, so only the last of these calculations is passed
     //into Update for smoothing.
-    perFrameFixedUpdateOffset_ = leap_controller_.Frame().Timestamp * NS_TO_S - Time.fixedTime;
+    using (var latestFrame = leap_controller_.Frame()) {
+      perFrameFixedUpdateOffset_ = latestFrame.Timestamp * NS_TO_S - Time.fixedTime;
+    }
 
     Frame frame = GetFixedFrame();
 
@@ -722,5 +753,22 @@ public class HandController : MonoBehaviour {
 
   public Quaternion ToUnityRot(Matrix basis) {
     return transform.rotation * basis.Rotation(false);
+  }
+
+  private static byte[] _cachedImagelessFrameByteArray = new byte[4096];
+  public static Frame GetImagelessFrame(Frame original, bool disposeOriginal) {
+    int length = original.SerializeLength;
+    if (length > _cachedImagelessFrameByteArray.Length) {
+      _cachedImagelessFrameByteArray = new byte[length * 2];
+    }
+
+    original.SerializeWithArg(_cachedImagelessFrameByteArray);
+    if (disposeOriginal) {
+      original.Dispose();
+    }
+
+    Frame imagelessFrame = new Frame();
+    imagelessFrame.DeserializeWithLength(_cachedImagelessFrameByteArray, length);
+    return imagelessFrame;
   }
 }

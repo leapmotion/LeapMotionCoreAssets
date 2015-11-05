@@ -66,10 +66,10 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
   }
 
   float4 trackingGlow(float4 screenPos) {
-    float leapBrightness = LeapBrightness(screenPos);
+    float leapBrightness = LeapGetStereoBrightness(screenPos);
     clip(leapBrightness - _MinThreshold);
 
-    float3 leapRawColor = LeapRawColor(screenPos);
+    float3 leapRawColor = LeapGetStereoRawColor(screenPos);
 
     // Map leap image to linear color space
     float3 leapLinearColor = pow(pow(leapRawColor, _LeapGlobalGammaCorrectionExponent), 1/_LeapGlobalColorSpaceGamma);
@@ -105,7 +105,7 @@ Shader "LeapMotion/Passthrough/ImageHandHighlight" {
   }
 
   float4 alphaFrag(frag_in i) : COLOR {
-    float leapBrightness = LeapBrightness(i.screenPos);
+    float leapBrightness = LeapGetStereoBrightness(i.screenPos);
     clip(leapBrightness - _MinThreshold);
     return float4(0,0,0,0);
   }
