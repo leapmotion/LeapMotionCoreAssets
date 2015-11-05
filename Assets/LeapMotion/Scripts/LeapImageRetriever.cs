@@ -41,7 +41,6 @@ public class LeapImageRetriever : MonoBehaviour {
   private class LeapTextureData {
     private Texture2D _combinedTexture = null;
     private byte[] _intermediateArray = null;
-    private Image.FormatType _formatType = Image.FormatType.INFRARED;
 
     public bool CheckStale(Image left, Image right) {
       if (_combinedTexture == null || _intermediateArray == null) {
