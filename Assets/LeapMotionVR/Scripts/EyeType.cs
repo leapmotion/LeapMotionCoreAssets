@@ -3,7 +3,6 @@
 using UnityEditor;
 #endif
 using System;
-using System.Collections;
 
 [System.Serializable]
 public class EyeType {
