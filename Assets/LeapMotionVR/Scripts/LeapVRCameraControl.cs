@@ -78,7 +78,10 @@ public class LeapVRCameraControl : MonoBehaviour {
       //We force a re-apply now that the cameras have correct projection matrices
       LeapImageRetriever.Instance.ApplyCameraProjectionValues();
 
-      OnValidCameraParams(cameraParams);
+      if(OnValidCameraParams != null) {
+        OnValidCameraParams(cameraParams);
+      }
+      
       _hasDispatchedValidCameraParams = true;
     }
   }

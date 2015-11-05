@@ -130,11 +130,11 @@ public class HandController : MonoBehaviour {
   protected Controller leap_controller_;
 
   /** The list of all hand graphic objects owned by this HandController.*/
-  protected Dictionary<int, HandModel> hand_graphics_;
+  protected Dictionary<int, HandModel> hand_graphics_ = new Dictionary<int, HandModel>();
   /** The list of all hand physics objects owned by this HandController.*/
-  protected Dictionary<int, HandModel> hand_physics_;
+  protected Dictionary<int, HandModel> hand_physics_ = new Dictionary<int, HandModel>();
   /** The list of all tool objects owned by this HandController.*/
-  protected Dictionary<int, ToolModel> tools_;
+  protected Dictionary<int, ToolModel> tools_ = new Dictionary<int, ToolModel>();
 
   protected bool graphicsEnabled = true;
   protected bool physicsEnabled = true;
@@ -215,12 +215,6 @@ public class HandController : MonoBehaviour {
 
   /** Initalizes the hand and tool lists and recording, if enabled.*/
   void Start() {
-    // Initialize hand lookup tables.
-    hand_graphics_ = new Dictionary<int, HandModel>();
-    hand_physics_ = new Dictionary<int, HandModel>();
-
-    tools_ = new Dictionary<int, ToolModel>();
-
     smoothedFixedUpdateOffset_.delay = FIXED_UPDATE_OFFSET_SMOOTHING_DELAY;
 
     if (enableRecordPlayback && recordingAsset != null)
@@ -422,6 +416,7 @@ public class HandController : MonoBehaviour {
     //Do a null check to deal with hot reloading
     if(leap_controller_ == null) {
       leap_controller_ = new Controller();
+      InitializeFlags();
     }
 #endif
     return leap_controller_;

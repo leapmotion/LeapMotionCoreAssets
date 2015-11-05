@@ -303,6 +303,8 @@ public class LeapImageRetriever : MonoBehaviour {
             "your Leap Motion device is plugged in.");
         }
         return;
+      } else {
+        _missedImages = 0;
       }
 
       using (Image leftBright = brightList[0])
