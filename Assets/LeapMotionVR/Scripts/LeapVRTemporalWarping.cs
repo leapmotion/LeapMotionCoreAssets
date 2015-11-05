@@ -8,7 +8,6 @@ using System.Collections.Generic;
 /// </summary>
 public class LeapVRTemporalWarping : MonoBehaviour {
   private const long MAX_LATENCY = 200000;
-  private const long IMAGE_WARNING_WAIT = 10;
 
   public enum WarpedAnchor {
     CENTER,
