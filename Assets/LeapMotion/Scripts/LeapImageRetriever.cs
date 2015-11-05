@@ -4,8 +4,7 @@
 * Available at http://www.apache.org/licenses/LICENSE-2.0.html                 *
 \******************************************************************************/
 using UnityEngine;
-using System;
-using System.Collections;
+using UnityEngine.Serialization;
 using System.Runtime.InteropServices;
 using Leap;
 
@@ -31,16 +30,28 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-  public Texture2D preview;
-
-  public float gammaCorrection = 1.0f;
+  [SerializeField]
+  [FormerlySerializedAs("gammaCorrection")]
+  private float _gammaCorrection = 1.0f;
 
   private int _missedImages = 0;
   private EyeTextureData _eyeTextureData = new EyeTextureData();
 
-  private class LeapTextureData {
+  public EyeTextureData TextureData {
+    get {
+      return _eyeTextureData;
+    }
+  }
+
+  public class LeapTextureData {
     private Texture2D _combinedTexture = null;
     private byte[] _intermediateArray = null;
+
+    public Texture2D CombinedTexture {
+      get {
+        return _combinedTexture;
+      }
+    }
 
     public bool CheckStale(Image left, Image right) {
       if (_combinedTexture == null || _intermediateArray == null) {
@@ -74,12 +85,6 @@ public class LeapImageRetriever : MonoBehaviour {
       _combinedTexture.name = globalShaderName;
 
       _intermediateArray = new byte[combinedWidth * combinedHeight * bytesPerPixel(format)];
-
-      _formatType = left.Format;
-
-
-      LeapImageRetriever.Instance.preview = _combinedTexture;
-
 
       Shader.SetGlobalTexture(globalShaderName, _combinedTexture);
     }
@@ -116,9 +121,15 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-  private class LeapDistortionData {
+  public class LeapDistortionData {
     private const string GLOBAL_SHADER_NAME = "_LeapGlobalDistortion";
     private Texture2D _combinedTexture = null;
+
+    public Texture2D CombinedTexture {
+      get {
+        return _combinedTexture;
+      }
+    }
 
     public bool CheckStale() {
       return _combinedTexture == null;
@@ -140,7 +151,7 @@ public class LeapImageRetriever : MonoBehaviour {
       addDistortionData(leftImage, colorArray, 0);
       addDistortionData(rightImage, colorArray, colorArray.Length / 2);
 
-      
+
 
       _combinedTexture.SetPixels32(colorArray);
       _combinedTexture.Apply();
@@ -175,27 +186,33 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-  private class EyeTextureData {
+  public class EyeTextureData {
     private const string IR_SHADER_VARIANT_NAME = "LEAP_FORMAT_IR";
     private const string RGB_SHADER_VARIANT_NAME = "LEAP_FORMAT_RGB";
     private const string GLOBAL_BRIGHT_TEXTURE_NAME = "_LeapGlobalBrightnessTexture";
     private const string GLOBAL_RAW_TEXTURE_NAME = "_LeapGlobalRawTexture";
 
-    private LeapTextureData _brightTexture = new LeapTextureData();
-    private LeapTextureData _rawTexture = new LeapTextureData();
-    private LeapDistortionData _distortion = new LeapDistortionData();
+    public readonly LeapTextureData BrightTexture;
+    public readonly LeapTextureData RawTexture;
+    public readonly LeapDistortionData Distortion;
+
+    public EyeTextureData() {
+      BrightTexture = new LeapTextureData();
+      RawTexture = new LeapTextureData();
+      Distortion = new LeapDistortionData();
+    }
 
     public bool CheckStale(Image leftBright, Image rightBright, Image leftRaw, Image rightRaw) {
-      return _brightTexture.CheckStale(leftBright, rightBright) ||
-             _rawTexture.CheckStale(leftRaw, rightRaw) ||
-             _distortion.CheckStale();
+      return BrightTexture.CheckStale(leftBright, rightBright) ||
+             RawTexture.CheckStale(leftRaw, rightRaw) ||
+             Distortion.CheckStale();
     }
 
     public void Reconstruct(Image leftBright, Image rightBright, Image leftRaw, Image rightRaw) {
-      _brightTexture.Reconstruct(leftBright, rightBright, GLOBAL_BRIGHT_TEXTURE_NAME);
-      _rawTexture.Reconstruct(leftRaw, rightRaw, GLOBAL_RAW_TEXTURE_NAME);
-      
-      _distortion.Reconstruct(leftRaw, rightRaw);
+      BrightTexture.Reconstruct(leftBright, rightBright, GLOBAL_BRIGHT_TEXTURE_NAME);
+      RawTexture.Reconstruct(leftRaw, rightRaw, GLOBAL_RAW_TEXTURE_NAME);
+
+      Distortion.Reconstruct(leftRaw, rightRaw);
 
       switch (leftRaw.Format) {
         case Image.FormatType.INFRARED:
@@ -213,13 +230,13 @@ public class LeapImageRetriever : MonoBehaviour {
     }
 
     public void UpdateTextures(Image leftBright, Image rightBright, Image leftRaw, Image rightRaw) {
-      _brightTexture.UpdateTexture(leftBright, rightBright);
-      _rawTexture.UpdateTexture(leftRaw, rightRaw);
+      BrightTexture.UpdateTexture(leftBright, rightBright);
+      RawTexture.UpdateTexture(leftRaw, rightRaw);
     }
   }
 
 #if UNITY_EDITOR
-  void OnValidate(){
+  void OnValidate() {
     if (Application.isPlaying) {
       ApplyGammaCorrectionValues();
     }
@@ -272,11 +289,11 @@ public class LeapImageRetriever : MonoBehaviour {
         return;
       }
 
-      using(Image leftBright = brightList[0])
-      using(Image rightBright = brightList[1])
-      using(Image leftRaw = rawList[0])
-      using(Image rightRaw = rawList[1]){
-        if(_eyeTextureData.CheckStale(leftBright, rightBright, leftRaw, rightRaw)){
+      using (Image leftBright = brightList[0])
+      using (Image rightBright = brightList[1])
+      using (Image leftRaw = rawList[0])
+      using (Image rightRaw = rawList[1]) {
+        if (_eyeTextureData.CheckStale(leftBright, rightBright, leftRaw, rightRaw)) {
           _eyeTextureData.Reconstruct(leftBright, rightBright, leftRaw, rightRaw);
         }
         _eyeTextureData.UpdateTextures(leftBright, rightBright, leftRaw, rightRaw);
@@ -290,7 +307,7 @@ public class LeapImageRetriever : MonoBehaviour {
       gamma = -Mathf.Log10(Mathf.GammaToLinearSpace(0.1f));
     }
     Shader.SetGlobalFloat(GLOBAL_COLOR_SPACE_GAMMA_NAME, gamma);
-    Shader.SetGlobalFloat(GLOBAL_GAMMA_CORRECTION_EXPONENT_NAME, 1.0f / gammaCorrection);
+    Shader.SetGlobalFloat(GLOBAL_GAMMA_CORRECTION_EXPONENT_NAME, 1.0f / _gammaCorrection);
   }
 
   public void ApplyCameraProjectionValues() {
