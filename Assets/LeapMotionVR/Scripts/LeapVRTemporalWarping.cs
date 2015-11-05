@@ -133,8 +133,6 @@ public class LeapVRTemporalWarping : MonoBehaviour {
   private Matrix4x4 _projectionMatrix;
   private List<TransformData> _history = new List<TransformData>();
 
-  private int _missedImages = 0;
-
   /// <summary>
   /// Provides the position of a Leap Anchor at a given Leap Time.  Cannot extrapolate.
   /// </summary>
