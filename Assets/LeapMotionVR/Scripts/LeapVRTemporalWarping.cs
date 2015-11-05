@@ -1,16 +1,14 @@
 ﻿using UnityEngine;
 using UnityEngine.VR;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using Leap;
 
 /// <summary>
 /// Implements spatial alignment of cameras and synchronization with images
 /// </summary>
 public class LeapVRTemporalWarping : MonoBehaviour {
-
   private const long MAX_LATENCY = 200000;
+  private const long IMAGE_WARNING_WAIT = 10;
 
   public enum WarpedAnchor {
     CENTER,
@@ -21,11 +19,11 @@ public class LeapVRTemporalWarping : MonoBehaviour {
   public enum SyncMode {
     /* SyncWithHands causes both Images and the Transform to be updated at the same time during LateUpdate.  This causes
      * the images to line up properly, but the images will lag behind the virtual world, causing drift. */
-    SYNC_WITH_HANDS,  
+    SYNC_WITH_HANDS,
     /* LowLatency causes the Images to be warped directly prior to rendering, causing them to line up better with virtual
      * objects.  Since transforms cannot be modified at this point in the update step, the Transform will still be updated
      * during LateUpdate, causing a misalignment between images and leap space. */
-    LOW_LATENCY        
+    LOW_LATENCY
   }
 
   protected struct TransformData {
@@ -134,15 +132,17 @@ public class LeapVRTemporalWarping : MonoBehaviour {
 
   private Transform _trackingAnchor;
   private Matrix4x4 _projectionMatrix;
-  private List<TransformData> history = new List<TransformData>();
-  
+  private List<TransformData> _history = new List<TransformData>();
+
+  private int _missedImages = 0;
+
   /// <summary>
   /// Provides the position of a Leap Anchor at a given Leap Time.  Cannot extrapolate.
   /// </summary>
   public bool TryGetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundPosition, out Quaternion rewoundRotation, long leapTime) {
     if (_trackingAnchor == null) {
       rewoundPosition = Vector3.one;
-      rewoundRotation = Quaternion.identity; 
+      rewoundRotation = Quaternion.identity;
       return false;
     }
 
@@ -153,7 +153,7 @@ public class LeapVRTemporalWarping : MonoBehaviour {
     rewoundPosition = _trackingAnchor.TransformPoint(past.localPosition) + rewoundRotation * Vector3.forward * deviceInfo.focalPlaneOffset;
 
     switch (anchor) {
-      case WarpedAnchor.CENTER: 
+      case WarpedAnchor.CENTER:
         break;
       case WarpedAnchor.LEFT:
         rewoundPosition += rewoundRotation * Vector3.left * deviceInfo.baseline * 0.5f;
@@ -169,12 +169,11 @@ public class LeapVRTemporalWarping : MonoBehaviour {
   }
 
   public bool TryGetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundPosition, out Quaternion rewoundRotation) {
-    long timestamp;
-    if (tryLatestImageTimestamp(out timestamp)) {
-      if (TryGetWarpedTransform(anchor, out rewoundPosition, out rewoundRotation, timestamp)) {
-        return true;
-      }
+    long timestamp = HandController.Main.GetFrame().Timestamp;
+    if (TryGetWarpedTransform(anchor, out rewoundPosition, out rewoundRotation, timestamp)) {
+      return true;
     }
+
     rewoundPosition = Vector3.zero;
     rewoundRotation = Quaternion.identity;
     return false;
@@ -233,16 +232,16 @@ public class LeapVRTemporalWarping : MonoBehaviour {
 
   private void updateHistory() {
     long leapNow = HandController.Main.GetLeapController().Now();
-    history.Add(new TransformData() {
+    _history.Add(new TransformData() {
       leapTime = leapNow,
       localPosition = InputTracking.GetLocalPosition(VRNode.CenterEye),
       localRotation = InputTracking.GetLocalRotation(VRNode.CenterEye)
     });
 
     // Reduce history length
-    while (history.Count > 0 &&
-           MAX_LATENCY < leapNow - history[0].leapTime) {
-      history.RemoveAt(0);
+    while (_history.Count > 0 &&
+           MAX_LATENCY < leapNow - _history[0].leapTime) {
+      _history.RemoveAt(0);
     }
   }
 
@@ -255,10 +254,7 @@ public class LeapVRTemporalWarping : MonoBehaviour {
     Quaternion currCenterRot = _trackingAnchor.rotation * InputTracking.GetLocalRotation(VRNode.CenterEye);
 
     //Get the transform at the time when the latest image was captured
-    long rewindTime;
-    if (!tryLatestImageTimestamp(out rewindTime)) {
-      return;
-    }
+    long rewindTime = HandController.Main.GetFrame().Timestamp;
 
     TransformData past = transformAtTime(rewindTime);
     Vector3 pastCenterPos = _trackingAnchor.TransformPoint(past.localPosition);
@@ -283,7 +279,7 @@ public class LeapVRTemporalWarping : MonoBehaviour {
    * have the desired time.
    */
   private TransformData transformAtTime(long time) {
-    if (history.Count == 0) {
+    if (_history.Count == 0) {
       return new TransformData() {
         leapTime = 0,
         localPosition = Vector3.zero,
@@ -291,36 +287,22 @@ public class LeapVRTemporalWarping : MonoBehaviour {
       };
     }
 
-    if (history[0].leapTime >= time) {
+    if (_history[0].leapTime >= time) {
       // Expect this when using LOW LATENCY image retrieval, which can yield negative latency estimates due to incorrect clock synchronization
-      return history[0];
+      return _history[0];
     }
 
     int t = 1;
-    while (t < history.Count &&
-           history[t].leapTime <= time) {
+    while (t < _history.Count &&
+           _history[t].leapTime <= time) {
       t++;
     }
 
-    if (!(t < history.Count)) {
+    if (!(t < _history.Count)) {
       // Expect this for initial frames which will have a very low frame rate
-      return history[history.Count - 1];
+      return _history[_history.Count - 1];
     }
 
-    return TransformData.Lerp(history[t - 1], history[t], time);
-  }
-
-  private bool tryLatestImageTimestamp(out long timestamp) {
-    using (ImageList list = HandController.Main.GetImageFrame().Images) {
-      if (list.Count > 0) {
-        using (Image image = list[0]) {
-          timestamp = image.Timestamp - warpingAdjustment * 1000;
-          return true;
-        }
-      } else {
-        timestamp = 0;
-        return false;
-      }
-    }
+    return TransformData.Lerp(_history[t - 1], _history[t], time);
   }
 }
