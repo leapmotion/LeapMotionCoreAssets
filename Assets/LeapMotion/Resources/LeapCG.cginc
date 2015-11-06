@@ -35,7 +35,7 @@ uniform float2 _LeapGlobalStereoUVOffset;
 uniform float4x4 _LeapGlobalWarpedOffset;
 
 
-/*** LEAP UTILITY ***/
+/*** LEAP UNDISTORTION ***/
 
 float2 LeapGetUndistortedUVWithOffset(float4 screenPos, float2 uvOffset){
   float2 screenUV = (screenPos.xy / screenPos.w) * 2 - float2(1,1);
@@ -58,6 +58,8 @@ float2 LeapGetRightUndistortedUV(float4 screenPos){
 float2 LeapGetStereoUndistortedUV(float4 screenPos){
   return LeapGetUndistortedUVWithOffset(screenPos, _LeapGlobalStereoUVOffset);
 }
+
+/*** LEAP TEMPORAL WARPING ***/
 
 float4 LeapGetWarpedScreenPos(float4 transformedVertex){
   float4 warpedPosition = mul(_LeapGlobalWarpedOffset, transformedVertex);
