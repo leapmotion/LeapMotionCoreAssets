@@ -59,13 +59,13 @@ float2 LeapGetStereoUndistortedUV(float4 screenPos){
   return LeapGetUndistortedUVWithOffset(screenPos, _LeapGlobalStereoUVOffset);
 }
 
+
 /*** LEAP TEMPORAL WARPING ***/
 
 float4 LeapGetWarpedScreenPos(float4 transformedVertex){
   float4 warpedPosition = mul(_LeapGlobalWarpedOffset, transformedVertex);
   return ComputeScreenPos(warpedPosition);
 }
-
 
 
 /*** LEAP BRIGHTNESS ***/
@@ -85,7 +85,6 @@ float LeapGetRightBrightness(float4 screenPos){
 float LeapGetStereoBrightness(float4 screenPos){
   return LeapGetUVBrightness(LeapGetStereoUndistortedUV(screenPos));
 }
-
 
 
 /*** LEAP RAW COLOR ***/
@@ -126,7 +125,6 @@ float3 LeapGetRightRawColor(float4 screenPos){
 float3 LeapGetStereoRawColor(float4 screenPos){
   return LeapGetUVRawColor(LeapGetStereoUndistortedUV(screenPos));
 }
-
 
 
 /*** LEAP COLOR ***/
