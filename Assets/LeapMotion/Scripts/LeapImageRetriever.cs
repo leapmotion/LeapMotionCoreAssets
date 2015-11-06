@@ -69,7 +69,7 @@ public class LeapImageRetriever : MonoBehaviour {
       return false;
     }
 
-    public void Reconstruct(Image left, Image right, string globalShaderName) {
+    public void Reconstruct(Image left, Image right, string globalShaderName, string pixelSizeName) {
       int combinedWidth = left.Width;
       int combinedHeight = left.Height * 2;
 
@@ -88,6 +88,7 @@ public class LeapImageRetriever : MonoBehaviour {
       _intermediateArray = new byte[combinedWidth * combinedHeight * bytesPerPixel(format)];
 
       Shader.SetGlobalTexture(globalShaderName, _combinedTexture);
+      Shader.SetGlobalVector(pixelSizeName, new Vector2(1.0f / left.Width, 1.0f / left.Height));
     }
 
     public void UpdateTexture(Image left, Image right) {
@@ -194,6 +195,8 @@ public class LeapImageRetriever : MonoBehaviour {
     private const string GLOBAL_BRIGHT_TEXTURE_NAME = "_LeapGlobalBrightnessTexture";
     private const string GLOBAL_RAW_TEXTURE_NAME = "_LeapGlobalRawTexture";
     private const string GLOBAL_DISTORTION_TEXTURE_NAME = "_LeapGlobalDistortion";
+    private const string GLOBAL_BRIGHT_PIXEL_SIZE_NAME = "_LeapGlobalBrightnessPixelSize";
+    private const string GLOBAL_RAW_PIXEL_SIZE_NAME = "_LeapGlobalRawPixelSize";
 
     public readonly LeapTextureData BrightTexture;
     public readonly LeapTextureData RawTexture;
@@ -223,8 +226,8 @@ public class LeapImageRetriever : MonoBehaviour {
     }
 
     public void Reconstruct(Image leftBright, Image rightBright, Image leftRaw, Image rightRaw) {
-      BrightTexture.Reconstruct(leftBright, rightBright, GLOBAL_BRIGHT_TEXTURE_NAME);
-      RawTexture.Reconstruct(leftRaw, rightRaw, GLOBAL_RAW_TEXTURE_NAME);
+      BrightTexture.Reconstruct(leftBright, rightBright, GLOBAL_BRIGHT_TEXTURE_NAME, GLOBAL_BRIGHT_PIXEL_SIZE_NAME);
+      RawTexture.Reconstruct(leftRaw, rightRaw, GLOBAL_RAW_TEXTURE_NAME, GLOBAL_RAW_PIXEL_SIZE_NAME);
 
       Distortion.Reconstruct(leftRaw, rightRaw, GLOBAL_DISTORTION_TEXTURE_NAME);
 

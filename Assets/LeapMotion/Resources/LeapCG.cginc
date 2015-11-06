@@ -1,15 +1,30 @@
 #include "UnityCG.cginc"
 
-/////////////// Constants for Dragonfly Color Correction ///////////////
-#define CAMERA_WIDTH  608.0
-#define CAMERA_HEIGHT 540.0
-#define CAMERA_DELTA  float2(1.0 / CAMERA_WIDTH, 1.0 / CAMERA_HEIGHT)
+uniform sampler2D _LeapGlobalBrightnessTexture;
 
+uniform sampler2D _LeapGlobalRawTexture;
+
+uniform sampler2D _LeapGlobalDistortion;
+
+
+uniform float2 _LeapGlobalBrightnessPixelSize;
+
+uniform float2 _LeapGlobalRawPixelSize;
+
+uniform float4 _LeapGlobalProjection;
+
+uniform float _LeapGlobalGammaCorrectionExponent;
+
+uniform float2 _LeapGlobalStereoUVOffset;
+
+uniform float4x4 _LeapGlobalWarpedOffset;
+
+/////////////// Constants for Dragonfly Color Correction ///////////////
 #define RGB_SCALE     1.5 * float3(1.5, 1.0, 0.5)
 
-#define R_OFFSET      CAMERA_DELTA * float2(-0.5, 0.0)
-#define G_OFFSET      CAMERA_DELTA * float2(-0.5, 0.5)
-#define B_OFFSET      CAMERA_DELTA * float2( 0.0, 0.5)
+#define R_OFFSET      (_LeapGlobalRawPixelSize * float2(-0.5, 0.0))
+#define G_OFFSET      (_LeapGlobalRawPixelSize * float2(-0.5, 0.5))
+#define B_OFFSET      (_LeapGlobalRawPixelSize * float2( 0.0, 0.5))
 
 #define R_BLEED       -0.05
 #define G_BLEED       0.001
@@ -23,18 +38,6 @@
 #define FUDGE_CONSTANT  (1 / (1 - FUDGE_THRESHOLD))
 ////////////////////////////////////////////////////////////////////////                                       
 
-uniform sampler2D _LeapGlobalBrightnessTexture;
-uniform sampler2D _LeapGlobalRawTexture;
-uniform sampler2D _LeapGlobalDistortion;
-
-uniform float4 _LeapGlobalProjection;
-uniform float _LeapGlobalGammaCorrectionExponent;
-
-uniform float2 _LeapGlobalStereoUVOffset;
-
-uniform float4x4 _LeapGlobalWarpedOffset;
-
-
 /*** LEAP UNDISTORTION ***/
 
 float2 LeapGetUndistortedUVWithOffset(float4 screenPos, float2 uvOffset){
@@ -44,7 +47,7 @@ float2 LeapGetUndistortedUVWithOffset(float4 screenPos, float2 uvOffset){
 
   float4 distortionAmount = tex2D(_LeapGlobalDistortion, distortionUV);
   float2 leapUV = float2(DecodeFloatRG(distortionAmount.xy), DecodeFloatRG(distortionAmount.zw)) * 2.3 - float2(0.6, 0.6);
-  return saturate(leapUV) * float2(1.0, 0.5 - CAMERA_DELTA.y) + uvOffset;
+  return saturate(leapUV) * float2(1.0, 0.5 - _LeapGlobalRawPixelSize.y) + uvOffset;
 }
 
 float2 LeapGetLeftUndistortedUV(float4 screenPos){
