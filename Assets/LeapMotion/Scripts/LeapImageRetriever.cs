@@ -16,6 +16,8 @@ public class LeapImageRetriever : MonoBehaviour {
   public const string GLOBAL_GAMMA_CORRECTION_EXPONENT_NAME = "_LeapGlobalGammaCorrectionExponent";
   public const string GLOBAL_CAMERA_PROJECTION_NAME = "_LeapGlobalProjection";
   public const int IMAGE_WARNING_WAIT = 10;
+  public const int LEFT_IMAGE_INDEX = 0;
+  public const int RIGHT_IMAGE_INDEX = 1;
 
   private static LeapImageRetriever _instance = null;
   public static LeapImageRetriever Instance {
@@ -293,7 +295,7 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   void Update() {
-    var imageFrame = HandController.Main.GetImageFrame();
+    Frame imageFrame = HandController.Main.GetImageFrame();
 
     using (ImageList brightList = imageFrame.Images)
     using (ImageList rawList = imageFrame.RawImages) {
@@ -309,11 +311,11 @@ public class LeapImageRetriever : MonoBehaviour {
       } else {
         _missedImages = 0;
       }
-
-      using (Image leftBright = brightList[0])
-      using (Image rightBright = brightList[1])
-      using (Image leftRaw = rawList[0])
-      using (Image rightRaw = rawList[1]) {
+      
+      using (Image leftBright = brightList[LEFT_IMAGE_INDEX])
+      using (Image rightBright = brightList[RIGHT_IMAGE_INDEX])
+      using (Image leftRaw = rawList[LEFT_IMAGE_INDEX])
+      using (Image rightRaw = rawList[RIGHT_IMAGE_INDEX]) {
         if (_eyeTextureData.CheckStale(leftBright, rightBright, leftRaw, rightRaw)) {
           _eyeTextureData.Reconstruct(leftBright, rightBright, leftRaw, rightRaw);
         }
