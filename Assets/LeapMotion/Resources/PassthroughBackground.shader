@@ -1,7 +1,4 @@
 ﻿Shader "LeapMotion/Passthrough/Background" {
-  Properties {
-  }
-
   SubShader {
     Tags {"Queue"="Background" "IgnoreProjector"="True"}
 
@@ -30,13 +27,12 @@
     frag_in vert(appdata_img v){
       frag_in o;
       o.position = mul(UNITY_MATRIX_MVP, v.vertex);
-      o.screenPos = ComputeScreenPos(o.position);
-      
+      o.screenPos = LeapGetWarpedScreenPos(o.position);
       return o;
     }
 
     float4 frag (frag_in i) : COLOR {
-      return float4(pow(LeapColorWarp(i.screenPos), 1/_LeapGlobalColorSpaceGamma), 1);
+      return float4(LeapGetStereoColor(i.screenPos), 1);
     }
 
     ENDCG

@@ -7,6 +7,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Leap;
+using System;
 
 /**
 * The Controller object that instantiates hands and tools to represent the hands and tools tracked
@@ -28,18 +29,25 @@ using Leap;
 * provides a variety of hands that you can use in conjunction with the hand controller. 
 */
 public class HandController : MonoBehaviour {
+  protected static List<HandController> _mains = new List<HandController>();
 
-  protected static HandController _main;
+  /* The HandController.Main property returns an instance of a HandController with it's isMain property set
+   * to true.  If there are multiple main Hand Controllers this method will choose one in an undefined way.
+   */
   public static HandController Main {
     get {
-      if (_main == null) {
-        Debug.LogWarning("Could not find an active main Hand Controller.  It may not exist, or may not have been enabled yet.");
+      if (_mains.Count == 0) {
+        Debug.LogWarning("Could not find an active main Hand Controller.  One may not exist, or may not have been enabled yet.");
+        return null;
       }
-      return _main;
+      return _mains[0];
     }
   }
 
   protected static List<HandController> _all = new List<HandController>();
+
+  /* Returns a list of all currently active HandController instances.
+   */
   public static List<HandController> All {
     get {
       return _all;
@@ -58,9 +66,10 @@ public class HandController : MonoBehaviour {
   protected const float FIXED_UPDATE_OFFSET_SMOOTHING_DELAY = 0.1f;
 
   /** There always should be exactly one main HandController in the scene, which is reffered to by the HandController.Main getter. */
-  public bool isMain = false;
+  public bool isMain = true;
 
   /** Whether to use a separate model for left and right hands (true); or mirror the same model for both hands (false). */
+  [Space(8)]
   public bool separateLeftRight = false;
   /** The GameObject containing graphics to use for the left hand or both hands if separateLeftRight is false. */
   public HandModel leftGraphicsModel;
@@ -75,7 +84,7 @@ public class HandController : MonoBehaviour {
   public ToolModel toolModel;
 
   /** Set true if the Leap Motion hardware is mounted on an HMD; otherwise, leave false. */
-  [Space]
+  [Space(8)]
   public bool isHeadMounted = false;
   /** Reverses the z axis. */
   public bool mirrorZAxis = false;
@@ -87,7 +96,7 @@ public class HandController : MonoBehaviour {
   public Vector3 handMovementScale = Vector3.one;
 
   /** If enabled, do not query the controller to determine device type, but instead always return a specific device. */
-  [Space]
+  [Space(8)]
   public bool overrideDeviceType = false;
 
   /** If overrideDeviceType is enabled, the hand controller will return a device of this type. */
@@ -95,7 +104,7 @@ public class HandController : MonoBehaviour {
 
   // Recording parameters.
   /** Set true to enable recording. */
-  [Space]
+  [Space(8)]
   public bool enableRecordPlayback = false;
   /** The file to record or playback from. */
   public TextAsset recordingAsset;
@@ -121,11 +130,11 @@ public class HandController : MonoBehaviour {
   protected Controller leap_controller_;
 
   /** The list of all hand graphic objects owned by this HandController.*/
-  protected Dictionary<int, HandModel> hand_graphics_;
+  protected Dictionary<int, HandModel> hand_graphics_ = new Dictionary<int, HandModel>();
   /** The list of all hand physics objects owned by this HandController.*/
-  protected Dictionary<int, HandModel> hand_physics_;
+  protected Dictionary<int, HandModel> hand_physics_ = new Dictionary<int, HandModel>();
   /** The list of all tool objects owned by this HandController.*/
-  protected Dictionary<int, ToolModel> tools_;
+  protected Dictionary<int, ToolModel> tools_ = new Dictionary<int, ToolModel>();
 
   protected bool graphicsEnabled = true;
   protected bool physicsEnabled = true;
@@ -155,6 +164,11 @@ public class HandController : MonoBehaviour {
   }
 
   private bool flag_initialized_ = false;
+
+  private int curr_frame_count = -1;
+  private Frame curr_image_frame = null;
+  private Frame curr_frame = null;
+
   private long prev_graphics_id_ = 0;
   private long prev_physics_id_ = 0;
 
@@ -186,53 +200,6 @@ public class HandController : MonoBehaviour {
     leap_controller_.SetPolicyFlags(policy_flags);
   }
 
-#if UNITY_EDITOR
-  void Reset() {
-    //If we have been reset, the default should be to make ourselves main if there are no others that are main
-    HandController[] controllers = Resources.FindObjectsOfTypeAll<HandController>();
-    for (int i = 0; i < controllers.Length; i++) {
-      HandController other = controllers[i];
-      if (other == this) continue;
-      if (UnityEditor.PrefabUtility.GetPrefabType(other.gameObject) == UnityEditor.PrefabType.Prefab) continue;
-
-      //If we find another Hand Controller that is already main, we don't need to make ourselves main
-      if (other.isMain) {
-        return;
-      }
-    }
-
-    //Make ourselves the main Hand Controller since we found no others that were main.
-    isMain = true;
-    UnityEditor.EditorUtility.SetDirty(this);
-  }
-
-  void OnValidate() {
-    if (isMain) {
-      //If we are a prefab, we do not need to validate
-      if (UnityEditor.PrefabUtility.GetPrefabType(gameObject) == UnityEditor.PrefabType.Prefab) {
-        return;
-      }
-
-      //We are going to loop through all other Hand Controllers and make them not the main Hand Controller
-      HandController[] controllers = Resources.FindObjectsOfTypeAll<HandController>();
-      for (int i = 0; i < controllers.Length; i++) {
-        HandController other = controllers[i];
-
-        //We ignore ourselves
-        if (other == this) continue;
-
-        //We ignore any Hand Controller on a prefab (FindObjectsOfTypeAll gets prefabs too!)
-        if (UnityEditor.PrefabUtility.GetPrefabType(other.gameObject) == UnityEditor.PrefabType.Prefab) continue;
-
-        if (other.isMain) {
-          other.isMain = false;
-          UnityEditor.EditorUtility.SetDirty(other);
-        }
-      }
-    }
-  }
-#endif
-
   /** Creates a new Leap Controller object. */
   void Awake() {
     leap_controller_ = new Controller();
@@ -241,25 +208,14 @@ public class HandController : MonoBehaviour {
 
   void OnEnable() {
     if (isMain) {
-      _main = this;
+      _mains.Add(this);
     }
     _all.Add(this);
   }
 
   /** Initalizes the hand and tool lists and recording, if enabled.*/
   void Start() {
-    // Initialize hand lookup tables.
-    hand_graphics_ = new Dictionary<int, HandModel>();
-    hand_physics_ = new Dictionary<int, HandModel>();
-
-    tools_ = new Dictionary<int, ToolModel>();
-
     smoothedFixedUpdateOffset_.delay = FIXED_UPDATE_OFFSET_SMOOTHING_DELAY;
-
-    if (leap_controller_ == null) {
-      Debug.LogWarning(
-          "Cannot connect to controller. Make sure you have Leap Motion v2.0+ installed");
-    }
 
     if (enableRecordPlayback && recordingAsset != null)
       recorder_.Load(recordingAsset);
@@ -273,12 +229,15 @@ public class HandController : MonoBehaviour {
   /* Calling this sets this Hand Controller as the main Hand Controller.  If there was a previous main 
    * Hand Controller it is demoted and is no longer the main Hand Controller.
    */
-  public void SetMain() {
-    if (_main != null) {
-      _main.isMain = false;
+  public void SetMain(bool shouldBeMain) {
+    if (isMain != shouldBeMain) {
+      isMain = shouldBeMain;
+      if (isMain) {
+        _mains.Add(this);
+      } else {
+        _mains.Remove(this);
+      }
     }
-    isMain = true;
-    _main = this;
   }
 
   /**
@@ -453,6 +412,13 @@ public class HandController : MonoBehaviour {
 
   /** Returns the Leap Controller instance. */
   public Controller GetLeapController() {
+#if UNITY_EDITOR
+    //Do a null check to deal with hot reloading
+    if(leap_controller_ == null) {
+      leap_controller_ = new Controller();
+      InitializeFlags();
+    }
+#endif
     return leap_controller_;
   }
 
@@ -466,12 +432,45 @@ public class HandController : MonoBehaviour {
   *
   * If the recorder object is playing a recording, then the frame is taken from the recording.
   * Otherwise, the frame comes from the Leap Motion Controller itself.
+  * 
+  * The returned frame does not contain any image data, use GetImageFrame() for that.
   */
   public virtual Frame GetFrame() {
     if (enableRecordPlayback && (recorder_.state == RecorderState.Playing || recorder_.state == RecorderState.Paused))
       return recorder_.GetCurrentFrame();
 
-    return leap_controller_.Frame();
+    ensureFramesUpToDate();
+    return curr_frame;
+  }
+
+  /* Returns the latest frame object. 
+   * 
+   * This method returns a frame object that contains Image data.  It is the users responsibility to make sure
+   * they dispose any objects they obtain from this frame, since it is linked to the images and could result
+   * in large memory increase if they are not disposed of properly.  
+   * 
+   * If the recorder object is playing a recording, then this method will return null.
+   */
+  public virtual Frame GetImageFrame() {
+    if (enableRecordPlayback && (recorder_.state == RecorderState.Playing || recorder_.state == RecorderState.Paused))
+      return null;
+
+    ensureFramesUpToDate();
+    return curr_image_frame;
+  }
+
+  protected virtual void ensureFramesUpToDate() {
+    //Ensure that we update curr_frame every Update cycle.  curr_frame stays the same until the next Update.
+    if (curr_frame == null || curr_image_frame == null || Time.frameCount != curr_frame_count) {
+      if (curr_image_frame != null) {
+        curr_image_frame.Dispose();
+        curr_image_frame = null;
+      }
+
+      curr_image_frame = GetLeapController().Frame();
+      curr_frame = GetImagelessFrame(curr_image_frame, false);
+      curr_frame_count = Time.frameCount;
+    }
   }
 
   /**
@@ -520,31 +519,31 @@ public class HandController : MonoBehaviour {
     float correctedTimestamp = (Time.fixedTime + smoothedFixedUpdateOffset_.value) * S_TO_NS;
 
     //Search the leap history for a frame with a timestamp closest to the corrected timestamp
-    Frame closestFrame = leap_controller_.Frame();
+    Frame closestFrame = GetLeapController().Frame();
     for (int searchHistoryIndex = 1; searchHistoryIndex < 60; searchHistoryIndex++) {
-      Frame historyFrame = leap_controller_.Frame(searchHistoryIndex);
+      Frame historyFrame = GetLeapController().Frame(searchHistoryIndex);
 
       //If we reach an invalid frame, terminate the search
       if (!historyFrame.IsValid) {
+        historyFrame.Dispose();
         break;
       }
 
       if (Mathf.Abs(historyFrame.Timestamp - correctedTimestamp) < Mathf.Abs(closestFrame.Timestamp - correctedTimestamp)) {
+        closestFrame.Dispose();
         closestFrame = historyFrame;
       } else {
         //Since frames are always reported in order, we can terminate the search once we stop finding a closer frame
+        historyFrame.Dispose();
         break;
       }
     }
 
-    return closestFrame;
+    return GetImagelessFrame(closestFrame, true);
   }
 
   /** Updates the graphics objects. */
   protected virtual void Update() {
-    if (leap_controller_ == null)
-      return;
-
     UpdateRecorder();
     Frame frame = GetFrame();
 
@@ -563,12 +562,11 @@ public class HandController : MonoBehaviour {
 
   /** Updates the physics objects */
   protected virtual void FixedUpdate() {
-    if (leap_controller_ == null)
-      return;
-
     //All FixedUpdates of a frame happen before Update, so only the last of these calculations is passed
     //into Update for smoothing.
-    perFrameFixedUpdateOffset_ = leap_controller_.Frame().Timestamp * NS_TO_S - Time.fixedTime;
+    using (var latestFrame = GetLeapController().Frame()) {
+      perFrameFixedUpdateOffset_ = latestFrame.Timestamp * NS_TO_S - Time.fixedTime;
+    }
 
     Frame frame = GetFixedFrame();
 
@@ -581,7 +579,7 @@ public class HandController : MonoBehaviour {
 
   /** True, if the Leap Motion hardware is plugged in and this application is connected to the Leap Motion service. */
   public bool IsConnected() {
-    return leap_controller_.IsConnected;
+    return GetLeapController().IsConnected;
   }
 
   /** Returns information describing the device hardware. */
@@ -590,7 +588,7 @@ public class HandController : MonoBehaviour {
       return new LeapDeviceInfo(overrideDeviceTypeWith);
     }
 
-    DeviceList devices = leap_controller_.Devices;
+    DeviceList devices = GetLeapController().Devices;
     if (devices.Count == 1) {
       LeapDeviceInfo info = new LeapDeviceInfo(LeapDeviceType.Invalid);
       // TODO: DeviceList does not tell us the device type. Dragonfly serial starts with "LE" and peripheral starts with "LP"
@@ -667,7 +665,7 @@ public class HandController : MonoBehaviour {
 
   void OnDisable() {
     if (isMain) {
-      _main = null;
+      _mains.Remove(this);
     }
 
     _all.Remove(this);
@@ -676,10 +674,6 @@ public class HandController : MonoBehaviour {
   }
 
   void OnDestroy() {
-    if (isMain) {
-      _main = null;
-    }
-
     DestroyAllHands();
   }
 
@@ -732,7 +726,7 @@ public class HandController : MonoBehaviour {
     recorder_.loop = recorderLoop;
 
     if (recorder_.state == RecorderState.Recording) {
-      recorder_.AddFrame(leap_controller_.Frame());
+      recorder_.AddFrame(GetLeapController().Frame());
     } else if (recorder_.state == RecorderState.Playing) {
       recorder_.NextFrame();
     }
@@ -748,5 +742,22 @@ public class HandController : MonoBehaviour {
 
   public Quaternion ToUnityRot(Matrix basis) {
     return transform.rotation * basis.Rotation(false);
+  }
+
+  private static byte[] _cachedImagelessFrameByteArray = new byte[4096];
+  public static Frame GetImagelessFrame(Frame original, bool disposeOriginal) {
+    int length = original.SerializeLength;
+    if (length > _cachedImagelessFrameByteArray.Length) {
+      _cachedImagelessFrameByteArray = new byte[length * 2];
+    }
+
+    original.SerializeWithArg(_cachedImagelessFrameByteArray);
+    if (disposeOriginal) {
+      original.Dispose();
+    }
+
+    Frame imagelessFrame = new Frame();
+    imagelessFrame.DeserializeWithLength(_cachedImagelessFrameByteArray, length);
+    return imagelessFrame;
   }
 }

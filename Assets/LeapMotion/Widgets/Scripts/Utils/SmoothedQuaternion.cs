@@ -6,6 +6,7 @@
 /// <remarks>
 /// When moving at a constant speed: speed * delay = Value - ExponentialSmoothing.value.
 /// </remarks>
+[System.Serializable]
 public class SmoothedQuaternion {
   public Quaternion value = Quaternion.identity; // Filtered value
   public float delay = 0f; // Mean delay
