@@ -96,8 +96,13 @@ public class HandControllerEditor : Editor {
         case "rightPhysicsModel":
           drawHandProperty(properties, "Right Hand Physics Model", null);
           break;
+        case "overrideDeviceType":
+          if (AdvancedMode._advancedModeEnabled) {
+            EditorGUILayout.PropertyField(properties);
+          }
+          break;
         case "overrideDeviceTypeWith":
-          if (controller.overrideDeviceType) {
+          if (controller.overrideDeviceType && AdvancedMode._advancedModeEnabled) {
             EditorGUILayout.PropertyField(properties);
           }
           break;

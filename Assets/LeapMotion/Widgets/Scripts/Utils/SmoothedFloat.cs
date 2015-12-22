@@ -6,6 +6,7 @@
 /// <remarks>
 /// When moving at a constant speed: speed * delay = Value - SmoothedFloat.value.
 /// </remarks>
+[System.Serializable]
 public class SmoothedFloat {
   public float value = 0f; // Filtered value
   public float delay = 0f; // Mean delay

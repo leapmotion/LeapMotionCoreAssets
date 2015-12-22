@@ -4,7 +4,7 @@ using System.Collections;
 
 public class TouchCubeHelpMenu : MonoBehaviour
 {
-  public GameObject trackingController;
+  public HandController trackingController;
   public GameObject overlayImage;
 
   // Update is called once per frame
@@ -15,7 +15,7 @@ public class TouchCubeHelpMenu : MonoBehaviour
     }
 
     string trackingControllerToState = "ON";
-    if (trackingController.activeSelf) {
+    if (trackingController.enabled) {
       trackingControllerToState = "OFF";
     }
     string overlayImageToState = "ON";
@@ -26,7 +26,7 @@ public class TouchCubeHelpMenu : MonoBehaviour
     textField.text = "H : Help Hide/Show" 
       + "\nR : Reset Virtual Cameras"
       + "\nRet. : Cycle Space-Time Alignment"
-      + "\nT : Tracked Skeleton " + trackingControllerToState
-      + "\nO : Overlay Image Mode " + overlayImageToState;
+      + "\nT : Turn Tracked Skeleton " + trackingControllerToState
+      + "\nO : Turn Overlay Image Mode " + overlayImageToState;
   }
 }

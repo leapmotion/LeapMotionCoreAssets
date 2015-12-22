@@ -13,18 +13,18 @@ using System.Collections.Generic;
 /// </remarks>
 public class TouchCubeQueues : MonoBehaviour {
   public KeyCode queueKey = KeyCode.Return;
-  public LeapCameraAlignment alignment;
-  public GameObject headMount;
+  public LeapVRTemporalWarping alignment;
   [Header("Messages")]
   public GameObject helpMenuCanvas;
   public GameObject noAlignmentCanvas;
   public GameObject alignedViewsCanvas;
-  public GameObject rewindViewsCanvas;
   public GameObject warpImagesCanvas;
 
+  private LeapVRCameraControl[] _cameraCorrectionScripts;
   private int demoStage = 0;
 
   void Start () {
+    _cameraCorrectionScripts = FindObjectsOfType<LeapVRCameraControl>();
     ResetState ();
   }
 	
@@ -36,30 +36,21 @@ public class TouchCubeQueues : MonoBehaviour {
     switch (demoStage) {
     case 0: // No Alignment
       helpMenuCanvas.SetActive(false);
-      alignment.tweenRewind = 0f;
-      alignment.tweenTimeWarp = 0f;
-      alignment.tweenPosition = 0f;
-      alignment.tweenForward = 0f;
+      alignment.TweenImageWarping = 0f;
+      setOverridePos(false);
       noAlignmentCanvas.SetActive(true);
       demoStage++;
       break;
     case 1: // IPD Alignment
       noAlignmentCanvas.SetActive(false);
-      alignment.tweenPosition = 1f;
-      alignment.tweenForward = 1f;
+      setOverridePos(true);
+      setOverridePos(true);
       alignedViewsCanvas.SetActive(true);
       demoStage++;
       break;
-    case 2: // IPD Alignment + Rewind
+    case 2: // IPD Alignment + temporal warping
       alignedViewsCanvas.SetActive(false);
-      alignment.tweenRewind = 1f;
-      rewindViewsCanvas.SetActive(true);
-      demoStage++;
-      break;
-    case 3: // IPD Alignment + TimeWarp
-      rewindViewsCanvas.SetActive(false);
-      alignment.tweenRewind = 0f;
-      alignment.tweenTimeWarp = 1f;
+      alignment.TweenImageWarping = 1f;
       warpImagesCanvas.SetActive(true);
       demoStage++;
       break;
@@ -70,15 +61,18 @@ public class TouchCubeQueues : MonoBehaviour {
     }
 	}
 
+  private void setOverridePos(bool overridePos) {
+    foreach (var correction in _cameraCorrectionScripts) {
+      correction.OverrideEyePosition = overridePos;;
+    }
+  }
+
   public void ResetState() {
     helpMenuCanvas.SetActive(true);
     noAlignmentCanvas.SetActive (false);
     alignedViewsCanvas.SetActive (false);
-    rewindViewsCanvas.SetActive (false);
     warpImagesCanvas.SetActive (false);
-    alignment.tweenRewind = 0f;
-    alignment.tweenTimeWarp = 1f;
-    alignment.tweenPosition = 1f;
-    alignment.tweenForward = 1f;
+    alignment.TweenImageWarping = 1f;
+    setOverridePos(true);
   }
 }

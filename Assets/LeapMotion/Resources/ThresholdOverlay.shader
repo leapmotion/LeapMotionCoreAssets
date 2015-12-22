@@ -35,7 +35,7 @@
     frag_in vert(appdata_img v){
       frag_in o;
       o.position = mul(UNITY_MATRIX_MVP, v.vertex);
-      o.screenPos = ComputeScreenPos(o.position);
+      o.screenPos = LeapGetWarpedScreenPos(o.position);
       return o;
     }
 
@@ -44,9 +44,10 @@
     uniform float _Fade;
 
     float4 frag (frag_in i) : COLOR {
-      float4 colorBrightness = LeapRawColorBrightnessWarp(i.screenPos);
-      float alpha = _Fade * smoothstep(_Min, _Max, colorBrightness.a);
-      return float4(pow(colorBrightness.rgb, _LeapGlobalGammaCorrectionExponent)*alpha, alpha);
+      float3 color = LeapGetStereoColor(i.screenPos);
+      float brightness = LeapGetStereoBrightness(i.screenPos);
+      float alpha = _Fade * smoothstep(_Min, _Max, brightness);
+      return float4(color, alpha);
     }
 
     ENDCG

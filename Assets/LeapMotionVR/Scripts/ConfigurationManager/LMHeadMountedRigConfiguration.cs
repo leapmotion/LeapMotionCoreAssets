@@ -1,13 +1,20 @@
 ﻿using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+using UnityEngine.Serialization;
 using System.Collections;
 
 [System.Serializable]
-public struct LMHeadMountedRigConfiguration  {
+public struct LMHeadMountedRigConfiguration {
   [SerializeField]
   private string _configurationName;
 
   [SerializeField]
   private bool _enableBackgroundQuad;
+
+  [SerializeField]
+  private bool _showHandGraphicField;
 
   [SerializeField]
   private HandModel _leftHandGraphicsModel;
@@ -16,57 +23,57 @@ public struct LMHeadMountedRigConfiguration  {
   private HandModel _rightHandGraphicsModel;
 
   [SerializeField]
-  private bool _enableLeftAndRightCameras;
+  private bool _enableImageRetrievers;
 
   [SerializeField]
-  private bool _enableLeftAndRightImageRetrievers;
-  
+  private CameraClearFlags _cameraClearFlags;
+
+  [Range(0, 1)]
   [SerializeField]
-  private bool _enableCenterCamera;
+  private float _tweenImageWarping;
+
+  [Range(0, 1)]
+  [SerializeField]
+  private float _tweenRotationalWarping;
+
+  [Range(0, 1)]
+  [SerializeField]
+  private float _tweenPositionalWarping;
 
   [SerializeField]
-  private int _cameraClearFlags;
+  private LeapVRTemporalWarping.SyncMode _temporalSyncMode;
 
   [SerializeField]
-  private float _tweenTimewarp;
+  private bool _overrideEyePos;
 
-  [SerializeField]
-  private float _tweenPosition;
+  public string ConfigurationName { get { return _configurationName; } set { _configurationName = value; } }
+  public bool EnableBackgroundQuad { get { return _enableBackgroundQuad; } }
+  public bool ShowHandGraphicField { get { return _showHandGraphicField; } }
+  public HandModel LeftHandGraphicsModel { get { return _leftHandGraphicsModel; } }
+  public HandModel RightHandGraphicsModel { get { return _rightHandGraphicsModel; } }
+  public bool EnableImageRetrievers { get { return _enableImageRetrievers; } }
+  public CameraClearFlags CameraClearFlags { get { return _cameraClearFlags; } }
+  public float TweenImageWarping { get { return _tweenImageWarping; } }
+  public float TweenRotationalWarping { get { return _tweenRotationalWarping; } }
+  public float TweenPositionalWarping { get { return _tweenPositionalWarping; } }
+  public LeapVRTemporalWarping.SyncMode TemporalSynMode { get { return _temporalSyncMode; } }
+  public bool OverrideEyePos { get { return _overrideEyePos; } }
 
-  [SerializeField]
-  private float _tweenForward;
-
-  public string configurationName { 
-    get { return _configurationName; }
-    set { _configurationName = value; }
+#if UNITY_EDITOR
+  public static LMHeadMountedRigConfiguration Deserialize(SerializedProperty property) {
+    LMHeadMountedRigConfiguration config = new LMHeadMountedRigConfiguration();
+    config._configurationName = property.FindPropertyRelative("_configurationName").stringValue;
+    config._enableBackgroundQuad = property.FindPropertyRelative("_enableBackgroundQuad").boolValue;
+    config._leftHandGraphicsModel = property.FindPropertyRelative("_leftHandGraphicsModel").objectReferenceValue as HandModel;
+    config._rightHandGraphicsModel = property.FindPropertyRelative("_rightHandGraphicsModel").objectReferenceValue as HandModel;
+    config._enableImageRetrievers = property.FindPropertyRelative("_enableImageRetrievers").boolValue;
+    config._cameraClearFlags = (CameraClearFlags)property.FindPropertyRelative("_cameraClearFlags").intValue;
+    config._tweenImageWarping = property.FindPropertyRelative("_tweenImageWarping").floatValue;
+    config._tweenRotationalWarping = property.FindPropertyRelative("_tweenRotationalWarping").floatValue;
+    config._tweenPositionalWarping = property.FindPropertyRelative("_tweenPositionalWarping").floatValue;
+    config._temporalSyncMode = (LeapVRTemporalWarping.SyncMode)property.FindPropertyRelative("_temporalSyncMode").intValue;
+    config._overrideEyePos = property.FindPropertyRelative("_overrideEyePos").boolValue;
+    return config;
   }
-  public bool enableBackgroundQuad { get { return _enableBackgroundQuad; } }
-  public HandModel leftHandGraphicsModel { get { return _leftHandGraphicsModel; } }
-  public HandModel rightHandGraphicsModel { get { return _rightHandGraphicsModel; } }
-  public bool enableLeftAndRightCameras { get { return _enableLeftAndRightCameras; } }
-  public bool enableLeftAndRightImageRetrievers { get { return _enableLeftAndRightImageRetrievers; } }
-  public bool enableCenterCamera { get { return _enableCenterCamera; } }
-  public int cameraClearFlags { get { return _cameraClearFlags; } }
-  public float tweenTimewarp { get { return _tweenTimewarp; } }
-  public float tweenPosition { get { return _tweenPosition; } }
-  public float tweenForward { get { return _tweenForward; } }
-
-  public LMHeadMountedRigConfiguration(
-    string name,
-    bool backgroundQuad, 
-    HandModel leftHandModel, HandModel rightHandModel,
-    bool leftAndRightCameras, bool leftAndRightImageRetrievers, bool centerCamera, int clearFlags,
-    float timewarp, float position, float forward) {
-      _configurationName = name;
-      _enableBackgroundQuad = backgroundQuad;
-      _leftHandGraphicsModel = leftHandModel;
-      _rightHandGraphicsModel = rightHandModel;
-      _enableLeftAndRightCameras = leftAndRightCameras;
-      _enableLeftAndRightImageRetrievers = leftAndRightImageRetrievers;
-      _enableCenterCamera = centerCamera;
-      _cameraClearFlags = clearFlags;
-      _tweenTimewarp = timewarp;
-      _tweenPosition = position;
-      _tweenForward = forward;
-  }
+#endif
 }
