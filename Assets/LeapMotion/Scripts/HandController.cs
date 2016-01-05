@@ -197,7 +197,7 @@ public class HandController : MonoBehaviour {
     else
       policy_flags &= ~Controller.PolicyFlag.POLICY_OPTIMIZE_HMD;
 
-    leap_controller_.SetPolicyFlags(policy_flags);
+    leap_controller_.SetPolicy(policy_flags);
   }
 
   /** Creates a new Leap Controller object. */
