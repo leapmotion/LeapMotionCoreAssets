@@ -295,7 +295,7 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   void Update() {
-    Frame imageFrame = HandController.Main.GetImageFrame();
+    Frame imageFrame = HandController.Main.GetFrame();
 
     using (ImageList brightList = imageFrame.Images)
     using (ImageList rawList = imageFrame.RawImages) {
