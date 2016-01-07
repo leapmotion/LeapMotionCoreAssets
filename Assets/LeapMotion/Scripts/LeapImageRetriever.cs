@@ -5,7 +5,7 @@
 \******************************************************************************/
 using UnityEngine;
 using UnityEngine.Serialization;
-using System.Runtime.InteropServices;
+using System;
 using Leap;
 
 // To use the LeapImageRetriever you must be on version 2.1+
@@ -94,8 +94,8 @@ public class LeapImageRetriever : MonoBehaviour {
     }
 
     public void UpdateTexture(Image left, Image right) {
-      Marshal.Copy(left.DataPointer(), _intermediateArray, 0, _intermediateArray.Length / 2);
-      Marshal.Copy(right.DataPointer(), _intermediateArray, _intermediateArray.Length / 2, _intermediateArray.Length / 2);
+	  Array.Copy(left.Data, 0, _intermediateArray, 0, _intermediateArray.Length / 2);
+	  Array.Copy(right.Data, 0, _intermediateArray, _intermediateArray.Length / 2, _intermediateArray.Length / 2);
       _combinedTexture.LoadRawTextureData(_intermediateArray);
       _combinedTexture.Apply();
     }
