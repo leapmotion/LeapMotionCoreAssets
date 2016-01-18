@@ -192,6 +192,7 @@ namespace LeapInternal
                             Logger.Log ("LeapC SetPolicyFlags call result: " + result);
                     }
                     checkPendingFrames();
+                    Thread.Sleep(1);
                 } //forever
             }
 
@@ -346,7 +347,7 @@ namespace LeapInternal
 
         private void makeQuad (ref LEAP_TRACKED_QUAD_EVENT quadMsg)
         {
-            Logger.Log (" ################ TrackedQuad ############################ ");
+            //Logger.Log (" ################ TrackedQuad ############################ ");
             this.DistpatchLeapCEvent(eLeapEventType.eLeapEventType_TrackedQuad, null); //TODO TrackedQuad event args
         }
 
