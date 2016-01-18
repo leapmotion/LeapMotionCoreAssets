@@ -36,7 +36,6 @@ namespace Leap
         bool _isLeft = false;
         bool _isRight = false;
         float _timeVisible = 0;
-        Frame _frame;
         Arm _arm;
         PointableList _pointables;
         FingerList _fingers;
@@ -86,7 +85,6 @@ namespace Leap
                     float palmWidth,
                     bool isLeft,
                     float timeVisible,
-                    Frame frame,
                     Arm arm,
                     PointableList pointables,
                     FingerList fingers,
@@ -105,7 +103,6 @@ namespace Leap
             _isLeft = isLeft;
             _isRight = !isLeft;
             _timeVisible = timeVisible;
-            _frame = frame;
             _arm = arm;
             _pointables = pointables;
             _fingers = fingers;
@@ -178,12 +175,13 @@ namespace Leap
      *
      * @deprecated 2.0
      */
-        public Tool Tool (int id)
-        {
-            return this.Tools.Find (delegate(Tool item) {
-                return item.Id == id;
-            });
-        }
+      //Fox - removed along with backref to Frame
+        //public Tool Tool (int id)
+        //{
+        //    return this.Tools.Find (delegate(Tool item) {
+        //        return item.Id == id;
+        //    });
+        //}
 
         /**
      * The change of position of this hand between the current frame and
@@ -442,10 +440,9 @@ namespace Leap
      */
         public bool Equals (Hand other)
         {
-            return this.IsValid && 
-                other.IsValid &&
-                (this.Id == other.Id) &&
-                (this.Frame.Id == other.Frame.Id);
+          return this.IsValid &&
+              other.IsValid &&
+              (this.Id == other.Id); //Fox - &&(this.Frame.Id == other.Frame.Id);
         }
 
         /**
@@ -532,13 +529,14 @@ namespace Leap
      *
      * @deprecated 2.0
      */
-        public ToolList Tools {
-            get {
-                return (ToolList)this.Frame.Tools.FindAll (delegate(Tool item) {
-                    return item.HandId == this.Id;
-                });
-            }
-        }
+      //Fox - removed along with backref to Frame
+        //public ToolList Tools {
+        //    get {
+        //        return (ToolList)this.Frame.Tools.FindAll (delegate(Tool item) {
+        //            return item.HandId == this.Id;
+        //        });
+        //    }
+        //}
 
 /**
      * The center position of the palm in millimeters from the Leap Motion Controller origin.
@@ -853,13 +851,14 @@ namespace Leap
      * an invalid Frame object is returned.
      * @since 1.0
      */
-        public Frame Frame {
-            get {
-                if(_frame == null)
-                    _frame = new Frame();
-                return _frame;
-            } 
-        }
+      //Fox - removed along with back-reference of Frame in Hand
+        //public Frame Frame {
+        //    get {
+        //        if(_frame == null)
+        //            _frame = new Frame();
+        //        return _frame;
+        //    } 
+        //}
 
 /**
      * The arm to which this hand is attached.

@@ -424,7 +424,6 @@ namespace LeapInternal
                                      palm.width,
                                      hand.type == eLeapHandType.eLeapHandType_Left,
                                      hand.visible_time,
-                                     owningFrame,
                                      newArm,
                                      new PointableList (),
                                      new FingerList (),
