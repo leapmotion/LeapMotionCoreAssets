@@ -47,7 +47,6 @@ namespace Leap
         float _touchDistance = float.PositiveInfinity;
         Vector _stabilizedTipPosition;
         float _timeVisible = 0;
-        Frame _frame;
 
         /**
      * Constructs a Pointable object.
@@ -111,9 +110,7 @@ namespace Leap
         {
             return this.IsValid && 
                 other.IsValid &&
-                this.Id == other.Id &&
-                this.Hand.Id == other.Hand.Id &&
-                this.Frame.Id == other.Frame.Id;
+                this.Id == other.Id; //Fox - && this.Hand.Id == other.Hand.Id && this.Frame.Id == other.Frame.Id;
         }
 
         /**
@@ -163,11 +160,12 @@ namespace Leap
      * an invalid Hand object is returned.
      * @since 1.0
      */
-        public Hand Hand {
-            get {
-                return _frame.Hand(_handID);
-            } 
-        }
+      //Fox  - removed along with backref to Frame
+        //public Hand Hand {
+        //    get {
+        //        return _frame.Hand(_handID);
+        //    } 
+        //}
 
         public int HandId{
             get{
@@ -413,11 +411,12 @@ namespace Leap
      * an invalid Frame object is returned.
      * @since 1.0
      */
-        public Frame Frame {
-                get {
-                    return (_frame != null) ? _frame : new Frame ();
-                } 
-        }
+      //Fox - removed along with backref to Frame
+        //public Frame Frame {
+        //        get {
+        //            return (_frame != null) ? _frame : new Frame ();
+        //        } 
+        //}
 
 /**
      * Returns an invalid Pointable object.
