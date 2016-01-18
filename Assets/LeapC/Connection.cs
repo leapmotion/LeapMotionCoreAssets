@@ -465,8 +465,7 @@ namespace LeapInternal
             Bone proximal = makeBone (ref digit.proximal, Bone.BoneType.TYPE_PROXIMAL);
             Bone intermediate = makeBone (ref digit.intermediate, Bone.BoneType.TYPE_INTERMEDIATE);
             Bone distal = makeBone (ref digit.distal, Bone.BoneType.TYPE_DISTAL);
-            return new Finger (owner,
-                               (int)hand.id,
+            return new Finger ((int)hand.id,
                                (int)digit.finger_id,
                                hand.visible_time,
                                distal.NextJoint,

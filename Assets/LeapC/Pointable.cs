@@ -69,8 +69,7 @@ namespace Leap
         }
 
         //Note: Add a new constructor when tools are added to LeapC
-        public Pointable(Frame frame, 
-                         int handId,
+        public Pointable(int handId,
                          int fingerId,
                          float timeVisible,
                          Vector tipPosition,
@@ -97,7 +96,6 @@ namespace Leap
             _touchDistance = 1.0f; //not implemented
              _stabilizedTipPosition = stabilizedTipPosition;
              _timeVisible = timeVisible;
-             _frame = frame;
         }
 
         /**
