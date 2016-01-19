@@ -24,8 +24,8 @@ namespace Leap
    * @since 1.0
    */
 
-    public class Hand
-    {
+    public class Hand {
+      int _frameId;
         int _id = 0;
         float _confidence = 0;
         float _grabStrength = 0;
@@ -77,7 +77,7 @@ namespace Leap
              _needToCalculateSphere = false;
         }
 
-        public Hand(        
+        public Hand(int frameID,        
                     int id,
                     float confidence,
                     float grabStrength,
@@ -95,6 +95,7 @@ namespace Leap
                     Vector direction,
                     Vector wristPosition)
         {
+            _frameId = frameID;
             _id = id;
             _confidence = confidence;
             _grabStrength = grabStrength;
@@ -430,7 +431,8 @@ namespace Leap
         {
           return this.IsValid &&
               other.IsValid &&
-              (this.Id == other.Id);
+              (this.Id == other.Id) &&
+              (this._frameId == other._frameId);
         }
 
         /**
@@ -465,6 +467,11 @@ namespace Leap
             } 
         }
 
+        public long FrameId {
+          get {
+            return _frameId;
+          }
+        }
 /**
      * The list of Pointable objects detected in this frame
      * that are associated with this hand, given in arbitrary order. The list

@@ -418,7 +418,8 @@ namespace LeapInternal
             Arm newArm = makeArm (ref arm);
             LEAP_PALM palm = LeapC.PtrToStruct<LEAP_PALM>(hand.palm);
             
-            Hand newHand = new Hand ((int)hand.id,
+            Hand newHand = new Hand ((int)owningFrame.Id,
+                                     (int)hand.id,
                                      hand.confidence,
                                      hand.grab_strength,
                                      hand.pinch_strength,
@@ -459,13 +460,14 @@ namespace LeapInternal
             return newHand;
         }
 
-        public Finger makeFinger (Frame owner, ref LEAP_HAND hand, ref LEAP_DIGIT digit, Finger.FingerType type)
+        public Finger makeFinger (Frame owner, ref LEAP_HAND hand, ref LEAP_DIGIT digit, Finger.FingerType type) 
         {
             Bone metacarpal = makeBone (ref digit.metacarpal, Bone.BoneType.TYPE_METACARPAL);
             Bone proximal = makeBone (ref digit.proximal, Bone.BoneType.TYPE_PROXIMAL);
             Bone intermediate = makeBone (ref digit.intermediate, Bone.BoneType.TYPE_INTERMEDIATE);
             Bone distal = makeBone (ref digit.distal, Bone.BoneType.TYPE_DISTAL);
-            return new Finger ((int)hand.id,
+            return new Finger ((int)owner.Id,
+                               (int)hand.id,
                                (int)digit.finger_id,
                                hand.visible_time,
                                distal.NextJoint,

@@ -32,6 +32,7 @@ namespace Leap
 
     public class Pointable
     {
+        int _frameId;
         int _id = 0;
         int _handID = 0;
         Vector _tipPosition;
@@ -68,7 +69,8 @@ namespace Leap
         }
 
         //Note: Add a new constructor when tools are added to LeapC
-        public Pointable(int handId,
+        public Pointable(int frameId,
+                         int handId,
                          int fingerId,
                          float timeVisible,
                          Vector tipPosition,
@@ -80,6 +82,7 @@ namespace Leap
                          bool isExtended,
                          Finger.FingerType type)
         {
+             _frameId = frameId;
              _id = (handId * 10) + fingerId;
              _handID = handId;
              _tipPosition = tipPosition;
@@ -110,7 +113,8 @@ namespace Leap
         {
             return this.IsValid && 
                 other.IsValid &&
-                this.Id == other.Id;
+                this.Id == other.Id &&
+                this.FrameId == other.FrameId;
         }
 
         /**
@@ -146,6 +150,12 @@ namespace Leap
             get {
                 return _id;
             } 
+        }
+        public long FrameId {
+            get {
+              return _frameId;
+            }
+
         }
 
 /**

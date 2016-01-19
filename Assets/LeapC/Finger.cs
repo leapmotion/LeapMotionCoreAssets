@@ -41,7 +41,8 @@ namespace Leap
         {
         }
 
-        public Finger (int handId, 
+        public Finger (int frameId,
+                           int handId, 
                            int fingerId,
                            float timeVisible,
                            Vector tipPosition,
@@ -56,7 +57,8 @@ namespace Leap
                            Bone proximal,
                            Bone intermediate,
                            Bone distal) 
-            : base( handId,
+            : base(frameId, 
+                    handId,
                     fingerId,
                     timeVisible,
                     tipPosition,
