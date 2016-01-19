@@ -110,7 +110,7 @@ namespace Leap
         {
             return this.IsValid && 
                 other.IsValid &&
-                this.Id == other.Id; //Fox - && this.Hand.Id == other.Hand.Id && this.Frame.Id == other.Frame.Id;
+                this.Id == other.Id;
         }
 
         /**
@@ -411,12 +411,7 @@ namespace Leap
      * an invalid Frame object is returned.
      * @since 1.0
      */
-      //Fox - removed along with backref to Frame
-        //public Frame Frame {
-        //        get {
-        //            return (_frame != null) ? _frame : new Frame ();
-        //        } 
-        //}
+
 
 /**
      * Returns an invalid Pointable object.

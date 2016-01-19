@@ -170,18 +170,6 @@ namespace Leap
         }
 
         /**
-     * Tools are not associated with hands in version 2+. This function
-     * always returns an invalid Tool object.
-     *
-     * @deprecated 2.0
-     */
-      //Fox - removed along with backref to Frame
-        //public Tool Tool (int id)
-        //{
-        //    return this.Tools.Find (delegate(Tool item) {
-        //        return item.Id == id;
-        //    });
-        //}
 
         /**
      * The change of position of this hand between the current frame and
@@ -442,7 +430,7 @@ namespace Leap
         {
           return this.IsValid &&
               other.IsValid &&
-              (this.Id == other.Id); //Fox - &&(this.Frame.Id == other.Frame.Id);
+              (this.Id == other.Id);
         }
 
         /**
@@ -529,14 +517,6 @@ namespace Leap
      *
      * @deprecated 2.0
      */
-      //Fox - removed along with backref to Frame
-        //public ToolList Tools {
-        //    get {
-        //        return (ToolList)this.Frame.Tools.FindAll (delegate(Tool item) {
-        //            return item.HandId == this.Id;
-        //        });
-        //    }
-        //}
 
 /**
      * The center position of the palm in millimeters from the Leap Motion Controller origin.
@@ -851,14 +831,7 @@ namespace Leap
      * an invalid Frame object is returned.
      * @since 1.0
      */
-      //Fox - removed along with back-reference of Frame in Hand
-        //public Frame Frame {
-        //    get {
-        //        if(_frame == null)
-        //            _frame = new Frame();
-        //        return _frame;
-        //    } 
-        //}
+
 
 /**
      * The arm to which this hand is attached.
