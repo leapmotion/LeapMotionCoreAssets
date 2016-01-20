@@ -1,13 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Leap {
   public class LeapHandController : MonoBehaviour {
 
     public LeapProvider Provider { get; set; }
-    public IHandFactory Factory { get; set; }
+    public HandFactory Factory { get; set; }
 
-    public System.Collections.Generic.Dictionary<int, IHandRepresentation> reps;
+    public Dictionary<int, HandRepresentation> reps;
 
     // Use this for initialization
     void Start() {
@@ -17,7 +18,7 @@ namespace Leap {
     // Update is called once per frame
     void Update() {
       foreach(Leap.Hand curHand in Provider.CurrentFrame.Hands) {
-        IHandRepresentation rep;
+        HandRepresentation rep;
         if (!reps.TryGetValue(curHand.Id, out rep)) {
           rep = Factory.MakeHandRepresentation(curHand);
           reps.Add(curHand.Id, rep);

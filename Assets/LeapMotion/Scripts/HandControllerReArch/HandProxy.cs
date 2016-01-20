@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace Leap {
   public class HandProxy:
-    IHandRepresentation
+    HandRepresentation
   {
     HandPool parent;
     HandModel handModel;

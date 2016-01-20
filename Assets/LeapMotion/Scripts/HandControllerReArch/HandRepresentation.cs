@@ -3,12 +3,12 @@ using System;
 using System.Collections;
 
 namespace Leap {
-  public abstract class IHandRepresentation
+  public abstract class HandRepresentation
   {
     public int HandID { get; private set; }
     public int LastUpdatedTime { get; set; }
 
-    public IHandRepresentation(int handID) {
+    public HandRepresentation(int handID) {
       HandID = handID;
     }
 
