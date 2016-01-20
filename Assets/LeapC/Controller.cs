@@ -135,6 +135,13 @@ namespace Leap
         }
 
 
+        public void StartConnection(){
+            _connection.Start();
+        }
+        public void StopConnection(){
+            _connection.Stop();
+        }
+
         /**
      * Reports whether your application has a connection to the Leap Motion
      * daemon/service. Can be true even if the Leap Motion hardware is not available.
@@ -546,10 +553,6 @@ namespace Leap
             } 
         }
 
-        public TrackedQuad GetTrackedQuadForFrame(long id){
-            return _connection.GetFrameQuad(id);
-        }
-
         public BugReport BugReport {
             get {
                 throw new NotImplementedException ("BugReport not implemented in this interface.");
@@ -623,10 +626,6 @@ namespace Leap
             POLICY_ALLOW_PAUSE_RESUME = (1 << 3),
         }
 
-        public void RequestDiagnostic(){
-            //TODO implement request diagnostic
-            //Are we still doing this?
-        }
         // Listener Dispatch
         //TODO Add listener interface and/or delegates
     /**

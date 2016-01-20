@@ -7,10 +7,10 @@ namespace LeapInternal
     {
         private T[] pool; //the pooled objects
         private UInt64 age = 0;
-        private bool _preallocate = false;
+        private const double _growRate = 1.5;
+
         public int InUse{get; private set;}
         public bool Growable{get; set;}
-        private const double _growRate = 1.5;
 
         /**
          * If Growable is true, then Capacity is only the **current** 
@@ -22,23 +22,11 @@ namespace LeapInternal
             } 
         }
 
-        public ObjectPool(int initialCapacity, bool preallocate = false, bool growable = false)
+        public ObjectPool(int initialCapacity, bool growable = false)
         {
             this.pool = new T[initialCapacity];
-//            _preallocate = preallocate; 
-//            if(_preallocate){
-//                for(uint p = 0; p < initialCapacity; p++){
-//                    addItem(p);
-//                }
-//            }
             this.Growable = growable;
             this.InUse = 0;
-        }
-
-        private void addItem(uint index){
-            this.pool[index] = new T();
-            this.pool[index].poolIndex = index;
-            this.pool[index].age = 0;
         }
 
         public T CheckOut(){
@@ -66,7 +54,7 @@ namespace LeapInternal
             } //else recycle existing object
 
             if(this.pool[indexToUse] == null)
-                this.pool[indexToUse] = new T(); // if non-preallocated
+                this.pool[indexToUse] = new T(); 
             
             this.pool[indexToUse].poolIndex = indexToUse;
             this.pool[indexToUse].age = ++age;
@@ -88,6 +76,12 @@ namespace LeapInternal
             return null;
         }
 
+        private void addItem(uint index){
+            this.pool[index] = new T();
+            this.pool[index].poolIndex = index;
+            this.pool[index].age = 0;
+        }
+        
         private void expand(){
             int newSize = (int)Math.Floor(Capacity * _growRate);
             T[] newPool = new T[newSize];
@@ -96,11 +90,6 @@ namespace LeapInternal
                 newPool[m] = this.pool[m];
             }
             this.pool = newPool;
-//            if(_preallocate){
-//                for(; m < this.pool.Length; m++){
-//                    addItem(m);
-//                }
-//            }
         }
     }
 }

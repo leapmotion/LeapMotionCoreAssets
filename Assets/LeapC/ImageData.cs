@@ -12,7 +12,6 @@ namespace LeapInternal
         private GCHandle _bufferHandle;
         public UInt64 index;
         public Int64 frame_id;
-        public int connectionIndex;
         public Int64 timestamp;
 
         public Image.FormatType type;
@@ -26,6 +25,7 @@ namespace LeapInternal
         public float RayScaleY;
         public int DistortionSize;
         public UInt64 DistortionMatrixKey;
+        public DistortionData DistortionData;
 
         public ImageData(){}
         public ImageData(UInt64 bufferLength, UInt64 index){
@@ -42,12 +42,12 @@ namespace LeapInternal
                                       UInt32 width, 
                                       UInt32 height,
                                       Int64 timestamp,
-                                      int connectionIndex,
                                       Int64 frame_id,
                                       float x_offset,
                                       float y_offset,
                                       float x_scale,
                                       float y_scale,
+                                      DistortionData distortionData,
                                       int distortion_size,
                                       UInt64 distortion_matrix_version){
             this.type = type; 
@@ -56,12 +56,12 @@ namespace LeapInternal
             this.width = width;
             this.height = height;
             this.timestamp = timestamp;
-            this.connectionIndex = connectionIndex;
             this.frame_id = frame_id;
             this.RayOffsetX = x_offset;
             this.RayOffsetY = y_offset;
             this.RayScaleX = x_scale;
             this.RayScaleY = y_offset;
+            this.DistortionData = distortionData;
             this.DistortionSize = distortion_size;
             this.DistortionMatrixKey = distortion_matrix_version;
             isComplete = true;
@@ -89,12 +89,12 @@ namespace LeapInternal
             copy.width = this.width;
             copy.height = this.height;
             copy.timestamp = this.timestamp;
-            copy.connectionIndex = this.connectionIndex;
             copy.frame_id = this.frame_id;
             copy.RayOffsetX = this.RayOffsetX;
             copy.RayOffsetY = this.RayOffsetY;
             copy.RayScaleX = this.RayScaleX;
             copy.RayScaleY = this.RayScaleY;
+            copy.DistortionData = this.DistortionData;
             copy.DistortionMatrixKey = this.DistortionMatrixKey;
             copy.isComplete = this.isComplete;
 

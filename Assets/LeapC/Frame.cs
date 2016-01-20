@@ -33,6 +33,7 @@ namespace Leap
         ToolList _tools;
         HandList _hands;
         ImageList _images;
+        ImageList _rawImages;
         TrackedQuad _trackedQuad;
         long _id = -1;
         float _fps = 0;
@@ -73,7 +74,6 @@ namespace Leap
             _fingers = new FingerList();
             _tools = new ToolList();
             _hands = new HandList();
-            //_images = new ImageList();
             _trackedQuad = new TrackedQuad();
             InteractionBox = interactionBox;
         }
@@ -113,7 +113,6 @@ namespace Leap
             _tools.Add(tool);
             _pointables.Add ((Pointable)tool);
         }
-
 
         ~Frame(){
             Dispose(false);
@@ -185,7 +184,6 @@ namespace Leap
             _fingers = new FingerList();
             _tools = new ToolList();
             _hands = new HandList();
-            //_images = new ImageList();
             _trackedQuad = new TrackedQuad();
         }
 
@@ -666,20 +664,8 @@ namespace Leap
      */
         public PointableList Pointables {
             get {
-                if (_pointables == null) {                 
-
+                if (_pointables == null) {
                         _pointables = new PointableList ();
-                    /*
-                    LEAP_HAND[] leap_hands = (LEAP_HAND[])_frameData.pHands;
-                    for( int h = 0; h < _frameData.nHands; h++){
-                        LEAP_HAND hand = leap_hands[h];
-                        _pointables.Add(new Leap.Pointable(hand.thumb, this, hand.id));
-                        _pointables.Add(new Leap.Pointable(hand.index));
-                        _pointables.Add(new Leap.Pointable(hand.middle));
-                        _pointables.Add(new Leap.Pointable(hand.ring));
-                        _pointables.Add(new Leap.Pointable(hand.pinky));
-                    }
-                    */
                 }
                 return _pointables;
             }
@@ -751,18 +737,21 @@ namespace Leap
             get {
                 if(_images == null)
                     _images = new ImageList();
-
-                if(_controller != null)
-                    _controller.GetImagesForFrame(this.Id, ref _images);
-
                 return _images;
             } 
+            set {
+                _images = value;
+            }
         }
 
-        //TODO Get RawImages from LeapC
         public ImageList RawImages{
-            get{
-                return this.Images;
+            get {
+                if(_rawImages == null)
+                    _rawImages = new ImageList();
+                return _rawImages;
+            } 
+            set {
+                _rawImages = value;
             }
         }
 /**
@@ -820,10 +809,13 @@ namespace Leap
         public TrackedQuad TrackedQuad {
             get {
                 if(_trackedQuad == null)
-                    _trackedQuad = controller.GetTrackedQuadForFrame(this.Id);
+                    _trackedQuad = new TrackedQuad();
 
                 return _trackedQuad;
             } 
+            set {
+                _trackedQuad = value;
+            }
         }
 
 /**

@@ -648,6 +648,18 @@ public class HandController : MonoBehaviour {
 
   void OnDestroy() {
     DestroyAllHands();
+    leap_controller_.StopConnection();
+  }
+  void OnApplicationPause(bool isPaused) {
+    Debug.Log("Pause " + isPaused);
+    if (isPaused)
+      leap_controller_.StopConnection();
+    else
+      leap_controller_.StartConnection();
+  }
+
+  void OnApplicationQuit() {
+    leap_controller_.StopConnection();
   }
 
   /** The current frame position divided by the total number of frames in the recording. */

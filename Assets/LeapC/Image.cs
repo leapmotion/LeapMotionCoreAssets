@@ -109,11 +109,10 @@ namespace Leap
   */
         public float[] Distortion {
             get {
-                if(IsValid){
-                    Connection conn = Connection.GetConnection(imageData.connectionIndex); //Distortion is cached in connection object
-                    return conn.DistortionCache.GetMatrix(imageData.DistortionMatrixKey).data;
-                }
-                return null;
+                if(IsValid)
+                    return imageData.DistortionData.data;
+
+                return new float[0];
             }
         }
 
