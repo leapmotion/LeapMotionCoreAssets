@@ -5,12 +5,12 @@
 \******************************************************************************/
 
 using UnityEngine;
-using System.Collections;
+using UnityEngine.SceneManagement;
 
 public class PressAnyKeyToReset : MonoBehaviour {
 
-  void OnGUI() {                                                                
+  void OnGUI() {
     if (Event.current.type == EventType.KeyDown)
-      Application.LoadLevel(Application.loadedLevel);
+      SceneManager.LoadScene(SceneManager.GetActiveScene().name);
   } 
 }
