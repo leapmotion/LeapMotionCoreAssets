@@ -218,7 +218,7 @@ namespace LeapInternal
                         checkPendingFrames ();
                         _needToCheckPendingFrames = false;
                     }
-                    //Thread.Sleep (1); //Required in Unity on Windows
+                    Thread.Sleep (1); //Required in Unity on Windows
                 } //forever
             } catch (Exception e) {
                 Logger.Log ("Exception: " + e);

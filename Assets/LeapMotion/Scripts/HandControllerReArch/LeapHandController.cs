@@ -5,19 +5,19 @@ using System.Collections.Generic;
 namespace Leap {
   public class LeapHandController : MonoBehaviour {
 
-    public LeapProvider Provider { get; set; }
+    public LeapProvider Provider {get; set; }
     public HandFactory Factory { get; set; }
 
     public Dictionary<int, HandRepresentation> reps;
 
     // Use this for initialization
     void Start() {
-
+      Provider = GetComponent<LeapProvider>();
     }
 
     // Update is called once per frame
     void Update() {
-      foreach(Leap.Hand curHand in Provider.CurrentFrame.Hands) {
+      foreach (Leap.Hand curHand in Provider.CurrentFrame.Hands) {
         HandRepresentation rep;
         if (!reps.TryGetValue(curHand.Id, out rep)) {
           rep = Factory.MakeHandRepresentation(curHand);
@@ -32,7 +32,7 @@ namespace Leap {
       }
 
       // TODO:  Mark-and-sweep or set difference implementation
-      for (; ; ) {
+      //for (; ; ) {
         // TODO:  Initialize toBeDeleted with a value to be deleted
         
         //IHandRepresentation toBeDeleted;
@@ -42,7 +42,7 @@ namespace Leap {
         // because the corresponding hand has gone away
         
         //toBeDeleted.Finish();
-      }
+      //}
     }
   }
 }
