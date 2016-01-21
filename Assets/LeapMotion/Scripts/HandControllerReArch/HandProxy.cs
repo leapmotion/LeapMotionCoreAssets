@@ -23,7 +23,7 @@ namespace Leap {
 
     public override void UpdateRepresentation(Leap.Hand hand) {
       // TODO:  Decide how to pass information about the updated hand to the hand model
-      Debug.Log(this.IsMarked);
+      //Debug.Log(this.IsMarked);
       handModel.SetLeapHand(hand);
       handModel.UpdateHand();
     }
