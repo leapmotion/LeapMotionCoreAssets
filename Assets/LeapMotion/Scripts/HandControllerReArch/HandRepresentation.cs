@@ -7,6 +7,8 @@ namespace Leap {
   {
     public int HandID { get; private set; }
     public int LastUpdatedTime { get; set; }
+    public bool IsMarked { get; set; }
+
 
     public HandRepresentation(int handID) {
       HandID = handID;

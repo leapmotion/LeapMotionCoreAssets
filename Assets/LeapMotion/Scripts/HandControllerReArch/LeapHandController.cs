@@ -6,7 +6,7 @@ using Leap;
 namespace Leap {
   public class LeapHandController : MonoBehaviour {
 
-    public LeapProvider Provider {get; set; }
+    public LeapProvider Provider { get; set; }
     public HandFactory Factory { get; set; }
 
 
@@ -21,34 +21,45 @@ namespace Leap {
 
     // Update is called once per frame
     void Update() {
-      //Debug.Log(Provider.CurrentFrame.Hands[0]);
+      Debug.Log("reps.Count:" + reps.Count);
       foreach (Leap.Hand curHand in Provider.CurrentFrame.Hands) {
         HandRepresentation rep;
-         if (!reps.TryGetValue(curHand.Id, out rep)) {
+        if (!reps.TryGetValue(curHand.Id, out rep)) {
           rep = Factory.MakeHandRepresentation(curHand);
           reps.Add(curHand.Id, rep);
-          Debug.Log("rep = " + rep);
+          Debug.Log("reps.Add(" + curHand.Id + ", " + rep + ")");
         }
-
-        if (rep == null)
-          continue;
-
+        rep.IsMarked = true;
         rep.UpdateRepresentation(curHand);
         rep.LastUpdatedTime = (int)Provider.CurrentFrame.Timestamp;
       }
 
-      // TODO:  Mark-and-sweep or set difference implementation
-      //for (; ; ) {
-        // TODO:  Initialize toBeDeleted with a value to be deleted
-        
-        //IHandRepresentation toBeDeleted;
-        //reps.Remove(toBeDeleted.HandID);
 
-        // Inform the representation that we will no longer be giving it any hand updates
-        // because the corresponding hand has gone away
-        
-        //toBeDeleted.Finish();
-      //}
+      // TODO:  Mark-and-sweep or set difference implementation
+  
+      //TODO:  Initialize toBeDeleted with a value to be deleted
+      HandRepresentation toBeDeleted = null;
+      foreach (KeyValuePair<int, HandRepresentation> r in reps) {
+        if (r.Value != null) {
+          if (r.Value.IsMarked) {
+            Debug.Log("LeapHandController Marking False");
+
+            r.Value.IsMarked = false;
+          }
+          else {
+            Debug.Log("Finishing");
+            toBeDeleted = r.Value;
+          }
+        }
+      }
+
+
+      if (toBeDeleted != null) {
+        //Inform the representation that we will no longer be giving it any hand updates
+        //because the corresponding hand has gone away
+        reps.Remove(toBeDeleted.HandID);
+        toBeDeleted.Finish();
+      }
     }
   }
 }

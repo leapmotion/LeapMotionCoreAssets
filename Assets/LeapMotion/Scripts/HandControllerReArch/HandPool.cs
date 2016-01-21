@@ -29,12 +29,15 @@ namespace Leap {
 
       for (int i = 0; i < ModelPool.Count; i++)
         if (ModelPool[i].Handedness == HandModel.Chirality.Right && hand.IsRight) {
-        //if(ModelPool != null){
           HandModel retVal = ModelPool[i];
           ModelPool.RemoveAt(i);
           return new HandProxy(this, retVal, hand);
-        }
-
+      }
+      else if (ModelPool[i].Handedness == HandModel.Chirality.Left && hand.IsLeft) {
+          HandModel retVal = ModelPool[i];
+          ModelPool.RemoveAt(i);
+          return new HandProxy(this, retVal, hand);
+      }
       return null;
     }
   }
