@@ -2,7 +2,7 @@
 using System.Collections;
 
 namespace Leap {
-  public abstract class HandFactory {
+  public abstract class HandFactory : MonoBehaviour {
     /// <summary>
     /// Creates a hand representation object that can receive updates from LeapHandController
     /// </summary>

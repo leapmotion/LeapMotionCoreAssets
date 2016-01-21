@@ -28,7 +28,7 @@ namespace Leap {
     // Update is called once per frame
     void Update() {
       CurrentFrame = connection.Frames.Get();
-      Debug.Log(CurrentFrame);
+      //Debug.Log(CurrentFrame);
 
     }
 
