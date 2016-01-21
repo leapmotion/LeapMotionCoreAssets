@@ -27,6 +27,7 @@ namespace Leap {
          if (!reps.TryGetValue(curHand.Id, out rep)) {
           rep = Factory.MakeHandRepresentation(curHand);
           reps.Add(curHand.Id, rep);
+          Debug.Log("rep = " + rep);
         }
 
         if (rep == null)

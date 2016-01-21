@@ -25,11 +25,12 @@ namespace Leap {
 
     public override HandRepresentation MakeHandRepresentation(Leap.Hand hand) {
       Debug.Log("Making a hand");
+      //return new HandProxy(this, RightHandModel, hand);
 
       for (int i = 0; i < ModelPool.Count; i++)
-        if (ModelPool[i].IsMirrored() && hand.IsRight) {
-
-          var retVal = ModelPool[i];
+        if (ModelPool[i].Handedness == HandModel.Chirality.Right && hand.IsRight) {
+        //if(ModelPool != null){
+          HandModel retVal = ModelPool[i];
           ModelPool.RemoveAt(i);
           return new HandProxy(this, retVal, hand);
         }

@@ -21,6 +21,10 @@ using Leap;
 */
 public abstract class HandModel : MonoBehaviour {
 
+  
+  public enum Chirality { Left, Right };
+  public Chirality Handedness; 
+  
   /** The number of fingers on a hand.*/
   public const int NUM_FINGERS = 5;
 
