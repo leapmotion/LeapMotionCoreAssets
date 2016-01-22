@@ -7,7 +7,6 @@ namespace Leap {
   {
     HandPool parent;
     HandModel handModel;
-    private int DebugUpdateCounter = 0;
   
     public HandProxy(HandPool parent, HandModel handModel, Leap.Hand hand) :
       base(hand.Id)
@@ -25,12 +24,10 @@ namespace Leap {
       handModel = null;
     }
 
-    public override void UpdateRepresentation(Leap.Hand hand) {
+    public override void UpdateRepresentation(Leap.Hand hand){
       // TODO:  Decide how to pass information about the updated hand to the hand model
-      Debug.Log("HandProxy.UpdateRepresentation: " + DebugUpdateCounter + " - hand: " + hand);
       handModel.SetLeapHand(hand);
       handModel.UpdateHand();
-      DebugUpdateCounter++;
     }
 
   }

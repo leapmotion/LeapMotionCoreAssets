@@ -77,8 +77,6 @@ public abstract class HandModel : MonoBehaviour {
   */
   public Vector3 GetPalmPosition() {
     if (controller_ != null && hand_ != null) {
-      Debug.Log("HandModel.hand_.GetPalmPosition(" + hand_.PalmPosition + ")");
-
       return controller_.transform.TransformPoint (hand_.PalmPosition.ToUnityScaled (mirror_z_axis_)) + GetHandOffset ();
     }
     if (palm) {
@@ -222,7 +220,6 @@ public abstract class HandModel : MonoBehaviour {
   * HandController calls this method to set or update the underlying hand.
   */
   public void SetLeapHand(Hand hand) {
-    Debug.Log("HandModel.SetLeapHand(" + hand + ")");
     hand_ = hand;
     for (int i = 0; i < fingers.Length; ++i) {
       if (fingers[i] != null) {
@@ -302,8 +299,4 @@ public abstract class HandModel : MonoBehaviour {
   * calls this function in the FixedUpdate() phase.
   */
   public abstract void UpdateHand();
-
-  void Update() {
-    Debug.Log("HandModel.Update()"  + hand_);
-  }
 }
