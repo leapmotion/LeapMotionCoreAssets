@@ -259,7 +259,7 @@ public class HandController : MonoBehaviour {
     hand_model.transform.SetParent(transform);
     hand_model.SetLeapHand(leap_hand);
     hand_model.MirrorZAxis(mirrorZAxis);
-    hand_model.SetController(this);
+    //hand_model.SetController(this);
 
     handEvent handHandler = onCreateHand;
     if (handHandler != null) {

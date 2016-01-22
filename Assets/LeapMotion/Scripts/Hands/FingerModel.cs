@@ -47,15 +47,15 @@ public abstract class FingerModel : MonoBehaviour {
   protected bool mirror_z_axis_ = false;
 
   /** The parent HandController instance. */
-  protected HandController controller_;
+  protected LeapHandController controller_;
 
   /** Assigns the HandController parent for this FingerModel object. */
-  public void SetController(HandController controller) {
+  public void SetController(LeapHandController controller) {
     controller_ = controller;
   }
 
   /** The parent HandController instance. */
-  public HandController GetController() {
+  public LeapHandController GetController() {
     return controller_;
   }
 

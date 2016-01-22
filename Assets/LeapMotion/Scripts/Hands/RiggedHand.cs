@@ -15,6 +15,7 @@ public class RiggedHand : HandModel {
   public Vector3 modelPalmFacing = -Vector3.up;
 
   public override void InitHand() {
+    Debug.Log("HandModel.IniHand()");
     UpdateHand();
   }
 
@@ -23,6 +24,9 @@ public class RiggedHand : HandModel {
   }
 
   public override void UpdateHand() {
+    Debug.Log("RiggedHand.UpdateHand() : " + hand_);
+    //Debug.Log("RiggedHand.hand_.PalmNormal: " + hand_.PalmNormal);
+
     if (palm != null) {
       palm.position = GetPalmPosition();
       palm.rotation = GetPalmRotation() * Reorientation();

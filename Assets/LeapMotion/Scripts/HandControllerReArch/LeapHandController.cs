@@ -8,6 +8,7 @@ namespace Leap {
 
     public LeapProvider Provider { get; set; }
     public HandFactory Factory { get; set; }
+    private int debugUpdateCounter = 0;
 
 
     public Dictionary<int, HandRepresentation> reps = new Dictionary<int, HandRepresentation>();
@@ -21,6 +22,7 @@ namespace Leap {
 
     // Update is called once per frame
     void Update() {
+      Debug.Log("LeapHandController.Update()" + debugUpdateCounter + " ========================================");
       //Debug.Log("reps.Count:" + reps.Count);
       foreach (Leap.Hand curHand in Provider.CurrentFrame.Hands) {
         HandRepresentation rep;
@@ -32,6 +34,7 @@ namespace Leap {
        
         rep.IsMarked = true;
         rep.UpdateRepresentation(curHand);
+        Debug.Log("LeapHandController.Update - rep.UpdateRepresentation(" + curHand + "): " + debugUpdateCounter);
         rep.LastUpdatedTime = (int)Provider.CurrentFrame.Timestamp;
       }
 
@@ -45,18 +48,19 @@ namespace Leap {
             r.Value.IsMarked = false;
           }
           else {
-            //TODO:  Initialize toBeDeleted with a value to be deleted
+            //Initialize toBeDeleted with a value to be deleted
             Debug.Log("Finishing");
             toBeDeleted = r.Value;
           }
         }
       }
+      //Inform the representation that we will no longer be giving it any hand updates
+      //because the corresponding hand has gone away
       if (toBeDeleted != null) {
-        //Inform the representation that we will no longer be giving it any hand updates
-        //because the corresponding hand has gone away
         reps.Remove(toBeDeleted.HandID);
         toBeDeleted.Finish();
       }
+      debugUpdateCounter++;
     }
   }
 }

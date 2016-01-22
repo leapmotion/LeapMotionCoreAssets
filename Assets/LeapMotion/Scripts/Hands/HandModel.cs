@@ -49,7 +49,9 @@ public abstract class HandModel : MonoBehaviour {
   /** The Leap Hand object this hand model represents. */
   protected Hand hand_;
   /** The parent HandController object for this hand. */
-  protected HandController controller_;
+  //protected HandController controller_;
+  protected LeapHandController controller_;
+
 
   /** Whether the parent HandController instance has been set to mirror across the z axis.*/
   protected bool mirror_z_axis_ = false;
@@ -62,7 +64,9 @@ public abstract class HandModel : MonoBehaviour {
     if (controller_ == null || hand_ == null)
       return Vector3.zero;
 
-    Vector3 additional_movement = controller_.handMovementScale - Vector3.one;
+    //Vector3 additional_movement = controller_.handMovementScale - Vector3.one;
+    Vector3 additional_movement = Vector3.one - Vector3.one;
+
     Vector3 scaled_wrist_position = Vector3.Scale(additional_movement, hand_.WristPosition.ToUnityScaled(mirror_z_axis_));
 
     return controller_.transform.TransformPoint(scaled_wrist_position) -
@@ -86,6 +90,7 @@ public abstract class HandModel : MonoBehaviour {
   * @returns A Quaternion representing the rotation of the hand. 
   */
   public Quaternion GetPalmRotation() {
+    Debug.Log("HandModel.hand_.Basis.Rotation()" + hand_.Basis.Rotation());
     if (controller_ != null && hand_ != null) {
       return controller_.transform.rotation * hand_.Basis.Rotation(mirror_z_axis_);
     }
@@ -216,6 +221,7 @@ public abstract class HandModel : MonoBehaviour {
   * HandController calls this method to set or update the underlying hand.
   */
   public void SetLeapHand(Hand hand) {
+    Debug.Log("HandModel.SetLeapHand(" + hand + ")");
     hand_ = hand;
     for (int i = 0; i < fingers.Length; ++i) {
       if (fingers[i] != null) {
@@ -244,13 +250,15 @@ public abstract class HandModel : MonoBehaviour {
   }
 
   /** The parent HandController object of this hand.*/
-  public HandController GetController() {
+  //public HandController GetController() {
+  public LeapHandController GetController() {
     return controller_;
   }
 
   /** Sets the parent HandController object. */
-  public void SetController(HandController controller) {
+  public void SetController(LeapHandController controller) {
     controller_ = controller;
+    Debug.Log("SetController:" + controller_);
     for (int i = 0; i < fingers.Length; ++i) {
       if (fingers[i] != null)
         fingers[i].SetController(controller_);
@@ -263,6 +271,7 @@ public abstract class HandModel : MonoBehaviour {
   * by the Leap Motion device.
   */
   public virtual void InitHand() {
+    Debug.Log("handModel.InitHand()");
     for (int f = 0; f < fingers.Length; ++f) {
       if (fingers[f] != null) {
         fingers[f].fingerType = (Finger.FingerType)f;
@@ -292,4 +301,8 @@ public abstract class HandModel : MonoBehaviour {
   * calls this function in the FixedUpdate() phase.
   */
   public abstract void UpdateHand();
+
+  void Update() {
+    Debug.Log("HandModel.Update()"  + hand_);
+  }
 }
