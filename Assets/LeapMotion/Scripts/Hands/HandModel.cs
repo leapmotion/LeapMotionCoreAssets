@@ -64,8 +64,7 @@ public abstract class HandModel : MonoBehaviour {
     if (controller_ == null || hand_ == null)
       return Vector3.zero;
 
-    //Vector3 additional_movement = controller_.handMovementScale - Vector3.one;
-    Vector3 additional_movement = Vector3.one - Vector3.one;
+    Vector3 additional_movement = controller_.handMovementScale - Vector3.one;
 
     Vector3 scaled_wrist_position = Vector3.Scale(additional_movement, hand_.WristPosition.ToUnityScaled(mirror_z_axis_));
 
@@ -78,6 +77,8 @@ public abstract class HandModel : MonoBehaviour {
   */
   public Vector3 GetPalmPosition() {
     if (controller_ != null && hand_ != null) {
+      Debug.Log("HandModel.hand_.GetPalmPosition(" + hand_.PalmPosition + ")");
+
       return controller_.transform.TransformPoint (hand_.PalmPosition.ToUnityScaled (mirror_z_axis_)) + GetHandOffset ();
     }
     if (palm) {
@@ -90,7 +91,7 @@ public abstract class HandModel : MonoBehaviour {
   * @returns A Quaternion representing the rotation of the hand. 
   */
   public Quaternion GetPalmRotation() {
-    Debug.Log("HandModel.hand_.Basis.Rotation()" + hand_.Basis.Rotation());
+    //Debug.Log("HandModel.hand_.Basis.Rotation()" + hand_.Basis.Rotation());
     if (controller_ != null && hand_ != null) {
       return controller_.transform.rotation * hand_.Basis.Rotation(mirror_z_axis_);
     }

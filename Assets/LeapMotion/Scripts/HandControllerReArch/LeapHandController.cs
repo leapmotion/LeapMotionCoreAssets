@@ -5,7 +5,14 @@ using Leap;
 
 namespace Leap {
   public class LeapHandController : MonoBehaviour {
+    public bool isHeadMounted = false;
+    /** Reverses the z axis. */
+    public bool mirrorZAxis = false;
+    /** The scale factors for hand movement. Set greater than 1 to give the hands a greater range of motion. */
+    public Vector3 handMovementScale = Vector3.one;
 
+
+    
     public LeapProvider Provider { get; set; }
     public HandFactory Factory { get; set; }
     private int debugUpdateCounter = 0;

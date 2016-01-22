@@ -32,14 +32,14 @@ namespace Leap {
       for (int i = 0; i < ModelPool.Count; i++)
         if (ModelPool[i].Handedness == HandModel.Chirality.Right && hand.IsRight) {
           HandModel retVal = ModelPool[i];
-          ModelPool[1].SetController(controller_);
+          ModelPool[i].SetController(controller_);
           ModelPool.RemoveAt(i);
           handRep = new HandProxy(this, retVal, hand);
           return handRep;
       }
       else if (ModelPool[i].Handedness == HandModel.Chirality.Left && hand.IsLeft) {
           HandModel retVal = ModelPool[i];
-          ModelPool[0].SetController(controller_);
+          ModelPool[i].SetController(controller_);
           ModelPool.RemoveAt(i);
           handRep = new HandProxy(this, retVal, hand);
           return handRep;
