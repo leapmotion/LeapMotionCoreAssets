@@ -14,7 +14,55 @@ namespace Leap {
     public LeapProvider Provider { get; set; }
     public HandFactory Factory { get; set; }
 
-    public Dictionary<int, HandRepresentation> reps = new Dictionary<int, HandRepresentation>();
+    public Dictionary<int, HandRepresentation> graphicsReps = new Dictionary<int, HandRepresentation>();
+    public Dictionary<int, HandRepresentation> physicsReps = new Dictionary<int, HandRepresentation>();
+
+
+    /** The smoothed offset between the FixedUpdate timeline and the Leap timeline.  
+ * Used to provide temporally correct frames within FixedUpdate */
+    private SmoothedFloat smoothedFixedUpdateOffset_ = new SmoothedFloat();
+    /** The maximum offset calculated per frame */
+    private float perFrameFixedUpdateOffset_;
+
+    // Reference distance from thumb base to pinky base in mm.
+    protected const float GIZMO_SCALE = 5.0f;
+    /** Conversion factor for millimeters to meters. */
+    protected const float MM_TO_M = 1e-3f;
+    /** Conversion factor for nanoseconds to seconds. */
+    protected const float NS_TO_S = 1e-6f;
+    /** Conversion factor for seconds to nanoseconds. */
+    protected const float S_TO_NS = 1e6f;
+    /** How much smoothing to use when calculating the FixedUpdate offset. */
+    protected const float FIXED_UPDATE_OFFSET_SMOOTHING_DELAY = 0.1f;
+
+    protected bool graphicsEnabled = true;
+    protected bool physicsEnabled = true;
+
+    public bool GraphicsEnabled {
+      get {
+        return graphicsEnabled;
+      }
+      set {
+        graphicsEnabled = value;
+        if (!graphicsEnabled) {
+          //DestroyGraphicsHands();
+        }
+      }
+    }
+
+    public bool PhysicsEnabled {
+      get {
+        return physicsEnabled;
+      }
+      set {
+        physicsEnabled = value;
+        if (!physicsEnabled) {
+          //DestroyPhysicsHands();
+        }
+      }
+    }
+    private long prev_graphics_id_ = 0;
+    private long prev_physics_id_ = 0;
 
     // Use this for initialization
     void Start() {
@@ -22,16 +70,24 @@ namespace Leap {
       Factory = GetComponent<HandFactory>();
     }
 
-    // Update is called once per frame
     void Update() {
+      Frame frame = Provider.CurrentFrame;
+      if (frame.Id != prev_graphics_id_ && graphicsEnabled) {
+        UpdateHandRepresentations(graphicsReps);
+        prev_graphics_id_ = frame.Id;
+
+      }
+    }
+
+    // Update is called once per frame
+    void UpdateHandRepresentations(Dictionary<int, HandRepresentation> all_hand_reps ) {
       foreach (Leap.Hand curHand in Provider.CurrentFrame.Hands) {
         HandRepresentation rep;
-        if (!reps.TryGetValue(curHand.Id, out rep)) {
+        if (!all_hand_reps.TryGetValue(curHand.Id, out rep)) {
           rep = Factory.MakeHandRepresentation(curHand);
-          reps.Add(curHand.Id, rep);
+          all_hand_reps.Add(curHand.Id, rep);
           Debug.Log("reps.Add(" + curHand.Id + ", " + rep + ")");
         }
-       
         rep.IsMarked = true;
         rep.UpdateRepresentation(curHand);
         rep.LastUpdatedTime = (int)Provider.CurrentFrame.Timestamp;
@@ -40,7 +96,7 @@ namespace Leap {
 
       //Mark-and-sweep or set difference implementation
       HandRepresentation toBeDeleted = null;
-      foreach (KeyValuePair<int, HandRepresentation> r in reps) {
+      foreach (KeyValuePair<int, HandRepresentation> r in all_hand_reps) {
         if (r.Value != null) {
           if (r.Value.IsMarked) {
             //Debug.Log("LeapHandController Marking False");
@@ -56,8 +112,23 @@ namespace Leap {
       //Inform the representation that we will no longer be giving it any hand updates
       //because the corresponding hand has gone away
       if (toBeDeleted != null) {
-        reps.Remove(toBeDeleted.HandID);
+        graphicsReps.Remove(toBeDeleted.HandID);
         toBeDeleted.Finish();
+      }
+    }
+    /** Updates the physics objects */
+    protected virtual void FixedUpdate() {
+      //All FixedUpdates of a frame happen before Update, so only the last of these calculations is passed
+      //into Update for smoothing.
+      using (var latestFrame = Provider.CurrentFrame) {
+        Provider.PerFrameFixedUpdateOffset = latestFrame.Timestamp * NS_TO_S - Time.fixedTime;
+      }
+
+      Frame frame = Provider.GetFixedFrame();
+
+      if (frame.Id != prev_physics_id_ && physicsEnabled) {
+        //UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
+        prev_physics_id_ = frame.Id;
       }
     }
   }

@@ -7,6 +7,7 @@ namespace Leap {
   {
     HandPool parent;
     HandModel handModel;
+
   
     public HandProxy(HandPool parent, HandModel handModel, Leap.Hand hand) :
       base(hand.Id)
@@ -29,6 +30,5 @@ namespace Leap {
       handModel.SetLeapHand(hand);
       handModel.UpdateHand();
     }
-
   }
 }

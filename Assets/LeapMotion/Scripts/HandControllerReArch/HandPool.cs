@@ -7,16 +7,18 @@ namespace Leap {
     HandFactory
 
   {
-    public HandModel LeftHandModel;
-    public HandModel RightHandModel;
+    public HandModel LeftGraphicsModel;
+    public HandModel RightGraphicsModel;
+    public HandModel LeftPhysicsModel;
+    public HandModel RightPhysicsModel;
     public List<HandModel> ModelPool;
     public LeapHandController controller_ { get; set; }
 
     // Use this for initialization
     void Start() {
       ModelPool = new List<HandModel>();
-      ModelPool.Add(LeftHandModel);
-      ModelPool.Add(RightHandModel);
+      ModelPool.Add(LeftGraphicsModel);
+      ModelPool.Add(RightGraphicsModel);
       controller_ = GetComponent<LeapHandController>();
     }
 
