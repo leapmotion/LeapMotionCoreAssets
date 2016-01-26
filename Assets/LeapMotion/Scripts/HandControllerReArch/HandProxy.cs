@@ -6,7 +6,6 @@ namespace Leap {
     HandRepresentation
   {
     HandPool parent;
-    HandModel handModel;
 
   
     public HandProxy(HandPool parent, HandModel handModel, Leap.Hand hand) :

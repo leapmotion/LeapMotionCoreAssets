@@ -29,7 +29,6 @@ public class SkeletalHand : HandModel {
 
   /** Updates the hand and its component parts by setting their positions and rotations. */
   public override void UpdateHand() {
-    Debug.Log("SkeletalHand.SetPositions()");
 
     SetPositions();
   }
@@ -40,6 +39,8 @@ public class SkeletalHand : HandModel {
   }
 
   protected void SetPositions() {
+    Debug.Log("SkeletalHand.SetPositions()");
+
     for (int f = 0; f < fingers.Length; ++f) {
       if (fingers[f] != null)
         fingers[f].UpdateFinger();

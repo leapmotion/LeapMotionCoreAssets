@@ -88,9 +88,15 @@ namespace Leap {
           all_hand_reps.Add(curHand.Id, rep);
           Debug.Log("reps.Add(" + curHand.Id + ", " + rep + ")");
         }
-        rep.IsMarked = true;
-        rep.UpdateRepresentation(curHand, modelType);
-        rep.LastUpdatedTime = (int)Provider.CurrentFrame.Timestamp;
+        if (rep != null) {
+          rep.IsMarked = true;
+
+          float hand_scale = MM_TO_M * curHand.PalmWidth / rep.handModel.handModelPalmWidth;
+          rep.handModel.transform.localScale = hand_scale * Vector3.one;
+
+          rep.UpdateRepresentation(curHand, modelType);
+          rep.LastUpdatedTime = (int)Provider.CurrentFrame.Timestamp;
+        }
       }
 
 

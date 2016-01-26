@@ -22,6 +22,8 @@ public class RigidFinger : SkeletalFinger {
   }
 
   public override void UpdateFinger() {
+    Debug.Log("RigidFinger.UpdateFinger()");
+
     for (int i = 0; i < bones.Length; ++i) {
       if (bones[i] != null) {
         // Set bone dimensions.

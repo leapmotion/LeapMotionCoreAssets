@@ -43,7 +43,7 @@ namespace Leap {
           //ModelPool[i].InitHand();
           handRep = new HandProxy(this, retVal, hand);
           return handRep;
-      }
+        }
         else if (ModelPool[i].Handedness == HandModel.Chirality.Left && hand.IsLeft && ModelPool[i].HandModelType == modelType) {
           Debug.Log("Found a " + modelType + " HandModel");
           HandModel retVal = ModelPool[i];

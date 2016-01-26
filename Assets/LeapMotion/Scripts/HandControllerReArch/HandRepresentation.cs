@@ -13,6 +13,7 @@ namespace Leap {
     public HandRepresentation(int handID) {
       HandID = handID;
     }
+    public HandModel handModel;
 
     /// <summary>
     /// Notifies the representation that a hand information update is available
