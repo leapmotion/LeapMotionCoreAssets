@@ -73,23 +73,23 @@ namespace Leap {
     void Update() {
       Frame frame = Provider.CurrentFrame;
       if (frame.Id != prev_graphics_id_ && graphicsEnabled) {
-        UpdateHandRepresentations(graphicsReps);
+        UpdateHandRepresentations(graphicsReps, HandModel.ModelType.Graphics);
         prev_graphics_id_ = frame.Id;
 
       }
     }
 
     // Update is called once per frame
-    void UpdateHandRepresentations(Dictionary<int, HandRepresentation> all_hand_reps ) {
+    void UpdateHandRepresentations(Dictionary<int, HandRepresentation> all_hand_reps, HandModel.ModelType modelType ) {
       foreach (Leap.Hand curHand in Provider.CurrentFrame.Hands) {
         HandRepresentation rep;
         if (!all_hand_reps.TryGetValue(curHand.Id, out rep)) {
-          rep = Factory.MakeHandRepresentation(curHand);
+          rep = Factory.MakeHandRepresentation(curHand, modelType);
           all_hand_reps.Add(curHand.Id, rep);
           Debug.Log("reps.Add(" + curHand.Id + ", " + rep + ")");
         }
         rep.IsMarked = true;
-        rep.UpdateRepresentation(curHand);
+        rep.UpdateRepresentation(curHand, modelType);
         rep.LastUpdatedTime = (int)Provider.CurrentFrame.Timestamp;
       }
 
@@ -112,7 +112,7 @@ namespace Leap {
       //Inform the representation that we will no longer be giving it any hand updates
       //because the corresponding hand has gone away
       if (toBeDeleted != null) {
-        graphicsReps.Remove(toBeDeleted.HandID);
+        all_hand_reps.Remove(toBeDeleted.HandID);
         toBeDeleted.Finish();
       }
     }
@@ -127,6 +127,7 @@ namespace Leap {
       Frame frame = Provider.GetFixedFrame();
 
       if (frame.Id != prev_physics_id_ && physicsEnabled) {
+        UpdateHandRepresentations(physicsReps, HandModel.ModelType.Physics);
         //UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
         prev_physics_id_ = frame.Id;
       }

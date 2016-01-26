@@ -14,6 +14,8 @@ public class RigidHand : SkeletalHand {
   public float filtering = 0.5f;
 
   public override void InitHand() {
+    Debug.Log("RigidHand.InitHand()");
+
     base.InitHand();
   }
 

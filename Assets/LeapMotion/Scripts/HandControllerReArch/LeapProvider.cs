@@ -44,6 +44,9 @@ namespace Leap {
       CurrentFrame = connection.Frames.Get();
       //Debug.Log(CurrentFrame);
 
+      //perFrameFixedUpdateOffset_ contains the maximum offset of this Update cycle
+      smoothedFixedUpdateOffset_.Update(PerFrameFixedUpdateOffset, Time.deltaTime);
+
     }
 
     void FixedUpdate() {

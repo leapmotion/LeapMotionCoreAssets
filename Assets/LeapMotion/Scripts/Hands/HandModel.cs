@@ -22,8 +22,11 @@ using Leap;
 public abstract class HandModel : MonoBehaviour {
 
   
-  public enum Chirality { Left, Right };
-  public Chirality Handedness; 
+  public enum Chirality { Left, Right, Either };
+  public Chirality Handedness;
+
+  public enum ModelType { Graphics, Physics };
+  public ModelType HandModelType;
   
   /** The number of fingers on a hand.*/
   public const int NUM_FINGERS = 5;
@@ -269,7 +272,7 @@ public abstract class HandModel : MonoBehaviour {
   * by the Leap Motion device.
   */
   public virtual void InitHand() {
-    Debug.Log("handModel.InitHand()");
+    Debug.Log("RigiHand.InitHand()");
     for (int f = 0; f < fingers.Length; ++f) {
       if (fingers[f] != null) {
         fingers[f].fingerType = (Finger.FingerType)f;
