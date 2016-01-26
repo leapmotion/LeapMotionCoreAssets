@@ -15,6 +15,11 @@ using Leap;
 * for the palm or the arm.
 */
 public class PolyHand : HandModel {
+  public override ModelType HandModelType {
+    get {
+      return ModelType.Graphics;
+    }
+  }
 
   /** Initializes the hand and calls the finger initializers. */
   public override void InitHand() {

@@ -14,6 +14,11 @@ using Leap;
  * The hand can have game objects for the palm, wrist and forearm, as well as fingers.
  */
 public class SkeletalHand : HandModel {
+  public override ModelType HandModelType {
+    get {
+      return ModelType.Graphics;
+    }
+  }
   protected const float PALM_CENTER_OFFSET = 0.015f;
 
   void Start() {
