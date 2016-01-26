@@ -86,6 +86,8 @@ namespace Leap {
         if (!all_hand_reps.TryGetValue(curHand.Id, out rep)) {
           rep = Factory.MakeHandRepresentation(curHand, modelType);
           all_hand_reps.Add(curHand.Id, rep);
+          float hand_scale = MM_TO_M * curHand.PalmWidth / rep.handModel.handModelPalmWidth;
+          rep.handModel.transform.localScale = hand_scale * Vector3.one;
           Debug.Log("reps.Add(" + curHand.Id + ", " + rep + ")");
         }
         if (rep != null) {
