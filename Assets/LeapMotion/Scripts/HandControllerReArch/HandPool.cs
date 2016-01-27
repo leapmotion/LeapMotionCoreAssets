@@ -54,6 +54,7 @@ namespace Leap {
           handRep = new HandProxy(this, retVal, hand);
           return handRep;
         }
+      Debug.Log("HandPool.MakeHandRepresentation() returning: " + handRep);
       return handRep;
     }
   }

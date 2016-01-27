@@ -1,5 +1,5 @@
 /******************************************************************************\
-* Copyright (C) 2012-2015 Leap Motion, Inc. All rights reserved.               *
+* Copyright (C) 2012-2016 Leap Motion, Inc. All rights reserved.               *
 * Leap Motion proprietary and confidential. Not for distribution.              *
 * Use subject to the terms of the Leap Motion SDK Agreement available at       *
 * https://developer.leapmotion.com/sdk_agreement, or another agreement         *
@@ -45,9 +45,12 @@ namespace LeapInternal
         {
             LEAP_IMAGE_PROPERTIES props = LeapC.PtrToStruct<LEAP_IMAGE_PROPERTIES>(imageMsg.properties);
                 Image.FormatType apiImageType;
-                switch (props.type){
-                    case eLeapImageType.eLeapImageType_IR:
+                switch (props.format){
+                    case eLeapImageFormat.eLeapImageType_IR:
                         apiImageType = Image.FormatType.INFRARED;
+                        break;
+                    case eLeapImageFormat.eLeapImageType_RGBIr_Bayer:
+                        apiImageType = Image.FormatType.IBRG;
                         break;
                     default:
                         apiImageType = Image.FormatType.INFRARED;

@@ -1,5 +1,5 @@
 /******************************************************************************\
-* Copyright (C) 2012-2015 Leap Motion, Inc. All rights reserved.               *
+* Copyright (C) 2012-2016 Leap Motion, Inc. All rights reserved.               *
 * Leap Motion proprietary and confidential. Not for distribution.              *
 * Use subject to the terms of the Leap Motion SDK Agreement available at       *
 * https://developer.leapmotion.com/sdk_agreement, or another agreement         *
@@ -65,11 +65,32 @@ namespace Leap
     public class Controller : IController
     {
         Connection _connection;
-        SynchronizationContext _synchronizationContext;
-        List<Listener> _listeners = new List<Listener>();
         ImageList _images;
-
+        ImageList _rawImages;
         bool _disposed = false;
+
+        public SynchronizationContext EventContext{get; set;}
+
+        public event EventHandler<LeapEventArgs> Init;
+        public event EventHandler<LeapEventArgs> Connect;
+        public event EventHandler<LeapEventArgs> Disconnect;
+        public event EventHandler<LeapEventArgs> Exit;
+        public event EventHandler<FrameEventArgs> FrameReady;
+        public event EventHandler<LeapEventArgs> FocusGained;
+        public event EventHandler<LeapEventArgs> FocusLost;
+        public event EventHandler<LeapEventArgs> ServiceConnect;
+        public event EventHandler<LeapEventArgs> ServiceDisconnect;
+        public event EventHandler<LeapEventArgs> DeviceChange;
+        public event EventHandler<ImageEventArgs> ImageReady;
+        public event EventHandler<LeapEventArgs> ServiceChange;
+        public event EventHandler<DeviceFailureEventArgs> DeviceFailure;
+        public event EventHandler<LogEventArgs> LogMessage;
+        
+        //new
+        public event EventHandler<PolicyEventArgs> PolicyChange;
+        public event EventHandler<ConfigChangeEventArgs> ConfigChange;
+        public event EventHandler<DistortionEventArgs> DistortionChange;
+        public event EventHandler<TrackedQuadEventArgs> TrackedQuadReady;
 
         //TODO revisit dispose code
         public void Dispose()
@@ -105,35 +126,22 @@ namespace Leap
      */
         public Controller ():this(0){}
 
-        public void handleAllEvents(eLeapEventType type, object obj){
-            Logger.Log ("Controller received event of " + type);
-        } 
-
         public Controller(int connectionKey){
             Logger.Log ("Creating controler with connectionKey: " + connectionKey);
-            _synchronizationContext = SynchronizationContext.Current;
+            EventContext = SynchronizationContext.Current;
             _connection = Connection.GetConnection(connectionKey);
-            _connection.AddLeapCEventHandler(eLeapEventType.eLeapEventType_Tracking, new LeapCEventHandler(dispatchOnFrame));
-            _connection.AddLeapCEventHandler(eLeapEventType.eLeapEventType_ImageComplete, new LeapCEventHandler(dispatchOnImages));
-        }
-        /**
-     * Constructs a Controller object.
-     *
-     * When creating a Controller object, you may optionally pass in a
-     * reference to an instance of a subclass of Leap::Listener. Alternatively,
-     * you may add a listener using the Controller::addListener() function.
-     *
-     * \include Controller_Controller.txt
-     *
-     * @param listener An instance of Leap::Listener implementing the callback
-     * functions for the Leap Motion events you want to handle in your application.
-     * @since 1.0
-     */
-        public Controller (Listener listener) :this()
-        {
-            this.AddListener (listener);
-        }
 
+            _connection.LeapInit += OnInit;
+            _connection.LeapFrame += OnFrame;
+            _connection.LeapImageComplete += OnImages;
+            _connection.LeapPolicyChange += OnPolicyChange;
+            _connection.LeapLogEvent += OnLogEvent;
+            _connection.LeapTrackedQuad += OnTrackedQuad;
+            _connection.LeapConfigChange += OnConfigChange;
+            _connection.LeapDeviceFailure += OnDeviceFailure;
+
+            _connection.Start ();
+        }
 
         public void StartConnection(){
             _connection.Start();
@@ -152,13 +160,8 @@ namespace Leap
                 return _connection.IsServiceConnected;
             }
         }
-        /**
-     * This function has been deprecated. Use setPolicy() and clearPolicy() instead.
-     * @deprecated 2.1.6
-     */
-        //public void SetPolicyFlags(Controller.PolicyFlag flags) {}
-        
-        /**
+
+    /**
      * Requests setting a policy.
      *
      * A request to change a policy is subject to user approval and a policy
@@ -427,16 +430,6 @@ namespace Leap
             } 
         }
 
-/**
-     * This function has been deprecated. Use isPolicySet() instead.
-     * @deprecated 2.1.6
-     */
-        public Controller.PolicyFlag PolicyFlags {
-            get {
-                return 0;
-            } 
-        }
-
         //TODO Add Config interface when available from LeapC
 /**
      * Returns a Config object, which you can use to query the Leap Motion system for
@@ -485,8 +478,20 @@ namespace Leap
 
         //TODO Get RawImages from LeapC
         public ImageList RawImages{
-            get{
-                return this.Images;
+            get {
+                if (_rawImages == null)
+                    _rawImages = new ImageList ();
+                
+                Image left;
+                Image right;
+                bool found = _connection.GetLatestRawImagePair(out left, out right);
+                if(found){
+                    _rawImages.Clear();
+                    
+                    _rawImages.Add(left);
+                    _rawImages.Add(right);
+                }
+                return _rawImages;
             }
         }
 
@@ -624,56 +629,9 @@ namespace Leap
         * @since 2.4.0
         */
             POLICY_ALLOW_PAUSE_RESUME = (1 << 3),
+            POLICY_RAW_IMAGES = (1 << 6),
         }
 
-        // Listener Dispatch
-        //TODO Add listener interface and/or delegates
-    /**
-     * Adds a listener to this Controller.
-     *
-     * The Controller dispatches Leap Motion events to each associated listener. The
-     * order in which listener callback functions are invoked is arbitrary. If
-     * you pass a listener to the Controller's constructor function, it is
-     * automatically added to the list and can be removed with the
-     * Controller::removeListener() function.
-     *
-     * \include Controller_addListener.txt
-     *
-     * The Controller does not keep a strong reference to the Listener instance.
-     * Ensure that you maintain a reference until the listener is removed from
-     * the controller.
-     *
-     * @param listener A subclass of Leap::Listener implementing the callback
-     * functions for the Leap Motion events you want to handle in your application.
-     * @returns Whether or not the listener was successfully added to the list
-     * of listeners.
-     * @since 1.0
-     */
-        public bool AddListener (Listener listener)
-        {
-            if (!_listeners.Contains (listener)) {
-                _listeners.Add (listener);
-                return true;
-            }
-            return false; //if already added
-        }
-        
-        /**
-     * Remove a listener from the list of listeners that will receive Leap Motion
-     * events. A listener must be removed if its lifetime is shorter than the
-     * controller to which it is listening.
-     *
-     * \include Controller_removeListener.txt
-     *
-     * @param listener The listener to remove.
-     * @returns Whether or not the listener was successfully removed from the
-     * list of listeners.
-     * @since 1.0
-     */
-        public bool RemoveListener (Listener listener)
-        {
-            return _listeners.Remove (listener);
-        }
 
         enum NotificationType{
             OnInit,
@@ -681,104 +639,66 @@ namespace Leap
         }
 
 
-//        void dispatchMessage(NotificationType notification){
-//            syncContext.Post(notifyListeners, notification);
-//        }
-//        SendOrPostCallback notifyListeners = delegate(object notificationType){
-//            NotificationType notificationType = (NotificationType)notificationType; 
-//            switch(notificationType){
-//                case NotificationType.OnFrame:
-//                    //dispatchOnFrame();
-//                    break;
-//            }
-//        };
-        void dispatchOnInit(){
-//            foreach(Listener listener in _listeners){
-//                listener.OnInit(this);
-//            }
+
+        protected virtual void OnInit(object sender, LeapEventArgs eventArgs){
+            object senderObj = new object();
+            Init.DispatchOnContext<LeapEventArgs>(senderObj, EventContext, eventArgs);
         }
-        void dispatchOnConnect(){
-//            foreach(Listener listener in _listeners){
-//                listener.OnConnect(this);
-//            }
+        protected virtual void OnConnect(object sender, LeapEventArgs eventArgs){
+            Connect.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
         }
-        void dispatchOnDisconnect(){
-//            foreach(Listener listener in _listeners){
-//                listener.OnDisconnect(this);
-//            }
+        protected virtual void OnDisconnect(object sender, LeapEventArgs eventArgs){
+            Disconnect.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
         }
-        void dispatchOnExit(){
-//            foreach(Listener listener in _listeners){
-//                listener.OnExit(this);
-//            }
+        protected virtual void OnExit(object sender, LeapEventArgs eventArgs){
+            Exit.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
         }
-        void dispatchOnFrame(eLeapEventType type, object data){
-                for(int l = 0; l < _listeners.Count; l++){
-                    if(HasMethod(_listeners[l], "OnFrame")){
-                        _listeners[l].OnFrame(this);
-                    }
-                }
+        protected virtual void OnFocusGained(object sender, LeapEventArgs eventArgs){
+            FocusGained.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
         }
-        void dispatchOnFocusGained(){
-//            foreach(Listener listener in _listeners){
-//                listener.OnFocusLost(this);
-//            }
+        protected virtual void OnFocusLost(object sender, LeapEventArgs eventArgs){
+            FocusLost.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
         }
-        void dispatchOnFocusLost(){
-//            foreach(Listener listener in _listeners){
-//                listener.OnFocusLost(this);
-//            }
+        protected virtual void OnServiceConnect(object sender, LeapEventArgs eventArgs){
+            ServiceConnect.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
         }
-        void dispatchOnServiceConnect(){
-//            foreach(Listener listener in _listeners){
-//                listener.OnServiceConnect(this);
-//            }
+        protected virtual void OnServiceDisconnect(object sender, LeapEventArgs eventArgs){
+            ServiceDisconnect.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
         }
-        void dispatchOnServiceDisconnect(){
-//            foreach(Listener listener in _listeners){
-//                listener.OnServiceDisconnect(this);
-//            }
+        protected virtual void OnDeviceChange(object sender, LeapEventArgs eventArgs){
+            DeviceChange.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
         }
-        void dispatchOnDeviceChange(){
-//            foreach(Listener listener in _listeners){
-//                listener.OnDeviceChange(this);
-//            }
+        protected virtual void OnServiceChange(object sender, LeapEventArgs eventArgs){
+            ServiceChange.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
         }
-        void dispatchOnImages(eLeapEventType type, object data){
-            try {
-                for(int l = 0; l < _listeners.Count; l++){
-                    if(HasMethod(_listeners[l], "OnImages"))
-                        _listeners[l].OnImages(this);
-                }
-            } catch (Exception e){
-                Logger.Log("Failed to dispatch OnImage event: " + e.Message);
-            }
+
+        //Rebroadcasting events from connection
+        protected virtual void OnFrame(object sender, FrameEventArgs eventArgs){
+            FrameReady.DispatchOnContext<FrameEventArgs>(this, EventContext, eventArgs);
         }
-        void dispatchOnServiceChange(){
-//            foreach(Listener listener in _listeners){
-//                listener.OnServiceChange(this);
-//            }
+        protected virtual void OnImages(object sender, ImageEventArgs eventArgs){
+            ImageReady.DispatchOnContext<ImageEventArgs>(this, EventContext, eventArgs);
         }
-        void dispatchOnDeviceFailure(){
-//            foreach(Listener listener in _listeners){
-//                listener.OnDeviceFailure(this);
-//            }
+        protected virtual void OnDistortionChange(object sender, DistortionEventArgs eventArgs){
+            DistortionChange.DispatchOnContext<DistortionEventArgs>(this, EventContext, eventArgs);
         }
-        void dispatchOnLogEvent(string msg){
-            try {
-                for(int l = 0; l < _listeners.Count; l++){
-                    if((_listeners != null) && HasMethod(_listeners[l], "OnLogMessage"))
-                        _listeners[l].OnLogMessage(this, msg);
-                }
-            } catch (Exception e){
-                Logger.Log(e.Message);
-            }
+        protected virtual void OnTrackedQuad(object sender, TrackedQuadEventArgs eventArgs){
+            TrackedQuadReady.DispatchOnContext<TrackedQuadEventArgs>(this, EventContext, eventArgs);
         }
-        private bool HasMethod(this object objectToCheck, string methodName)
-        {
-            var type = objectToCheck.GetType();
-            return type.GetMethod(methodName) != null;
+        protected virtual void OnLogEvent(object sender, LogEventArgs eventArgs){
+            LogMessage.DispatchOnContext<LogEventArgs>(this, EventContext, eventArgs);
         }
+        protected virtual void OnPolicyChange(object sender, PolicyEventArgs eventArgs){
+            PolicyChange.DispatchOnContext<PolicyEventArgs>(this, EventContext, eventArgs);
+        }
+        protected virtual void OnConfigChange(object sender, ConfigChangeEventArgs eventArgs){
+            ConfigChange.DispatchOnContext<ConfigChangeEventArgs>(this, EventContext, eventArgs);
+        }
+        protected virtual void OnDeviceFailure(object sender, DeviceFailureEventArgs eventArgs){
+            DeviceFailure.DispatchOnContext<DeviceFailureEventArgs>(this, EventContext, eventArgs);
+        }
+
+
     }
 
 }

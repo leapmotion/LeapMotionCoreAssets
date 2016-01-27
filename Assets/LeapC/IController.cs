@@ -1,5 +1,5 @@
 /******************************************************************************\
-* Copyright (C) 2012-2015 Leap Motion, Inc. All rights reserved.               *
+* Copyright (C) 2012-2016 Leap Motion, Inc. All rights reserved.               *
 * Leap Motion proprietary and confidential. Not for distribution.              *
 * Use subject to the terms of the Leap Motion SDK Agreement available at       *
 * https://developer.leapmotion.com/sdk_agreement, or another agreement         *
@@ -10,14 +10,9 @@ using System;
 namespace Leap {
     interface IController :IDisposable{
          Frame Frame(int history = 0);
-         bool AddListener(Listener listener);
-         bool RemoveListener(Listener listener);
          void SetPolicy(Controller.PolicyFlag policy);
          void ClearPolicy(Controller.PolicyFlag policy);
          bool IsPolicySet(Controller.PolicyFlag policy);
-         void EnableGesture(Gesture.GestureType type, bool enable);
-         void EnableGesture(Gesture.GestureType type);
-         bool IsGestureEnabled(Gesture.GestureType type);
          long Now();
          bool IsConnected {get;}
          bool IsServiceConnected {get;}
@@ -26,8 +21,27 @@ namespace Leap {
          ImageList Images {get;}
          DeviceList Devices {get;}
          TrackedQuad TrackedQuad {get;}
-         BugReport BugReport {get;}
-//         bool GetDistortionData(IntPtr deviceHandle, ref float[] buffer, out int width, out int height);
+
+         event EventHandler<LeapEventArgs> Init;
+         event EventHandler<LeapEventArgs> Connect;
+         event EventHandler<LeapEventArgs> Disconnect;
+         event EventHandler<LeapEventArgs> Exit;
+         event EventHandler<FrameEventArgs> FrameReady;
+         event EventHandler<LeapEventArgs> FocusGained;
+         event EventHandler<LeapEventArgs> FocusLost;
+         event EventHandler<LeapEventArgs> ServiceConnect;
+         event EventHandler<LeapEventArgs> ServiceDisconnect;
+         event EventHandler<LeapEventArgs> DeviceChange;
+         event EventHandler<ImageEventArgs> ImageReady;
+         event EventHandler<LeapEventArgs> ServiceChange;
+         event EventHandler<DeviceFailureEventArgs> DeviceFailure;
+         event EventHandler<LogEventArgs> LogMessage;
+        
+        //new
+         event EventHandler<PolicyEventArgs> PolicyChange;
+         event EventHandler<ConfigChangeEventArgs> ConfigChange;
+        event EventHandler<DistortionEventArgs> DistortionChange;
+         event EventHandler<TrackedQuadEventArgs> TrackedQuadReady;
     }
 }
 

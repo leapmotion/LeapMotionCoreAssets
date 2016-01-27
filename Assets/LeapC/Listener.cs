@@ -1,9 +1,9 @@
-namespace Leap {
+namespace Leap
+{
+    using System;
+    using System.Runtime.InteropServices;
 
-using System;
-using System.Runtime.InteropServices;
-
-  /**
+    /**
    * The Listener class defines a set of callback functions that you can
    * override in a subclass to respond to events dispatched by the Controller object.
    *
@@ -17,23 +17,27 @@ using System.Runtime.InteropServices;
    * @since 1.0
    */
     //TODO implement Listener
-public class Listener : IDisposable {
+    public class Listener : IDisposable
+    {
 
-  ~Listener() {
-    Dispose();
-  }
+        ~Listener ()
+        {
+            Dispose ();
+        }
 
-  public virtual void Dispose() {
-  }
+        public virtual void Dispose ()
+        {
+        }
 
-    /**
+        /**
      * Constructs a Listener object.
      * @since 1.0
      */
-  public Listener() {
-  }
+        public Listener ()
+        {
+        }
 
-    /**
+        /**
      * Called once, when this Listener object is newly added to a Controller.
      *
      * \include Listener_onInit.txt
@@ -41,10 +45,11 @@ public class Listener : IDisposable {
      * @param controller The Controller object invoking this callback function.
      * @since 1.0
      */
-  public virtual void OnInit(Controller arg0) {
-  }
+        public virtual void OnInit (Controller controller)
+        {
+        }
 
-    /**
+        /**
      * Called when the Controller object connects to the Leap Motion software and
      * the Leap Motion hardware device is plugged in,
      * or when this Listener object is added to a Controller that is already connected.
@@ -58,10 +63,11 @@ public class Listener : IDisposable {
      * @param controller The Controller object invoking this callback function.
      * @since 1.0
      */
-  public virtual void OnConnect(Controller arg0) {
-  }
+        public virtual void OnConnect (Controller controller)
+        {
+        }
 
-    /**
+        /**
      * Called when the Controller object disconnects from the Leap Motion software or
      * the Leap Motion hardware is unplugged.
      * The controller can disconnect when the Leap Motion device is unplugged, the
@@ -77,10 +83,11 @@ public class Listener : IDisposable {
      * @param controller The Controller object invoking this callback function.
      * @since 1.0
      */
-  public virtual void OnDisconnect(Controller arg0) {
-  }
+        public virtual void OnDisconnect (Controller controller)
+        {
+        }
 
-    /**
+        /**
      * Called when this Listener object is removed from the Controller
      * or the Controller instance is destroyed.
      *
@@ -89,10 +96,11 @@ public class Listener : IDisposable {
      * @param controller The Controller object invoking this callback function.
      * @since 1.0
      */
-  public virtual void OnExit(Controller arg0) {
-  }
+        public virtual void OnExit (Controller controller)
+        {
+        }
 
-    /**
+        /**
      * Called when a new frame of hand and finger tracking data is available.
      * Access the new frame data using the Controller::frame() function.
      *
@@ -109,10 +117,11 @@ public class Listener : IDisposable {
      * @param controller The Controller object invoking this callback function.
      * @since 1.0
      */
-  public virtual void OnFrame(Controller arg0) {
-  }
+        public virtual void OnFrame (Controller controller)
+        {
+        }
 
-    /**
+        /**
      * Called when this application becomes the foreground application.
      *
      * Only the foreground application receives tracking data from the Leap
@@ -124,10 +133,11 @@ public class Listener : IDisposable {
      * @param controller The Controller object invoking this callback function.
      * @since 1.0
      */
-  public virtual void OnFocusGained(Controller arg0) {
-  }
+        public virtual void OnFocusGained (Controller controller)
+        {
+        }
 
-    /**
+        /**
      * Called when this application loses the foreground focus.
      *
      * Only the foreground application receives tracking data from the Leap
@@ -139,10 +149,11 @@ public class Listener : IDisposable {
      * @param controller The Controller object invoking this callback function.
      * @since 1.0
      */
-  public virtual void OnFocusLost(Controller arg0) {
-  }
+        public virtual void OnFocusLost (Controller controller)
+        {
+        }
 
-    /**
+        /**
      * Called when the Leap Motion daemon/service connects to your application Controller.
      *
      * \include Listener_onServiceConnect.txt
@@ -150,10 +161,11 @@ public class Listener : IDisposable {
      * @param controller The Controller object invoking this callback function.
      * @since 1.2
      */
-  public virtual void OnServiceConnect(Controller arg0) {
-  }
+        public virtual void OnServiceConnect (Controller controller)
+        {
+        }
 
-    /**
+        /**
      * Called if the Leap Motion daemon/service disconnects from your application Controller.
      *
      * Normally, this callback is not invoked. It is only called if some external event
@@ -164,10 +176,11 @@ public class Listener : IDisposable {
      * @param controller The Controller object invoking this callback function.
      * @since 1.2
      */
-  public virtual void OnServiceDisconnect(Controller arg0) {
-  }
+        public virtual void OnServiceDisconnect (Controller controller)
+        {
+        }
 
-    /**
+        /**
      * Called when a Leap Motion controller is plugged in, unplugged, or the device changes state.
      *
      * State changes include entering or leaving robust mode and low resource mode.
@@ -180,10 +193,11 @@ public class Listener : IDisposable {
      * @param controller The Controller object invoking this callback function.
      * @since 1.2
      */
-  public virtual void OnDeviceChange(Controller arg0) {
-  }
+        public virtual void OnDeviceChange (Controller controller)
+        {
+        }
 
-    /**
+        /**
      * Called when new images are available.
      * Access the new frame data using the Controller::images() function.
      *
@@ -192,10 +206,11 @@ public class Listener : IDisposable {
      * @param controller The Controller object invoking this callback function.
      * @since 2.2.1
      */
-  public virtual void OnImages(Controller arg0) {
-  }
+        public virtual void OnImages (Controller controller)
+        {
+        }
 
-   /**
+        /**
     * Called when the Leap Motion service is paused or resumed or when a 
     * controller policy is changed.
     *
@@ -214,10 +229,11 @@ public class Listener : IDisposable {
     * @param controller The Controller object invoking this callback function.
     * @since banana
     */
-  public virtual void OnServiceChange(Controller arg0) {
-  }
+        public virtual void OnServiceChange (Controller controller)
+        {
+        }
 
-   /**
+        /**
     * Called when a Leap Motion controller device is plugged into the client
     * computer, but fails to operate properly.
     *
@@ -229,10 +245,11 @@ public class Listener : IDisposable {
     * @param controller The Controller object invoking this callback function.
     * @since banana
     */
-  public virtual void OnDeviceFailure(Controller arg0) {
-  }
+        public virtual void OnDeviceFailure (Controller controller)
+        {
+        }
 
-   /**
+        /**
     * Called when the results of a device diagnostic check are available.
     * 
     * \include Listener_onDiagnosticEvent.txt
@@ -243,10 +260,15 @@ public class Listener : IDisposable {
     * @param msg The diagnostic results.
     * @since banana
     */
-  public virtual void OnLogMessage(Controller arg0, string msg) {
-  }
+        public virtual void OnLogMessage (Controller controller, string msg)
+        {
+        }
 
+        //LeapC only
+        public virtual void OnPolicyChange (Controller controller)
+        {
+        }
 
-}
+    }
 
 }

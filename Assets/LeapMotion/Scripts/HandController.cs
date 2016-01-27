@@ -190,14 +190,14 @@ public class HandController : MonoBehaviour {
   */
   void InitializeFlags() {
     // Optimize for top-down tracking if on head mounted display.
-    Controller.PolicyFlag policy_flags = leap_controller_.PolicyFlags;
-    if (isHeadMounted)
-      policy_flags |= Controller.PolicyFlag.POLICY_OPTIMIZE_HMD;
-    else
-      policy_flags &= ~Controller.PolicyFlag.POLICY_OPTIMIZE_HMD;
+    //Controller.PolicyFlag policy_flags = leap_controller_.PolicyFlags;
+    //if (isHeadMounted)
+    //  policy_flags |= Controller.PolicyFlag.POLICY_OPTIMIZE_HMD;
+    //else
+    //  policy_flags &= ~Controller.PolicyFlag.POLICY_OPTIMIZE_HMD;
 
-    leap_controller_.SetPolicy(policy_flags);
-    flag_initialized_ = true;
+    //leap_controller_.SetPolicy(policy_flags);
+    //flag_initialized_ = true;
   }
 
   /** Creates a new Leap Controller object. */

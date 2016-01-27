@@ -18,6 +18,42 @@ namespace Leap
                 return diff / (absA + absB) < epsilon;
             }
         }
-    }
+
+        public static bool HasMethod(this object objectToCheck, string methodName)
+        {
+            var type = objectToCheck.GetType();
+            return type.GetMethod(methodName) != null;
+        }
+
+        public static int indexOf (this Enum enumItem)
+        {
+            return Array.IndexOf (Enum.GetValues (enumItem.GetType ()), enumItem);
+        }
+        
+        public static T itemFor<T> (this int ordinal)
+        {
+            T[] values = (T[])Enum.GetValues (typeof(T));
+            return values [ordinal];
+        }
+
+        public static void Dispatch<T>(this EventHandler<T> handler, 
+                                    object sender, T eventArgs) where T : EventArgs   
+        {   
+            if (handler != null) handler(sender, eventArgs);   
+        } 
+
+        public static void DispatchOnContext<T>(this EventHandler<T> handler, object sender, 
+                                    System.Threading.SynchronizationContext context,
+                                                     T eventArgs) where T : EventArgs
+        {   
+            if(handler != null){
+                if (context != null){
+                    System.Threading.SendOrPostCallback evt = (spc_args) => {handler(sender, spc_args as T);};
+                    context.Post (evt, eventArgs);
+                } else
+                    handler(sender, eventArgs);
+            }
+        }
+    } 
 }
 

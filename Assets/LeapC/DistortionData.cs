@@ -5,10 +5,10 @@ using Leap;
 namespace LeapInternal
 {
     public class DistortionData{
-        public UInt64 version;
-        public float width;
-        public float height;
-        public float[] data;
+        public UInt64 version{get; set;}
+        public float width{get; set;}
+        public float height{get; set;}
+        public float[] data{get; set;}
     }
 }
 

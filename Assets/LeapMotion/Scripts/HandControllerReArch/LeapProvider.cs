@@ -11,7 +11,7 @@ namespace Leap {
     public Image CurrentImage { get; private set; }
     private Transform providerSpace;
 
-    public Connection connection { get; set; }
+    public Controller leap_controller_ { get; set; }
 
     /** The smoothed offset between the FixedUpdate timeline and the Leap timeline.  
    * Used to provide temporally correct frames within FixedUpdate */
@@ -28,7 +28,7 @@ namespace Leap {
   /** How much smoothing to use when calculating the FixedUpdate offset. */
   protected const float FIXED_UPDATE_OFFSET_SMOOTHING_DELAY = 0.1f;
     void Awake() {
-      connection = Connection.GetConnection();
+      leap_controller_ = new Controller();
 
     }
 
@@ -41,7 +41,7 @@ namespace Leap {
 
     // Update is called once per frame
     void Update() {
-      CurrentFrame = connection.Frames.Get();
+      CurrentFrame = leap_controller_.Frame();
       //Debug.Log(CurrentFrame);
 
       //perFrameFixedUpdateOffset_ contains the maximum offset of this Update cycle
@@ -58,9 +58,9 @@ namespace Leap {
       float correctedTimestamp = (Time.fixedTime + smoothedFixedUpdateOffset_.value) * S_TO_NS;
 
       //Search the leap history for a frame with a timestamp closest to the corrected timestamp
-      Frame closestFrame = connection.Frames.Get();
+      Frame closestFrame = leap_controller_.Frame();
       for (int searchHistoryIndex = 1; searchHistoryIndex < 60; searchHistoryIndex++) {
-        Frame historyFrame = connection.Frames.Get(searchHistoryIndex);
+        Frame historyFrame = leap_controller_.Frame(searchHistoryIndex);
 
         //If we reach an invalid frame, terminate the search
         if (!historyFrame.IsValid) {
@@ -81,7 +81,7 @@ namespace Leap {
       return closestFrame; 
     }
     void OnDestroy() {
-      connection.Stop();
+      //leap_controller_.Stop();
     }
   }
 }
