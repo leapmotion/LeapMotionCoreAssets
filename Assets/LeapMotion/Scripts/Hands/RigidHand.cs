@@ -18,8 +18,6 @@ public class RigidHand : SkeletalHand {
   public float filtering = 0.5f;
 
   public override void InitHand() {
-    Debug.Log("RigidHand.InitHand()");
-
     base.InitHand();
   }
 
@@ -27,8 +25,6 @@ public class RigidHand : SkeletalHand {
 
     for (int f = 0; f < fingers.Length; ++f) {
       if (fingers[f] != null) {
-        Debug.Log("RigidHand.UpdateHand() fingers");
-
         fingers[f].UpdateFinger();
       }
     }

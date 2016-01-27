@@ -6,6 +6,7 @@ namespace Leap {
     HandRepresentation
   {
     HandPool parent;
+    HandFinishBehavior handFinishBehavior;
 
   
     public HandProxy(HandPool parent, HandModel handModel, Leap.Hand hand) :
@@ -15,11 +16,15 @@ namespace Leap {
       this.handModel = handModel;
       handModel.SetLeapHand(hand);
       handModel.InitHand();
+      handFinishBehavior = handModel.GetComponent<HandFinishBehavior>();
       Debug.Log("handProxy Constructor ------------------------------");
     }
 
     public override void Finish() {
       Debug.Log("HandProxy Finishing");
+      if (handFinishBehavior) {
+        handFinishBehavior.HandFinish();
+      }
       parent.ModelPool.Add(handModel);
       handModel = null;
     }
