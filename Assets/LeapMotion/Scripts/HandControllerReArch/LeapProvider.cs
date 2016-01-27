@@ -27,6 +27,16 @@ namespace Leap {
   protected const float S_TO_NS = 1e6f;
   /** How much smoothing to use when calculating the FixedUpdate offset. */
   protected const float FIXED_UPDATE_OFFSET_SMOOTHING_DELAY = 0.1f;
+
+  /** Set true if the Leap Motion hardware is mounted on an HMD; otherwise, leave false. */
+  public bool isHeadMounted = false;
+
+  public bool overrideDeviceType = false;
+
+  /** If overrideDeviceType is enabled, the hand controller will return a device of this type. */
+  public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Peripheral;
+
+  private bool flag_initialized_ = false;
     void Awake() {
       leap_controller_ = new Controller();
 
@@ -38,6 +48,75 @@ namespace Leap {
       //set empty frame
       CurrentFrame = new Frame();
     }
+
+    /** 
+* Initializes the Leap Motion policy flags.
+* The POLICY_OPTIMIZE_HMD flag improves tracking for head-mounted devices.
+*/
+    void InitializeFlags() {
+      //Optimize for top-down tracking if on head mounted display.
+      if (isHeadMounted)
+        leap_controller_.SetPolicy(Controller.PolicyFlag.POLICY_OPTIMIZE_HMD);
+      else
+        leap_controller_.ClearPolicy(Controller.PolicyFlag.POLICY_OPTIMIZE_HMD);
+
+      flag_initialized_ = true;
+    }
+
+    /** Returns the Leap Controller instance. */
+    public Controller GetLeapController() {
+#if UNITY_EDITOR
+      //Do a null check to deal with hot reloading
+      if (leap_controller_ == null) {
+        leap_controller_ = new Controller();
+        InitializeFlags();
+      }
+#endif
+      return leap_controller_;
+    }
+    /** True, if the Leap Motion hardware is plugged in and this application is connected to the Leap Motion service. */
+    public bool IsConnected() {
+      return GetLeapController().IsConnected;
+    }
+
+    /** Returns information describing the device hardware. */
+    public LeapDeviceInfo GetDeviceInfo() {
+      if (overrideDeviceType) {
+        return new LeapDeviceInfo(overrideDeviceTypeWith);
+      }
+
+      DeviceList devices = GetLeapController().Devices;
+      if (devices.Count == 1) {
+        LeapDeviceInfo info = new LeapDeviceInfo(LeapDeviceType.Invalid);
+        // TODO: DeviceList does not tell us the device type. Dragonfly serial starts with "LE" and peripheral starts with "LP"
+        if (devices[0].SerialNumber.Length >= 2) {
+          switch (devices[0].SerialNumber.Substring(0, 2)) {
+            case ("LP"):
+              info = new LeapDeviceInfo(LeapDeviceType.Peripheral);
+              break;
+            case ("LE"):
+              info = new LeapDeviceInfo(LeapDeviceType.Dragonfly);
+              break;
+            default:
+              break;
+          }
+        }
+
+        // TODO: Add baseline & offset when included in API
+        // NOTE: Alternative is to use device type since all parameters are invariant
+        info.isEmbedded = devices[0].IsEmbedded;
+        info.horizontalViewAngle = devices[0].HorizontalViewAngle * Mathf.Rad2Deg;
+        info.verticalViewAngle = devices[0].VerticalViewAngle * Mathf.Rad2Deg;
+        info.trackingRange = devices[0].Range / 1000f;
+        info.serialID = devices[0].SerialNumber;
+        return info;
+      }
+      else if (devices.Count > 1) {
+        return new LeapDeviceInfo(LeapDeviceType.Peripheral);
+      }
+      return new LeapDeviceInfo(LeapDeviceType.Invalid);
+    }
+
 
     // Update is called once per frame
     void Update() {
@@ -81,7 +160,19 @@ namespace Leap {
       return closestFrame; 
     }
     void OnDestroy() {
-      //leap_controller_.Stop();
+      //DestroyAllHands();
+      leap_controller_.StopConnection();
+    }
+    void OnApplicationPause(bool isPaused) {
+      Debug.Log("Pause " + isPaused);
+      if (isPaused)
+        leap_controller_.StopConnection();
+      else
+        leap_controller_.StartConnection();
+    }
+
+    void OnApplicationQuit() {
+      leap_controller_.StopConnection();
     }
   }
 }
