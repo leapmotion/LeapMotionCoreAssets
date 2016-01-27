@@ -10,7 +10,7 @@ namespace Leap {
     public bool mirrorZAxis = false;
     /** The scale factors for hand movement. Set greater than 1 to give the hands a greater range of motion. */
     public Vector3 handMovementScale = Vector3.one;
-    
+
     public LeapProvider Provider { get; set; }
     public HandFactory Factory { get; set; }
 
@@ -68,7 +68,16 @@ namespace Leap {
       Provider = GetComponent<LeapProvider>();
       Factory = GetComponent<HandFactory>();
     }
-
+    /**
+    * Turns off collisions between the specified GameObject and all hands.
+    * Subject to the limitations of Unity Physics.IgnoreCollisions(). 
+    * See http://docs.unity3d.com/ScriptReference/Physics.IgnoreCollision.html.
+    */
+    public void IgnoreCollisionsWithHands(GameObject to_ignore, bool ignore = true) {
+      foreach (HandRepresentation rep in physicsReps.Values) {
+        Leap.Utils.IgnoreCollisions(rep.handModel.gameObject, to_ignore, ignore);
+      }
+    }
     void Update() {
       Frame frame = Provider.CurrentFrame;
       if (frame.Id != prev_graphics_id_ && graphicsEnabled) {
@@ -78,7 +87,7 @@ namespace Leap {
       }
     }
 
-    void UpdateHandRepresentations(Dictionary<int, HandRepresentation> all_hand_reps, HandModel.ModelType modelType ) {
+    void UpdateHandRepresentations(Dictionary<int, HandRepresentation> all_hand_reps, HandModel.ModelType modelType) {
       foreach (Leap.Hand curHand in Provider.CurrentFrame.Hands) {
         // If we've mirrored since this hand was updated, destroy it.
         if (all_hand_reps.ContainsKey(curHand.Id) &&
