@@ -3,14 +3,16 @@ using System.Collections;
 
 namespace Leap {
   public class HandDrop : HandFinishBehavior {
-    public Vector3 startingPosition;
+    public Vector3 startingPalmPosition;
     public Quaternion startingOrientation;
     public Vector3 startingScale;
+    private Transform palm;
 
     // Use this for initialization
     void Awake() {
-      startingPosition = transform.localPosition;
-      startingOrientation = transform.rotation;
+      palm = GetComponent<HandModel>().palm;
+      startingPalmPosition = palm.localPosition;
+      startingOrientation = palm.localRotation;
       startingScale = transform.localScale;
     }
 
@@ -19,19 +21,18 @@ namespace Leap {
     }
 
     private IEnumerator LerpToStart() {
-      transform.localScale = startingScale;
-      float speed = 1.0F;
-      Vector3 dropPosition = transform.localPosition;
+      Vector3 droppedPosition = palm.localPosition;
+      Quaternion droppedOrientation = palm.localRotation;
+      float duration = 1.0f;
+      float startTime = Time.time;
+      float endTime = startTime + duration;
 
-      float elapsedTime = 0f;
-
-      while (elapsedTime < speed) {
-        Debug.Log("Dropping");
-        transform.localPosition = Vector3.Lerp(dropPosition, startingPosition, (elapsedTime / speed));
-        elapsedTime += Time.deltaTime;
-        yield return new WaitForEndOfFrame();
+      while (Time.time <= endTime) {
+        float t = (Time.time - startTime) / duration;
+        palm.localPosition = Vector3.Lerp(droppedPosition, startingPalmPosition, t);
+        palm.localRotation = Quaternion.Lerp(droppedOrientation, startingOrientation, t);
+        yield return null;
       }
-
     }
   }
 }
