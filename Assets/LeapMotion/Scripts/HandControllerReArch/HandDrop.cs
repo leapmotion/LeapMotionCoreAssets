@@ -3,9 +3,9 @@ using System.Collections;
 
 namespace Leap {
   public class HandDrop : HandFinishBehavior {
-    public Vector3 startingPalmPosition;
-    public Quaternion startingOrientation;
-    public Vector3 startingScale;
+    private Vector3 startingPalmPosition;
+    private Quaternion startingOrientation;
+    private Vector3 startingScale;
     private Transform palm;
 
     // Use this for initialization
@@ -18,6 +18,9 @@ namespace Leap {
 
     public override void HandFinish() {
       StartCoroutine(LerpToStart());
+    }
+    public override void Resest() {
+      StopAllCoroutines();
     }
 
     private IEnumerator LerpToStart() {

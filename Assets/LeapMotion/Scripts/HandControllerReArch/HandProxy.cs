@@ -17,6 +17,7 @@ namespace Leap {
       handModel.SetLeapHand(hand);
       handModel.InitHand();
       handFinishBehavior = handModel.GetComponent<HandFinishBehavior>();
+      handFinishBehavior.Resest();
       Debug.Log("handProxy Constructor ------------------------------");
     }
 
