@@ -17,7 +17,6 @@ namespace Leap {
     public Dictionary<int, HandRepresentation> graphicsReps = new Dictionary<int, HandRepresentation>();
     public Dictionary<int, HandRepresentation> physicsReps = new Dictionary<int, HandRepresentation>();
 
-
     /** The smoothed offset between the FixedUpdate timeline and the Leap timeline.  
  * Used to provide temporally correct frames within FixedUpdate */
     private SmoothedFloat smoothedFixedUpdateOffset_ = new SmoothedFloat();
@@ -79,23 +78,30 @@ namespace Leap {
       }
     }
 
-    // Update is called once per frame
     void UpdateHandRepresentations(Dictionary<int, HandRepresentation> all_hand_reps, HandModel.ModelType modelType ) {
       foreach (Leap.Hand curHand in Provider.CurrentFrame.Hands) {
+        // If we've mirrored since this hand was updated, destroy it.
+        if (all_hand_reps.ContainsKey(curHand.Id) &&
+            all_hand_reps[curHand.Id].handModel.IsMirrored() != mirrorZAxis) {
+          all_hand_reps[curHand.Id].Finish();
+          all_hand_reps.Remove(curHand.Id);
+        }
+
         HandRepresentation rep;
         if (!all_hand_reps.TryGetValue(curHand.Id, out rep)) {
           rep = Factory.MakeHandRepresentation(curHand, modelType);
           if (rep != null) {
             all_hand_reps.Add(curHand.Id, rep);
+            rep.handModel.MirrorZAxis(mirrorZAxis);
 
             float hand_scale = MM_TO_M * curHand.PalmWidth / rep.handModel.handModelPalmWidth;
             rep.handModel.transform.localScale = hand_scale * Vector3.one;
             Debug.Log("reps.Add(" + curHand.Id + ", " + rep + ")");
           }
-
         }
         if (rep != null) {
           rep.IsMarked = true;
+          rep.handModel.MirrorZAxis(mirrorZAxis);
 
           float hand_scale = MM_TO_M * curHand.PalmWidth / rep.handModel.handModelPalmWidth;
           rep.handModel.transform.localScale = hand_scale * Vector3.one;
@@ -104,7 +110,6 @@ namespace Leap {
           rep.LastUpdatedTime = (int)Provider.CurrentFrame.Timestamp;
         }
       }
-
 
       //Mark-and-sweep or set difference implementation
       HandRepresentation toBeDeleted = null;
