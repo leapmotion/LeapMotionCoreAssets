@@ -17,7 +17,6 @@ namespace Leap {
    * Used to provide temporally correct frames within FixedUpdate */
   private SmoothedFloat smoothedFixedUpdateOffset_ = new SmoothedFloat();
   /** The maximum offset calculated per frame */
-  [HideInInspector]
   public float PerFrameFixedUpdateOffset;
      /** Conversion factor for millimeters to meters. */
   protected const float MM_TO_M = 1e-3f;

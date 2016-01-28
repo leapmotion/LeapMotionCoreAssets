@@ -5,31 +5,6 @@ using Leap;
 
 namespace Leap {
   public class LeapHandController : MonoBehaviour {
-    protected static List<LeapHandController> _mains = new List<LeapHandController>();
-
-    /* The LeapHandController.Main property returns an instance of a LeapHandController with it's isMain property set
-     * to true.  If there are multiple main Hand Controllers this method will choose one in an undefined way.
-     */
-    public static LeapHandController Main {
-      get {
-        if (_mains.Count == 0) {
-          Debug.LogWarning("Could not find an active main Hand Controller.  One may not exist, or may not have been enabled yet.");
-          return null;
-        }
-        return _mains[0];
-      }
-    }
-
-    protected static List<LeapHandController> _all = new List<LeapHandController>();
-
-    /* Returns a list of all currently active LeapHandController instances.
-     */
-    public static List<LeapHandController> All {
-      get {
-        return _all;
-      }
-    }
-
     public bool isHeadMounted = false;
     /** Reverses the z axis. */
     public bool mirrorZAxis = false;
@@ -58,9 +33,6 @@ namespace Leap {
     protected const float S_TO_NS = 1e6f;
     /** How much smoothing to use when calculating the FixedUpdate offset. */
     protected const float FIXED_UPDATE_OFFSET_SMOOTHING_DELAY = 0.1f;
-
-    /** There always should be exactly one main HandController in the scene, which is reffered to by the HandController.Main getter. */
-    public bool isMain = true;
 
     protected bool graphicsEnabled = true;
     protected bool physicsEnabled = true;
@@ -101,21 +73,6 @@ namespace Leap {
     * Subject to the limitations of Unity Physics.IgnoreCollisions(). 
     * See http://docs.unity3d.com/ScriptReference/Physics.IgnoreCollision.html.
     */
-    
-    /* Calling this sets this Hand Controller as the main Hand Controller.  If there was a previous main 
-     * Hand Controller it is demoted and is no longer the main Hand Controller.
-     */
-    public void SetMain(bool shouldBeMain) {
-      if (isMain != shouldBeMain) {
-        isMain = shouldBeMain;
-        if (isMain) {
-          _mains.Add(this);
-        }
-        else {
-          _mains.Remove(this);
-        }
-      }
-    }
     public void IgnoreCollisionsWithHands(GameObject to_ignore, bool ignore = true) {
       foreach (HandRepresentation rep in physicsReps.Values) {
         Leap.Utils.IgnoreCollisions(rep.handModel.gameObject, to_ignore, ignore);
