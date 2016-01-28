@@ -2,6 +2,7 @@
 using UnityEngine.VR;
 using System;
 using System.Collections.Generic;
+using Leap;
 
 /// <summary>
 /// Implements spatial alignment of cameras and synchronization with images
@@ -42,7 +43,10 @@ public class LeapVRTemporalWarping : MonoBehaviour {
       };
     }
   }
-
+  [SerializeField]
+  LeapHandController leapHandController;
+  [SerializeField]
+  LeapProvider provider;
   // Spatial recalibration
   [Tooltip("Key to recenter the VR tracking space.")]
   [SerializeField]
@@ -166,7 +170,7 @@ public class LeapVRTemporalWarping : MonoBehaviour {
   }
 
   public bool TryGetWarpedTransform(WarpedAnchor anchor, out Vector3 rewoundPosition, out Quaternion rewoundRotation) {
-    long timestamp = HandController.Main.GetFrame().Timestamp;
+    long timestamp = provider.CurrentFrame.Timestamp;
     if (TryGetWarpedTransform(anchor, out rewoundPosition, out rewoundRotation, timestamp)) {
       return true;
     }
@@ -177,8 +181,8 @@ public class LeapVRTemporalWarping : MonoBehaviour {
   }
 
   protected void Start() {
-    if (HandController.Main == null) {
-      Debug.LogWarning("Camera alignment requires an active main HandController in the scene -> enabled = false");
+    if (leapHandController == null) {
+      Debug.LogWarning("Camera alignment requires an active LeapHandController -> enabled = false");
       enabled = false;
       return;
     }
@@ -186,7 +190,7 @@ public class LeapVRTemporalWarping : MonoBehaviour {
     //Get a callback right as rendering begins for this frame so we can update the history and warping.
     LeapVRCameraControl.OnValidCameraParams += onValidCameraParams;
 
-    deviceInfo = HandController.Main.GetDeviceInfo();
+    deviceInfo = provider.GetDeviceInfo();
     if (deviceInfo.type == LeapDeviceType.Invalid) {
       Debug.LogWarning("Invalid Leap Device -> enabled = false");
       enabled = false;
@@ -228,7 +232,7 @@ public class LeapVRTemporalWarping : MonoBehaviour {
   }
 
   private void updateHistory() {
-    long leapNow = HandController.Main.GetLeapController().Now();
+    long leapNow = provider.GetLeapController().Now();
     _history.Add(new TransformData() {
       leapTime = leapNow,
       localPosition = InputTracking.GetLocalPosition(VRNode.CenterEye),
@@ -251,7 +255,7 @@ public class LeapVRTemporalWarping : MonoBehaviour {
     Quaternion currCenterRot = _trackingAnchor.rotation * InputTracking.GetLocalRotation(VRNode.CenterEye);
 
     //Get the transform at the time when the latest image was captured
-    long rewindTime = HandController.Main.GetFrame().Timestamp;
+    long rewindTime = provider.CurrentFrame.Timestamp;
 
     TransformData past = transformAtTime(rewindTime);
     Vector3 pastCenterPos = _trackingAnchor.TransformPoint(past.localPosition);

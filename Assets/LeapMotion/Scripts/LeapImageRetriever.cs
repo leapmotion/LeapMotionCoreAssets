@@ -31,7 +31,8 @@ public class LeapImageRetriever : MonoBehaviour {
       return _instance;
     }
   }
-
+  [SerializeField]
+  LeapProvider provider;
   [SerializeField]
   [FormerlySerializedAs("gammaCorrection")]
   private float _gammaCorrection = 1.0f;
@@ -275,8 +276,8 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   void Start() {
-    if (HandController.Main == null) {
-      Debug.LogWarning("Cannot use LeapImageRetriever if there is no main HandController!");
+    if (provider == null) {
+      Debug.LogWarning("Cannot use LeapImageRetriever if there is no LeapProvider!");
       enabled = false;
       return;
     }
@@ -284,7 +285,7 @@ public class LeapImageRetriever : MonoBehaviour {
     ApplyGammaCorrectionValues();
     ApplyCameraProjectionValues();
 
-    var controller = HandController.Main.GetLeapController();
+    var controller = provider.GetLeapController();
     controller.SetPolicy(Controller.PolicyFlag.POLICY_IMAGES);
   }
 
@@ -295,7 +296,7 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   void Update() {
-    Frame imageFrame = HandController.Main.GetFrame();
+    Frame imageFrame = provider.CurrentFrame;
 
     using (ImageList brightList = imageFrame.Images)
     using (ImageList rawList = imageFrame.RawImages) {
