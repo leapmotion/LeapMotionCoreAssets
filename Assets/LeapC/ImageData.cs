@@ -14,7 +14,8 @@ namespace LeapInternal
         public Int64 frame_id;
         public Int64 timestamp;
 
-        public Image.FormatType type;
+        public Image.ImageType type;
+        public Image.FormatType format;
         public Image.PerspectiveType perspective;
         public UInt32 bpp;
         public UInt32 width;
@@ -36,7 +37,8 @@ namespace LeapInternal
             this.index = index;
         }
 
-        public void CompleteImageData(Image.FormatType type,
+        public void CompleteImageData(Image.ImageType type,
+                                      Image.FormatType format,
                                       Image.PerspectiveType perspective,
                                       UInt32 bpp, 
                                       UInt32 width, 
@@ -50,7 +52,8 @@ namespace LeapInternal
                                       DistortionData distortionData,
                                       int distortion_size,
                                       UInt64 distortion_matrix_version){
-            this.type = type; 
+            this.type = type;
+            this.format = format;
             this.perspective = perspective;
             this.bpp = bpp;
             this.width = width;
@@ -84,6 +87,7 @@ namespace LeapInternal
             copy.pixelBuffer = new byte[pixelBuffer.Length];
             copy.index = this.index;
             copy.type = this.type; 
+            copy.format = this.format;
             copy.perspective = this.perspective; 
             copy.bpp = this.bpp;
             copy.width = this.width;

@@ -287,6 +287,7 @@ public class LeapImageRetriever : MonoBehaviour {
 
     var controller = provider.GetLeapController();
     controller.SetPolicy(Controller.PolicyFlag.POLICY_IMAGES);
+    controller.SetPolicy(Controller.PolicyFlag.POLICY_RAW_IMAGES);
   }
 
   void OnDestroy() {
@@ -313,10 +314,10 @@ public class LeapImageRetriever : MonoBehaviour {
         _missedImages = 0;
       }
       
-      using (Image leftBright = brightList[LEFT_IMAGE_INDEX])
-      using (Image rightBright = brightList[RIGHT_IMAGE_INDEX])
-      using (Image leftRaw = rawList[LEFT_IMAGE_INDEX])
-      using (Image rightRaw = rawList[RIGHT_IMAGE_INDEX]) {
+      using (Image leftBright = brightList.IRLeft)
+      using (Image rightBright = brightList.IRRight)
+      using (Image leftRaw = brightList.RawLeft)
+      using (Image rightRaw = brightList.RawRight) {
         if (_eyeTextureData.CheckStale(leftBright, rightBright, leftRaw, rightRaw)) {
           _eyeTextureData.Reconstruct(leftBright, rightBright, leftRaw, rightRaw);
         }

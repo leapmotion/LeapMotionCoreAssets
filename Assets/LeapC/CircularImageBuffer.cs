@@ -10,54 +10,60 @@ namespace LeapInternal
     {
         public CircularImageBuffer(int capacity):base(capacity){}
 
-        public bool GetLatestImages(out Image left, out Image right){
-            bool giveUp = false;
-            for(int i = 0; i < this.Count; i ++){
-                Image firstImage = this.Get (i);
-                for(int j = i; j < this.Count; j++){
-                    Image nextImage = this.Get (j);
-                    if(firstImage.SequenceId == nextImage.SequenceId){
-                        left = (firstImage.Id == 0) ? firstImage : nextImage;
-                        right = (nextImage.Id == 0) ? firstImage : nextImage;
-                        return true;
-                    }
-                    if(nextImage.SequenceId > firstImage.SequenceId){
-                        giveUp = true;
-                        break;
-                    }
-                }
-                if(giveUp == true)
-                    break;
+        private Image _latestIRLeft;
+        private Image _latestIRRight;
+        private Image _latestRawLeft;
+        private Image _latestRawRight;
+
+        public override void Put (Image item)
+        {
+            base.Put (item);
+            if(item.Type == Image.ImageType.DEFAULT){
+                if(item.Perspective == Image.PerspectiveType.STEREO_LEFT) _latestIRLeft = item;
+                if(item.Perspective == Image.PerspectiveType.STEREO_RIGHT) _latestIRRight = item;
+            } else if (item.Type == Image.ImageType.RAW){
+                if(item.Perspective == Image.PerspectiveType.STEREO_LEFT) _latestRawLeft = item;
+                if(item.Perspective == Image.PerspectiveType.STEREO_RIGHT) _latestRawRight = item;
             }
-            left = new Image();
-            right = new Image();
-            return false;
         }
 
-        public bool GetImagesForFrame(long frameId, out Image left, out Image right){
-            bool giveUp = false;
+        public ImageList GetLatestImages(){
+            ImageList latest = new ImageList();
+            latest.IRLeft = _latestIRLeft;
+            latest.IRRight = _latestIRRight;
+            latest.RawLeft = _latestRawLeft;
+            latest.RawRight = _latestRawRight;
+            return latest;
+        }
+
+        public void GetLatestImages(ImageList receiver){
+            if(receiver == null)
+                receiver = new ImageList();
+            receiver.IRLeft = _latestIRLeft;
+            receiver.IRRight = _latestIRRight;
+            receiver.RawLeft = _latestRawLeft;
+            receiver.RawRight = _latestRawRight;
+        }
+
+        public void GetLatestImages(out Image irLeft, out Image irRight, out Image rawLeft, out Image rawRight){
+            irLeft = _latestIRLeft;
+            irRight = _latestIRRight;
+            rawLeft = _latestRawLeft;
+            rawRight = _latestRawRight;
+        }
+
+        public int GetImagesForFrame(long frameId, ImageList receiver){
+            if( receiver == null)
+                receiver = new ImageList();
+            int foundCount = 0;
             for(int i = 0; i < this.Count; i ++){
-                Image firstImage = this.Get (i);
-                if(firstImage.SequenceId == frameId){
-                    for(int j = i; j < this.Count; j++){
-                        Image nextImage = this.Get (j);
-                        if(firstImage.SequenceId == nextImage.SequenceId){
-                            left = (firstImage.Id == 0) ? firstImage : nextImage;
-                            right = (nextImage.Id == 0) ? firstImage : nextImage;
-                            return true;
-                        }
-                        if(nextImage.SequenceId > firstImage.SequenceId){
-                            giveUp = true;
-                            break;
-                        }
-                    }
-                    if(giveUp == true)
-                        break;
-                }
+                Image image = this.Get (i);
+                if(image.SequenceId == frameId){ 
+                    receiver.Add (image);
+                    foundCount++;
+                } else if(image.SequenceId < frameId) break;
             }
-            left = new Image();
-            right = new Image();
-            return false;
+            return foundCount;
         }
     }
 }

@@ -463,15 +463,7 @@ namespace Leap
                 if (_images == null)
                     _images = new ImageList ();
 
-                Image left;
-                Image right;
-                bool found = _connection.GetLatestImagePair(out left, out right);
-                if(found){
-                    _images.Clear();
-                    
-                    _images.Add(left);
-                    _images.Add(right);
-                }
+                _connection.GetLatestImages(ref _images);
                 return _images;
             } 
         }
@@ -479,30 +471,7 @@ namespace Leap
         //TODO Get RawImages from LeapC
         public ImageList RawImages{
             get {
-                if (_rawImages == null)
-                    _rawImages = new ImageList ();
-                
-                Image left;
-                Image right;
-                bool found = _connection.GetLatestRawImagePair(out left, out right);
-                if(found){
-                    _rawImages.Clear();
-                    
-                    _rawImages.Add(left);
-                    _rawImages.Add(right);
-                }
-                return _rawImages;
-            }
-        }
-
-        public void GetImagesForFrame(long frameId, ref ImageList images) {
-            Image left;
-            Image right;
-            if(_connection.GetFrameImagePair(frameId, out left, out right)){
-                if(left.IsValid)
-                    images.Add(left);
-                if(right.IsValid)
-                    images.Add(right);
+                return Images.RawImages;
             }
         }
 
@@ -639,7 +608,7 @@ namespace Leap
         }
 
 
-
+        //Controller events
         protected virtual void OnInit(object sender, LeapEventArgs eventArgs){
             object senderObj = new object();
             Init.DispatchOnContext<LeapEventArgs>(senderObj, EventContext, eventArgs);
@@ -672,7 +641,7 @@ namespace Leap
             ServiceChange.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
         }
 
-        //Rebroadcasting events from connection
+        //Rebroadcasted events from connection
         protected virtual void OnFrame(object sender, FrameEventArgs eventArgs){
             FrameReady.DispatchOnContext<FrameEventArgs>(this, EventContext, eventArgs);
         }

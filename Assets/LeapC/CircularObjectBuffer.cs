@@ -25,15 +25,15 @@ namespace LeapInternal
 
         public CircularObjectBuffer(int capacity)
         {
-            this.array = new T[capacity];
-            this.current = 0;
             this.Capacity = capacity;
+            this.array = new T[this.Capacity];
+            this.current = 0;
             this.Count = 0;
             this.IsEmpty = true;
         }
 
         /** Put an item at the head of the list. Once full, this will overwrite the oldest item. */
-        public void Put(T item){
+        public virtual void Put(T item){
             if(!IsEmpty){
                 current++;
                 if(current >= Capacity){

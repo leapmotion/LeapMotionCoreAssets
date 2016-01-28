@@ -34,7 +34,7 @@ public class TemporalWarpingStatus : MonoBehaviour {
     }
 
     using(ImageList list = HandController.Main.GetFrame().Images){
-      using (Leap.Image image = list[0]) {
+      using (Leap.Image image = list.IRLeft) {
         float latency = HandController.Main.GetLeapController().Now() - image.Timestamp;
         _imageLatency.Update(latency, Time.deltaTime);
       }

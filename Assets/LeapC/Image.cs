@@ -48,6 +48,7 @@ namespace Leap
 
         public Image(ImageData data){
             this.imageData = data;
+            this.referenceIndex = data.index; //validates that image data hasn't been recycled
         }
 
         ~Image() {
@@ -376,12 +377,23 @@ namespace Leap
         public Image.FormatType Format {
             get {
                 if(IsValid)
-                    return imageData.type;
+                    return imageData.format;
 
                 return Image.FormatType.INFRARED;
             } 
         }
 
+        public Image.ImageType Type{
+            get{
+                return imageData.type;
+            }
+        }
+
+        public Image.PerspectiveType Perspective{
+            get{
+                return imageData.perspective;
+            }
+        }
 /**
      * The stride of the distortion map.
      *
@@ -501,7 +513,7 @@ namespace Leap
         public bool IsValid {
             get {
                 //If indexes are different, the ImageData object has been reused and is no longer valid for this image
-                return (this.imageData == null) || (this.referenceIndex == this.imageData.index); 
+                return (this.imageData != null) && (this.referenceIndex == this.imageData.index); 
             } 
         }
 
@@ -544,6 +556,12 @@ namespace Leap
             STEREO_LEFT = 1, //!< Left side of a stereo pair
             STEREO_RIGHT = 2, //!< Right side of a stereo pair
             MONO = 3 //!< Reserved for future use
+        }
+
+        public enum ImageType
+        {
+            DEFAULT,
+            RAW
         }
     }
 
