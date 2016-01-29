@@ -7,18 +7,19 @@
 using UnityEditor;
 using UnityEngine;
 using System.Collections;
+using Leap;
 
-[CustomEditor(typeof(HandController))]
-public class HandControllerEditor : Editor {
+[CustomEditor(typeof(LeapHandController))]
+public class LeapHandControllerEditor : Editor {
 
   private const float BOX_RADIUS = 0.45f;
   private const float BOX_WIDTH = 0.965f;
   private const float BOX_DEPTH = 0.6671f;
 
-  private HandController controller;
+  private LeapHandController controller;
 
   void OnEnable() {
-    controller = target as HandController;
+    controller = target as LeapHandController;
   }
 
   public void OnSceneGUI() {
@@ -101,11 +102,11 @@ public class HandControllerEditor : Editor {
             EditorGUILayout.PropertyField(properties);
           }
           break;
-        case "overrideDeviceTypeWith":
-          if (controller.overrideDeviceType && AdvancedMode._advancedModeEnabled) {
-            EditorGUILayout.PropertyField(properties);
-          }
-          break;
+        //case "overrideDeviceTypeWith":
+        //  if (controller.overrideDeviceType && AdvancedMode._advancedModeEnabled) {
+        //    EditorGUILayout.PropertyField(properties);
+        //  }
+        //  break;
         case "recordingAsset":
           drawRecorderProperty(properties);
           break;

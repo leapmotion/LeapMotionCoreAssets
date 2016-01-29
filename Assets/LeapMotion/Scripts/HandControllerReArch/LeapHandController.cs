@@ -62,6 +62,13 @@ namespace Leap {
     private long prev_graphics_id_ = 0;
     private long prev_physics_id_ = 0;
 
+    /** Draws the Leap Motion gizmo when in the Unity editor. */
+    void OnDrawGizmos() {
+      // Draws the little Leap Motion Controller in the Editor view.
+      Gizmos.matrix = Matrix4x4.Scale(GIZMO_SCALE * Vector3.one);
+      Gizmos.DrawIcon(transform.position, "leap_motion.png");
+    }
+
     // Use this for initialization
     void Start() {
       Provider = GetComponent<LeapProvider>();
