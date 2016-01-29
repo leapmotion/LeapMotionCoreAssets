@@ -10,6 +10,6 @@ public class HMRConfigurationManager : MonoBehaviour {
   private LMHeadMountedRigConfiguration[] _headMountedConfigurations;
 
   public GameObject _backgroundQuad;
-  public HandController _handController;
+  public LeapHandController _handController;
   public LeapVRTemporalWarping _aligner;
 }

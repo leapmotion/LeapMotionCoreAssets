@@ -10,6 +10,8 @@ public class TemporalWarpingStatus : MonoBehaviour {
 
   protected SmoothedFloat _imageLatency = new SmoothedFloat();
   protected SmoothedFloat _frameDelta = new SmoothedFloat();
+  [SerializeField]
+  LeapProvider Provider;
 
   void Start () {
     textField = GetComponent<Text> ();
@@ -33,9 +35,9 @@ public class TemporalWarpingStatus : MonoBehaviour {
       return;
     }
 
-    using(ImageList list = HandController.Main.GetFrame().Images){
+    using(ImageList list = Provider.CurrentFrame.Images){
       using (Leap.Image image = list.IRLeft) {
-        float latency = HandController.Main.GetLeapController().Now() - image.Timestamp;
+        float latency = Provider.GetLeapController().Now() - image.Timestamp;
         _imageLatency.Update(latency, Time.deltaTime);
       }
     }
