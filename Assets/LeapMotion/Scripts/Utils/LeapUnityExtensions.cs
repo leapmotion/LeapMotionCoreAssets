@@ -85,8 +85,10 @@ namespace Leap {
      * @param mirror If true, the operation is reflected along the z axis.
      */
     public static Quaternion Rotation(this Matrix matrix, bool mirror = false) {
-      Vector3 up = matrix.TransformDirection(LEAP_UP).ToUnity(mirror);
-      Vector3 forward = matrix.TransformDirection(LEAP_FORWARD).ToUnity(mirror);
+      //Vector3 up = matrix.TransformDirection(LEAP_UP).ToUnity(mirror);
+      //Vector3 forward = matrix.TransformDirection(LEAP_FORWARD).ToUnity(mirror);
+      Vector3 up = matrix.yBasis.ToUnity(mirror);
+      Vector3 forward = -matrix.zBasis.ToUnity(mirror);
       return Quaternion.LookRotation(forward, up);
     }
 
