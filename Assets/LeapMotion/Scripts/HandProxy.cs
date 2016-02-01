@@ -14,12 +14,21 @@ namespace Leap {
     {
       this.parent = parent;
       this.handModel = handModel;
-      handModel.SetLeapHand(hand);
-      handModel.InitHand();
+
+      // Check to see if the hand model has been initialized yet
+      if (handModel.GetLeapHand() == null) {
+        handModel.SetLeapHand(hand);
+        handModel.InitHand();
+      } else {
+        handModel.SetLeapHand(hand);
+      }
+
+
       handFinishBehavior = handModel.GetComponent<HandFinishBehavior>();
       if (handFinishBehavior) {
         handFinishBehavior.Resest();
       }
+
       Debug.Log("handProxy Constructor ------------------------------");
     }
 

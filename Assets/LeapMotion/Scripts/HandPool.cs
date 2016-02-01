@@ -31,29 +31,31 @@ namespace Leap {
 
     public override HandRepresentation MakeHandRepresentation(Leap.Hand hand, HandModel.ModelType modelType) {
       Debug.Log("Making a " + modelType + " hand");
-      //return new HandProxy(this, RightHandModel, hand);
+
       HandRepresentation handRep = null;
-      for (int i = 0; i < ModelPool.Count; i++)
-        if (ModelPool[i].Handedness == HandModel.Chirality.Right && hand.IsRight && ModelPool[i].HandModelType == modelType) {
-          Debug.Log("Found a " + modelType + " HandModel");
-          HandModel retVal = ModelPool[i];
-          ModelPool[i].SetController(controller_);
-          ModelPool.RemoveAt(i);
-          //ModelPool[i].SetLeapHand(hand);
-          //ModelPool[i].InitHand();
-          handRep = new HandProxy(this, retVal, hand);
-          return handRep;
-      }
-        else if (ModelPool[i].Handedness == HandModel.Chirality.Left && hand.IsLeft && ModelPool[i].HandModelType == modelType) {
-          Debug.Log("Found a " + modelType + " HandModel");
-          HandModel retVal = ModelPool[i];
-          ModelPool[i].SetController(controller_);
-          ModelPool.RemoveAt(i);
-          //ModelPool[i].SetLeapHand(hand);
-          //ModelPool[i].InitHand();
-          handRep = new HandProxy(this, retVal, hand);
-          return handRep;
+      for (int i = 0; i < ModelPool.Count; i++) {
+        HandModel model = ModelPool[i];
+
+        bool isCorrectHandedness;
+        if(model.Handedness == HandModel.Chirality.Either) {
+          isCorrectHandedness = true;
+        } else {
+          HandModel.Chirality handChirality = hand.IsRight ? HandModel.Chirality.Right : HandModel.Chirality.Left;
+          isCorrectHandedness = model.Handedness == handChirality;
         }
+
+        bool isCorrectModelType;
+        isCorrectModelType = model.HandModelType == modelType;
+
+        if(isCorrectHandedness && isCorrectModelType) {
+          Debug.Log("Found a " + modelType + " HandModel");
+          model.SetController(controller_);
+          ModelPool.RemoveAt(i);
+          handRep = new HandProxy(this, model, hand);
+          break;
+        }
+      }
+
       Debug.Log("HandPool.MakeHandRepresentation() returning: " + handRep);
       return handRep;
     }
