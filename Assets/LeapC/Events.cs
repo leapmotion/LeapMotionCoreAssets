@@ -90,12 +90,27 @@ using System.Runtime.InteropServices;
 
     public class ConfigChangeEventArgs : LeapEventArgs
     {
-        public ConfigChangeEventArgs():base(LeapEvent.EVENT_CONFIG_CHANGE){}
+        public ConfigChangeEventArgs(string config_key, bool succeeded, uint requestId):base(LeapEvent.EVENT_CONFIG_CHANGE){
+            this.ConfigKey = config_key;
+            this.Succeeded = succeeded;
+            this.RequestId = requestId;
+        }
+        public string ConfigKey{get; set;}
+        public bool Succeeded{get; set;}
+        public uint RequestId{get; set;}
+
     }
 
     public class SetConfigResponseEventArgs : LeapEventArgs
     {
-        public SetConfigResponseEventArgs():base(LeapEvent.EVENT_CONFIG_RESPONSE){}
+        public SetConfigResponseEventArgs(string config_key, ConfigValue value, uint requestId):base(LeapEvent.EVENT_CONFIG_RESPONSE){
+            this.ConfigKey = config_key;
+            this.Value = value;
+            this.RequestId = requestId;
+        }
+        public string ConfigKey{get; set;}
+        public ConfigValue Value{get; set;}
+        public uint RequestId{get; set;}
     }
 
     public class ConnectionEventArgs : LeapEventArgs
@@ -110,18 +125,23 @@ using System.Runtime.InteropServices;
 
     public class DeviceEventArgs : LeapEventArgs
     {
-        public DeviceEventArgs():base(LeapEvent.EVENT_DEVICE){}
+        public DeviceEventArgs(Device device):base(LeapEvent.EVENT_DEVICE){
+            this.Device = device;
+        }
+        public Device Device{get; set;}
     }
 
     public class DeviceFailureEventArgs : LeapEventArgs
     {
-        public DeviceFailureEventArgs():base(LeapEvent.EVENT_DEVICE_FAILURE){}
-    }
+        public DeviceFailureEventArgs(uint code, string message, string serial):base(LeapEvent.EVENT_DEVICE_FAILURE){
+            ErrorCode = code;
+            ErrorMessage = message;
+            DeviceSerialNumber = serial;
+        }
 
-    public class DeviceLostEventArgs : LeapEventArgs
-    {
-        public DeviceLostEventArgs():base(LeapEvent.EVENT_DEVICE_LOST){}
+        public uint ErrorCode{get; set;}
+        public string ErrorMessage{get; set;}
+        public string DeviceSerialNumber{get; set;}
     }
-
 
 }

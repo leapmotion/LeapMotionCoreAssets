@@ -21,9 +21,11 @@ namespace LeapInternal
             if(item.Type == Image.ImageType.DEFAULT){
                 if(item.Perspective == Image.PerspectiveType.STEREO_LEFT) _latestIRLeft = item;
                 if(item.Perspective == Image.PerspectiveType.STEREO_RIGHT) _latestIRRight = item;
+//                System.IO.File.WriteAllBytes(("default" + item.SequenceId + ".raw"), item.Data);
             } else if (item.Type == Image.ImageType.RAW){
                 if(item.Perspective == Image.PerspectiveType.STEREO_LEFT) _latestRawLeft = item;
                 if(item.Perspective == Image.PerspectiveType.STEREO_RIGHT) _latestRawRight = item;
+//                System.IO.File.WriteAllBytes(("raw" + item.SequenceId + ".raw"), item.Data);
             }
         }
 

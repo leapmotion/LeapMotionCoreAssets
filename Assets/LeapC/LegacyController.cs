@@ -178,7 +178,12 @@ namespace Leap
             //                listener.OnServiceDisconnect(this);
             //            }
         }
-        protected override void OnDeviceChange(object sender, LeapEventArgs eventArgs){
+        protected override void OnDevice(object sender, DeviceEventArgs eventArgs){
+            //            foreach(Listener listener in _listeners){
+            //                listener.OnDeviceChange(this);
+            //            }
+        }
+        protected override void OnDeviceLost(object sender, DeviceEventArgs eventArgs){
             //            foreach(Listener listener in _listeners){
             //                listener.OnDeviceChange(this);
             //            }

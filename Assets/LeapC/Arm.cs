@@ -38,7 +38,21 @@ public class Arm : Bone {
                             width,
                             type,
                             basis){}
-   /**
+
+        public new Arm TransformedCopy(Matrix trs){
+            float dScale = trs.zBasis.Magnitude;
+            float hScale = trs.xBasis.Magnitude;
+            return new Arm(trs.TransformPoint(PrevJoint),
+                trs.TransformPoint(NextJoint),
+                trs.TransformPoint(Center),
+                trs.TransformDirection(Direction),
+                Length * dScale,
+                Width * hScale,
+                Type,
+                trs * Basis);
+        }
+
+        /**
     * Compare Arm object equality.
     *
     * \include Arm_operator_equals.txt

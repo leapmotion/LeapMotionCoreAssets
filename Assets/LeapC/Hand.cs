@@ -115,6 +115,31 @@ namespace Leap
             _wristPosition = wristPosition;
         }
 
+        public Hand TransformedCopy(Matrix trs){
+            FingerList transformedFingers = new FingerList();
+            for(int f = 0; f < this.Fingers.Count; f++)
+                transformedFingers.Add(Fingers[f].TransformedCopy(trs));
+
+            float hScale = trs.xBasis.Magnitude;
+            return new Hand(_frameId,
+                _id,
+                _confidence,
+                _grabStrength,
+                _pinchStrength,
+                _palmWidth * hScale,
+                _isLeft,
+                _timeVisible,
+                _arm.TransformedCopy(trs),
+                new PointableList(), //TODO could remove the Pointable list since we only have fingers
+                transformedFingers,
+                trs.TransformPoint(_palmPosition),
+                trs.TransformPoint(_stabilizedPalmPosition),
+                trs.TransformPoint(_palmVelocity),
+                trs.TransformDirection(_palmNormal),
+                trs.TransformDirection(_direction),
+                trs.TransformPoint(_wristPosition)
+            );
+        }
         /**
      * The Pointable object with the specified ID associated with this hand.
      *

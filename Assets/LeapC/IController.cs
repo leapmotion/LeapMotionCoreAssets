@@ -31,7 +31,8 @@ namespace Leap {
          event EventHandler<LeapEventArgs> FocusLost;
          event EventHandler<LeapEventArgs> ServiceConnect;
          event EventHandler<LeapEventArgs> ServiceDisconnect;
-         event EventHandler<LeapEventArgs> DeviceChange;
+         event EventHandler<DeviceEventArgs> Device;
+         event EventHandler<DeviceEventArgs> DeviceLost;
          event EventHandler<ImageEventArgs> ImageReady;
          event EventHandler<LeapEventArgs> ServiceChange;
          event EventHandler<DeviceFailureEventArgs> DeviceFailure;

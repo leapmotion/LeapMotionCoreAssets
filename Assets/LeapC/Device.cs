@@ -67,8 +67,46 @@ namespace Leap
             _serialNumber = serialNumber;
         }
 
+        public void Update (
+            float horizontalViewAngle,
+            float verticalViewAngle,
+            float range,
+            float baseline,
+            bool isEmbedded,
+            bool isStreaming,
+            string serialNumber)
+        {
+            _horizontalViewAngle = horizontalViewAngle;
+            _verticalViewAngle = verticalViewAngle;
+            _range = range;
+            _baseline = baseline;
+            _isValid = true;
+            _isEmbedded = isEmbedded;
+            _isStreaming = isStreaming;
+            _serialNumber = serialNumber;
+        }
+
+        public void Update (Device updatedDevice)
+        {
+            _horizontalViewAngle = updatedDevice.HorizontalViewAngle;
+            _verticalViewAngle = updatedDevice.VerticalViewAngle;
+            _range = updatedDevice.Range;
+            _baseline = updatedDevice.Baseline;
+            _isValid = updatedDevice.IsValid;
+            _isEmbedded = updatedDevice.IsEmbedded;
+            _isStreaming = updatedDevice.IsStreaming;
+            _serialNumber = updatedDevice.SerialNumber;
+        }
+
         public bool UsesHandle(IntPtr handle){
             return handle == _hDevice;
+        }
+
+        public IntPtr Handle{
+            get{
+                return _hDevice;
+            }
+            private set{}
         }
         /**
      * The distance to the nearest edge of the Leap Motion controller's view volume.

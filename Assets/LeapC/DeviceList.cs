@@ -11,7 +11,6 @@ namespace Leap {
 using System;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
-    using LeapInternal;
 
   /**
    * The DeviceList class represents a list of Device objects.
@@ -38,44 +37,43 @@ public class DeviceList : List<Device> {
                 if(this[d].UsesHandle(deviceHandle))
                     return this[d];
             }
-            return new Device();
+            return null;
         }
 
-        public Device FindActiveDevice(){
-            if(Count == 1)
-                return this[0];
+        public Device ActiveDevice{
+            get{
+                if(Count == 1)
+                    return this[0];
 
-            for( int d = 0; d < this.Count; d++){
-                if(this[d].IsStreaming)
-                    return this[d];
+                for( int d = 0; d < this.Count; d++){
+                    if(this[d].IsStreaming)
+                        return this[d];
+                }
+                return new Device();
             }
-            return new Device();
         }
-
+        public void AddOrUpdate(Device device){
+            Device existingDevice = FindDeviceByHandle(device.Handle);
+            if(existingDevice != null){
+                existingDevice.Update(device);
+            } else {
+                this.Add(device);
+            }
+        }
     /**
-     * Appends the members of the specified DeviceList to this DeviceList.
-     * @param other A DeviceList object containing Device objects
-     * to append to the end of this DeviceList.
-     * @since 1.0
-     */
-//  public DeviceList Append(DeviceList other) {
-//            this.InsertRange(this.Count - 1, other);
-//    return this;
-//  }
-
-/**
      * Reports whether the list is empty.
      *
      * \include DeviceList_isEmpty.txt
      *
      * @returns True, if the list has no members.
      * @since 1.0
-     */  public bool IsEmpty {
-    get {
-      return this.Count == 0;
-    } 
-  }
+     */  
+     public bool IsEmpty {
+        get {
+          return this.Count == 0;
+        } 
+     }
 
-}
+  }
 
 }

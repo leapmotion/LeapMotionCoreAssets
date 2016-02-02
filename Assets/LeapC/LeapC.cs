@@ -455,15 +455,15 @@ namespace LeapInternal
         [FieldOffset(4)]
         public bool boolValue;
         [FieldOffset(4)]
-        public Int32 iValue;
+        public Int32 intValue;
         [FieldOffset(4)]
-        public float fValue;
+        public float floatValue;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack=1, CharSet = CharSet.Ansi)]
     public struct LEAP_VARIANT_REF_TYPE {
         public eLeapValueType type;
-        public string strValue;
+        public string stringValue;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack=1)]
@@ -525,7 +525,7 @@ namespace LeapInternal
 		public static extern eLeapRS  GetDeviceInfo (IntPtr hDevice, out LEAP_DEVICE_INFO info);
 
 		[DllImport("LeapC", EntryPoint="LeapSetPolicyFlags")]
-        public static extern eLeapRS  SetPolicyFlags (IntPtr hConnection, UInt64 set, UInt64 clear, out UInt64 prior);
+        public static extern eLeapRS  SetPolicyFlags (IntPtr hConnection, UInt64 set, UInt64 clear);
 
 		[DllImport("LeapC", EntryPoint="LeapSetDeviceFlags")]
 		public static extern eLeapRS  SetDeviceFlags (IntPtr hDevice, UInt64 set, UInt64 clear, out UInt64 prior);
@@ -553,34 +553,34 @@ namespace LeapInternal
         public static extern eLeapRS RequestConfigValue(IntPtr hConnection, string name, out UInt32 request_id);
 
         // TODO: refactor this and move the following helper functions to somewhere else
-        public static eLeapRS SaveBoolConfigValue(IntPtr hConnection, string key, bool value, out UInt32 requestId){
+        public static eLeapRS SaveConfigValue(IntPtr hConnection, string key, bool value, out UInt32 requestId){
             LEAP_VARIANT_VALUE_TYPE valueStruct; //This is a C# approximation of a C union
             valueStruct.type = eLeapValueType.eLeapValueType_Boolean;
-            valueStruct.fValue =  0; //Must set all these values, but only the last one matters since they are in a union
-            valueStruct.iValue = 0;
+            valueStruct.floatValue =  0; //Must set all these values, but only the last one matters since they are in a union
+            valueStruct.intValue = 0;
             valueStruct.boolValue = value;
             return LeapC.SaveConfigWithValueType(hConnection, key, valueStruct, out requestId);
         }
-        public static eLeapRS SaveIntConfigValue(IntPtr hConnection, string key, Int32 value, out UInt32 requestId){
+        public static eLeapRS SaveConfigValue(IntPtr hConnection, string key, Int32 value, out UInt32 requestId){
             LEAP_VARIANT_VALUE_TYPE valueStruct;
             valueStruct.type = eLeapValueType.eLeapValueType_Int32;
-            valueStruct.fValue = 0; //Must set all these values, but only the last one matters since they are in a union
+            valueStruct.floatValue = 0; //Must set all these values, but only the last one matters since they are in a union
             valueStruct.boolValue = false;
-            valueStruct.iValue = value;
+            valueStruct.intValue = value;
             return LeapC.SaveConfigWithValueType(hConnection, key, valueStruct, out requestId);
         }
-        public static eLeapRS SaveFloatConfigValue(IntPtr hConnection, string key, float value, out UInt32 requestId){
+        public static eLeapRS SaveConfigValue(IntPtr hConnection, string key, float value, out UInt32 requestId){
             LEAP_VARIANT_VALUE_TYPE valueStruct;
             valueStruct.type = eLeapValueType.eleapValueType_Float;
-            valueStruct.iValue = 0; //Must set all these values, but only the last one matters since they are in a union
+            valueStruct.intValue = 0; //Must set all these values, but only the last one matters since they are in a union
             valueStruct.boolValue = false;
-            valueStruct.fValue = value;
+            valueStruct.floatValue = value;
             return LeapC.SaveConfigWithValueType(hConnection, key, valueStruct, out requestId);
         }
-        public static eLeapRS SaveStrConfigValue(IntPtr hConnection, string key, string value, out UInt32 requestId){
+        public static eLeapRS SaveConfigValue(IntPtr hConnection, string key, string value, out UInt32 requestId){
             LEAP_VARIANT_REF_TYPE valueStruct;
             valueStruct.type = eLeapValueType.eLeapValueType_String;
-            valueStruct.strValue = value;
+            valueStruct.stringValue = value;
             return LeapC.SaveConfigWithRefType(hConnection, key, valueStruct, out requestId);
         }
         private static eLeapRS SaveConfigWithValueType(IntPtr hConnection, string key, LEAP_VARIANT_VALUE_TYPE valueStruct, out UInt32 requestId){

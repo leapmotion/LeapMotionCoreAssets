@@ -68,6 +68,7 @@ namespace Leap
         ImageList _images;
         ImageList _rawImages;
         bool _disposed = false;
+        Config _config;
 
         public SynchronizationContext EventContext{get; set;}
 
@@ -80,7 +81,8 @@ namespace Leap
         public event EventHandler<LeapEventArgs> FocusLost;
         public event EventHandler<LeapEventArgs> ServiceConnect;
         public event EventHandler<LeapEventArgs> ServiceDisconnect;
-        public event EventHandler<LeapEventArgs> DeviceChange;
+        public event EventHandler<DeviceEventArgs> Device;
+        public event EventHandler<DeviceEventArgs> DeviceLost;
         public event EventHandler<ImageEventArgs> ImageReady;
         public event EventHandler<LeapEventArgs> ServiceChange;
         public event EventHandler<DeviceFailureEventArgs> DeviceFailure;
@@ -107,12 +109,10 @@ namespace Leap
             
             if (disposing) {
                 // Free any other managed objects here.
-                Logger.Log ("Disposing managed");
             }
             
             // Free any unmanaged objects here.
             //
-            Logger.Log ("Disposing rest");
             _disposed = true;
         }
         /**
@@ -127,17 +127,19 @@ namespace Leap
         public Controller ():this(0){}
 
         public Controller(int connectionKey){
-            Logger.Log ("Creating controler with connectionKey: " + connectionKey);
             EventContext = SynchronizationContext.Current;
             _connection = Connection.GetConnection(connectionKey);
 
             _connection.LeapInit += OnInit;
+            _connection.LeapConnection += OnConnect;
             _connection.LeapFrame += OnFrame;
             _connection.LeapImageComplete += OnImages;
             _connection.LeapPolicyChange += OnPolicyChange;
             _connection.LeapLogEvent += OnLogEvent;
             _connection.LeapTrackedQuad += OnTrackedQuad;
             _connection.LeapConfigChange += OnConfigChange;
+            _connection.LeapDevice += OnDevice;
+            _connection.LeapDeviceLost += OnDeviceLost;
             _connection.LeapDeviceFailure += OnDeviceFailure;
 
             _connection.Start ();
@@ -248,9 +250,7 @@ namespace Leap
      */
         public Frame Frame (int history)
         {
-            Frame frame = _connection.Frames.Get (history);
-            frame.controller = this;
-            return frame;
+            return _connection.Frames.Get (history);
         }
 
         /**
@@ -277,6 +277,10 @@ namespace Leap
         public Frame Frame ()
         {
             return Frame (0);
+        }
+
+        public Frame GetTransformedFrame(Matrix trs, int history = 0){
+            return Frame(history).TransformedCopy(trs);
         }
 
         /**
@@ -442,7 +446,9 @@ namespace Leap
      */  
         public Config Config {
             get {
-                return new Config (this._connection.ConnectionKey);
+                if(_config == null)
+                    _config = new Config(this._connection.ConnectionKey);
+                return _config;
             } 
         }
 
@@ -634,8 +640,11 @@ namespace Leap
         protected virtual void OnServiceDisconnect(object sender, LeapEventArgs eventArgs){
             ServiceDisconnect.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
         }
-        protected virtual void OnDeviceChange(object sender, LeapEventArgs eventArgs){
-            DeviceChange.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
+        protected virtual void OnDevice(object sender, DeviceEventArgs eventArgs){
+            Device.DispatchOnContext<DeviceEventArgs>(this, EventContext, eventArgs);
+        }
+        protected virtual void OnDeviceLost(object sender, DeviceEventArgs eventArgs){
+            DeviceLost.DispatchOnContext<DeviceEventArgs>(this, EventContext, eventArgs);
         }
         protected virtual void OnServiceChange(object sender, LeapEventArgs eventArgs){
             ServiceChange.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);

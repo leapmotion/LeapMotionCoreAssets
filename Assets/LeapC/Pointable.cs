@@ -32,22 +32,22 @@ namespace Leap
 
     public class Pointable
     {
-        int _frameId;
-        int _id = 0;
-        int _handID = 0;
-        Vector _tipPosition;
-        Vector _tipVelocity;
-        Vector _direction;
-        float _width = 0;
-        float _length = 0;
-        bool _isTool = false;
-        bool _isFinger = false;
-        bool _isExtended = false;
-        bool _isValid = false;
-        Pointable.Zone _zone = Pointable.Zone.ZONE_NONE;
-        float _touchDistance = float.PositiveInfinity;
-        Vector _stabilizedTipPosition;
-        float _timeVisible = 0;
+        protected int _frameId;
+        protected int _id = 0;
+        protected int _handID = 0;
+        protected Vector _tipPosition;
+        protected Vector _tipVelocity;
+        protected Vector _direction;
+        protected float _width = 0;
+        protected float _length = 0;
+        protected bool _isTool = false;
+        protected bool _isFinger = false;
+        protected bool _isExtended = false;
+        protected bool _isValid = false;
+        protected Pointable.Zone _zone = Pointable.Zone.ZONE_NONE;
+        protected float _touchDistance = float.PositiveInfinity;
+        protected Vector _stabilizedTipPosition;
+        protected float _timeVisible = 0;
 
         /**
      * Constructs a Pointable object.

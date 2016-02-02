@@ -37,8 +37,7 @@ namespace Leap
 
             // cleanup
             if (disposing) {
-                // Free any managed objects here.
-                //
+                
             }
 
             // Free any unmanaged objects here.

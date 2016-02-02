@@ -76,6 +76,28 @@ namespace Leap
             _bones [2] = intermediate;
             _bones [3] = distal;
         }
+
+        public Finger TransformedCopy(Matrix trs){
+            float dScale = trs.zBasis.Magnitude;
+            float hScale = trs.xBasis.Magnitude;
+            return new Finger(_frameId,
+                              _handID,
+                              _id,
+                              _timeVisible,
+                              trs.TransformPoint(_tipPosition),
+                              trs.TransformPoint(_tipVelocity),
+                              trs.TransformDirection(_direction),
+                              trs.TransformPoint(_stabilizedTipPosition),
+                              _width * hScale,
+                              _length * dScale,
+                              _isExtended,
+                              _type,
+                              _bones[0].TransformedCopy(trs),
+                              _bones[1].TransformedCopy(trs),
+                              _bones[2].TransformedCopy(trs),
+                              _bones[3].TransformedCopy(trs));
+        }
+
         /**
      * If the specified Pointable object represents a finger, creates a copy
      * of it as a Finger object; otherwise, creates an invalid Finger object.

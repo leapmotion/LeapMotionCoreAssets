@@ -51,12 +51,60 @@ namespace Leap {
             _images = new Image[MAX_IMAGES];
         }
         
-        
+        public Image this[int i]{
+            get{
+                switch(i){
+                case 0:
+                    if(_images[0] != null)
+                        return _images[0];
+                    if(_images[2] != null)
+                        return _images[2];
+                    throw new IndexOutOfRangeException("ImageList is empty");
+                case 1:
+                    if(_images[1] != null)
+                        return _images[1];
+                    if(_images[3] != null)
+                        return _images[3];
+                    throw new IndexOutOfRangeException("ImageList is empty");
+                case 2:
+                    if(_images[2] != null)
+                        return _images[2];
+                    throw new IndexOutOfRangeException();
+                case 3:
+                    if(_images[3] != null)
+                        return _images[3];
+                    throw new IndexOutOfRangeException();
+                    default:
+                    throw new IndexOutOfRangeException();
+                }
+            }
+            set{
+                if( i < 0 || i > MAX_IMAGES - 1)
+                    throw new IndexOutOfRangeException();
+                
+                if(value.Perspective == Image.PerspectiveType.STEREO_LEFT){
+                    if(value.Type == Image.ImageType.DEFAULT){
+                        IRLeft = value;
+                    } else {
+                        RawLeft = value;
+                    }
+                } else { 
+                    if(value.Type == Image.ImageType.DEFAULT){
+                        IRRight = value;
+                    } else {
+                        RawRight = value;
+                    }
+                }
+            }
+        }
+
         public Image IRLeft{
             get{
                 return _images[0];
             } 
             set{
+                if(value.Perspective != Image.PerspectiveType.STEREO_LEFT || value.Type != Image.ImageType.DEFAULT)
+                    throw new ArgumentException("Wrong image type or perspective.");
                 _images[0] = value;
             }
         }
@@ -65,6 +113,8 @@ namespace Leap {
                 return _images[1];
             } 
             set{
+                if(value.Perspective != Image.PerspectiveType.STEREO_RIGHT || value.Type != Image.ImageType.DEFAULT)
+                    throw new ArgumentException("Wrong image type or perspective.");
                 _images[1] = value;
             }
         }
@@ -73,6 +123,8 @@ namespace Leap {
                 return _images[2];
             } 
             set{
+                if(value.Perspective != Image.PerspectiveType.STEREO_LEFT || value.Type != Image.ImageType.RAW)
+                    throw new ArgumentException("Wrong image type or perspective.");
                 _images[2] = value;
             }
         }
@@ -81,6 +133,8 @@ namespace Leap {
                 return _images[3];
             } 
             set{
+                if(value.Perspective != Image.PerspectiveType.STEREO_RIGHT || value.Type != Image.ImageType.RAW)
+                    throw new ArgumentException("Wrong image type or perspective.");
                 _images[3] = value;
             }
         }

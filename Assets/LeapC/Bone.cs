@@ -77,7 +77,18 @@ namespace Leap
             _isValid = true;
         }
 
-
+        public Bone TransformedCopy(Matrix trs){
+            float dScale = trs.zBasis.Magnitude;
+            float hScale = trs.xBasis.Magnitude;
+            return new Bone(trs.TransformPoint(_prevJoint),
+                trs.TransformPoint(_nextJoint),
+                trs.TransformPoint(_center),
+                trs.TransformDirection(_direction),
+                _length * dScale,
+                _width * hScale,
+                _type,
+                trs * _basis);
+        }
         /**
      * Compare Bone object equality.
      *

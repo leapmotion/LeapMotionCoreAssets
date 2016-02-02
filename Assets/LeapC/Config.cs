@@ -1,54 +1,54 @@
 namespace Leap {
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using LeapInternal;
 
   /**
    * The Config class provides access to Leap Motion system configuration information.
    *
-   * You can get and set gesture configuration parameters using the Config object
-   * obtained from a connected Controller object. The key strings required to
-   * identify a configuration parameter include:
-   *
-   * \table
-   * ====================================  ========== ============= =======
-   * Key string                            Value type Default value Units
-   * ====================================  ========== ============= =======
-   * Gesture.Circle.MinRadius              float      5.0           mm
-   * Gesture.Circle.MinArc                 float      1.5 * pi      radians
-   * Gesture.Swipe.MinLength               float      150           mm
-   * Gesture.Swipe.MinVelocity             float      1000          mm/s
-   * Gesture.KeyTap.MinDownVelocity        float      50            mm/s
-   * Gesture.KeyTap.HistorySeconds         float      0.1           s
-   * Gesture.KeyTap.MinDistance            float      3.0           mm
-   * Gesture.ScreenTap.MinForwardVelocity  float      50            mm/s
-   * Gesture.ScreenTap.HistorySeconds      float      0.1           s
-   * Gesture.ScreenTap.MinDistance         float      5.0           mm
-   * ====================================  ========== ============= =======
-   * \endtable
-   *
-   * After setting a configuration value, you must call the Config::save() method
-   * to commit the changes. You can save after the Controller has connected to
-   * the Leap Motion service/daemon. In other words, after the Controller
-   * has dispatched the serviceConnected or connected events or
-   * Controller::isConnected is true. The configuration value changes are
-   * not persistent; your application needs to set the values every time it runs.
-   *
-   * @see CircleGesture
-   * @see KeyTapGesture
-   * @see ScreenTapGesture
-   * @see SwipeGesture
    * @since 1.0
    */
 
 public class Config {
         private Connection _connection;
+        private Dictionary<string, ConfigValue> _configDictionary = new Dictionary<string, ConfigValue>();
 
   public Config(int connectionKey) {
             _connection = Connection.GetConnection(connectionKey);
+            _connection.LeapConfigChange += handleConfigChange;
+            _connection.LeapConfigResponse += handleConfigResponse;
+             _configDictionary.Add("tracking_hand_enabled", new ConfigValue());
+            _configDictionary.Add("robust_mode_enabled", new ConfigValue());
+            _configDictionary.Add("force_robust_mode", new ConfigValue());
+            _configDictionary.Add("images_mode", new ConfigValue());
+            _configDictionary.Add("image_processing_auto_flip", new ConfigValue());
+            _configDictionary.Add("interaction_box_auto", new ConfigValue());
+            _configDictionary.Add("low_resource_mode_enabled", new ConfigValue());
+            _configDictionary.Add("avoid_poor_performance", new ConfigValue());
+            _configDictionary.Add("power_saving_adapter", new ConfigValue());
+            _configDictionary.Add("power_saving_battery", new ConfigValue());
+
+//            if(_connection.IsServiceConnected)
+//                refreshCachedValues();
   }
 
+        private void refreshCachedValues(){
+            foreach(string key in _configDictionary.Keys){
+                _connection.GetConfigValue(key);
+            }
+        }
+
+        private void handleConfigChange(object sender, ConfigChangeEventArgs eventArgs){
+            if(_configDictionary.ContainsKey(eventArgs.ConfigKey)){
+                _configDictionary[eventArgs.ConfigKey].pending = false;
+            }
+        }
+        private void handleConfigResponse(object sender, SetConfigResponseEventArgs eventArgs){
+            _configDictionary[eventArgs.ConfigKey] = eventArgs.Value;
+            _configDictionary[eventArgs.ConfigKey].pending = false;
+        }
     /**
      * Reports the natural data type for the value related to the specified key.
      *
@@ -203,13 +203,48 @@ public class Config {
          * @since 1.0
          */
     TYPE_STRING = 8,
-    TYPEUNKNOWN = TYPE_UNKNOWN,
-    TYPEBOOLEAN = TYPE_BOOLEAN,
-    TYPEINT32 = TYPE_INT32,
-    TYPEFLOAT = TYPE_FLOAT,
-    TYPESTRING = TYPE_STRING
   }
 
-}
 
+//
+//
+//        tracking_hand_enabled
+//        robust_mode_enabled
+//        force_robust_mode
+//        images_mode arg
+//        image_processing_auto_flip
+//        interaction_box_auto
+//        tracking_quad_enabled
+//        low_resource_mode_enabled
+//        avoid_poor_performance
+//        power_saving_adapter
+//        power_saving_battery
+
+//        public bool HandTrackingEnabled{
+//            
+//        }
+//                RobustModeEnabled
+//                RobustModeOn
+//                ImagesEnabled
+//                AutoOrientationEnabled
+//                AutoInterActionBoxHeightEnabled
+//                QuadTrackingEnabled
+//                LowResourceModeOn
+//                AvoidPoorPerformance
+//                ReducePowerUsageAdapter
+//                ReducePowerUsageBattery
+
+
+}
+    public class ConfigValue{
+        public ConfigValue(){
+            pending = true;
+        }
+        public Config.ValueType type{get; set;}
+        public float floatValue{get; set;}
+        public Int32 intValue{get; set;}
+        public bool boolValue{get; set;}
+        public string stringValue{get; set;}
+        public bool pending{get; set;}
+    }
 }

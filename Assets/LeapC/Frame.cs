@@ -78,13 +78,18 @@ namespace Leap
             InteractionBox = interactionBox;
         }
 
-        public Controller controller{
-            get{
-                return _controller;
-            } 
-            set{
-                _controller = value;
-            }
+        public Frame TransformedCopy(Matrix trs){
+            Frame transformedFrame = new Frame(_id, 
+                _timestamp, 
+                _fps, 
+                new InteractionBox(InteractionBox.Center, InteractionBox.Size));
+            //TODO should InteractionBox be transformed, too?
+
+            for(int h = 0; h < this.Hands.Count; h++)
+                transformedFrame.AddHand(this.Hands[h].TransformedCopy(trs));
+            
+                //TODO tools are deprecated, not adding them
+            return transformedFrame;
         }
 
         public void AddHand(Hand hand){
