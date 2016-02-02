@@ -10,6 +10,7 @@ namespace Leap {
     public Frame CurrentFrame { get; private set; }
     public Image CurrentImage { get; private set; }
     private Transform providerSpace;
+    private Matrix leapMat;
 
     public Controller leap_controller_ { get; set; }
 
@@ -115,11 +116,21 @@ namespace Leap {
       }
       return new LeapDeviceInfo(LeapDeviceType.Invalid);
     }
-
+    private Matrix GetLeapMatrix() {
+      Transform t = this.transform;
+      Vector xbasis = new Vector(t.right.x, t.right.y, t.right.z) * t.localScale.x * MM_TO_M;
+      Vector ybasis = new Vector(t.up.x, t.up.y, t.up.z) * t.localScale.y * MM_TO_M;
+      Vector zbasis = new Vector(t.forward.x, t.forward.y, t.forward.z) * -t.localScale.z * MM_TO_M;
+      Vector trans = new Vector(t.position.x, t.position.y, t.position.z);
+      return new Matrix(xbasis, ybasis, zbasis, trans);
+    }
 
     // Update is called once per frame
     void Update() {
-      CurrentFrame = leap_controller_.Frame();
+
+      leapMat = GetLeapMatrix();
+      CurrentFrame = leap_controller_.GetTransformedFrame(leapMat, 0);
+      //CurrentFrame = leap_controller_.Frame();
       //Debug.Log(CurrentFrame);
 
       //perFrameFixedUpdateOffset_ contains the maximum offset of this Update cycle
@@ -138,7 +149,10 @@ namespace Leap {
       //Search the leap history for a frame with a timestamp closest to the corrected timestamp
       Frame closestFrame = leap_controller_.Frame();
       for (int searchHistoryIndex = 1; searchHistoryIndex < 60; searchHistoryIndex++) {
-        Frame historyFrame = leap_controller_.Frame(searchHistoryIndex);
+
+        leapMat = GetLeapMatrix();
+        Frame historyFrame = leap_controller_.GetTransformedFrame(leapMat, searchHistoryIndex);
+        //Frame historyFrame = leap_controller_.Frame(searchHistoryIndex);
 
         //If we reach an invalid frame, terminate the search
         if (!historyFrame.IsValid) {

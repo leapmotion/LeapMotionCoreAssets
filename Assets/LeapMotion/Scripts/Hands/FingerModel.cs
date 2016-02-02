@@ -119,7 +119,9 @@ public abstract class FingerModel : MonoBehaviour {
   public Vector3 GetTipPosition() {
     if (controller_ != null && finger_ != null) {
       Vector3 local_tip = finger_.Bone ((Bone.BoneType.TYPE_DISTAL)).NextJoint.ToUnityScaled (mirror_z_axis_);
-      return controller_.transform.TransformPoint (local_tip) + offset_;
+      //return controller_.transform.TransformPoint (local_tip) + offset_;
+      return local_tip;
+
     }
     if (bones [NUM_BONES - 1] && joints [NUM_JOINTS - 2]) {
       return 2f*bones [NUM_BONES - 1].position - joints [NUM_JOINTS - 2].position;
@@ -134,7 +136,9 @@ public abstract class FingerModel : MonoBehaviour {
     }
     if (controller_ != null && finger_ != null) {
       Vector3 local_position = finger_.Bone ((Bone.BoneType)(joint)).PrevJoint.ToUnityScaled (mirror_z_axis_);
-      return controller_.transform.TransformPoint (local_position) + offset_;
+      //return controller_.transform.TransformPoint (local_position) + offset_;
+      return local_position;
+
     }
     if (joints [joint]) {
       return joints[joint].position;
@@ -152,7 +156,9 @@ public abstract class FingerModel : MonoBehaviour {
   public Vector3 GetBoneCenter(int bone_type) {
     if (controller_ != null && finger_ != null) {
       Bone bone = finger_.Bone ((Bone.BoneType)(bone_type));
-      return controller_.transform.TransformPoint (bone.Center.ToUnityScaled (mirror_z_axis_)) + offset_;
+      //return controller_.transform.TransformPoint (bone.Center.ToUnityScaled (mirror_z_axis_)) + offset_;
+      return bone.Center.ToUnityScaled(mirror_z_axis_);
+
     }
     if (bones [bone_type]) {
       return bones[bone_type].position;
@@ -176,7 +182,9 @@ public abstract class FingerModel : MonoBehaviour {
   public Quaternion GetBoneRotation(int bone_type) {
     if (controller_ != null && finger_ != null) {
       Quaternion local_rotation = finger_.Bone ((Bone.BoneType)(bone_type)).Basis.Rotation (mirror_z_axis_);
-      return controller_.transform.rotation * local_rotation;
+      //return controller_.transform.rotation * local_rotation;
+      return local_rotation;
+
     }
     if (bones[bone_type]) {
       return bones[bone_type].rotation;

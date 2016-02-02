@@ -109,7 +109,7 @@ namespace Leap {
             all_hand_reps.Add(curHand.Id, rep);
             rep.handModel.MirrorZAxis(mirrorZAxis);
 
-            float hand_scale = MM_TO_M * curHand.PalmWidth / rep.handModel.handModelPalmWidth;
+            float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
             rep.handModel.transform.localScale = hand_scale * Vector3.one;
             Debug.Log("reps.Add(" + curHand.Id + ", " + rep + ")");
           }
@@ -118,7 +118,7 @@ namespace Leap {
           rep.IsMarked = true;
           rep.handModel.MirrorZAxis(mirrorZAxis);
 
-          float hand_scale = MM_TO_M * curHand.PalmWidth / rep.handModel.handModelPalmWidth;
+          float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
           rep.handModel.transform.localScale = hand_scale * Vector3.one;
 
           rep.UpdateRepresentation(curHand, modelType);

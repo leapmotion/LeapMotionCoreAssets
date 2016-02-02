@@ -20,7 +20,7 @@ namespace Leap {
     /** Scale factor from Leap units (millimeters) to Unity units (meters). */
     public const float INPUT_SCALE = 0.001f;
     /** Constant used when converting from right-handed to left-handed axes.*/
-    public static readonly Vector3 Z_FLIP = new Vector3(1, 1, -1);
+    public static readonly Vector3 Z_FLIP = new Vector3(1, 1, 1);
 
     /** 
      * Converts a direction vector from Leap to Unity. (Does not scale.) 
@@ -51,16 +51,20 @@ namespace Leap {
      */
     public static Vector3 ToUnityScaled(this Vector leap_vector, bool mirror = false) {
       if (mirror)
-        return INPUT_SCALE * ToVector3(leap_vector);
+        //return INPUT_SCALE * ToVector3(leap_vector);
+        return ToVector3(leap_vector);
+
       
-      return INPUT_SCALE * FlipZ(ToVector3(leap_vector));
+      //return INPUT_SCALE * FlipZ(ToVector3(leap_vector));
+      return FlipZ(ToVector3(leap_vector));
+
     }
 
     private static Vector3 FlipZ(Vector3 vector) {
       return Vector3.Scale(vector, Z_FLIP);
     }
 
-    private static Vector3 ToVector3(Vector vector) {
+    public static Vector3 ToVector3(this Vector vector) {
       return new Vector3(vector.x, vector.y, vector.z);
     }
   }
