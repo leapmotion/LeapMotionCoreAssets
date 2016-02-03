@@ -644,10 +644,17 @@ namespace Leap
             get {
                 if(_needToCalculateBasis){
                     //TODO verify this calculation for both hands
-                    _basis.zBasis = -Direction;
-                    _basis.yBasis = -PalmNormal;
+                    _basis.zBasis = -Direction.Normalized;
+                    _basis.yBasis = -PalmNormal.Normalized;
+                    _basis.xBasis = _basis.zBasis.Cross(_basis.yBasis);
+
                     _basis.xBasis = _basis.zBasis.Cross(_basis.yBasis);
                     _basis.xBasis = _basis.xBasis.Normalized;
+                    if (_basis.xBasis.Magnitude <= 0.0001f) {
+                      UnityEngine.Debug.Log("It was zero!");
+                      UnityEngine.Debug.Log(_basis.zBasis.Normalized);
+                      UnityEngine.Debug.Log(_basis.yBasis.Normalized);
+                    }
                     _needToCalculateBasis = false;
                 }
                 return _basis;
