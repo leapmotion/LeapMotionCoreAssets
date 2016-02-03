@@ -119,7 +119,6 @@ public abstract class FingerModel : MonoBehaviour {
   public Vector3 GetTipPosition() {
     if (controller_ != null && finger_ != null) {
       Vector3 local_tip = finger_.Bone ((Bone.BoneType.TYPE_DISTAL)).NextJoint.ToUnityScaled (mirror_z_axis_);
-      //return controller_.transform.TransformPoint (local_tip) + offset_;
       return local_tip;
 
     }
@@ -136,7 +135,6 @@ public abstract class FingerModel : MonoBehaviour {
     }
     if (controller_ != null && finger_ != null) {
       Vector3 local_position = finger_.Bone ((Bone.BoneType)(joint)).PrevJoint.ToUnityScaled (mirror_z_axis_);
-      //return controller_.transform.TransformPoint (local_position) + offset_;
       return local_position;
 
     }
@@ -156,7 +154,6 @@ public abstract class FingerModel : MonoBehaviour {
   public Vector3 GetBoneCenter(int bone_type) {
     if (controller_ != null && finger_ != null) {
       Bone bone = finger_.Bone ((Bone.BoneType)(bone_type));
-      //return controller_.transform.TransformPoint (bone.Center.ToUnityScaled (mirror_z_axis_)) + offset_;
       return bone.Center.ToUnityScaled(mirror_z_axis_);
 
     }
@@ -182,7 +179,6 @@ public abstract class FingerModel : MonoBehaviour {
   public Quaternion GetBoneRotation(int bone_type) {
     if (controller_ != null && finger_ != null) {
       Quaternion local_rotation = finger_.Bone ((Bone.BoneType)(bone_type)).Basis.Rotation (mirror_z_axis_);
-      //return controller_.transform.rotation * local_rotation;
       return local_rotation;
 
     }

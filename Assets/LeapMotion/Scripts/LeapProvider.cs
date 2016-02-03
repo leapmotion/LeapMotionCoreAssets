@@ -130,8 +130,6 @@ namespace Leap {
 
       leapMat = GetLeapMatrix();
       CurrentFrame = leap_controller_.GetTransformedFrame(leapMat, 0);
-      //CurrentFrame = leap_controller_.Frame();
-      //Debug.Log(CurrentFrame);
 
       //perFrameFixedUpdateOffset_ contains the maximum offset of this Update cycle
       smoothedFixedUpdateOffset_.Update(PerFrameFixedUpdateOffset, Time.deltaTime);
@@ -152,7 +150,6 @@ namespace Leap {
 
         leapMat = GetLeapMatrix();
         Frame historyFrame = leap_controller_.GetTransformedFrame(leapMat, searchHistoryIndex);
-        //Frame historyFrame = leap_controller_.Frame(searchHistoryIndex);
 
         //If we reach an invalid frame, terminate the search
         if (!historyFrame.IsValid) {

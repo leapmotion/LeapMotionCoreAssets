@@ -83,7 +83,6 @@ public abstract class HandModel : MonoBehaviour {
   */
   public Vector3 GetPalmPosition() {
     if (controller_ != null && hand_ != null) {
-      //return controller_.transform.TransformPoint (hand_.PalmPosition.ToUnityScaled (mirror_z_axis_)) + GetHandOffset ();
       return hand_.PalmPosition.ToVector3();
 
     }
@@ -99,7 +98,6 @@ public abstract class HandModel : MonoBehaviour {
   public Quaternion GetPalmRotation() {
     //Debug.Log("HandModel.hand_.Basis.Rotation()" + hand_.Basis.Rotation());
     if (controller_ != null && hand_ != null) {
-      //return controller_.transform.rotation * hand_.Basis.Rotation(mirror_z_axis_);
       return hand_.Basis.Rotation(mirror_z_axis_);
 
     }
@@ -114,7 +112,6 @@ public abstract class HandModel : MonoBehaviour {
   */
   public Vector3 GetPalmDirection() {
     if (controller_ != null && hand_ != null) {
-      //return controller_.transform.TransformDirection(hand_.Direction.ToUnity(mirror_z_axis_));
       return hand_.Direction.ToUnity(mirror_z_axis_);
 
     }
@@ -129,7 +126,6 @@ public abstract class HandModel : MonoBehaviour {
   */
   public Vector3 GetPalmNormal() {
     if (controller_ != null && hand_ != null) {
-      //return controller_.transform.TransformDirection(hand_.PalmNormal.ToUnity(mirror_z_axis_));
       return hand_.PalmNormal.ToUnity(mirror_z_axis_);
 
     }
@@ -158,7 +154,6 @@ public abstract class HandModel : MonoBehaviour {
   public Vector3 GetArmCenter() {
     if (controller_ != null && hand_ != null) {
       Vector leap_center = 0.5f * (hand_.Arm.WristPosition + hand_.Arm.ElbowPosition);
-      //return controller_.transform.TransformPoint (leap_center.ToUnityScaled (mirror_z_axis_)) + GetHandOffset ();
       return leap_center.ToUnityScaled(mirror_z_axis_);
 
     }
@@ -170,7 +165,6 @@ public abstract class HandModel : MonoBehaviour {
 
   /** Returns the measured length of the forearm in meters.*/
   public float GetArmLength() {
-    //return (hand_.Arm.WristPosition - hand_.Arm.ElbowPosition).Magnitude * UnityVectorExtension.INPUT_SCALE;
     return (hand_.Arm.WristPosition - hand_.Arm.ElbowPosition).Magnitude * UnityVectorExtension.INPUT_SCALE;
   }
   
@@ -185,7 +179,6 @@ public abstract class HandModel : MonoBehaviour {
   public Vector3 GetElbowPosition() {
     if (controller_ != null && hand_ != null) {
       Vector3 local_position = hand_.Arm.ElbowPosition.ToUnityScaled (mirror_z_axis_);
-      //return controller_.transform.TransformPoint (local_position) + GetHandOffset ();
       return local_position;
 
     }
@@ -201,7 +194,6 @@ public abstract class HandModel : MonoBehaviour {
   public Vector3 GetWristPosition() {
     if (controller_ != null && hand_ != null) {
       Vector3 local_position = hand_.Arm.WristPosition.ToUnityScaled (mirror_z_axis_);
-      //return controller_.transform.TransformPoint (local_position) + GetHandOffset ();
       return local_position;
     }
     if (wristJoint) {
@@ -216,7 +208,6 @@ public abstract class HandModel : MonoBehaviour {
   public Quaternion GetArmRotation() {
     if (controller_ != null && hand_ != null) {
       Quaternion local_rotation = hand_.Arm.Basis.Rotation (mirror_z_axis_);
-      //return controller_.transform.rotation * local_rotation;
       return local_rotation;
 
     }
