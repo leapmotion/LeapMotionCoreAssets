@@ -149,7 +149,6 @@ public class CapsuleHand : HandModel {
     Transform thumbBase = _jointSpheres[THUMB_BASE_INDEX];
 
     Vector3 thumbBaseToPalm = thumbBase.position - GetPalmPosition();
-    Debug.Log(hand_.Basis.xBasis.x + " : " + hand_.Basis.xBasis.y + " : " + hand_.Basis.xBasis.z);
     mockThumbJointSphere.position = GetPalmPosition() + Vector3.Reflect(thumbBaseToPalm, hand_.Basis.xBasis.ToUnity().normalized);
 
     //Update Arm

@@ -29,7 +29,7 @@ namespace Leap {
 
     }
 
-    public override HandRepresentation MakeHandRepresentation(Leap.Hand hand, HandModel.ModelType modelType) {
+    public override HandRepresentation MakeHandRepresentation(Leap.Hand hand, ModelType modelType) {
       Debug.Log("Making a " + modelType + " hand");
 
       HandRepresentation handRep = null;
@@ -37,10 +37,10 @@ namespace Leap {
         HandModel model = ModelPool[i];
 
         bool isCorrectHandedness;
-        if(model.Handedness == HandModel.Chirality.Either) {
+        if(model.Handedness == Chirality.Either) {
           isCorrectHandedness = true;
         } else {
-          HandModel.Chirality handChirality = hand.IsRight ? HandModel.Chirality.Right : HandModel.Chirality.Left;
+          Chirality handChirality = hand.IsRight ? Chirality.Right : Chirality.Left;
           isCorrectHandedness = model.Handedness == handChirality;
         }
 

@@ -19,12 +19,15 @@ using Leap;
 * and in the Unity FixedUpdate() phase for physics objects. InitHand() is called once,
 * when the hand is created and is followed by a call to UpdateHand().
 */
-public abstract class HandModel : MonoBehaviour {
+public abstract class HandModel : MonoBehaviour, IHandModel {
 
-  public enum Chirality { Left, Right, Either };
-  public Chirality Handedness;
+  [SerializeField]
+  private Chirality handedness;
+  public Chirality Handedness {
+    get { return handedness; }
+  }
 
-  public enum ModelType { Graphics, Physics };
+  private ModelType handModelType;
   public abstract ModelType HandModelType {
     get;
   }
@@ -242,6 +245,7 @@ public abstract class HandModel : MonoBehaviour {
     }
   }
 
+  //Todo kill this
   /** 
   * Sets the mirror z-axis flag for this Hand Model and its fingers.
   * Mirroring the z axis reverses the hand so that they face the opposite direction -- as if in a mirror.
@@ -259,13 +263,13 @@ public abstract class HandModel : MonoBehaviour {
   public bool IsMirrored() {
     return mirror_z_axis_;
   }
-
+  //Todo Kill these
   /** The parent HandController object of this hand.*/
   //public HandController GetController() {
   public LeapHandController GetController() {
     return controller_;
   }
-
+ 
   /** Sets the parent HandController object. */
   public void SetController(LeapHandController controller) {
     controller_ = controller;

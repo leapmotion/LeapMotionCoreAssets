@@ -87,13 +87,13 @@ namespace Leap {
     void Update() {
       Frame frame = Provider.CurrentFrame;
       if (frame.Id != prev_graphics_id_ && graphicsEnabled) {
-        UpdateHandRepresentations(graphicsReps, HandModel.ModelType.Graphics);
+        UpdateHandRepresentations(graphicsReps, ModelType.Graphics);
         prev_graphics_id_ = frame.Id;
 
       }
     }
 
-    void UpdateHandRepresentations(Dictionary<int, HandRepresentation> all_hand_reps, HandModel.ModelType modelType) {
+    void UpdateHandRepresentations(Dictionary<int, HandRepresentation> all_hand_reps, ModelType modelType) {
       foreach (Leap.Hand curHand in Provider.CurrentFrame.Hands) {
         // If we've mirrored since this hand was updated, destroy it.
         if (all_hand_reps.ContainsKey(curHand.Id) &&
@@ -108,7 +108,7 @@ namespace Leap {
           if (rep != null) {
             all_hand_reps.Add(curHand.Id, rep);
             rep.handModel.MirrorZAxis(mirrorZAxis);
-
+            //Todo move this to Init() or Update HandModel
             float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
             rep.handModel.transform.localScale = hand_scale * Vector3.one;
             Debug.Log("reps.Add(" + curHand.Id + ", " + rep + ")");
@@ -118,6 +118,7 @@ namespace Leap {
           rep.IsMarked = true;
           rep.handModel.MirrorZAxis(mirrorZAxis);
 
+          //Todo move this to Init() or Update HandModel
           float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
           rep.handModel.transform.localScale = hand_scale * Vector3.one;
 
@@ -159,7 +160,7 @@ namespace Leap {
       Frame frame = Provider.GetFixedFrame();
 
       if (frame.Id != prev_physics_id_ && physicsEnabled) {
-        UpdateHandRepresentations(physicsReps, HandModel.ModelType.Physics);
+        UpdateHandRepresentations(physicsReps, ModelType.Physics);
         //UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
         prev_physics_id_ = frame.Id;
       }

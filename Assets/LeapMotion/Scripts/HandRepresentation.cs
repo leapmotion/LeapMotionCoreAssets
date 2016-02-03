@@ -19,7 +19,7 @@ namespace Leap {
     /// Notifies the representation that a hand information update is available
     /// </summary>
     /// <param name="hand">The current Leap.Hand</param>
-    public abstract void UpdateRepresentation(Leap.Hand hand, HandModel.ModelType modelType);
+    public abstract void UpdateRepresentation(Leap.Hand hand, ModelType modelType);
 
     /// <summary>
     /// Called when a hand representation is no longer needed

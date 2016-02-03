@@ -41,7 +41,7 @@ namespace Leap {
       handModel = null;
     }
 
-    public override void UpdateRepresentation(Leap.Hand hand, HandModel.ModelType modelType){
+    public override void UpdateRepresentation(Leap.Hand hand, ModelType modelType){
       // TODO:  Decide how to pass information about the updated hand to the hand model
       handModel.SetLeapHand(hand);
       handModel.UpdateHand();
