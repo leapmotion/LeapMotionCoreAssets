@@ -146,7 +146,7 @@ namespace Leap {
 
       //Search the leap history for a frame with a timestamp closest to the corrected timestamp
       Frame closestFrame = leap_controller_.Frame();
-      for (int searchHistoryIndex = 1; searchHistoryIndex < 60; searchHistoryIndex++) {
+      for (int searchHistoryIndex = 0; searchHistoryIndex < 60; searchHistoryIndex++) {
 
         leapMat = GetLeapMatrix();
         Frame historyFrame = leap_controller_.GetTransformedFrame(leapMat, searchHistoryIndex);
