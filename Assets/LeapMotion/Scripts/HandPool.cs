@@ -30,7 +30,7 @@ namespace Leap {
     }
 
     public override HandRepresentation MakeHandRepresentation(Leap.Hand hand, ModelType modelType) {
-      Debug.Log("Making a " + modelType + " hand");
+      //Debug.Log("Making a " + modelType + " hand");
 
       HandRepresentation handRep = null;
       for (int i = 0; i < ModelPool.Count; i++) {
@@ -48,14 +48,14 @@ namespace Leap {
         isCorrectModelType = model.HandModelType == modelType;
 
         if(isCorrectHandedness && isCorrectModelType) {
-          Debug.Log("Found a " + modelType + " HandModel");
+          //Debug.Log("Found a " + modelType + " HandModel");
           ModelPool.RemoveAt(i);
           handRep = new HandProxy(this, model, hand);
           break;
         }
       }
 
-      Debug.Log("HandPool.MakeHandRepresentation() returning: " + handRep);
+      //Debug.Log("HandPool.MakeHandRepresentation() returning: " + handRep);
       return handRep;
     }
   }

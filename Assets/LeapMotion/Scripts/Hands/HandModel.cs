@@ -61,10 +61,6 @@ public abstract class HandModel : IHandModel {
   //protected HandController controller_;
   protected LeapHandController controller_;
 
-
-  /** Whether the parent HandController instance has been set to mirror across the z axis.*/
-  protected bool mirror_z_axis_ = false;
-
   /** 
   * Calculates the offset between the wrist position and the controller based
   * on the HandController.handMovementScale property and the Leap hand wrist position.
@@ -76,7 +72,7 @@ public abstract class HandModel : IHandModel {
 
     Vector3 additional_movement = controller_.handMovementScale - Vector3.one;
 
-    Vector3 scaled_wrist_position = Vector3.Scale(additional_movement, hand_.WristPosition.ToUnityScaled(mirror_z_axis_));
+    Vector3 scaled_wrist_position = Vector3.Scale(additional_movement, hand_.WristPosition.ToUnityScaled());
 
     return controller_.transform.TransformPoint(scaled_wrist_position) -
            controller_.transform.position;
@@ -102,7 +98,7 @@ public abstract class HandModel : IHandModel {
   public Quaternion GetPalmRotation() {
     //Debug.Log("HandModel.hand_.Basis.Rotation()" + hand_.Basis.Rotation());
     //if (controller_ != null && hand_ != null) {
-      return hand_.Basis.Rotation(mirror_z_axis_);
+      return hand_.Basis.Rotation();
 
     //}
     //if (palm) {
@@ -116,7 +112,7 @@ public abstract class HandModel : IHandModel {
   */
   public Vector3 GetPalmDirection() {
     //if (controller_ != null && hand_ != null) {
-      return hand_.Direction.ToUnity(mirror_z_axis_);
+      return hand_.Direction.ToUnity();
 
     //}
     //if (palm) {
@@ -130,7 +126,7 @@ public abstract class HandModel : IHandModel {
   */
   public Vector3 GetPalmNormal() {
     //if (controller_ != null && hand_ != null) {
-      return hand_.PalmNormal.ToUnity(mirror_z_axis_);
+      return hand_.PalmNormal.ToUnity();
     //}
     //if (palm) {
     //  return -palm.up;
@@ -157,7 +153,7 @@ public abstract class HandModel : IHandModel {
   public Vector3 GetArmCenter() {
     //if (controller_ != null && hand_ != null) {
       Vector leap_center = 0.5f * (hand_.Arm.WristPosition + hand_.Arm.ElbowPosition);
-      return leap_center.ToUnityScaled(mirror_z_axis_);
+      return leap_center.ToUnityScaled();
 
     //}
     //if (forearm) {
@@ -181,7 +177,7 @@ public abstract class HandModel : IHandModel {
   */
   public Vector3 GetElbowPosition() {
     //if (controller_ != null && hand_ != null) {
-      Vector3 local_position = hand_.Arm.ElbowPosition.ToUnityScaled (mirror_z_axis_);
+      Vector3 local_position = hand_.Arm.ElbowPosition.ToUnityScaled ();
       return local_position;
 
     //}
@@ -196,7 +192,7 @@ public abstract class HandModel : IHandModel {
   */
   public Vector3 GetWristPosition() {
     //if (controller_ != null && hand_ != null) {
-      Vector3 local_position = hand_.Arm.WristPosition.ToUnityScaled (mirror_z_axis_);
+      Vector3 local_position = hand_.Arm.WristPosition.ToUnityScaled ();
       return local_position;
     //}
     //if (wristJoint) {
@@ -210,7 +206,7 @@ public abstract class HandModel : IHandModel {
   */
   public Quaternion GetArmRotation() {
     //if (controller_ != null && hand_ != null) {
-      Quaternion local_rotation = hand_.Arm.Basis.Rotation (mirror_z_axis_);
+      Quaternion local_rotation = hand_.Arm.Basis.Rotation ();
       return local_rotation;
 
     //}
@@ -245,24 +241,9 @@ public abstract class HandModel : IHandModel {
     }
   }
 
-  //Todo kill this
-  /** 
-  * Sets the mirror z-axis flag for this Hand Model and its fingers.
-  * Mirroring the z axis reverses the hand so that they face the opposite direction -- as if in a mirror.
-  * @param mirror Set true, the default value to mirror; false for normal rendering. 
-  */
-  public void MirrorZAxis(bool mirror = true) {
-    mirror_z_axis_ = mirror;
-    for (int i = 0; i < fingers.Length; ++i) {
-      if (fingers[i] != null)
-        fingers[i].MirrorZAxis(mirror);
-    }
-  }
 
-  /** Whether this hand is currently mirrored.*/
-  public override bool IsMirrored() {
-    return mirror_z_axis_;
-  }
+
+
   //Todo Kill these
   /** The parent HandController object of this hand.*/
   //public HandController GetController() {

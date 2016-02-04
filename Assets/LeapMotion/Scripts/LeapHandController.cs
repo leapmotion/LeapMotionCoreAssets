@@ -5,8 +5,6 @@ using Leap;
 
 namespace Leap {
   public class LeapHandController : MonoBehaviour {
-    /** Reverses the z axis. */
-    public bool mirrorZAxis = false;
     /** The scale factors for hand movement. Set greater than 1 to give the hands a greater range of motion. */
     public Vector3 handMovementScale = Vector3.one;
 
@@ -97,8 +95,7 @@ namespace Leap {
     void UpdateHandRepresentations(Dictionary<int, HandRepresentation> all_hand_reps, ModelType modelType) {
       foreach (Leap.Hand curHand in Provider.CurrentFrame.Hands) {
         // If we've mirrored since this hand was updated, destroy it.
-        if (all_hand_reps.ContainsKey(curHand.Id) &&
-            all_hand_reps[curHand.Id].handModel.IsMirrored() != mirrorZAxis) {
+        if (all_hand_reps.ContainsKey(curHand.Id)) {
           all_hand_reps[curHand.Id].Finish();
           all_hand_reps.Remove(curHand.Id);
         }
@@ -112,7 +109,7 @@ namespace Leap {
             //rep.handModel.MirrorZAxis(mirrorZAxis);
             //float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
             //rep.handModel.transform.localScale = hand_scale * Vector3.one;
-            Debug.Log("reps.Add(" + curHand.Id + ", " + rep + ")");
+            //Debug.Log("reps.Add(" + curHand.Id + ", " + rep + ")");
           }
         }
         if (rep != null) {
@@ -137,7 +134,7 @@ namespace Leap {
           }
           else {
             //Initialize toBeDeleted with a value to be deleted
-            Debug.Log("Finishing");
+            //Debug.Log("Finishing");
             toBeDeleted = r.Value;
           }
         }

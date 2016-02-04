@@ -13,7 +13,6 @@ public abstract class IHandModel : MonoBehaviour {
   public abstract void UpdateHand();
   public abstract Hand GetLeapHand(); 
   public abstract void SetLeapHand(Hand hand);
-  public abstract bool IsMirrored();
 }
 
 

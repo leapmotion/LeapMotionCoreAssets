@@ -31,10 +31,7 @@ namespace Leap {
      * @param mirror If true, the vector is reflected along the z axis.
      * @param leap_vector the Leap.Vector object to convert.
      */
-    public static Vector3 ToUnity(this Vector leap_vector, bool mirror = false) {
-      if (mirror)
-        return ToVector3(leap_vector);
-
+    public static Vector3 ToUnity(this Vector leap_vector) {
       return FlipZ(ToVector3(leap_vector));
     }
 
@@ -49,12 +46,7 @@ namespace Leap {
      * @param mirror If true, the vector is reflected along the z axis.
      * @param leap_vector the Leap.Vector object to convert. 
      */
-    public static Vector3 ToUnityScaled(this Vector leap_vector, bool mirror = false) {
-      if (mirror)
-        //return INPUT_SCALE * ToVector3(leap_vector);
-        return ToVector3(leap_vector);
-
-      
+    public static Vector3 ToUnityScaled(this Vector leap_vector) {      
       //return INPUT_SCALE * FlipZ(ToVector3(leap_vector));
       return FlipZ(ToVector3(leap_vector));
 
@@ -88,11 +80,11 @@ namespace Leap {
      * @param matrix The Leap.Matrix to convert.
      * @param mirror If true, the operation is reflected along the z axis.
      */
-    public static Quaternion Rotation(this Matrix matrix, bool mirror = false) {
+    public static Quaternion Rotation(this Matrix matrix) {
       //Vector3 up = matrix.TransformDirection(LEAP_UP).ToUnity(mirror);
       //Vector3 forward = matrix.TransformDirection(LEAP_FORWARD).ToUnity(mirror);
-      Vector3 up = matrix.yBasis.ToUnity(mirror);
-      Vector3 forward = -matrix.zBasis.ToUnity(mirror);
+      Vector3 up = matrix.yBasis.ToUnity();
+      Vector3 forward = -matrix.zBasis.ToUnity();
       return Quaternion.LookRotation(forward, up);
     }
 
@@ -104,7 +96,7 @@ namespace Leap {
      * @param mirror If true, the operation is reflected along the z axis.
      */
     public static Vector3 Translation(this Matrix matrix, bool mirror = false) {
-      return matrix.TransformPoint(LEAP_ORIGIN).ToUnityScaled(mirror);
+      return matrix.TransformPoint(LEAP_ORIGIN).ToUnityScaled();
     }
   }
 }

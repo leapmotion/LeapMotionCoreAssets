@@ -300,7 +300,7 @@ public class LeapImageRetriever : MonoBehaviour {
 
     Frame imageFrame = provider.CurrentFrame;
     Controller controller = provider.GetLeapController();
-    Debug.Log("LeapImageImageRetriever " + controller.Images.Count);
+    //Debug.Log("LeapImageImageRetriever " + controller.Images.Count);
 
     //ImageList brightList = imageFrame.Images;
     ImageList brightList = controller.Images;

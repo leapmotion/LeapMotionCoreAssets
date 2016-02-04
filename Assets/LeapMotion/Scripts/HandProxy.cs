@@ -29,11 +29,11 @@ namespace Leap {
         handFinishBehavior.Resest();
       }
 
-      Debug.Log("handProxy Constructor ------------------------------");
+      //Debug.Log("handProxy Constructor ------------------------------");
     }
 
     public override void Finish() {
-      Debug.Log("HandProxy Finishing");
+      //Debug.Log("HandProxy Finishing");
       if (handFinishBehavior) {
         handFinishBehavior.HandFinish();
       }
