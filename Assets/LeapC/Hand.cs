@@ -77,7 +77,7 @@ namespace Leap
              _needToCalculateSphere = false;
         }
 
-        public Hand(int frameID,        
+        public Hand(int frameID,
                     int id,
                     float confidence,
                     float grabStrength,
@@ -116,7 +116,7 @@ namespace Leap
         }
 
         public Hand TransformedCopy(Matrix trs){
-            FingerList transformedFingers = new FingerList();
+            FingerList transformedFingers = new FingerList(5);
             for(int f = 0; f < this.Fingers.Count; f++)
                 transformedFingers.Add(Fingers[f].TransformedCopy(trs));
 
@@ -135,8 +135,8 @@ namespace Leap
                 trs.TransformPoint(_palmPosition),
                 trs.TransformPoint(_stabilizedPalmPosition),
                 trs.TransformPoint(_palmVelocity),
-                trs.TransformDirection(_palmNormal),
-                trs.TransformDirection(_direction),
+                trs.TransformDirection(_palmNormal).Normalized,
+                trs.TransformDirection(_direction).Normalized,
                 trs.TransformPoint(_wristPosition)
             );
         }
@@ -512,7 +512,7 @@ namespace Leap
         public PointableList Pointables {
             get {
                 if(_pointables == null)
-                    _pointables = new PointableList();
+                    _pointables = new PointableList(5);
 
                 return _pointables;
 //                return (PointableList)this.Frame.Pointables.FindAll (delegate(Pointable item) {
@@ -535,7 +535,7 @@ namespace Leap
         public FingerList Fingers {
                     get {
                 if(_fingers == null)
-                    _fingers = new FingerList();
+                    _fingers = new FingerList(5);
                 return _fingers;
 //                return (FingerList)this.Frame.Fingers.FindAll (delegate(Finger item) {
 //                            return item.HandId == this.Id;
@@ -644,17 +644,10 @@ namespace Leap
             get {
                 if(_needToCalculateBasis){
                     //TODO verify this calculation for both hands
-                    _basis.zBasis = -Direction.Normalized;
-                    _basis.yBasis = -PalmNormal.Normalized;
-                    _basis.xBasis = _basis.zBasis.Cross(_basis.yBasis);
-
+                    _basis.zBasis = -Direction;
+                    _basis.yBasis = -PalmNormal;
                     _basis.xBasis = _basis.zBasis.Cross(_basis.yBasis);
                     _basis.xBasis = _basis.xBasis.Normalized;
-                    if (_basis.xBasis.Magnitude <= 0.0001f) {
-                      UnityEngine.Debug.Log("It was zero!");
-                      UnityEngine.Debug.Log(_basis.zBasis.Normalized);
-                      UnityEngine.Debug.Log(_basis.yBasis.Normalized);
-                    }
                     _needToCalculateBasis = false;
                 }
                 return _basis;
@@ -906,7 +899,6 @@ namespace Leap
                 return new Hand ();
             } 
         }
-
 
     }
 

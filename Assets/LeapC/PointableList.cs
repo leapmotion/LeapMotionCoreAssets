@@ -25,6 +25,9 @@ namespace Leap
     
     public class PointableList : List<Pointable>
     {
+        public PointableList():base(){}
+        public PointableList(int initialCapacity):base(initialCapacity){}
+
         /**
      * Appends the members of the specified PointableList to this PointableList.
      * @param other A PointableList object containing Pointable objects

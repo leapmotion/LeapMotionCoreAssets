@@ -23,8 +23,8 @@ namespace Leap {
          TrackedQuad TrackedQuad {get;}
 
          event EventHandler<LeapEventArgs> Init;
-         event EventHandler<LeapEventArgs> Connect;
-         event EventHandler<LeapEventArgs> Disconnect;
+         event EventHandler<ConnectionEventArgs> Connect;
+         event EventHandler<ConnectionLostEventArgs> Disconnect;
          event EventHandler<LeapEventArgs> Exit;
          event EventHandler<FrameEventArgs> FrameReady;
          event EventHandler<LeapEventArgs> FocusGained;
@@ -41,7 +41,7 @@ namespace Leap {
         //new
          event EventHandler<PolicyEventArgs> PolicyChange;
          event EventHandler<ConfigChangeEventArgs> ConfigChange;
-        event EventHandler<DistortionEventArgs> DistortionChange;
+         event EventHandler<DistortionEventArgs> DistortionChange;
          event EventHandler<TrackedQuadEventArgs> TrackedQuadReady;
     }
 }

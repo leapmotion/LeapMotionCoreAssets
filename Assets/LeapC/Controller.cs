@@ -73,8 +73,8 @@ namespace Leap
         public SynchronizationContext EventContext{get; set;}
 
         public event EventHandler<LeapEventArgs> Init;
-        public event EventHandler<LeapEventArgs> Connect;
-        public event EventHandler<LeapEventArgs> Disconnect;
+        public event EventHandler<ConnectionEventArgs> Connect;
+        public event EventHandler<ConnectionLostEventArgs> Disconnect;
         public event EventHandler<LeapEventArgs> Exit;
         public event EventHandler<FrameEventArgs> FrameReady;
         public event EventHandler<LeapEventArgs> FocusGained;
@@ -132,6 +132,7 @@ namespace Leap
 
             _connection.LeapInit += OnInit;
             _connection.LeapConnection += OnConnect;
+            _connection.LeapConnectionLost += OnDisconnect;
             _connection.LeapFrame += OnFrame;
             _connection.LeapImageComplete += OnImages;
             _connection.LeapPolicyChange += OnPolicyChange;
@@ -619,11 +620,11 @@ namespace Leap
             object senderObj = new object();
             Init.DispatchOnContext<LeapEventArgs>(senderObj, EventContext, eventArgs);
         }
-        protected virtual void OnConnect(object sender, LeapEventArgs eventArgs){
-            Connect.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
+        protected virtual void OnConnect(object sender, ConnectionEventArgs eventArgs){
+            Connect.DispatchOnContext<ConnectionEventArgs>(this, EventContext, eventArgs);
         }
-        protected virtual void OnDisconnect(object sender, LeapEventArgs eventArgs){
-            Disconnect.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
+        protected virtual void OnDisconnect(object sender, ConnectionLostEventArgs eventArgs){
+            Disconnect.DispatchOnContext<ConnectionLostEventArgs>(this, EventContext, eventArgs);
         }
         protected virtual void OnExit(object sender, LeapEventArgs eventArgs){
             Exit.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);

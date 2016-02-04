@@ -185,17 +185,19 @@ namespace LeapInternal
                                 break;
                             case eLeapEventType.eLeapEventType_Tracking:
                                 LEAP_TRACKING_EVENT tracking_evt = LeapC.PtrToStruct<LEAP_TRACKING_EVENT> (_msg.eventStructPtr);
-                                if((LeapC.GetNow() - tracking_evt.info.timestamp) < 60000/*microseconds*/){ //skip frames if we are getting behind
+//                                if((LeapC.GetNow() - tracking_evt.info.timestamp) < 60000 /*microseconds*/){ //skip frames if we are getting behind
                                     lastFrameId = tracking_evt.info.frame_id;
                                     enqueueFrame (ref tracking_evt);
                                     _needToCheckPendingFrames = true;
-                                }
+//                                }
                                 break;
                             case eLeapEventType.eLeapEventType_Image:
+                                LEAP_IMAGE_EVENT image_evt = LeapC.PtrToStruct<LEAP_IMAGE_EVENT> (_msg.eventStructPtr);
                                 if(lastImageId <= lastFrameId + 8){ //Skip images if they get too far behind their frames
-                                    LEAP_IMAGE_EVENT image_evt = LeapC.PtrToStruct<LEAP_IMAGE_EVENT> (_msg.eventStructPtr);
                                     startImage (ref image_evt);
-                                }
+                                } //else {
+                                  //  LeapC.SetImageBuffer (ref image_evt.image, IntPtr.Zero, 0); //discard image
+                                //}
                                 break;
                             case eLeapEventType.eLeapEventType_ImageComplete:
                                 LEAP_IMAGE_COMPLETE_EVENT image_complete_evt = LeapC.PtrToStruct<LEAP_IMAGE_COMPLETE_EVENT> (_msg.eventStructPtr);
@@ -384,18 +386,15 @@ namespace LeapInternal
 
         private void handleConnection (ref LEAP_CONNECTION_EVENT connectionMsg)
         {
-//            Logger.Log ("Update Connection Message");
-//            Logger.LogStruct (connectionMsg);
             //TODO update connection on CONNECTION_EVENT
             this.LeapConnection.Dispatch<ConnectionEventArgs> (this, new ConnectionEventArgs ()); //TODO Meaningful Connection event args
         }
 
         private void handleConnectionLost (ref LEAP_CONNECTION_LOST_EVENT connectionMsg)
         {
-//            Logger.Log ("Lost Connection Message");
-//            Logger.LogStruct (connectionMsg);
             //TODO update connection on CONNECTION_LOST_EVENT
             this.LeapConnectionLost.Dispatch<ConnectionLostEventArgs> (this, new ConnectionLostEventArgs ()); //TODO Meaningful ConnectionLost event args
+            this.Stop();
         }
 
         private void handleDevice (ref LEAP_DEVICE_EVENT deviceMsg)
@@ -493,31 +492,36 @@ namespace LeapInternal
             if(config_key != null)
                 _configRequests.Remove(config_response_evt.requestId);
 
-            ConfigValue change = new ConfigValue();
+            Config.ValueType dataType;
+            object value;
             uint requestId = config_response_evt.requestId;
             if(config_response_evt.value.type != eLeapValueType.eLeapValueType_String){
                 
                 switch(config_response_evt.value.type){
                 case eLeapValueType.eLeapValueType_Boolean:
-                    change.type = Config.ValueType.TYPE_BOOLEAN;
-                    change.boolValue = config_response_evt.value.boolValue;
+                    dataType = Config.ValueType.TYPE_BOOLEAN;
+                    value = config_response_evt.value.boolValue;
                     break;
                 case eLeapValueType.eLeapValueType_Int32:
-                    change.type = Config.ValueType.TYPE_INT32;
-                    change.intValue = config_response_evt.value.intValue;
+                    dataType = Config.ValueType.TYPE_INT32;
+                    value = config_response_evt.value.intValue;
                     break;
                 case eLeapValueType.eleapValueType_Float:
-                    change.type = Config.ValueType.TYPE_FLOAT;
-                    change.floatValue = config_response_evt.value.floatValue;
+                    dataType = Config.ValueType.TYPE_FLOAT;
+                    value = config_response_evt.value.floatValue;
+                    break;
+                default:
+                    dataType = Config.ValueType.TYPE_UNKNOWN;
+                    value = new object();
                     break;
                 }
             } else {
                 LEAP_CONFIG_RESPONSE_EVENT_WITH_REF_TYPE config_ref_value =
                      LeapC.PtrToStruct<LEAP_CONFIG_RESPONSE_EVENT_WITH_REF_TYPE> (configMsg.eventStructPtr);
-                change.type = Config.ValueType.TYPE_STRING;
-                change.stringValue = config_ref_value.value.stringValue;
+                dataType = Config.ValueType.TYPE_STRING;
+                value = config_ref_value.value.stringValue;
             }
-            SetConfigResponseEventArgs args = new SetConfigResponseEventArgs(config_key, change, requestId);
+            SetConfigResponseEventArgs args = new SetConfigResponseEventArgs(config_key, dataType, value, requestId);
             
             this.LeapConfigResponse.Dispatch<SetConfigResponseEventArgs> (this, args);
         }
@@ -646,11 +650,29 @@ namespace LeapInternal
             uint requestId;
             eLeapRS result = LeapC.RequestConfigValue(_leapConnection, config_key, out requestId);
             reportAbnormalResults ("LeapC RequestConfigValue call was ", result);
-            Logger.Log("Config request: " + requestId + ", " + config_key);
             _configRequests.Add(requestId, config_key);
             return requestId;
         }
 
+        public uint SetConfigValue<T>(string config_key, T value) where T : IConvertible{
+            uint requestId = 0;
+            eLeapRS result;
+            Type dataType = value.GetType();
+            if(dataType == typeof(bool)){
+                result = LeapC.SaveConfigValue(_leapConnection, config_key, Convert.ToBoolean(value), out requestId);
+            } else if (dataType == typeof(Int32)){
+                result = LeapC.SaveConfigValue(_leapConnection, config_key, Convert.ToInt32(value), out requestId); 
+            } else if (dataType == typeof(float)){
+                result = LeapC.SaveConfigValue(_leapConnection, config_key, Convert.ToSingle(value), out requestId); 
+            } else if(dataType == typeof(string)){
+                result = LeapC.SaveConfigValue(_leapConnection, config_key, Convert.ToString(value), out requestId); 
+            } else {
+                throw new ArgumentException("Only boolean, Int32, float, and string types are supported.");
+            }
+            reportAbnormalResults ("LeapC SaveConfigValue call was ", result);
+
+            return requestId;
+        }
         public uint SetConfigValue(string config_key, bool value){
             uint requestId;
             eLeapRS result = LeapC.SaveConfigValue(_leapConnection, config_key, value, out requestId);

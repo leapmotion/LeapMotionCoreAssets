@@ -103,13 +103,15 @@ using System.Runtime.InteropServices;
 
     public class SetConfigResponseEventArgs : LeapEventArgs
     {
-        public SetConfigResponseEventArgs(string config_key, ConfigValue value, uint requestId):base(LeapEvent.EVENT_CONFIG_RESPONSE){
+        public SetConfigResponseEventArgs(string config_key, Config.ValueType dataType, object value, uint requestId):base(LeapEvent.EVENT_CONFIG_RESPONSE){
             this.ConfigKey = config_key;
+            this.DataType = dataType;
             this.Value = value;
             this.RequestId = requestId;
         }
         public string ConfigKey{get; set;}
-        public ConfigValue Value{get; set;}
+        public Config.ValueType DataType{get; set;}
+        public object Value{get; set;}
         public uint RequestId{get; set;}
     }
 

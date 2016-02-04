@@ -15,6 +15,8 @@ namespace LeapInternal
 
     public enum eLeapConnectionStatus : uint {
         eLeapConnectionStatus_Connected     = 0, //!< // A connection has been established
+        eLeapConnectionStatus_NotConnected, //!< The connection has not been completed. Call OpenConnection.
+        eLeapConnectionStatus_HandshakeIncomplete, //!< The connection handshake has not completed
         eLeapConnectionStatus_NotRunning    = 0xE7030004 //!< A connection could not be established because the server does not appear to be running
     };
 
@@ -265,16 +267,16 @@ namespace LeapInternal
     }
 
     //For LEAP_DISTORTION_MATRIX
-    public struct DISTORTION_POINT {
-        public float x;
-        public float y;
-        public DISTORTION_POINT( float x, float y )
-        {
-            this.x = x;
-            this.y = y;
-        }
-    }
-
+//    public struct DISTORTION_POINT {
+//        public float x;
+//        public float y;
+//        public DISTORTION_POINT( float x, float y )
+//        {
+//            this.x = x;
+//            this.y = y;
+//        }
+//    }
+//
 //    [StructLayout(LayoutKind.Sequential, Pack=1)]
 //    public struct LEAP_DISTORTION_MATRIX {
 //        [MarshalAs(UnmanagedType.ByValArray, SizeConst=64*64)]

@@ -83,7 +83,7 @@ namespace Leap
             return new Bone(trs.TransformPoint(_prevJoint),
                 trs.TransformPoint(_nextJoint),
                 trs.TransformPoint(_center),
-                trs.TransformDirection(_direction),
+                trs.TransformDirection(_direction).Normalized,
                 _length * dScale,
                 _width * hScale,
                 _type,

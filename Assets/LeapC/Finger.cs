@@ -86,7 +86,7 @@ namespace Leap
                               _timeVisible,
                               trs.TransformPoint(_tipPosition),
                               trs.TransformPoint(_tipVelocity),
-                              trs.TransformDirection(_direction),
+                              trs.TransformDirection(_direction).Normalized,
                               trs.TransformPoint(_stabilizedTipPosition),
                               _width * hScale,
                               _length * dScale,

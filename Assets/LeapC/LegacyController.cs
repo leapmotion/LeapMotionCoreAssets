@@ -135,12 +135,12 @@ namespace Leap
             //                listener.OnInit(this);
             //            }
         }
-        protected override void OnConnect(object sender, LeapEventArgs eventArgs){
+        protected override void OnConnect(object sender, ConnectionEventArgs eventArgs){
             //            foreach(Listener listener in _listeners){
             //                listener.OnConnect(this);
             //            }
         }
-        protected override void OnDisconnect(object sender, LeapEventArgs eventArgs){
+        protected override void OnDisconnect(object sender, ConnectionLostEventArgs eventArgs){
             //            foreach(Listener listener in _listeners){
             //                listener.OnDisconnect(this);
             //            }

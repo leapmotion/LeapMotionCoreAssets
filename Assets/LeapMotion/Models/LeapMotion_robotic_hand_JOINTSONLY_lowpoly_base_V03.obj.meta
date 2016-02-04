@@ -1,7 +1,7 @@
 fileFormatVersion: 2
 guid: 77be2d34588f94f148029da0fc06afa0
 ModelImporter:
-  serializedVersion: 16
+  serializedVersion: 19
   fileIDToRecycleName:
     100000: group10_group7 polySurface230
     100002: group10_group7 polySurface231
@@ -57,6 +57,21 @@ ModelImporter:
     100102: pPipe7
     100104: pPipe8
     100106: pPipe9
+    100108: group10_group7_polySurface230
+    100110: group10_group7_polySurface231
+    100112: group10_group7_pPlane1
+    100114: group10_group7_pPlane2
+    100116: group8_group5_polySurface230
+    100118: group8_group5_polySurface231
+    100120: group8_group5_pPlane1
+    100122: group8_group5_pPlane2
+    100124: group9_group6_polySurface230
+    100126: group9_group6_polySurface231
+    100128: group9_group6_pPlane1
+    100130: group9_group6_pPlane2
+    100132: polySurface227_group10_group7
+    100134: polySurface227_group8_group5
+    100136: polySurface227_group9_group6
     400000: group10_group7 polySurface230
     400002: group10_group7 polySurface231
     400004: group10_group7 pPlane1
@@ -111,6 +126,21 @@ ModelImporter:
     400102: pPipe7
     400104: pPipe8
     400106: pPipe9
+    400108: group10_group7_polySurface230
+    400110: group10_group7_polySurface231
+    400112: group10_group7_pPlane1
+    400114: group10_group7_pPlane2
+    400116: group8_group5_polySurface230
+    400118: group8_group5_polySurface231
+    400120: group8_group5_pPlane1
+    400122: group8_group5_pPlane2
+    400124: group9_group6_polySurface230
+    400126: group9_group6_polySurface231
+    400128: group9_group6_pPlane1
+    400130: group9_group6_pPlane2
+    400132: polySurface227_group10_group7
+    400134: polySurface227_group8_group5
+    400136: polySurface227_group9_group6
     2300000: group10_group7 polySurface230
     2300002: group10_group7 polySurface231
     2300004: group10_group7 pPlane1
@@ -164,6 +194,21 @@ ModelImporter:
     2300100: pPipe7
     2300102: pPipe8
     2300104: pPipe9
+    2300106: group10_group7_polySurface230
+    2300108: group10_group7_polySurface231
+    2300110: group10_group7_pPlane1
+    2300112: group10_group7_pPlane2
+    2300114: group8_group5_polySurface230
+    2300116: group8_group5_polySurface231
+    2300118: group8_group5_pPlane1
+    2300120: group8_group5_pPlane2
+    2300122: group9_group6_polySurface230
+    2300124: group9_group6_polySurface231
+    2300126: group9_group6_pPlane1
+    2300128: group9_group6_pPlane2
+    2300130: polySurface227_group10_group7
+    2300132: polySurface227_group8_group5
+    2300134: polySurface227_group9_group6
     3300000: group10_group7 polySurface230
     3300002: group10_group7 polySurface231
     3300004: group10_group7 pPlane1
@@ -217,6 +262,21 @@ ModelImporter:
     3300100: pPipe7
     3300102: pPipe8
     3300104: pPipe9
+    3300106: group10_group7_polySurface230
+    3300108: group10_group7_polySurface231
+    3300110: group10_group7_pPlane1
+    3300112: group10_group7_pPlane2
+    3300114: group8_group5_polySurface230
+    3300116: group8_group5_polySurface231
+    3300118: group8_group5_pPlane1
+    3300120: group8_group5_pPlane2
+    3300122: group9_group6_polySurface230
+    3300124: group9_group6_polySurface231
+    3300126: group9_group6_pPlane1
+    3300128: group9_group6_pPlane2
+    3300130: polySurface227_group10_group7
+    3300132: polySurface227_group8_group5
+    3300134: polySurface227_group9_group6
     4300000: group10_group7 polySurface230
     4300002: group10_group7 polySurface231
     4300004: group10_group7 pPlane1
@@ -270,6 +330,21 @@ ModelImporter:
     4300100: pPipe7
     4300102: pPipe8
     4300104: pPipe9
+    4300106: group10_group7_polySurface230
+    4300108: group10_group7_polySurface231
+    4300110: group10_group7_pPlane1
+    4300112: group10_group7_pPlane2
+    4300114: group8_group5_polySurface230
+    4300116: group8_group5_polySurface231
+    4300118: group8_group5_pPlane1
+    4300120: group8_group5_pPlane2
+    4300122: group9_group6_polySurface230
+    4300124: group9_group6_polySurface231
+    4300126: group9_group6_pPlane1
+    4300128: group9_group6_pPlane2
+    4300130: polySurface227_group10_group7
+    4300132: polySurface227_group8_group5
+    4300134: polySurface227_group9_group6
     9500000: //RootNode
   materials:
     importMaterials: 0
@@ -278,12 +353,17 @@ ModelImporter:
   animations:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
+    resampleRotations: 1
     optimizeGameObjects: 0
     motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
     animationCompression: 1
-    animationRotationError: .5
-    animationPositionError: .5
-    animationScaleError: .5
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
     animationWrapMode: 0
     extraExposedTransformPaths: []
     clipAnimations: []
@@ -298,30 +378,35 @@ ModelImporter:
     generateSecondaryUV: 0
     useFileUnits: 1
     optimizeMeshForGPU: 1
+    keepQuads: 0
     weldVertices: 1
     secondaryUVAngleDistortion: 8
     secondaryUVAreaDistortion: 15.000001
     secondaryUVHardAngle: 88
     secondaryUVPackMargin: 4
+    useFileScale: 0
   tangentSpace:
     normalSmoothAngle: 99
-    splitTangentsAcrossUV: 1
     normalImportMode: 1
-    tangentImportMode: 1
+    tangentImportMode: 4
   importAnimation: 0
   copyAvatar: 0
   humanDescription:
     human: []
     skeleton: []
-    armTwist: .5
-    foreArmTwist: .5
-    upperLegTwist: .5
-    legTwist: .5
-    armStretch: .0500000007
-    legStretch: .0500000007
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
     feetSpacing: 0
     rootMotionBoneName: 
+    hasTranslationDoF: 0
   lastHumanDescriptionAvatarSource: {instanceID: 0}
   animationType: 2
+  humanoidOversampling: 1
   additionalBone: 0
   userData: 
+  assetBundleName: 
+  assetBundleVariant: 

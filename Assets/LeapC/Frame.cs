@@ -70,10 +70,10 @@ namespace Leap
             _timestamp = timestamp;
             _fps = fps;
             _isValid = true;
-            _pointables = new PointableList();
-            _fingers = new FingerList();
+            _pointables = new PointableList(15);
+            _fingers = new FingerList(15);
             _tools = new ToolList();
-            _hands = new HandList();
+            _hands = new HandList(3);
             _trackedQuad = new TrackedQuad();
             InteractionBox = interactionBox;
         }
@@ -88,19 +88,19 @@ namespace Leap
             for(int h = 0; h < this.Hands.Count; h++)
                 transformedFrame.AddHand(this.Hands[h].TransformedCopy(trs));
             
-                //TODO tools are deprecated, not adding them
+                //TODO tools are deprecated, not adding them here -- need to remove all tool concepts
             return transformedFrame;
         }
 
         public void AddHand(Hand hand){
             if(_hands == null)
-                _hands = new HandList();
+                _hands = new HandList(3);
 
             _hands.Add(hand);
             if(_pointables == null)
-                _pointables = new PointableList();
+                _pointables = new PointableList(15);
             if(_fingers == null)
-                _fingers = new FingerList();
+                _fingers = new FingerList(15);
 
 
             for(int f = 0; f < hand.Fingers.Count; f ++){
@@ -185,10 +185,10 @@ namespace Leap
      */
         public Frame ()
         {
-            _pointables = new PointableList();
-            _fingers = new FingerList();
+            _pointables = new PointableList(15);
+            _fingers = new FingerList(15);
             _tools = new ToolList();
-            _hands = new HandList();
+            _hands = new HandList(3);
             _trackedQuad = new TrackedQuad();
         }
 
@@ -670,7 +670,7 @@ namespace Leap
         public PointableList Pointables {
             get {
                 if (_pointables == null) {
-                        _pointables = new PointableList ();
+                        _pointables = new PointableList (15);
                 }
                 return _pointables;
             }
@@ -690,7 +690,7 @@ namespace Leap
         public FingerList Fingers {
             get {
                 if(_fingers == null)
-                    _fingers = new FingerList();
+                    _fingers = new FingerList(15);
 
                 return _fingers;
             } 
@@ -726,7 +726,7 @@ namespace Leap
         public HandList Hands {
             get {
                 if(_hands == null)
-                    _hands = new HandList();
+                    _hands = new HandList(3);
 
                 return _hands;
             } 

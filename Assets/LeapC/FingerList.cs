@@ -24,7 +24,9 @@ namespace Leap
 
     public class FingerList : List<Finger>
     {
-  
+        public FingerList():base(){}
+        public FingerList(int initialCapacity):base(initialCapacity){}
+
         /**
      * Appends the members of the specified FingerList to this FingerList.
      * @param other A FingerList object containing Finger objects

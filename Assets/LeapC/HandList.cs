@@ -24,7 +24,8 @@ namespace Leap
     
     public class HandList : List<Hand>
     {
-        
+        public HandList():base(){}
+        public HandList(int initialCapacity):base(initialCapacity){}
         /**
      * Appends the members of the specified HandList to this HandList.
      * @param other A HandList object containing Hand objects
