@@ -1,3 +1,10 @@
+/******************************************************************************\
+* Copyright (C) 2012-2016 Leap Motion, Inc. All rights reserved.               *
+* Leap Motion proprietary and confidential. Not for distribution.              *
+* Use subject to the terms of the Leap Motion SDK Agreement available at       *
+* https://developer.leapmotion.com/sdk_agreement, or another agreement         *
+* between Leap Motion and you, your company or other organization.             *
+\******************************************************************************/
 namespace LeapInternal
 {
     using System;
@@ -10,6 +17,9 @@ namespace LeapInternal
         public byte[] pixelBuffer;
         //private IntPtr dataPtr;
         private GCHandle _bufferHandle;
+        private bool _isPinned = false;
+        private object lockable = new object();
+
         public UInt64 index;
         public Int64 frame_id;
         public Int64 timestamp;
@@ -74,12 +84,22 @@ namespace LeapInternal
             if(pixelBuffer == null)
                 return IntPtr.Zero;
 
-            _bufferHandle = GCHandle.Alloc(pixelBuffer, GCHandleType.Pinned);
-            return _bufferHandle.AddrOfPinnedObject();;
+            lock(lockable){
+                if(!_isPinned){
+                    _bufferHandle = GCHandle.Alloc(pixelBuffer, GCHandleType.Pinned);
+                    _isPinned = true;
+                }
+            }
+            return _bufferHandle.AddrOfPinnedObject();
         }
 
         public void unPinHandle(){
-            _bufferHandle.Free();
+            lock(lockable){
+                if(_isPinned){
+                    _bufferHandle.Free();
+                    _isPinned = false;
+                }
+            }
         }
 
         public ImageData Copy(){

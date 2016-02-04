@@ -1,3 +1,10 @@
+/******************************************************************************\
+* Copyright (C) 2012-2016 Leap Motion, Inc. All rights reserved.               *
+* Leap Motion proprietary and confidential. Not for distribution.              *
+* Use subject to the terms of the Leap Motion SDK Agreement available at       *
+* https://developer.leapmotion.com/sdk_agreement, or another agreement         *
+* between Leap Motion and you, your company or other organization.             *
+\******************************************************************************/
 namespace Leap {
     
     using System;
@@ -11,38 +18,11 @@ namespace Leap {
    * @since 1.0
    */
     
-    public class ImageList : IDisposable {
+    public class ImageList {
         public const int MAX_IMAGES = 4;
 
         private Image[] _images;
 
-        // TODO: revisit dispose code
-        // Dispose() is called explicitly by CoreAssets, so adding the stub implementation for now.
-        bool _disposed = false;
-        public void Dispose(){
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing){
-            if (_disposed)
-              return;
-
-            // cleanup
-            if (disposing) {
-                _images = null;
-            }
-
-            // Free any unmanaged objects here.
-            //
-            _disposed = true;
-        }
-        
-        ~ImageList() {
-            Dispose(false);
-        }
-        
-        
         /**
      * Constructs an empty list of images.
      * @since 1.0
@@ -81,6 +61,9 @@ namespace Leap {
             set{
                 if( i < 0 || i > MAX_IMAGES - 1)
                     throw new IndexOutOfRangeException();
+
+                if(value == null)
+                    _images[i] = value;
                 
                 if(value.Perspective == Image.PerspectiveType.STEREO_LEFT){
                     if(value.Type == Image.ImageType.DEFAULT){
@@ -103,7 +86,7 @@ namespace Leap {
                 return _images[0];
             } 
             set{
-                if(value.Perspective != Image.PerspectiveType.STEREO_LEFT || value.Type != Image.ImageType.DEFAULT)
+                if(value != null && (value.Perspective != Image.PerspectiveType.STEREO_LEFT || value.Type != Image.ImageType.DEFAULT))
                     throw new ArgumentException("Wrong image type or perspective.");
                 _images[0] = value;
             }
@@ -113,7 +96,7 @@ namespace Leap {
                 return _images[1];
             } 
             set{
-                if(value.Perspective != Image.PerspectiveType.STEREO_RIGHT || value.Type != Image.ImageType.DEFAULT)
+                if(value != null && (value.Perspective != Image.PerspectiveType.STEREO_RIGHT || value.Type != Image.ImageType.DEFAULT))
                     throw new ArgumentException("Wrong image type or perspective.");
                 _images[1] = value;
             }
@@ -123,7 +106,7 @@ namespace Leap {
                 return _images[2];
             } 
             set{
-                if(value.Perspective != Image.PerspectiveType.STEREO_LEFT || value.Type != Image.ImageType.RAW)
+                if(value != null && (value.Perspective != Image.PerspectiveType.STEREO_LEFT || value.Type != Image.ImageType.RAW))
                     throw new ArgumentException("Wrong image type or perspective.");
                 _images[2] = value;
             }
@@ -133,7 +116,7 @@ namespace Leap {
                 return _images[3];
             } 
             set{
-                if(value.Perspective != Image.PerspectiveType.STEREO_RIGHT || value.Type != Image.ImageType.RAW)
+                if(value != null && (value.Perspective != Image.PerspectiveType.STEREO_RIGHT || value.Type != Image.ImageType.RAW))
                     throw new ArgumentException("Wrong image type or perspective.");
                 _images[3] = value;
             }
@@ -149,6 +132,9 @@ namespace Leap {
         }
 
         public bool Add(Image image){
+            if(image == null)
+                return false;
+            
             if(image.Type == Image.ImageType.DEFAULT){
                 if(image.Perspective == Image.PerspectiveType.STEREO_LEFT){ IRLeft = image; return true;}
                 if(image.Perspective == Image.PerspectiveType.STEREO_RIGHT){ IRRight = image; return true;}

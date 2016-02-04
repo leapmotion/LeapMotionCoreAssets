@@ -35,12 +35,11 @@ public class TemporalWarpingStatus : MonoBehaviour {
       return;
     }
 
-    using(ImageList list = Provider.CurrentFrame.Images){
-      using (Leap.Image image = list.IRLeft) {
+    ImageList list = Provider.CurrentFrame.Images;
+      Leap.Image image = list.IRLeft;
         float latency = Provider.GetLeapController().Now() - image.Timestamp;
         _imageLatency.Update(latency, Time.deltaTime);
-      }
-    }
+
 
     _frameDelta.Update(Time.deltaTime, Time.deltaTime);
 

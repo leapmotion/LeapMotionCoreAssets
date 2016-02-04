@@ -153,9 +153,9 @@ namespace Leap {
     protected virtual void FixedUpdate() {
       //All FixedUpdates of a frame happen before Update, so only the last of these calculations is passed
       //into Update for smoothing.
-      using (var latestFrame = Provider.CurrentFrame) {
-        Provider.PerFrameFixedUpdateOffset = latestFrame.Timestamp * NS_TO_S - Time.fixedTime;
-      }
+      var latestFrame = Provider.CurrentFrame;
+      Provider.PerFrameFixedUpdateOffset = latestFrame.Timestamp * NS_TO_S - Time.fixedTime;
+      
 
       Frame frame = Provider.GetFixedFrame();
 

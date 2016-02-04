@@ -11,6 +11,7 @@ namespace Leap
 {
     using System;
     using System.Runtime.InteropServices;
+
     /**
    * The Frame class represents a set of hand and finger tracking data detected
    * in a single frame.
@@ -26,101 +27,59 @@ namespace Leap
    * @since 1.0
    */
 
-    public class Frame : IDisposable
+    public class Frame
     {
-        PointableList _pointables;
         FingerList _fingers;
-        ToolList _tools;
         HandList _hands;
         ImageList _images;
         ImageList _rawImages;
         TrackedQuad _trackedQuad;
+        InteractionBox _interactionBox;
         long _id = -1;
         float _fps = 0;
         long _timestamp = -1;
         bool _isValid = false;
-        Controller _controller;
 
-        // TODO: revisit dispose code
-        // Dispose() is called explicitly by CoreAssets, so adding the stub implementation for now.
-        bool _disposed = false;
-
-        public void Dispose(){
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing){
-            if (_disposed)
-              return;
-
-            // cleanup
-            if (disposing) {
-                // Free any managed objects here.
-                //
-            }
-
-            // Free any unmanaged objects here.
-            //
-            _disposed = true;
-        }
-
-        public Frame(long id, long timestamp, float fps, InteractionBox interactionBox){
+        public Frame (long id, long timestamp, float fps, InteractionBox interactionBox)
+        {
             _id = id;
             _timestamp = timestamp;
             _fps = fps;
             _isValid = true;
-            _pointables = new PointableList(15);
-            _fingers = new FingerList(15);
-            _tools = new ToolList();
-            _hands = new HandList(3);
-            _trackedQuad = new TrackedQuad();
+            _fingers = new FingerList (15);
+            _hands = new HandList (3);
+            _trackedQuad = new TrackedQuad ();
             InteractionBox = interactionBox;
         }
 
-        public Frame TransformedCopy(Matrix trs){
-            Frame transformedFrame = new Frame(_id, 
-                _timestamp, 
-                _fps, 
-                new InteractionBox(InteractionBox.Center, InteractionBox.Size));
+        public Frame TransformedCopy (Matrix trs)
+        {
+            Frame transformedFrame = new Frame (_id, 
+                                         _timestamp, 
+                                         _fps, 
+                                         new InteractionBox (InteractionBox.Center, InteractionBox.Size));
             //TODO should InteractionBox be transformed, too?
 
-            for(int h = 0; h < this.Hands.Count; h++)
-                transformedFrame.AddHand(this.Hands[h].TransformedCopy(trs));
+            for (int h = 0; h < this.Hands.Count; h++)
+                transformedFrame.AddHand (this.Hands [h].TransformedCopy (trs));
             
-                //TODO tools are deprecated, not adding them here -- need to remove all tool concepts
+            //TODO tools are deprecated, not adding them here -- need to remove all tool concepts
             return transformedFrame;
         }
 
-        public void AddHand(Hand hand){
-            if(_hands == null)
-                _hands = new HandList(3);
+        public void AddHand (Hand hand)
+        {
+            if (_hands == null)
+                _hands = new HandList (3);
 
-            _hands.Add(hand);
-            if(_pointables == null)
-                _pointables = new PointableList(15);
-            if(_fingers == null)
-                _fingers = new FingerList(15);
+            _hands.Add (hand);
+            if (_fingers == null)
+                _fingers = new FingerList (15);
 
 
-            for(int f = 0; f < hand.Fingers.Count; f ++){
-                _pointables.Add((Pointable)hand.Fingers[f]);
-                _fingers.Add(hand.Fingers[f]);
+            for (int f = 0; f < hand.Fingers.Count; f++) {
+                _fingers.Add (hand.Fingers [f]);
             }
-        }
-
-        public void AddTool(Tool tool){
-            if(_tools == null)
-                _tools = new ToolList();
-            if(_pointables == null)
-                _pointables = new PointableList();
-
-            _tools.Add(tool);
-            _pointables.Add ((Pointable)tool);
-        }
-
-        ~Frame(){
-            Dispose(false);
         }
 
         /**
@@ -185,11 +144,9 @@ namespace Leap
      */
         public Frame ()
         {
-            _pointables = new PointableList(15);
-            _fingers = new FingerList(15);
-            _tools = new ToolList();
-            _hands = new HandList(3);
-            _trackedQuad = new TrackedQuad();
+            _fingers = new FingerList (15);
+            _hands = new HandList (3);
+            _trackedQuad = new TrackedQuad ();
         }
 
         /**
@@ -220,33 +177,6 @@ namespace Leap
         }
 
         /**
-     * The Pointable object with the specified ID in this frame.
-     *
-     * Use the Frame::pointable() function to retrieve the Pointable object from
-     * this frame using an ID value obtained from a previous frame.
-     * This function always returns a Pointable object, but if no finger or tool
-     * with the specified ID is present, an invalid Pointable object is returned.
-     *
-     * \include Frame_pointable.txt
-     *
-     * Note that ID values persist across frames, but only until tracking of a
-     * particular object is lost. If tracking of a finger or tool is lost and subsequently
-     * regained, the new Pointable object representing that finger or tool may have
-     * a different ID than that representing the finger or tool in an earlier frame.
-     *
-     * @param id The ID value of a Pointable object from a previous frame.
-     * @returns The Pointable object with the matching ID if one exists in this frame;
-     * otherwise, an invalid Pointable object is returned.
-     * @since 1.0
-     */
-        public Pointable Pointable (int id)
-        {
-            return this.Pointables.Find (delegate(Pointable item) {
-                return item.Id == id;
-            });
-        }
-
-        /**
      * The Finger object with the specified ID in this frame.
      *
      * Use the Frame::finger() function to retrieve the Finger object from
@@ -271,89 +201,6 @@ namespace Leap
             return this.Fingers.Find (delegate(Finger item) {
                 return item.Id == id;
             });
-        }
-
-        /**
-     * The Tool object with the specified ID in this frame.
-     *
-     * Use the Frame::tool() function to retrieve the Tool object from
-     * this frame using an ID value obtained from a previous frame.
-     * This function always returns a Tool object, but if no tool
-     * with the specified ID is present, an invalid Tool object is returned.
-     *
-     * \include Frame_tool.txt
-     *
-     * Note that ID values persist across frames, but only until tracking of a
-     * particular object is lost. If tracking of a tool is lost and subsequently
-     * regained, the new Tool object representing that tool may have a
-     * different ID than that representing the tool in an earlier frame.
-     *
-     * @param id The ID value of a Tool object from a previous frame.
-     * @returns The Tool object with the matching ID if one exists in this frame;
-     * otherwise, an invalid Tool object is returned.
-     * @since 1.0
-     */
-        public Tool Tool (int id)
-        {
-            return this.Tools.Find (delegate(Tool item) {
-                return item.Id == id;
-            });
-        }
-
-        /**
-     * The Gesture object with the specified ID in this frame.
-     *
-     * Use the Frame::gesture() function to return a Gesture object in this
-     * frame using an ID obtained in an earlier frame. The function always
-     * returns a Gesture object, but if there was no update for the gesture in
-     * this frame, then an invalid Gesture object is returned.
-     *
-     * \include Frame_gesture.txt
-     *
-     * All Gesture objects representing the same recognized movement share the
-     * same ID.
-     * @param id The ID of an Gesture object from a previous frame.
-     * @returns The Gesture object in the frame with the specified ID if one
-     * exists; Otherwise, an Invalid Gesture object.
-     * @since 1.0
-     */
-        public Gesture Gesture (int id)
-        {
-            return new Gesture ();
-        }
-
-        /**
-     * The gestures recognized or continuing in this frame.
-     *
-     * \include Frame_gestures_now.txt
-     *
-     * Circle and swipe gestures are updated every frame. Tap gestures
-     * only appear in the list  for a single frame.
-     *
-     * @return GestureList the list of gestures.
-     * @since 1.0
-     */
-        public GestureList Gestures ()
-        {
-            return new GestureList ();
-        }
-
-        /**
-     * Returns a GestureList containing all gestures that have occurred since
-     * the specified frame.
-     *
-     * \include Frame_gestures_since.txt
-     *
-     * @param sinceFrame An earlier Frame object. The starting frame must
-     * still be in the frame history cache, which has a default length of
-     * 60 frames.
-     * @return GestureList The list of the Gesture objects that have occurred
-     * since the specified frame.
-     * @since 1.0
-     */
-        public GestureList Gestures (Frame sinceFrame)
-        {
-            return new GestureList ();
         }
 
         /**
@@ -598,7 +445,7 @@ namespace Leap
             return "Frame id: " + this.Id + " timestamp: " + this.Timestamp;
         }
 
-/**
+        /**
      * A unique ID for this Frame.
      *
      * Consecutive frames processed by the Leap Motion software have consecutive
@@ -620,7 +467,7 @@ namespace Leap
             } 
         }
 
-/**
+        /**
      * The frame capture time in microseconds elapsed since an arbitrary point in 
      * time in the past.
      *
@@ -637,7 +484,7 @@ namespace Leap
             } 
         }
 
-/**
+        /**
      * The instantaneous framerate.
      *
      * The rate at which the Leap Motion software is providing frames of data
@@ -656,27 +503,7 @@ namespace Leap
             } 
         }
 
-/**
-     * The list of Pointable objects (fingers and tools) detected in this frame,
-     * given in arbitrary order. The list can be empty if no fingers or tools are detected.
-     *
-     * Use PointableList::extended() to remove non-extended fingers from the list.
-     *
-     * \include Frame_pointables.txt
-     *
-     * @returns The PointableList containing all Pointable objects detected in this frame.
-     * @since 1.0
-     */
-        public PointableList Pointables {
-            get {
-                if (_pointables == null) {
-                        _pointables = new PointableList (15);
-                }
-                return _pointables;
-            }
-        }
-
-/**
+        /**
      * The list of Finger objects detected in this frame, given in arbitrary order.
      * The list can be empty if no fingers are detected.
      *
@@ -689,32 +516,14 @@ namespace Leap
      */
         public FingerList Fingers {
             get {
-                if(_fingers == null)
-                    _fingers = new FingerList(15);
+                if (_fingers == null)
+                    _fingers = new FingerList (15);
 
                 return _fingers;
             } 
         }
 
-/**
-     * The list of Tool objects detected in this frame, given in arbitrary order.
-     * The list can be empty if no tools are detected.
-     *
-     * \include Frame_tools.txt
-     *
-     * @returns The ToolList containing all Tool objects detected in this frame.
-     * @since 1.0
-     */
-        public ToolList Tools {
-            get {
-                if(_tools == null)
-                    _tools = new ToolList();
-
-                return _tools;
-            } 
-        }
-
-/**
+        /**
      * The list of Hand objects detected in this frame, given in arbitrary order.
      * The list can be empty if no hands are detected.
      *
@@ -725,14 +534,14 @@ namespace Leap
      */
         public HandList Hands {
             get {
-                if(_hands == null)
-                    _hands = new HandList(3);
+                if (_hands == null)
+                    _hands = new HandList (3);
 
                 return _hands;
             } 
         }
 
-/**
+        /**
      * The list of images from the Leap Motion cameras.
      *
      * @return An ImageList object containing the camera images analyzed to create this Frame.
@@ -740,8 +549,8 @@ namespace Leap
      */
         public ImageList Images {
             get {
-                if(_images == null)
-                    _images = new ImageList();
+                if (_images == null)
+                    _images = new ImageList ();
                 return _images;
             } 
             set {
@@ -749,17 +558,7 @@ namespace Leap
             }
         }
 
-        public ImageList RawImages{
-            get {
-                if(_rawImages == null)
-                    _rawImages = new ImageList();
-                return _rawImages;
-            } 
-            set {
-                _rawImages = value;
-            }
-        }
-/**
+        /**
      * Reports whether this Frame instance is valid.
      *
      * A valid Frame is one generated by the Leap::Controller object that contains
@@ -784,7 +583,7 @@ namespace Leap
             } 
         }
 
-/**
+        /**
      * The current InteractionBox for the frame. See the InteractionBox class
      * documentation for more details on how this class should be used.
      *
@@ -793,7 +592,18 @@ namespace Leap
      * @returns The current InteractionBox object.
      * @since 1.0
      */
-        public InteractionBox InteractionBox {get; private set;}
+        public InteractionBox InteractionBox { get{
+                if(_interactionBox == null)
+                    _interactionBox = new InteractionBox(new Vector(0, 200, 0), 
+                                                         new Vector(200, 200, 200)
+                    );
+
+                return _interactionBox;
+            } 
+            private set{
+                _interactionBox = value;
+            } 
+        }
 
         public int SerializeLength {
             get {
@@ -801,7 +611,7 @@ namespace Leap
             } 
         }
 
-/**
+        /**
      * Note: This class is an experimental API for internal use only. It may be
      * removed without warning.
      *
@@ -813,8 +623,8 @@ namespace Leap
      **/
         public TrackedQuad TrackedQuad {
             get {
-                if(_trackedQuad == null)
-                    _trackedQuad = new TrackedQuad();
+                if (_trackedQuad == null)
+                    _trackedQuad = new TrackedQuad ();
 
                 return _trackedQuad;
             } 
@@ -823,7 +633,7 @@ namespace Leap
             }
         }
 
-/**
+        /**
      * Returns an invalid Frame object.
      *
      * You can use the instance returned by this function in comparisons testing

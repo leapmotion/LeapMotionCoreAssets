@@ -66,7 +66,6 @@ namespace LeapInternal
         //Policy and enabled features
         private UInt64 _requestedPolicies = 0;
         private UInt64 _activePolicies = 0;
-        private bool _policiesAreDirty = false;
         private bool _imagesAreEnabled = false;
         private bool _rawImagesAreEnabled = false;
         private bool _trackedQuadsAreEnabled = false;
@@ -76,7 +75,6 @@ namespace LeapInternal
 
         //Connection events
         public EventHandler<LeapEventArgs> LeapInit;
-
         public EventHandler<ConnectionEventArgs> LeapConnection;
         public EventHandler<ConnectionLostEventArgs> LeapConnectionLost;
         public EventHandler<DeviceEventArgs> LeapDevice;
@@ -94,7 +92,6 @@ namespace LeapInternal
         private bool _disposed = false;
         private bool _needToCheckPendingFrames = false;
 
-        //TODO revisit dispose code
         public void Dispose ()
         { 
             Dispose (true);
@@ -185,19 +182,17 @@ namespace LeapInternal
                                 break;
                             case eLeapEventType.eLeapEventType_Tracking:
                                 LEAP_TRACKING_EVENT tracking_evt = LeapC.PtrToStruct<LEAP_TRACKING_EVENT> (_msg.eventStructPtr);
-//                                if((LeapC.GetNow() - tracking_evt.info.timestamp) < 60000 /*microseconds*/){ //skip frames if we are getting behind
+                                if((LeapC.GetNow() - tracking_evt.info.timestamp) < 60000 /*microseconds*/){ //skip frames if we are getting behind
                                     lastFrameId = tracking_evt.info.frame_id;
                                     enqueueFrame (ref tracking_evt);
                                     _needToCheckPendingFrames = true;
-//                                }
+                                }
                                 break;
                             case eLeapEventType.eLeapEventType_Image:
                                 LEAP_IMAGE_EVENT image_evt = LeapC.PtrToStruct<LEAP_IMAGE_EVENT> (_msg.eventStructPtr);
-                                if(lastImageId <= lastFrameId + 8){ //Skip images if they get too far behind their frames
+                                if(lastImageId <= lastFrameId + 4){ //Skip images if they get too far behind their frames
                                     startImage (ref image_evt);
-                                } //else {
-                                  //  LeapC.SetImageBuffer (ref image_evt.image, IntPtr.Zero, 0); //discard image
-                                //}
+                                }
                                 break;
                             case eLeapEventType.eLeapEventType_ImageComplete:
                                 LEAP_IMAGE_COMPLETE_EVENT image_complete_evt = LeapC.PtrToStruct<LEAP_IMAGE_COMPLETE_EVENT> (_msg.eventStructPtr);
@@ -257,7 +252,6 @@ namespace LeapInternal
                     pendingFrames.Dequeue ();
                     Frames.Put (pending);
                     this.LeapFrame.Dispatch<FrameEventArgs> (this, new FrameEventArgs (pending));
-//                    Logger.Log("Frame: " + pending.Id + " dly: " + (LeapC.GetNow () - pending.Timestamp) + ", imgs: " + pending.Images.Count);
                     checkPendingFrames (); //check the next frame if this one was ready
                 }
             }
@@ -323,12 +317,6 @@ namespace LeapInternal
             ImageData pendingImageData = _imageDataCache.FindByPoolIndex (imageMsg.image.index);
 
             if (pendingImageData != null) {
-                pendingImageData.unPinHandle (); //Done with pin for unmanaged code
-
-//                Logger.Log("Write image");
-//                System.IO.File.WriteAllBytes(("img-" + pendingImageData.type + pendingImageData.frame_id + ".raw"), pendingImageData.pixelBuffer);
-
-
                 DistortionData distData;
                 if (!DistortionCache.TryGetValue (imageMsg.matrix_version, out distData)) {//if fails, then create new entry
                     distData = new DistortionData ();
@@ -363,8 +351,6 @@ namespace LeapInternal
                         frame.Images.Add (newImage);
                     pendingFrames.Enqueue (frame);
                 }
-//                Logger.Log("Image: " + newImage.SequenceId + " dly: " + (LeapC.GetNow () - newImage.Timestamp));
-
                 this.LeapImageComplete.Dispatch<ImageEventArgs> (this, new ImageEventArgs (newImage));
             }
         }
@@ -374,7 +360,6 @@ namespace LeapInternal
             TrackedQuad quad = frameFactory.makeQuad (ref quad_evt);
             _quads.Put (quad);
 
-            //TODO rework pending frame lookup -- if frame leaves queue because of timeout, it will never get its quads or images
             for (int f = 0; f < pendingFrames.Count; f++) {
                 Frame frame = pendingFrames.Dequeue ();
                 if (frame.Id == quad.Id)
@@ -473,8 +458,6 @@ namespace LeapInternal
 
         private void handleConfigChange (ref LEAP_CONFIG_CHANGE_EVENT configEvent)
         {
-            Logger.Log ("Config change >>>>>>>>>>>>>>>>>>>>>");
-            Logger.LogStruct (configEvent);
             string config_key = "";
             _configRequests.TryGetValue(configEvent.requestId, out config_key);
             if(config_key != null)
@@ -485,7 +468,6 @@ namespace LeapInternal
 
         private void handleConfigResponse (ref LEAP_CONNECTION_MESSAGE configMsg)
         {
-            Logger.Log ("Config response >>>>>>>>>>>>>>>>>>>>>");
             LEAP_CONFIG_RESPONSE_EVENT config_response_evt = LeapC.PtrToStruct<LEAP_CONFIG_RESPONSE_EVENT> (configMsg.eventStructPtr);
             string config_key = "";
             _configRequests.TryGetValue(config_response_evt.requestId, out config_key);
@@ -557,7 +539,7 @@ namespace LeapInternal
             if (_activePolicies != _requestedPolicies) {
                 // This could happen when config is turned off, or
                 // the this is the policy change event from the last SetPolicy, after that, the user called SetPolicy again
-                Logger.Log ("Current active policy flags: " + _activePolicies);
+                //TODO handle failure to set deisred policy -- maybe a PolicyDenied event 
             }
 
             if ((policyMsg.current_policy & (UInt64)eLeapPolicyFlag.eLeapPolicyFlag_Images)
@@ -567,15 +549,12 @@ namespace LeapInternal
             if ((policyMsg.current_policy & (UInt64)eLeapPolicyFlag.eLeapPolicyFlag_RawImages)
                 == (UInt64)eLeapPolicyFlag.eLeapPolicyFlag_RawImages)
                 _rawImagesAreEnabled = true;
-
-            //TODO Handle other (non-image) policy changes; handle policy disable
         }
 
         public void SetPolicy (Controller.PolicyFlag policy)
         {
             UInt64 setFlags = (ulong)flagForPolicy (policy);
             _requestedPolicies = _requestedPolicies | setFlags;
-            _policiesAreDirty = true;
             setFlags = _requestedPolicies;
             UInt64 clearFlags = ~_requestedPolicies; //inverse of desired policies
 
@@ -587,7 +566,6 @@ namespace LeapInternal
         {
             UInt64 clearFlags = (ulong)flagForPolicy (policy);
             _requestedPolicies = _requestedPolicies & ~clearFlags;
-            _policiesAreDirty = true; //request occurs in message loop
             eLeapRS result = LeapC.SetPolicyFlags (_leapConnection, 0, clearFlags);
             reportAbnormalResults("LeapC SetPolicyFlags call was ", result);
         }
@@ -673,38 +651,7 @@ namespace LeapInternal
 
             return requestId;
         }
-        public uint SetConfigValue(string config_key, bool value){
-            uint requestId;
-            eLeapRS result = LeapC.SaveConfigValue(_leapConnection, config_key, value, out requestId);
-            reportAbnormalResults ("LeapC SaveConfigValue call was ", result);
-            _configRequests.Add(requestId, config_key);
 
-            return requestId;
-        }
-        public uint SetConfigValue(string config_key, Int32 value){
-            uint requestId;
-            eLeapRS result = LeapC.SaveConfigValue(_leapConnection, config_key, value, out requestId);
-            reportAbnormalResults ("LeapC SaveConfigValue call was ", result);
-            _configRequests.Add(requestId, config_key);
-
-            return requestId;
-        }
-        public uint SetConfigValue(string config_key, float value){
-            uint requestId;
-            eLeapRS result = LeapC.SaveConfigValue(_leapConnection, config_key, value, out requestId);
-            reportAbnormalResults ("LeapC SaveConfigValue call was ", result);
-            _configRequests.Add(requestId, config_key);
-
-            return requestId;
-        }
-        public uint SetConfigValue(string config_key, string value){
-            uint requestId;
-            eLeapRS result = LeapC.SaveConfigValue(_leapConnection, config_key, value, out requestId);
-            reportAbnormalResults ("LeapC SaveConfigValue call was ", result);
-            _configRequests.Add(requestId, config_key);
-
-            return requestId;
-        }
         /**
      * Reports whether your application has a connection to the Leap Motion
      * daemon/service. Can be true even if the Leap Motion hardware is not available.

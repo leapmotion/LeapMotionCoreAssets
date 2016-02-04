@@ -1,3 +1,10 @@
+/******************************************************************************\
+* Copyright (C) 2012-2016 Leap Motion, Inc. All rights reserved.               *
+* Leap Motion proprietary and confidential. Not for distribution.              *
+* Use subject to the terms of the Leap Motion SDK Agreement available at       *
+* https://developer.leapmotion.com/sdk_agreement, or another agreement         *
+* between Leap Motion and you, your company or other organization.             *
+\******************************************************************************/
 namespace Leap
 {
     using System;
@@ -18,40 +25,14 @@ namespace Leap
    * @since 2.1.0
    */
 
-    public class Image :IDisposable
+    public class Image
     {
         private ImageData imageData; //The pooled object containing the actual data
         private UInt64 referenceIndex = 0; //Corresponds to the index in the pooled object
 
-        // TODO: revisit dispose code
-        bool _disposed = false;
-
-        public void Dispose(){
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing){
-            if (_disposed)
-              return;
-
-            // cleanup
-            if (disposing) {
-                
-            }
-
-            // Free any unmanaged objects here.
-            //
-            _disposed = true;
-        }
-
         public Image(ImageData data){
             this.imageData = data;
             this.referenceIndex = data.index; //validates that image data hasn't been recycled
-        }
-
-        ~Image() {
-            Dispose(false);
         }
 
         /**
@@ -161,13 +142,16 @@ namespace Leap
      */
         public Vector Rectify (Vector uv)
         {
-            //TODO test Rectify
-            //Warp uv to correct distortion
-            Vector rectified = Warp(uv);
-            //normalize to ray
-            rectified.x = (rectified.x/Width - RayOffsetX) / RayScaleX ;
-            rectified.y = (rectified.y/Height - RayOffsetY) / RayScaleY ;
-            return rectified;
+            if(this.IsValid){
+                //TODO test Rectify
+                //Warp uv to correct distortion
+                Vector rectified = Warp(uv);
+                //normalize to ray
+                rectified.x = (rectified.x/Width - RayOffsetX) / RayScaleX ;
+                rectified.y = (rectified.y/Height - RayOffsetY) / RayScaleY ;
+                return rectified;
+            }
+            return Vector.Zero;
         }
 
         /**
@@ -197,7 +181,9 @@ namespace Leap
         public Vector Warp (Vector xy)
         {
             //TODO test Warp
-            return Warp(xy, imageData.width, imageData.height);
+            if(this.IsValid)
+                return Warp(xy, imageData.width, imageData.height);
+            return Vector.Zero;
         }
 
         /**
@@ -210,43 +196,46 @@ namespace Leap
          */
         public Vector Warp (Vector xy, float targetWidth, float targetHeight)
         {
-            //Calculate the position in the calibration map (still with a fractional part)
-            float calibrationX = 63 * xy.x / targetWidth;
-            float calibrationY = 62 * (1 - xy.y / targetHeight); // The y origin is at the bottom
-            //Save the fractional part to use as the weight for interpolation
-            float weightX = calibrationX - (int)calibrationX;
-            float weightY = calibrationY - (int)calibrationY;
-                    
-            //Get the integer x,y coordinates of the closest calibration map points to the target pixel
-            int x1 = (int)calibrationX; //Note truncation to int
-            int y1 = (int)calibrationY;
-            int x2 = x1 + 1;
-            int y2 = y1 + 1;
-                    
-            //Look up the x and y values for the 4 calibration map points around the target
-            float dX1 = Distortion [x1 * 2 + y1 * DistortionWidth];
-            float dX2 = Distortion [x2 * 2 + y1 * DistortionWidth];
-            float dX3 = Distortion [x1 * 2 + y2 * DistortionWidth];
-            float dX4 = Distortion [x2 * 2 + y2 * DistortionWidth];
-            float dY1 = Distortion [x1 * 2 + y1 * DistortionWidth + 1];
-            float dY2 = Distortion [x2 * 2 + y1 * DistortionWidth + 1];
-            float dY3 = Distortion [x1 * 2 + y2 * DistortionWidth + 1];
-            float dY4 = Distortion [x2 * 2 + y2 * DistortionWidth + 1];
-                    
-            //Bilinear interpolation of the looked-up values:
-            // X value
-            float dX = dX1 * (1 - weightX) * (1 - weightY) +
-                       dX2 * weightX * (1 - weightY) +
-                       dX3 * (1 - weightX) * weightY +
-                       dX4 * weightX * weightY;
-                    
-            // Y value
-            float dY = dY1 * (1 - weightX) * (1 - weightY) +
-                       dY2 * weightX * (1 - weightY) +
-                       dY3 * (1 - weightX) * weightY +
-                       dY4 * weightX * weightY;
-                    
-            return new Vector (dX * Width, dY * Height, 0);
+            if(this.IsValid){
+                //Calculate the position in the calibration map (still with a fractional part)
+                float calibrationX = 63 * xy.x / targetWidth;
+                float calibrationY = 62 * (1 - xy.y / targetHeight); // The y origin is at the bottom
+                //Save the fractional part to use as the weight for interpolation
+                float weightX = calibrationX - (int)calibrationX;
+                float weightY = calibrationY - (int)calibrationY;
+                        
+                //Get the integer x,y coordinates of the closest calibration map points to the target pixel
+                int x1 = (int)calibrationX; //Note truncation to int
+                int y1 = (int)calibrationY;
+                int x2 = x1 + 1;
+                int y2 = y1 + 1;
+                        
+                //Look up the x and y values for the 4 calibration map points around the target
+                float dX1 = Distortion [x1 * 2 + y1 * DistortionWidth];
+                float dX2 = Distortion [x2 * 2 + y1 * DistortionWidth];
+                float dX3 = Distortion [x1 * 2 + y2 * DistortionWidth];
+                float dX4 = Distortion [x2 * 2 + y2 * DistortionWidth];
+                float dY1 = Distortion [x1 * 2 + y1 * DistortionWidth + 1];
+                float dY2 = Distortion [x2 * 2 + y1 * DistortionWidth + 1];
+                float dY3 = Distortion [x1 * 2 + y2 * DistortionWidth + 1];
+                float dY4 = Distortion [x2 * 2 + y2 * DistortionWidth + 1];
+                        
+                //Bilinear interpolation of the looked-up values:
+                // X value
+                float dX = dX1 * (1 - weightX) * (1 - weightY) +
+                           dX2 * weightX * (1 - weightY) +
+                           dX3 * (1 - weightX) * weightY +
+                           dX4 * weightX * weightY;
+                        
+                // Y value
+                float dY = dY1 * (1 - weightX) * (1 - weightY) +
+                           dY2 * weightX * (1 - weightY) +
+                           dY3 * (1 - weightX) * weightY +
+                           dY4 * weightX * weightY;
+                        
+                return new Vector (dX * Width, dY * Height, 0);
+            }
+            return Vector.Zero;
         }
         /**
      * Compare Image object equality.
@@ -272,7 +261,10 @@ namespace Leap
      */
         public override string ToString ()
         {
-            return "Image " + this.SequenceId + (this.Id == 0 ? " right camera." : "left camera.");
+            if(this.IsValid)
+                return "Image " + this.SequenceId + (this.Id == 0 ? " right camera." : "left camera.");
+
+            return "Invalid Image";
         }
 
 /**
@@ -384,13 +376,19 @@ namespace Leap
 
         public Image.ImageType Type{
             get{
-                return imageData.type;
+                if(IsValid)
+                    return imageData.type;
+
+                return Image.ImageType.DEFAULT;
             }
         }
 
         public Image.PerspectiveType Perspective{
             get{
-                return imageData.perspective;
+                if(IsValid)
+                    return imageData.perspective;
+
+                return Image.PerspectiveType.INVALID;
             }
         }
 /**
@@ -406,7 +404,10 @@ namespace Leap
      */
         public int DistortionWidth {
             get {
-                return imageData.DistortionSize * 2;
+                if(IsValid)
+                    return imageData.DistortionSize * 2;
+
+                return 0;
             } 
         }
 
@@ -421,7 +422,10 @@ namespace Leap
      */
         public int DistortionHeight {
             get {
-                return imageData.DistortionSize;
+                if(IsValid)
+                    return imageData.DistortionSize;
+
+                return 0;
             } 
         }
 
@@ -437,7 +441,10 @@ namespace Leap
      */
         public float RayOffsetX {
             get {
-                return imageData.RayOffsetX;
+                if(IsValid)
+                    return imageData.RayOffsetX;
+
+                return 0;
             } 
         }
 
@@ -453,7 +460,10 @@ namespace Leap
      */
         public float RayOffsetY {
             get {
-                return imageData.RayOffsetY;
+                if(IsValid)
+                    return imageData.RayOffsetY;
+
+                return 0;
             } 
         }
 
@@ -469,7 +479,10 @@ namespace Leap
      */
         public float RayScaleX {
             get {
-                return imageData.RayScaleX;
+                if(IsValid)
+                    return imageData.RayScaleX;
+
+                return 0;
             } 
         }
 
@@ -485,7 +498,10 @@ namespace Leap
      */
         public float RayScaleY {
             get {
-                return imageData.RayScaleY;
+                if(IsValid)
+                    return imageData.RayScaleY;
+
+                return 0;
             } 
         }
 

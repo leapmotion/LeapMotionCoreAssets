@@ -287,7 +287,7 @@ public class LeapImageRetriever : MonoBehaviour {
 
     var controller = provider.GetLeapController();
     controller.SetPolicy(Controller.PolicyFlag.POLICY_IMAGES);
-    controller.SetPolicy(Controller.PolicyFlag.POLICY_RAW_IMAGES);
+    //controller.SetPolicy(Controller.PolicyFlag.POLICY_RAW_IMAGES);
   }
 
   void OnDestroy() {
@@ -297,11 +297,21 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   void Update() {
-    Frame imageFrame = provider.CurrentFrame;
 
-    using (ImageList brightList = imageFrame.Images)
-    using (ImageList rawList = imageFrame.RawImages) {
-      if (brightList == null || brightList.Count == 0 || rawList == null || rawList.Count == 0) {
+    Frame imageFrame = provider.CurrentFrame;
+    Controller controller = provider.GetLeapController();
+    Debug.Log("LeapImageImageRetriever " + controller.Images.Count);
+
+    //ImageList brightList = imageFrame.Images;
+    ImageList brightList = controller.Images;
+
+    //ImageList rawList = imageFrame.Images.RawImages;
+    ImageList rawList = controller.Images.RawImages;
+
+    
+      //if (brightList == null || brightList.Count == 0 || rawList == null || rawList.Count == 0) {
+    if (brightList == null || brightList.Count == 0) {
+
         _missedImages++;
         if (_missedImages == IMAGE_WARNING_WAIT) {
           Debug.LogWarning("Can't find any images. " +
@@ -313,17 +323,19 @@ public class LeapImageRetriever : MonoBehaviour {
       } else {
         _missedImages = 0;
       }
-      
-      using (Image leftBright = brightList.IRLeft)
-      using (Image rightBright = brightList.IRRight)
-      using (Image leftRaw = brightList.RawLeft)
-      using (Image rightRaw = brightList.RawRight) {
+
+      Image leftBright = brightList.IRLeft;
+      Image rightBright = brightList.IRRight;
+      //Image leftRaw = brightList.RawLeft;
+      //Image rightRaw = brightList.RawRight;
+      Image leftRaw = brightList.IRLeft;
+      Image rightRaw = brightList.IRRight;
         if (_eyeTextureData.CheckStale(leftBright, rightBright, leftRaw, rightRaw)) {
           _eyeTextureData.Reconstruct(leftBright, rightBright, leftRaw, rightRaw);
         }
         _eyeTextureData.UpdateTextures(leftBright, rightBright, leftRaw, rightRaw);
-      }
-    }
+ 
+    
   }
 
   public void ApplyGammaCorrectionValues() {

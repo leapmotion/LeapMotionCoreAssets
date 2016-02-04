@@ -1,3 +1,10 @@
+/******************************************************************************\
+* Copyright (C) 2012-2016 Leap Motion, Inc. All rights reserved.               *
+* Leap Motion proprietary and confidential. Not for distribution.              *
+* Use subject to the terms of the Leap Motion SDK Agreement available at       *
+* https://developer.leapmotion.com/sdk_agreement, or another agreement         *
+* between Leap Motion and you, your company or other organization.             *
+\******************************************************************************/
 namespace Leap
 {
     using System;
@@ -37,7 +44,6 @@ namespace Leap
         bool _isRight = false;
         float _timeVisible = 0;
         Arm _arm;
-        PointableList _pointables;
         FingerList _fingers;
         Vector _palmPosition;
         Vector _stabilizedPalmPosition;
@@ -86,7 +92,6 @@ namespace Leap
                     bool isLeft,
                     float timeVisible,
                     Arm arm,
-                    PointableList pointables,
                     FingerList fingers,
                     Vector palmPosition,
                     Vector stabilizedPalmPosition,
@@ -105,7 +110,6 @@ namespace Leap
             _isRight = !isLeft;
             _timeVisible = timeVisible;
             _arm = arm;
-            _pointables = pointables;
             _fingers = fingers;
             _palmPosition = palmPosition;
             _stabilizedPalmPosition = stabilizedPalmPosition;
@@ -130,7 +134,6 @@ namespace Leap
                 _isLeft,
                 _timeVisible,
                 _arm.TransformedCopy(trs),
-                new PointableList(), //TODO could remove the Pointable list since we only have fingers
                 transformedFingers,
                 trs.TransformPoint(_palmPosition),
                 trs.TransformPoint(_stabilizedPalmPosition),
@@ -139,33 +142,6 @@ namespace Leap
                 trs.TransformDirection(_direction).Normalized,
                 trs.TransformPoint(_wristPosition)
             );
-        }
-        /**
-     * The Pointable object with the specified ID associated with this hand.
-     *
-     * Use the Hand::pointable() function to retrieve a Pointable object
-     * associated with this hand using an ID value obtained from a previous frame.
-     * This function always returns a Pointable object, but if no finger
-     * with the specified ID is present, an invalid Pointable object is returned.
-     *
-     * \include Hand_Get_Pointable_ByID.txt
-     *
-     * Note that the ID values assigned to fingers are based on the hand ID.
-     * Hand IDs persist across frames, but only until
-     * tracking of that hand is lost. If tracking of the hand is lost and subsequently
-     * regained, the new Hand object and its child Finger objects will have a
-     * different ID than in an earlier frame.
-     *
-     * @param id The ID value of a Pointable object from a previous frame.
-     * @returns The Pointable object with the matching ID if one exists for this
-     * hand in this frame; otherwise, an invalid Pointable object is returned.
-     * @since 1.0
-     */
-        public Pointable Pointable (int id)
-        {
-            return this.Pointables.Find (delegate(Pointable item) {
-                return item.Id == id;
-            });
         }
 
         /**
@@ -443,6 +419,7 @@ namespace Leap
             return 0; //not implemented
         }
 
+     
         /**
      * Compare Hand object equality.
      *
@@ -468,7 +445,10 @@ namespace Leap
      */
         public override string ToString ()
         {
-            return "Hand " + this.Id + (this.IsLeft ? " left." : " right.");
+            if(this.IsValid)
+                return "Hand " + this.Id + (this.IsLeft ? " left." : " right.");
+
+            return "Invalid hand";
         }
 
 /**
@@ -497,29 +477,6 @@ namespace Leap
             return _frameId;
           }
         }
-/**
-     * The list of Pointable objects detected in this frame
-     * that are associated with this hand, given in arbitrary order. The list
-     * will always contain 5 fingers.
-     *
-     * Use PointableList::extended() to remove non-extended fingers from the list.
-     *
-     * \include Hand_Get_Fingers.txt
-     *
-     * @returns The PointableList containing all Pointable objects associated with this hand.
-     * @since 1.0
-     */
-        public PointableList Pointables {
-            get {
-                if(_pointables == null)
-                    _pointables = new PointableList(5);
-
-                return _pointables;
-//                return (PointableList)this.Frame.Pointables.FindAll (delegate(Pointable item) {
-//                    return item.HandId == this.Id;
-//                });
-            }
-        }
 
         /**
      * The list of Finger objects detected in this frame that are attached to
@@ -543,12 +500,6 @@ namespace Leap
             }
         }
 
-/**
-     * Tools are not associated with hands in version 2+. This list
-     * is always empty.
-     *
-     * @deprecated 2.0
-     */
 
 /**
      * The center position of the palm in millimeters from the Leap Motion Controller origin.
@@ -682,8 +633,7 @@ namespace Leap
      */
         public Vector SphereCenter {
             get {
-                if(_needToCalculateSphere)
-                    calculateSphere();
+                calculateSphere();
                 return _sphereCenter;
             } 
         }
@@ -701,8 +651,7 @@ namespace Leap
      */
         public float SphereRadius {
             get {
-                if(_needToCalculateSphere)
-                    calculateSphere();
+                calculateSphere();
                 return _sphereRadius;
             } 
         }
@@ -711,7 +660,6 @@ namespace Leap
             float curvatureProxy = (float)Math.Max (GrabStrength, PinchStrength);
             _sphereRadius = _minSphereRadius + (_maxSphereradius - _minSphereRadius) * curvatureProxy;
             _sphereCenter = PalmPosition + PalmNormal * _sphereRadius * 2;
-            _needToCalculateSphere = false;
         }
 
 /**
@@ -853,17 +801,6 @@ namespace Leap
                 return _isRight;
             } 
         }
-
-/**
-     * The Frame associated with this Hand.
-     *
-     * \include Hand_frame.txt
-     *
-     * @returns The associated Frame object, if available; otherwise,
-     * an invalid Frame object is returned.
-     * @since 1.0
-     */
-
 
 /**
      * The arm to which this hand is attached.

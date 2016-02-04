@@ -1,3 +1,10 @@
+/******************************************************************************\
+* Copyright (C) 2012-2016 Leap Motion, Inc. All rights reserved.               *
+* Leap Motion proprietary and confidential. Not for distribution.              *
+* Use subject to the terms of the Leap Motion SDK Agreement available at       *
+* https://developer.leapmotion.com/sdk_agreement, or another agreement         *
+* between Leap Motion and you, your company or other organization.             *
+\******************************************************************************/
 using System;
 using System.Reflection;
 
@@ -18,38 +25,7 @@ namespace LeapInternal{
                 #endif
             #endif
         }
-
-        public static void LogObject(object thisObject)
-        {
-            try
-            {
-                MemberInfo[] memberInfos;
-                memberInfos = thisObject.GetType().GetMembers(
-                    BindingFlags.Public | BindingFlags.NonPublic // Get public and non-public
-                    | BindingFlags.Static | BindingFlags.Instance  // Get instance + static
-                    | BindingFlags.FlattenHierarchy); // Search up the hierarchy
-                // sort members by name
-                Array.Sort(memberInfos,
-                           (memberInfo1, memberInfo2) => memberInfo1.Name.CompareTo(memberInfo2.Name));
-                
-                // write member names
-                foreach (MemberInfo memberInfo in memberInfos)
-                {
-                    if(memberInfo.MemberType == MemberTypes.Property){
-                        string value = thisObject.GetType().GetProperty(memberInfo.Name).GetValue(thisObject, null).ToString();
-                        Logger.Log("Type: " + memberInfo.MemberType + ", Name: " + memberInfo.Name + ", Value = " + value);
-                    } else {
-                        Logger.Log("Type: " + memberInfo.MemberType + ", Name: " + memberInfo.Name);
-                    }
-                   
-                }
-            }
-            catch (Exception exception)
-            {
-                Logger.Log (exception.Message);
-            }
             
-        }
         public static void LogStruct(object thisObject, string title = "")
         {
             try

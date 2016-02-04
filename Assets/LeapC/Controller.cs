@@ -16,7 +16,9 @@ namespace Leap
 
     using LeapInternal;
 
-    using System.IO; //debugging
+    using System.IO;
+
+    //debugging
 
     /**
    * The Controller class is your main interface to the Leap Motion Controller.
@@ -66,11 +68,10 @@ namespace Leap
     {
         Connection _connection;
         ImageList _images;
-        ImageList _rawImages;
         bool _disposed = false;
         Config _config;
 
-        public SynchronizationContext EventContext{get; set;}
+        public SynchronizationContext EventContext{ get; set; }
 
         public event EventHandler<LeapEventArgs> Init;
         public event EventHandler<ConnectionEventArgs> Connect;
@@ -95,14 +96,14 @@ namespace Leap
         public event EventHandler<TrackedQuadEventArgs> TrackedQuadReady;
 
         //TODO revisit dispose code
-        public void Dispose()
+        public void Dispose ()
         { 
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            Dispose (true);
+            GC.SuppressFinalize (this);
         }
         
         // Protected implementation of Dispose pattern.
-        protected virtual void Dispose(bool disposing)
+        protected virtual void Dispose (bool disposing)
         {
             if (_disposed)
                 return; 
@@ -115,6 +116,7 @@ namespace Leap
             //
             _disposed = true;
         }
+
         /**
      * Constructs a Controller object.
      *
@@ -124,11 +126,14 @@ namespace Leap
      *
      * @since 1.0
      */
-        public Controller ():this(0){}
+        public Controller () : this (0)
+        {
+        }
 
-        public Controller(int connectionKey){
+        public Controller (int connectionKey)
+        {
             EventContext = SynchronizationContext.Current;
-            _connection = Connection.GetConnection(connectionKey);
+            _connection = Connection.GetConnection (connectionKey);
 
             _connection.LeapInit += OnInit;
             _connection.LeapConnection += OnConnect;
@@ -146,11 +151,14 @@ namespace Leap
             _connection.Start ();
         }
 
-        public void StartConnection(){
-            _connection.Start();
+        public void StartConnection ()
+        {
+            _connection.Start ();
         }
-        public void StopConnection(){
-            _connection.Stop();
+
+        public void StopConnection ()
+        {
+            _connection.Stop ();
         }
 
         /**
@@ -164,7 +172,7 @@ namespace Leap
             }
         }
 
-    /**
+        /**
      * Requests setting a policy.
      *
      * A request to change a policy is subject to user approval and a policy
@@ -183,9 +191,9 @@ namespace Leap
      */
         public void SetPolicy (Controller.PolicyFlag policy)
         {
-            _connection.SetPolicy(policy);
+            _connection.SetPolicy (policy);
         }
-        
+
         /**
      * Requests clearing a policy.
      *
@@ -201,7 +209,7 @@ namespace Leap
      */
         public void ClearPolicy (Controller.PolicyFlag policy)
         {
-            _connection.ClearPolicy(policy);
+            _connection.ClearPolicy (policy);
         }
 
         /**
@@ -224,7 +232,7 @@ namespace Leap
      */
         public bool IsPolicySet (Controller.PolicyFlag policy)
         {
-            return _connection.IsPolicySet(policy);
+            return _connection.IsPolicySet (policy);
         }
 
 
@@ -280,72 +288,18 @@ namespace Leap
             return Frame (0);
         }
 
-        public Frame GetTransformedFrame(Matrix trs, int history = 0){
-            return Frame(history).TransformedCopy(trs);
+        /**
+         * Returns the frame object with all hands transformed by the specified
+         * transform matrix.
+         * @param trs a Matrix containing translation, rotation, and scale.
+         * @param history The age of the frame to return, counting backwards from
+         * the most recent frame (0) into the past and up to the maximum age (59).
+         */
+        public Frame GetTransformedFrame (Matrix trs, int history = 0)
+        {
+            return Frame (history).TransformedCopy (trs);
         }
 
-        /**
-     * Enables or disables reporting of a specified gesture type.
-     *
-     * By default, all gesture types are disabled. When disabled, gestures of the
-     * disabled type are never reported and will not appear in the frame
-     * gesture list.
-     *
-     * \include Controller_enableGesture.txt
-     *
-     * As a performance optimization, only enable recognition for the types
-     * of movements that you use in your application.
-     *
-     * @param type The type of gesture to enable or disable. Must be a
-     * member of the Gesture::Type enumeration.
-     * @param enable True, to enable the specified gesture type; False,
-     * to disable.
-     * @see Controller::isGestureEnabled()
-     * @since 1.0
-     */
-        public void EnableGesture (Gesture.GestureType type, bool enable)
-        {
-            throw new NotImplementedException ("Gestures are not implemented in this interface.");
-        }
-
-        /**
-     * Enables or disables reporting of a specified gesture type.
-     *
-     * By default, all gesture types are disabled. When disabled, gestures of the
-     * disabled type are never reported and will not appear in the frame
-     * gesture list.
-     *
-     * \include Controller_enableGesture.txt
-     *
-     * As a performance optimization, only enable recognition for the types
-     * of movements that you use in your application.
-     *
-     * @param type The type of gesture to enable or disable. Must be a
-     * member of the Gesture::Type enumeration.
-     * @param enable True, to enable the specified gesture type; False,
-     * to disable.
-     * @see Controller::isGestureEnabled()
-     * @since 1.0
-     */
-        public void EnableGesture (Gesture.GestureType type)
-        {
-            EnableGesture (type, true);
-        }
-
-        /**
-     * Reports whether the specified gesture type is enabled.
-     *
-     * \include Controller_isGestureEnabled.txt
-     *
-     * @param type The type of gesture to check; a member of the Gesture::Type enumeration.
-     * @returns True, if the specified type is enabled; false, otherwise.
-     * @see Controller::enableGesture()
-     * @since 1.0
-     */
-        public bool IsGestureEnabled (Gesture.GestureType type)
-        {
-            throw new NotImplementedException ("Gestures are not implemented in this interface.");
-        }
 
         /**
      * Returns a timestamp value as close as possible to the current time.
@@ -374,10 +328,11 @@ namespace Leap
      * @param pause Set true to pause the service; false to resume.
      * @since 2.4.0
      */
-        public void SetPaused(bool pause) {
-            _connection.SetPaused(pause);
+        public void SetPaused (bool pause)
+        {
+            _connection.SetPaused (pause);
         }
-        
+
         /**
      * Reports whether the Leap Motion service is currently paused.
      *
@@ -386,11 +341,12 @@ namespace Leap
      * @returns True, if the service is paused; false, otherwise.
      * @since 2.4.0
      */
-        public bool IsPaused() {
+        public bool IsPaused ()
+        {
             return _connection.IsPaused;
         }
 
-/**
+        /**
      * Reports whether this Controller is connected to the Leap Motion service and
      * the Leap Motion hardware is plugged in.
      *
@@ -409,12 +365,12 @@ namespace Leap
      */
         public bool IsConnected {
             get {
-                //TODO Check that a device is streaming, not just present.  -- need to update devices in PollConnection first.
                 return IsServiceConnected && Devices.Count > 0;
             } 
         }
 
-/**
+        //TODO how is LeapC going to handle focus?
+        /**
      * Reports whether this application is the focused, foreground application.
      *
      * By default, your application only receives tracking information from
@@ -435,8 +391,7 @@ namespace Leap
             } 
         }
 
-        //TODO Add Config interface when available from LeapC
-/**
+        /**
      * Returns a Config object, which you can use to query the Leap Motion system for
      * configuration information.
      *
@@ -447,13 +402,13 @@ namespace Leap
      */  
         public Config Config {
             get {
-                if(_config == null)
-                    _config = new Config(this._connection.ConnectionKey);
+                if (_config == null)
+                    _config = new Config (this._connection.ConnectionKey);
                 return _config;
             } 
         }
 
-/**
+        /**
      * The most recent set of images from the Leap Motion cameras.
      *
      * \include Controller_images.txt
@@ -470,19 +425,12 @@ namespace Leap
                 if (_images == null)
                     _images = new ImageList ();
 
-                _connection.GetLatestImages(ref _images);
+                _connection.GetLatestImages (ref _images);
                 return _images;
             } 
         }
-
-        //TODO Get RawImages from LeapC
-        public ImageList RawImages{
-            get {
-                return Images.RawImages;
-            }
-        }
-
-/**
+            
+        /**
      * The list of currently attached and recognized Leap Motion controller devices.
      *
      * The Device objects in the list describe information such as the range and
@@ -513,11 +461,12 @@ namespace Leap
     *
     * @since 2.4.0
     */
-        public FailedDeviceList FailedDevices() {
+        public FailedDeviceList FailedDevices ()
+        {
             return _connection.FailedDevices;
         }
 
-/**
+        /**
      * Note: This class is an experimental API for internal use only. It may be
      * removed without warning.
      *
@@ -530,18 +479,11 @@ namespace Leap
         public TrackedQuad TrackedQuad {
             get {
 
-                return _connection.GetLatestQuad();
+                return _connection.GetLatestQuad ();
             } 
         }
 
-        public BugReport BugReport {
-            get {
-                throw new NotImplementedException ("BugReport not implemented in this interface.");
-            } 
-        }
-
-
-      /**
+        /**
        * The supported controller policies.
        *
        * The supported policy flags are:
@@ -609,72 +551,102 @@ namespace Leap
         }
 
 
-        enum NotificationType{
-            OnInit,
-            OnFrame
-        }
-
-
         //Controller events
-        protected virtual void OnInit(object sender, LeapEventArgs eventArgs){
-            object senderObj = new object();
-            Init.DispatchOnContext<LeapEventArgs>(senderObj, EventContext, eventArgs);
+        protected virtual void OnInit (object sender, LeapEventArgs eventArgs)
+        {
+            object senderObj = new object ();
+            Init.DispatchOnContext<LeapEventArgs> (senderObj, EventContext, eventArgs);
         }
-        protected virtual void OnConnect(object sender, ConnectionEventArgs eventArgs){
-            Connect.DispatchOnContext<ConnectionEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnConnect (object sender, ConnectionEventArgs eventArgs)
+        {
+            Connect.DispatchOnContext<ConnectionEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnDisconnect(object sender, ConnectionLostEventArgs eventArgs){
-            Disconnect.DispatchOnContext<ConnectionLostEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnDisconnect (object sender, ConnectionLostEventArgs eventArgs)
+        {
+            Disconnect.DispatchOnContext<ConnectionLostEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnExit(object sender, LeapEventArgs eventArgs){
-            Exit.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnExit (object sender, LeapEventArgs eventArgs)
+        {
+            Exit.DispatchOnContext<LeapEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnFocusGained(object sender, LeapEventArgs eventArgs){
-            FocusGained.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnFocusGained (object sender, LeapEventArgs eventArgs)
+        {
+            FocusGained.DispatchOnContext<LeapEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnFocusLost(object sender, LeapEventArgs eventArgs){
-            FocusLost.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnFocusLost (object sender, LeapEventArgs eventArgs)
+        {
+            FocusLost.DispatchOnContext<LeapEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnServiceConnect(object sender, LeapEventArgs eventArgs){
-            ServiceConnect.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnServiceConnect (object sender, LeapEventArgs eventArgs)
+        {
+            ServiceConnect.DispatchOnContext<LeapEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnServiceDisconnect(object sender, LeapEventArgs eventArgs){
-            ServiceDisconnect.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnServiceDisconnect (object sender, LeapEventArgs eventArgs)
+        {
+            ServiceDisconnect.DispatchOnContext<LeapEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnDevice(object sender, DeviceEventArgs eventArgs){
-            Device.DispatchOnContext<DeviceEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnDevice (object sender, DeviceEventArgs eventArgs)
+        {
+            Device.DispatchOnContext<DeviceEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnDeviceLost(object sender, DeviceEventArgs eventArgs){
-            DeviceLost.DispatchOnContext<DeviceEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnDeviceLost (object sender, DeviceEventArgs eventArgs)
+        {
+            DeviceLost.DispatchOnContext<DeviceEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnServiceChange(object sender, LeapEventArgs eventArgs){
-            ServiceChange.DispatchOnContext<LeapEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnServiceChange (object sender, LeapEventArgs eventArgs)
+        {
+            ServiceChange.DispatchOnContext<LeapEventArgs> (this, EventContext, eventArgs);
         }
 
         //Rebroadcasted events from connection
-        protected virtual void OnFrame(object sender, FrameEventArgs eventArgs){
-            FrameReady.DispatchOnContext<FrameEventArgs>(this, EventContext, eventArgs);
+        protected virtual void OnFrame (object sender, FrameEventArgs eventArgs)
+        {
+            FrameReady.DispatchOnContext<FrameEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnImages(object sender, ImageEventArgs eventArgs){
-            ImageReady.DispatchOnContext<ImageEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnImages (object sender, ImageEventArgs eventArgs)
+        {
+            ImageReady.DispatchOnContext<ImageEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnDistortionChange(object sender, DistortionEventArgs eventArgs){
-            DistortionChange.DispatchOnContext<DistortionEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnDistortionChange (object sender, DistortionEventArgs eventArgs)
+        {
+            DistortionChange.DispatchOnContext<DistortionEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnTrackedQuad(object sender, TrackedQuadEventArgs eventArgs){
-            TrackedQuadReady.DispatchOnContext<TrackedQuadEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnTrackedQuad (object sender, TrackedQuadEventArgs eventArgs)
+        {
+            TrackedQuadReady.DispatchOnContext<TrackedQuadEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnLogEvent(object sender, LogEventArgs eventArgs){
-            LogMessage.DispatchOnContext<LogEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnLogEvent (object sender, LogEventArgs eventArgs)
+        {
+            LogMessage.DispatchOnContext<LogEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnPolicyChange(object sender, PolicyEventArgs eventArgs){
-            PolicyChange.DispatchOnContext<PolicyEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnPolicyChange (object sender, PolicyEventArgs eventArgs)
+        {
+            PolicyChange.DispatchOnContext<PolicyEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnConfigChange(object sender, ConfigChangeEventArgs eventArgs){
-            ConfigChange.DispatchOnContext<ConfigChangeEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnConfigChange (object sender, ConfigChangeEventArgs eventArgs)
+        {
+            ConfigChange.DispatchOnContext<ConfigChangeEventArgs> (this, EventContext, eventArgs);
         }
-        protected virtual void OnDeviceFailure(object sender, DeviceFailureEventArgs eventArgs){
-            DeviceFailure.DispatchOnContext<DeviceFailureEventArgs>(this, EventContext, eventArgs);
+
+        protected virtual void OnDeviceFailure (object sender, DeviceFailureEventArgs eventArgs)
+        {
+            DeviceFailure.DispatchOnContext<DeviceFailureEventArgs> (this, EventContext, eventArgs);
         }
 
 

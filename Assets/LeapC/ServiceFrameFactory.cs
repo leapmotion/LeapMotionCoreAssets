@@ -134,7 +134,6 @@ namespace LeapInternal
                                hand.type == eLeapHandType.eLeapHandType_Left,
                                hand.visible_time,
                                newArm,
-                               new PointableList (),
                                new FingerList (),
                                new Vector (palm.position.x, palm.position.y, palm.position.z),
                                new Vector (palm.stabilized_position.x, palm.stabilized_position.y, palm.stabilized_position.z),
@@ -145,24 +144,19 @@ namespace LeapInternal
                            );
             LEAP_DIGIT thumbDigit = LeapC.PtrToStruct<LEAP_DIGIT> (hand.thumb);
             Finger thumb = makeFinger (owningFrame, ref hand, ref thumbDigit, Finger.FingerType.TYPE_THUMB);
-            newHand.Pointables.Add ((Pointable)thumb);
             newHand.Fingers.Add (thumb);
             LEAP_DIGIT indexDigit = LeapC.PtrToStruct<LEAP_DIGIT> (hand.index);
             Finger index = makeFinger (owningFrame, ref hand, ref indexDigit, Finger.FingerType.TYPE_INDEX);
             newHand.Fingers.Add (index);
-            newHand.Pointables.Add ((Pointable)index);
             LEAP_DIGIT middleDigit = LeapC.PtrToStruct<LEAP_DIGIT> (hand.middle);
             Finger middle = makeFinger (owningFrame, ref hand, ref middleDigit, Finger.FingerType.TYPE_MIDDLE);
             newHand.Fingers.Add (middle);
-            newHand.Pointables.Add ((Pointable)middle);
             LEAP_DIGIT ringDigit = LeapC.PtrToStruct<LEAP_DIGIT> (hand.ring);
             Finger ring = makeFinger (owningFrame, ref hand, ref ringDigit, Finger.FingerType.TYPE_RING);
             newHand.Fingers.Add (ring);
-            newHand.Pointables.Add ((Pointable)ring);
             LEAP_DIGIT pinkyDigit = LeapC.PtrToStruct<LEAP_DIGIT> (hand.pinky);
             Finger pinky = makeFinger (owningFrame, ref hand, ref pinkyDigit, Finger.FingerType.TYPE_PINKY);
             newHand.Fingers.Add (pinky);
-            newHand.Pointables.Add ((Pointable)pinky);
 
             return newHand;
         }

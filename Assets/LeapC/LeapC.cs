@@ -266,23 +266,6 @@ namespace LeapInternal
         public UInt32 range;
     }
 
-    //For LEAP_DISTORTION_MATRIX
-//    public struct DISTORTION_POINT {
-//        public float x;
-//        public float y;
-//        public DISTORTION_POINT( float x, float y )
-//        {
-//            this.x = x;
-//            this.y = y;
-//        }
-//    }
-//
-//    [StructLayout(LayoutKind.Sequential, Pack=1)]
-//    public struct LEAP_DISTORTION_MATRIX {
-//        [MarshalAs(UnmanagedType.ByValArray, SizeConst=64*64)]
-//        public DISTORTION_POINT[] matrix_data;
-//    }
-
     [StructLayout(LayoutKind.Sequential, Pack=1)]
     public struct LEAP_DISTORTION_MATRIX {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst=2*64*64)]
@@ -556,26 +539,20 @@ namespace LeapInternal
 
         // TODO: refactor this and move the following helper functions to somewhere else
         public static eLeapRS SaveConfigValue(IntPtr hConnection, string key, bool value, out UInt32 requestId){
-            LEAP_VARIANT_VALUE_TYPE valueStruct; //This is a C# approximation of a C union
+            LEAP_VARIANT_VALUE_TYPE valueStruct = new LEAP_VARIANT_VALUE_TYPE(); //This is a C# approximation of a C union
             valueStruct.type = eLeapValueType.eLeapValueType_Boolean;
-            valueStruct.floatValue =  0; //Must set all these values, but only the last one matters since they are in a union
-            valueStruct.intValue = 0;
             valueStruct.boolValue = value;
             return LeapC.SaveConfigWithValueType(hConnection, key, valueStruct, out requestId);
         }
         public static eLeapRS SaveConfigValue(IntPtr hConnection, string key, Int32 value, out UInt32 requestId){
-            LEAP_VARIANT_VALUE_TYPE valueStruct;
+            LEAP_VARIANT_VALUE_TYPE valueStruct = new LEAP_VARIANT_VALUE_TYPE();
             valueStruct.type = eLeapValueType.eLeapValueType_Int32;
-            valueStruct.floatValue = 0; //Must set all these values, but only the last one matters since they are in a union
-            valueStruct.boolValue = false;
             valueStruct.intValue = value;
             return LeapC.SaveConfigWithValueType(hConnection, key, valueStruct, out requestId);
         }
         public static eLeapRS SaveConfigValue(IntPtr hConnection, string key, float value, out UInt32 requestId){
-            LEAP_VARIANT_VALUE_TYPE valueStruct;
+            LEAP_VARIANT_VALUE_TYPE valueStruct = new LEAP_VARIANT_VALUE_TYPE();
             valueStruct.type = eLeapValueType.eleapValueType_Float;
-            valueStruct.intValue = 0; //Must set all these values, but only the last one matters since they are in a union
-            valueStruct.boolValue = false;
             valueStruct.floatValue = value;
             return LeapC.SaveConfigWithValueType(hConnection, key, valueStruct, out requestId);
         }

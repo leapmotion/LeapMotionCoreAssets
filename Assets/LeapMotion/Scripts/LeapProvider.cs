@@ -153,17 +153,14 @@ namespace Leap {
 
         //If we reach an invalid frame, terminate the search
         if (!historyFrame.IsValid) {
-          historyFrame.Dispose();
           break;
         }
 
         if (Mathf.Abs(historyFrame.Timestamp - correctedTimestamp) < Mathf.Abs(closestFrame.Timestamp - correctedTimestamp)) {
-          closestFrame.Dispose();
           closestFrame = historyFrame;
         }
         else {
           //Since frames are always reported in order, we can terminate the search once we stop finding a closer frame
-          historyFrame.Dispose();
           break;
         }
       }

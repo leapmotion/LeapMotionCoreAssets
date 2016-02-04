@@ -1,3 +1,10 @@
+/******************************************************************************\
+* Copyright (C) 2012-2016 Leap Motion, Inc. All rights reserved.               *
+* Leap Motion proprietary and confidential. Not for distribution.              *
+* Use subject to the terms of the Leap Motion SDK Agreement available at       *
+* https://developer.leapmotion.com/sdk_agreement, or another agreement         *
+* between Leap Motion and you, your company or other organization.             *
+\******************************************************************************/
 namespace Leap
 {
     using System;
@@ -6,7 +13,7 @@ namespace Leap
     /**
    * The Finger class represents a tracked finger.
    *
-   * Fingers are Pointable objects that the Leap Motion software has classified as a finger.
+   * Fingers are objects that the Leap Motion software has classified as a finger.
    * Get valid Finger objects from a Frame or a Hand object.
    *
    * Fingers may be permanently associated to a hand. In this case the angular order of the finger IDs
@@ -25,10 +32,24 @@ namespace Leap
    * @since 1.0
    */
 
-    public class Finger : Pointable
+    public class Finger
     {
         Bone[] _bones = new Bone[4];
         FingerType _type = FingerType.TYPE_UNKNOWN;
+         int _frameId;
+         int _id = 0;
+         int _handID = 0;
+         Vector _tipPosition;
+         Vector _tipVelocity;
+         Vector _direction;
+         float _width = 0;
+         float _length = 0;
+         bool _isTool = false;
+         bool _isFinger = false;
+         bool _isExtended = false;
+         bool _isValid = false;
+         Vector _stabilizedTipPosition;
+         float _timeVisible = 0;
 
         /**
      * Constructs a Finger object.
@@ -56,25 +77,27 @@ namespace Leap
                            Bone metacarpal,
                            Bone proximal,
                            Bone intermediate,
-                           Bone distal) 
-            : base(frameId, 
-                    handId,
-                    fingerId,
-                    timeVisible,
-                    tipPosition,
-                    tipVelocity,
-                    direction,
-                    stabilizedTipPosition,
-                    width,
-                    length,
-                    isExtended,
-                    type)
+                           Bone distal)
         {
             _type = type;
             _bones [0] = metacarpal;
             _bones [1] = proximal;
             _bones [2] = intermediate;
             _bones [3] = distal;
+            _frameId = frameId;
+            _id = (handId * 10) + fingerId;
+            _handID = handId;
+            _tipPosition = tipPosition;
+            _tipVelocity = tipVelocity;
+            _direction = direction;
+            _width = width;
+            _length = length;
+            _isTool = false;
+            _isFinger = true;
+            _isExtended = isExtended;
+            _isValid = false;
+            _stabilizedTipPosition = stabilizedTipPosition;
+            _timeVisible = timeVisible;
         }
 
         public Finger TransformedCopy(Matrix trs){
@@ -98,37 +121,6 @@ namespace Leap
                               _bones[3].TransformedCopy(trs));
         }
 
-        /**
-     * If the specified Pointable object represents a finger, creates a copy
-     * of it as a Finger object; otherwise, creates an invalid Finger object.
-     *
-     * \include Finger_Finger.txt
-     *
-     * @since 1.0
-     */
-        public Finger (Pointable pointable)
-        {
-
-        }
-
-        /**
-     * Deprecated as of version 2.0
-     * Use 'bone' method instead.
-     */
-        public Vector JointPosition (Finger.FingerJoint jointIx)
-        {
-            switch (jointIx){
-                case FingerJoint.JOINT_MCP:
-                    return _bones[0].NextJoint;
-                case FingerJoint.JOINT_PIP:
-                    return _bones[1].NextJoint;
-                case FingerJoint.JOINT_DIP:
-                    return _bones[2].NextJoint;
-                case FingerJoint.JOINT_TIP:
-                    return _bones[3].NextJoint;
-            }
-            return Vector.Zero;
-        }
 
         /**
      * The bone at a given bone index on this finger.
@@ -173,6 +165,189 @@ namespace Leap
             } 
         }
 
+        /**
+     * A unique ID assigned to this Finger object, whose value remains the
+     * same across consecutive frames while the tracked finger or tool remains
+     * visible. If tracking is lost (for example, when a finger is occluded by
+     * another finger or when it is withdrawn from the Leap Motion Controller field of view), the
+     * Leap Motion software may assign a new ID when it detects the entity in a future frame.
+     *
+     * \include Finger_id.txt
+     *
+     * Use the ID value with the Frame::pointable() function to find this
+     * Finger object in future frames.
+     *
+     * IDs should be from 1 to 100 (inclusive). If more than 100 objects are tracked
+     * an IDs of -1 will be used until an ID in the defined range is available.
+     *
+     * @returns The ID assigned to this Finger object.
+     * @since 1.0
+     */
+        public int Id {
+            get {
+                return _id;
+            } 
+        }
+
+        /**
+     * The Hand associated with a finger.
+     *
+     * \include Finger_hand.txt
+     *
+     * Not that in version 2+, tools are not associated with hands. For
+     * tools, this function always returns an invalid Hand object.
+     *
+     * @returns The associated Hand object, if available; otherwise,
+     * an invalid Hand object is returned.
+     * @since 1.0
+     */
+        public int HandId{
+            get{
+                return _handID;
+            }
+        }
+        /**
+     * The tip position in millimeters from the Leap Motion origin.
+     *
+     * \include Finger_tipPosition.txt
+     *
+     * @returns The Vector containing the coordinates of the tip position.
+     * @since 1.0
+     */
+        public Vector TipPosition {
+            get {
+                return _tipPosition;
+            } 
+        }
+
+        /**
+     * The rate of change of the tip position in millimeters/second.
+     *
+     * \include Finger_tipVelocity.txt
+     *
+     * @returns The Vector containing the coordinates of the tip velocity.
+     * @since 1.0
+     */
+        public Vector TipVelocity {
+            get {
+                return _tipVelocity;
+            } 
+        }
+
+        /**
+     * The direction in which this finger or tool is pointing.
+     *
+     * \include Finger_direction.txt
+     *
+     * The direction is expressed as a unit vector pointing in the same
+     * direction as the tip.
+     *
+     * \image html images/Leap_Finger_Model.png
+     *
+     * @returns The Vector pointing in the same direction as the tip of this
+     * Finger object.
+     * @since 1.0
+     */
+        public Vector Direction {
+            get {
+                return _direction;
+            } 
+        }
+
+        /**
+     * The estimated width of the finger or tool in millimeters.
+     *
+     * \include Finger_width.txt
+     *
+     * @returns The estimated width of this Finger object.
+     * @since 1.0
+     */
+        public float Width {
+            get {
+                return _width;
+            } 
+        }
+
+        /**
+     * The estimated length of the finger or tool in millimeters.
+     *
+     * \include Finger_length.txt
+     *
+     * @returns The estimated length of this Finger object.
+     * @since 1.0
+     */
+        public float Length {
+            get {
+                return _length;
+            } 
+        }
+            
+        /**
+     * Whether or not this Finger is in an extended posture.
+     *
+     * A finger is considered extended if it is extended straight from the hand as if
+     * pointing. A finger is not extended when it is bent down and curled towards the
+     * palm.  Tools are always extended.
+     *
+     * \include Finger_isExtended.txt
+     *
+     * @returns True, if the pointable is extended.
+     * @since 2.0
+     */
+        public bool IsExtended {
+            get {
+                return _isExtended;
+            } 
+        }
+
+        /**
+     * Reports whether this is a valid Finger object.
+     *
+     * \include Finger_isValid.txt
+     *
+     * @returns True, if this Finger object contains valid tracking data.
+     * @since 1.0
+     */
+        public bool IsValid {
+            get {
+                return _isValid;
+            } 
+        }
+
+        /**
+     * The stabilized tip position of this Finger.
+     *
+     * Smoothing and stabilization is performed in order to make
+     * this value more suitable for interaction with 2D content. The stabilized
+     * position lags behind the tip position by a variable amount, depending
+     * primarily on the speed of movement.
+     *
+     * \include Finger_stabilizedTipPosition.txt
+     *
+     * @returns A modified tip position of this Finger object
+     * with some additional smoothing and stabilization applied.
+     * @since 1.0
+     */
+        public Vector StabilizedTipPosition {
+            get {
+                return _stabilizedTipPosition;
+            } 
+        }
+
+        /**
+     * The duration of time this Finger has been visible to the Leap Motion Controller.
+     *
+     * \include Finger_timeVisible.txt
+     *
+     * @returns The duration (in seconds) that this Finger has been tracked.
+     * @since 1.0
+     */
+        public float TimeVisible {
+            get {
+                return _timeVisible;
+            } 
+        }
+
 /**
      * Returns an invalid Finger object.
      *
@@ -185,23 +360,12 @@ namespace Leap
      * @returns The invalid Finger instance.
      * @since 1.0
      */
-        public new static Finger Invalid {
+        public static Finger Invalid {
             get {
                 return new Finger ();
             } 
         }
-
-        /**
-       * Deprecated as of version 2.0
-       */
-        public enum FingerJoint
-        {
-            JOINT_MCP = 0,
-            JOINT_PIP = 1,
-            JOINT_DIP = 2,
-            JOINT_TIP = 3
-        }
-
+            
         /**
        * Enumerates the names of the fingers.
        *
@@ -215,11 +379,41 @@ namespace Leap
             TYPE_INDEX = 1,
             TYPE_MIDDLE = 2,
             TYPE_RING = 3,
-            /** The pinky or little finger 
-  */
+            /** The pinky or little finger  */
             TYPE_PINKY = 4,
             TYPE_UNKNOWN = -1
         }
+
+        /**
+     * Deprecated as of version 2.0
+     * Use 'bone' method instead.
+     */
+        public Vector JointPosition (Finger.FingerJoint jointIx)
+        {
+            switch (jointIx){
+            case FingerJoint.JOINT_MCP:
+                return _bones[0].NextJoint;
+            case FingerJoint.JOINT_PIP:
+                return _bones[1].NextJoint;
+            case FingerJoint.JOINT_DIP:
+                return _bones[2].NextJoint;
+            case FingerJoint.JOINT_TIP:
+                return _bones[3].NextJoint;
+            }
+            return Vector.Zero;
+        }
+
+        /**
+       * Deprecated as of version 2.0
+       */
+        public enum FingerJoint
+        {
+            JOINT_MCP = 0,
+            JOINT_PIP = 1,
+            JOINT_DIP = 2,
+            JOINT_TIP = 3
+        }
+
 
     }
 
