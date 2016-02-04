@@ -286,7 +286,7 @@ public abstract class HandModel : IHandModel {
   * by the Leap Motion device.
   */
   public override void InitHand() {
-    Debug.Log("RigiHand.InitHand()");
+    Debug.Log("HandModel.InitHand() +++++++++++++++++++++++++++++++++++++++++++");
     for (int f = 0; f < fingers.Length; ++f) {
       if (fingers[f] != null) {
         fingers[f].fingerType = (Finger.FingerType)f;
