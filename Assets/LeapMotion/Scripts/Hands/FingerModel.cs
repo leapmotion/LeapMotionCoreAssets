@@ -117,7 +117,7 @@ public abstract class FingerModel : MonoBehaviour {
 
   /** Returns the location of the tip of the finger in relation to the controller.*/
   public Vector3 GetTipPosition() {
-    if (controller_ != null && finger_ != null) {
+    if (finger_ != null) {
       Vector3 local_tip = finger_.Bone ((Bone.BoneType.TYPE_DISTAL)).NextJoint.ToUnityScaled (mirror_z_axis_);
       return local_tip;
 
@@ -133,7 +133,7 @@ public abstract class FingerModel : MonoBehaviour {
     if (joint >= NUM_BONES) {
       return GetTipPosition ();
     }
-    if (controller_ != null && finger_ != null) {
+    if (finger_ != null) {
       Vector3 local_position = finger_.Bone ((Bone.BoneType)(joint)).PrevJoint.ToUnityScaled (mirror_z_axis_);
       return local_position;
 
@@ -152,7 +152,7 @@ public abstract class FingerModel : MonoBehaviour {
 
   /** Returns the center of the given bone on the finger in relation to the controller.*/
   public Vector3 GetBoneCenter(int bone_type) {
-    if (controller_ != null && finger_ != null) {
+    if (finger_ != null) {
       Bone bone = finger_.Bone ((Bone.BoneType)(bone_type));
       return bone.Center.ToUnityScaled(mirror_z_axis_);
 
@@ -165,7 +165,7 @@ public abstract class FingerModel : MonoBehaviour {
 
   /** Returns the direction the given bone is facing on the finger in relation to the controller.*/
   public Vector3 GetBoneDirection(int bone_type) {
-    if (controller_ != null && finger_ != null) {
+    if (finger_ != null) {
       Vector3 direction = GetJointPosition (bone_type + 1) - GetJointPosition (bone_type);
       return direction.normalized;
     }
@@ -177,7 +177,7 @@ public abstract class FingerModel : MonoBehaviour {
 
   /** Returns the rotation quaternion of the given bone in relation to the controller.*/
   public Quaternion GetBoneRotation(int bone_type) {
-    if (controller_ != null && finger_ != null) {
+    if (finger_ != null) {
       Quaternion local_rotation = finger_.Bone ((Bone.BoneType)(bone_type)).Basis.Rotation (mirror_z_axis_);
       return local_rotation;
 

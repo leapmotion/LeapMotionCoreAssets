@@ -7,16 +7,16 @@ namespace Leap {
     HandFactory
 
   {
-    public HandModel LeftGraphicsModel;
-    public HandModel RightGraphicsModel;
-    public HandModel LeftPhysicsModel;
-    public HandModel RightPhysicsModel;
-    public List<HandModel> ModelPool;
+    public IHandModel LeftGraphicsModel;
+    public IHandModel RightGraphicsModel;
+    public IHandModel LeftPhysicsModel;
+    public IHandModel RightPhysicsModel;
+    public List<IHandModel> ModelPool;
     public LeapHandController controller_ { get; set; }
 
     // Use this for initialization
     void Start() {
-      ModelPool = new List<HandModel>();
+      ModelPool = new List<IHandModel>();
       ModelPool.Add(LeftGraphicsModel);
       ModelPool.Add(RightGraphicsModel);
       ModelPool.Add(LeftPhysicsModel);
@@ -34,7 +34,7 @@ namespace Leap {
 
       HandRepresentation handRep = null;
       for (int i = 0; i < ModelPool.Count; i++) {
-        HandModel model = ModelPool[i];
+        IHandModel model = ModelPool[i];
 
         bool isCorrectHandedness;
         if(model.Handedness == Chirality.Either) {
@@ -49,7 +49,6 @@ namespace Leap {
 
         if(isCorrectHandedness && isCorrectModelType) {
           Debug.Log("Found a " + modelType + " HandModel");
-          model.SetController(controller_);
           ModelPool.RemoveAt(i);
           handRep = new HandProxy(this, model, hand);
           break;

@@ -9,7 +9,7 @@ namespace Leap {
     HandFinishBehavior handFinishBehavior;
 
   
-    public HandProxy(HandPool parent, HandModel handModel, Leap.Hand hand) :
+    public HandProxy(HandPool parent, IHandModel handModel, Leap.Hand hand) :
       base(hand.Id)
     {
       this.parent = parent;

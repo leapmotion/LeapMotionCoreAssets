@@ -19,16 +19,16 @@ using Leap;
 * and in the Unity FixedUpdate() phase for physics objects. InitHand() is called once,
 * when the hand is created and is followed by a call to UpdateHand().
 */
-public abstract class HandModel : MonoBehaviour, IHandModel {
+public abstract class HandModel : IHandModel {
 
   [SerializeField]
   private Chirality handedness;
-  public Chirality Handedness {
+  public override Chirality Handedness {
     get { return handedness; }
   }
 
   private ModelType handModelType;
-  public abstract ModelType HandModelType {
+  public override abstract ModelType HandModelType {
     get;
   }
 
@@ -69,6 +69,7 @@ public abstract class HandModel : MonoBehaviour, IHandModel {
   * Calculates the offset between the wrist position and the controller based
   * on the HandController.handMovementScale property and the Leap hand wrist position.
   */
+  //TODO: Remove this
   public Vector3 GetHandOffset() {
     if (controller_ == null || hand_ == null)
       return Vector3.zero;
@@ -85,14 +86,14 @@ public abstract class HandModel : MonoBehaviour, IHandModel {
   * @returns A Vector3 containing the Unity coordinates of the palm position.
   */
   public Vector3 GetPalmPosition() {
-    if (controller_ != null && hand_ != null) {
+    //if (hand_ != null) {
       return hand_.PalmPosition.ToVector3();
 
-    }
-    if (palm) {
-      return palm.position;
-    }
-    return Vector3.zero;
+    //}
+    //if (palm) {
+    //  return palm.position;
+    //}
+    //return Vector3.zero;
   }
 
   /** Calculates the rotation of the hand in global coordinates.
@@ -100,54 +101,53 @@ public abstract class HandModel : MonoBehaviour, IHandModel {
   */
   public Quaternion GetPalmRotation() {
     //Debug.Log("HandModel.hand_.Basis.Rotation()" + hand_.Basis.Rotation());
-    if (controller_ != null && hand_ != null) {
+    //if (controller_ != null && hand_ != null) {
       return hand_.Basis.Rotation(mirror_z_axis_);
 
-    }
-    if (palm) {
-      return palm.rotation;
-    }
-    return Quaternion.identity;
+    //}
+    //if (palm) {
+    //  return palm.rotation;
+    //}
+    //return Quaternion.identity;
   }
 
   /** Calculates the direction vector of the hand in global coordinates.
   * @returns A Vector3 representing the direction of the hand.
   */
   public Vector3 GetPalmDirection() {
-    if (controller_ != null && hand_ != null) {
+    //if (controller_ != null && hand_ != null) {
       return hand_.Direction.ToUnity(mirror_z_axis_);
 
-    }
-    if (palm) {
-      return palm.forward;
-    }
-    return Vector3.forward;
+    //}
+    //if (palm) {
+    //  return palm.forward;
+    //}
+    //return Vector3.forward;
   }
 
   /** Calculates the normal vector projecting from the hand in global coordinates.
   * @returns A Vector3 representing the vector perpendicular to the palm.
   */
   public Vector3 GetPalmNormal() {
-    if (controller_ != null && hand_ != null) {
+    //if (controller_ != null && hand_ != null) {
       return hand_.PalmNormal.ToUnity(mirror_z_axis_);
-
-    }
-    if (palm) {
-      return -palm.up;
-    }
-    return -Vector3.up;
+    //}
+    //if (palm) {
+    //  return -palm.up;
+    //}
+    //return -Vector3.up;
   }
 
   /** Calculates the direction vector of the forearm in global coordinates.
   * @returns A Vector3 representing the direction of the forearm (pointing from elbow to wrist).
   */
   public Vector3 GetArmDirection() {
-    if (controller_ != null && hand_ != null) {
-      //return controller_.transform.TransformDirection(hand_.Arm.Direction.ToUnity(mirror_z_axis_));
-    }
-    if (forearm) {
-      return forearm.forward;
-    }
+    //if (controller_ != null && hand_ != null) {
+    //  return controller_.transform.TransformDirection(hand_.Arm.Direction.ToUnity(mirror_z_axis_));
+    //}
+    //if (forearm) {
+    //  return forearm.forward;
+    //}
     return Vector3.forward;
   }
 
@@ -155,15 +155,15 @@ public abstract class HandModel : MonoBehaviour, IHandModel {
   * @returns A Vector3 containing the Unity coordinates of the center of the forearm.
   */
   public Vector3 GetArmCenter() {
-    if (controller_ != null && hand_ != null) {
+    //if (controller_ != null && hand_ != null) {
       Vector leap_center = 0.5f * (hand_.Arm.WristPosition + hand_.Arm.ElbowPosition);
       return leap_center.ToUnityScaled(mirror_z_axis_);
 
-    }
-    if (forearm) {
-      return forearm.position;
-    }
-    return Vector3.zero;
+    //}
+    //if (forearm) {
+    //  return forearm.position;
+    //}
+    //return Vector3.zero;
   }
 
   /** Returns the measured length of the forearm in meters.*/
@@ -180,44 +180,44 @@ public abstract class HandModel : MonoBehaviour, IHandModel {
   * @returns A Vector3 containing the Unity coordinates of the elbow.
   */
   public Vector3 GetElbowPosition() {
-    if (controller_ != null && hand_ != null) {
+    //if (controller_ != null && hand_ != null) {
       Vector3 local_position = hand_.Arm.ElbowPosition.ToUnityScaled (mirror_z_axis_);
       return local_position;
 
-    }
-    if (elbowJoint) {
-      return elbowJoint.position;
-    }
-    return Vector3.zero;
+    //}
+    //if (elbowJoint) {
+    //  return elbowJoint.position;
+    //}
+    //return Vector3.zero;
   }
 
   /** Calculates the position of the wrist in global coordinates.
   * @returns A Vector3 containing the Unity coordinates of the wrist.
   */
   public Vector3 GetWristPosition() {
-    if (controller_ != null && hand_ != null) {
+    //if (controller_ != null && hand_ != null) {
       Vector3 local_position = hand_.Arm.WristPosition.ToUnityScaled (mirror_z_axis_);
       return local_position;
-    }
-    if (wristJoint) {
-      return wristJoint.position;
-    }
-    return Vector3.zero;
+    //}
+    //if (wristJoint) {
+    //  return wristJoint.position;
+    //}
+    //return Vector3.zero;
   }
 
   /** Calculates the rotation of the forearm in global coordinates.
   * @returns A Quaternion representing the rotation of the arm. 
   */
   public Quaternion GetArmRotation() {
-    if (controller_ != null && hand_ != null) {
+    //if (controller_ != null && hand_ != null) {
       Quaternion local_rotation = hand_.Arm.Basis.Rotation (mirror_z_axis_);
       return local_rotation;
 
-    }
-    if (forearm) {
-      return forearm.rotation;
-    }
-    return Quaternion.identity;
+    //}
+    //if (forearm) {
+    //  return forearm.rotation;
+    //}
+    //return Quaternion.identity;
   }
 
   /** 
@@ -226,7 +226,7 @@ public abstract class HandModel : MonoBehaviour, IHandModel {
   * Leap Hand object are relative to the Leap Motion coordinate system,
   * which uses a right-handed axes and units of millimeters.
   */
-  public Hand GetLeapHand() {
+  public override Hand GetLeapHand() {
     return hand_;
   }
 
@@ -235,7 +235,7 @@ public abstract class HandModel : MonoBehaviour, IHandModel {
   * Note that the Leap Hand objects are recreated every frame. The parent 
   * HandController calls this method to set or update the underlying hand.
   */
-  public void SetLeapHand(Hand hand) {
+  public override void SetLeapHand(Hand hand) {
     hand_ = hand;
     for (int i = 0; i < fingers.Length; ++i) {
       if (fingers[i] != null) {
@@ -260,7 +260,7 @@ public abstract class HandModel : MonoBehaviour, IHandModel {
   }
 
   /** Whether this hand is currently mirrored.*/
-  public bool IsMirrored() {
+  public override bool IsMirrored() {
     return mirror_z_axis_;
   }
   //Todo Kill these
@@ -285,7 +285,7 @@ public abstract class HandModel : MonoBehaviour, IHandModel {
   * This function is called by the HandController during the Unity Update() phase when a new hand is detected
   * by the Leap Motion device.
   */
-  public virtual void InitHand() {
+  public override void InitHand() {
     Debug.Log("RigiHand.InitHand()");
     for (int f = 0; f < fingers.Length; ++f) {
       if (fingers[f] != null) {
@@ -313,5 +313,5 @@ public abstract class HandModel : MonoBehaviour, IHandModel {
   * function during the Unity Update() phase. For HandModel instances in the physics hand list, the HandController
   * calls this function in the FixedUpdate() phase.
   */
-  public abstract void UpdateHand();
+  public override abstract void UpdateHand();
 }

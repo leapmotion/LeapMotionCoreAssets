@@ -81,7 +81,8 @@ namespace Leap {
     */
     public void IgnoreCollisionsWithHands(GameObject to_ignore, bool ignore = true) {
       foreach (HandRepresentation rep in physicsReps.Values) {
-        Leap.Utils.IgnoreCollisions(rep.handModel.gameObject, to_ignore, ignore);
+      //Todo move this to HandModel
+        //Leap.Utils.IgnoreCollisions(rep.handModel.gameObject, to_ignore, ignore);
       }
     }
     void Update() {
@@ -107,20 +108,19 @@ namespace Leap {
           rep = Factory.MakeHandRepresentation(curHand, modelType);
           if (rep != null) {
             all_hand_reps.Add(curHand.Id, rep);
-            rep.handModel.MirrorZAxis(mirrorZAxis);
             //Todo move this to Init() or Update HandModel
-            float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
-            rep.handModel.transform.localScale = hand_scale * Vector3.one;
+            //rep.handModel.MirrorZAxis(mirrorZAxis);
+            //float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
+            //rep.handModel.transform.localScale = hand_scale * Vector3.one;
             Debug.Log("reps.Add(" + curHand.Id + ", " + rep + ")");
           }
         }
         if (rep != null) {
           rep.IsMarked = true;
-          rep.handModel.MirrorZAxis(mirrorZAxis);
-
           //Todo move this to Init() or Update HandModel
-          float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
-          rep.handModel.transform.localScale = hand_scale * Vector3.one;
+          //rep.handModel.MirrorZAxis(mirrorZAxis);
+          //float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
+          //rep.handModel.transform.localScale = hand_scale * Vector3.one;
 
           rep.UpdateRepresentation(curHand, modelType);
           rep.LastUpdatedTime = (int)Provider.CurrentFrame.Timestamp;
