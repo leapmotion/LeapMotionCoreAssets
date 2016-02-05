@@ -4,7 +4,12 @@ using System.Collections.Generic;
 using Leap;
 using System;
 
-public class CapsuleHand : HandModel {
+public class CapsuleHand : IHandModel {
+  [SerializeField]
+  private Chirality handedness;
+  public override Chirality Handedness {
+    get { return handedness; }
+  }
   private const int THUMB_BASE_INDEX = (int)Finger.FingerType.TYPE_THUMB * 4 + (int)Finger.FingerJoint.JOINT_MCP;
   private const int PINKY_BASE_INDEX = (int)Finger.FingerType.TYPE_PINKY * 4 + (int)Finger.FingerJoint.JOINT_MCP;
 
@@ -27,10 +32,9 @@ public class CapsuleHand : HandModel {
   private Dictionary<Transform, KeyValuePair<Transform, Transform>> _capsuleToSpheres;
 
   private Transform armFrontLeft, armFrontRight, armBackLeft, armBackRight;
-
+  private Hand hand_;
 
   public override void InitHand() {
-    base.InitHand();
 
     _jointSpheres = new Dictionary<int, Transform>();
     _capsuleToSpheres = new Dictionary<Transform, KeyValuePair<Transform, Transform>>();
@@ -102,6 +106,12 @@ public class CapsuleHand : HandModel {
       createCapsule("ArmRight", armFrontRight, armBackRight);
     }
   }
+  public override Hand GetLeapHand() {
+    return hand_;
+  }
+  public override void SetLeapHand(Hand hand) {
+    hand_ = hand;
+  }
 
   private int getFingerJointIndex(int fingerIndex, int jointIndex) {
     return fingerIndex * 4 + jointIndex;
@@ -141,15 +151,15 @@ public class CapsuleHand : HandModel {
       }
     }
 
-    palmPositionSphere.position = GetPalmPosition();
+    palmPositionSphere.position = hand_.PalmPosition.ToUnity();
 
-    Vector3 wristPos = GetWristPosition();
+    Vector3 wristPos = hand_.PalmPosition.ToUnity();
     wristPositionSphere.position = wristPos;
 
     Transform thumbBase = _jointSpheres[THUMB_BASE_INDEX];
 
-    Vector3 thumbBaseToPalm = thumbBase.position - GetPalmPosition();
-    mockThumbJointSphere.position = GetPalmPosition() + Vector3.Reflect(thumbBaseToPalm, hand_.Basis.xBasis.ToUnity().normalized);
+    Vector3 thumbBaseToPalm = thumbBase.position - hand_.PalmPosition.ToUnity();
+    mockThumbJointSphere.position = hand_.PalmPosition.ToUnity() + Vector3.Reflect(thumbBaseToPalm, hand_.Basis.xBasis.ToUnity().normalized);
 
     //Update Arm
     if (showArm) {

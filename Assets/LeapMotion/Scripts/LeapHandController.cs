@@ -94,11 +94,7 @@ namespace Leap {
 
     void UpdateHandRepresentations(Dictionary<int, HandRepresentation> all_hand_reps, ModelType modelType) {
       foreach (Leap.Hand curHand in Provider.CurrentFrame.Hands) {
-        // If we've mirrored since this hand was updated, destroy it.
-        if (all_hand_reps.ContainsKey(curHand.Id)) {
-          all_hand_reps[curHand.Id].Finish();
-          all_hand_reps.Remove(curHand.Id);
-        }
+
 
         HandRepresentation rep;
         if (!all_hand_reps.TryGetValue(curHand.Id, out rep)) {
