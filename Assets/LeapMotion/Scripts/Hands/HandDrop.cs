@@ -2,7 +2,7 @@
 using System.Collections;
 
 namespace Leap {
-  public class HandDrop : HandFinishBehavior {
+  public class HandDrop : HandTransitionBehavior {
     private Vector3 startingPalmPosition;
     private Quaternion startingOrientation;
     private Vector3 startingScale;
@@ -19,7 +19,7 @@ namespace Leap {
     public override void HandFinish() {
       StartCoroutine(LerpToStart());
     }
-    public override void Resest() {
+    public override void Reset() {
       StopAllCoroutines();
     }
 
