@@ -14,12 +14,6 @@ namespace Leap {
     public Dictionary<int, HandRepresentation> graphicsReps = new Dictionary<int, HandRepresentation>();
     public Dictionary<int, HandRepresentation> physicsReps = new Dictionary<int, HandRepresentation>();
 
-    /** The smoothed offset between the FixedUpdate timeline and the Leap timeline.  
- * Used to provide temporally correct frames within FixedUpdate */
-    private SmoothedFloat smoothedFixedUpdateOffset_ = new SmoothedFloat();
-    /** The maximum offset calculated per frame */
-    private float perFrameFixedUpdateOffset_;
-
     // Reference distance from thumb base to pinky base in mm.
     protected const float GIZMO_SCALE = 5.0f;
     /** Conversion factor for millimeters to meters. */
@@ -94,27 +88,19 @@ namespace Leap {
 
     void UpdateHandRepresentations(Dictionary<int, HandRepresentation> all_hand_reps, ModelType modelType) {
       foreach (Leap.Hand curHand in Provider.CurrentFrame.Hands) {
-
-
         HandRepresentation rep;
         if (!all_hand_reps.TryGetValue(curHand.Id, out rep)) {
           rep = Factory.MakeHandRepresentation(curHand, modelType);
           if (rep != null) {
             all_hand_reps.Add(curHand.Id, rep);
-            //Todo move this to Init() or Update HandModel
-            //rep.handModel.MirrorZAxis(mirrorZAxis);
             //float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
             //rep.handModel.transform.localScale = hand_scale * Vector3.one;
-            //Debug.Log("reps.Add(" + curHand.Id + ", " + rep + ")");
           }
         }
         if (rep != null) {
           rep.IsMarked = true;
-          //Todo move this to Init() or Update HandModel
-          //rep.handModel.MirrorZAxis(mirrorZAxis);
           //float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
           //rep.handModel.transform.localScale = hand_scale * Vector3.one;
-
           rep.UpdateRepresentation(curHand, modelType);
           rep.LastUpdatedTime = (int)Provider.CurrentFrame.Timestamp;
         }
@@ -149,7 +135,6 @@ namespace Leap {
       var latestFrame = Provider.CurrentFrame;
       Provider.PerFrameFixedUpdateOffset = latestFrame.Timestamp * NS_TO_S - Time.fixedTime;
       
-
       Frame frame = Provider.GetFixedFrame();
 
       if (frame.Id != prev_physics_id_ && physicsEnabled) {

@@ -24,14 +24,7 @@ namespace Leap {
       controller_ = GetComponent<LeapHandController>();
     }
 
-    // Update is called once per frame
-    void Update() {
-
-    }
-
     public override HandRepresentation MakeHandRepresentation(Leap.Hand hand, ModelType modelType) {
-      //Debug.Log("Making a " + modelType + " hand");
-
       HandRepresentation handRep = null;
       for (int i = 0; i < ModelPool.Count; i++) {
         IHandModel model = ModelPool[i];
@@ -48,14 +41,11 @@ namespace Leap {
         isCorrectModelType = model.HandModelType == modelType;
 
         if(isCorrectHandedness && isCorrectModelType) {
-          //Debug.Log("Found a " + modelType + " HandModel");
           ModelPool.RemoveAt(i);
           handRep = new HandProxy(this, model, hand);
           break;
         }
       }
-
-      //Debug.Log("HandPool.MakeHandRepresentation() returning: " + handRep);
       return handRep;
     }
   }

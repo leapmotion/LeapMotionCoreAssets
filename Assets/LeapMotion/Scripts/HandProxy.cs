@@ -28,12 +28,9 @@ namespace Leap {
       if (handFinishBehavior) {
         handFinishBehavior.Reset();
       }
-
-      //Debug.Log("handProxy Constructor ------------------------------");
     }
 
     public override void Finish() {
-      //Debug.Log("HandProxy Finishing");
       if (handFinishBehavior) {
         handFinishBehavior.HandFinish();
       }
@@ -42,7 +39,6 @@ namespace Leap {
     }
 
     public override void UpdateRepresentation(Leap.Hand hand, ModelType modelType){
-      // TODO:  Decide how to pass information about the updated hand to the hand model
       handModel.SetLeapHand(hand);
       handModel.UpdateHand();
     }
