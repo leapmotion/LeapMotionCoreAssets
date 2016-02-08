@@ -96,7 +96,7 @@ public abstract class HandModel : IHandModel {
   * @returns A Quaternion representing the rotation of the hand. 
   */
   public Quaternion GetPalmRotation() {
-    if (controller_ != null) {
+    if (hand_ != null) {
       return hand_.Basis.Rotation();
     }
     if (palm) {
