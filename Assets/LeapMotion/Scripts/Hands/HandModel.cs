@@ -31,8 +31,6 @@ public abstract class HandModel : IHandModel {
   public override abstract ModelType HandModelType {
     get;
   }
-
-
   
   /** The number of fingers on a hand.*/
   public const int NUM_FINGERS = 5;
