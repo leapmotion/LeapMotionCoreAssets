@@ -96,54 +96,51 @@ public abstract class HandModel : IHandModel {
   * @returns A Quaternion representing the rotation of the hand. 
   */
   public Quaternion GetPalmRotation() {
-    //Debug.Log("HandModel.hand_.Basis.Rotation()" + hand_.Basis.Rotation());
-    //if (controller_ != null && hand_ != null) {
+    if (controller_ != null) {
       return hand_.Basis.Rotation();
-
-    //}
-    //if (palm) {
-    //  return palm.rotation;
-    //}
-    //return Quaternion.identity;
+    }
+    if (palm) {
+      return palm.rotation;
+    }
+    return Quaternion.identity;
   }
 
   /** Calculates the direction vector of the hand in global coordinates.
   * @returns A Vector3 representing the direction of the hand.
   */
   public Vector3 GetPalmDirection() {
-    //if (controller_ != null && hand_ != null) {
+    if (hand_ != null) {
       return hand_.Direction.ToUnity();
-
-    //}
-    //if (palm) {
-    //  return palm.forward;
-    //}
-    //return Vector3.forward;
+    }
+    if (palm) {
+      return palm.forward;
+    }
+    return Vector3.forward;
   }
 
   /** Calculates the normal vector projecting from the hand in global coordinates.
   * @returns A Vector3 representing the vector perpendicular to the palm.
   */
   public Vector3 GetPalmNormal() {
-    //if (controller_ != null && hand_ != null) {
+    if (hand_ != null) {
       return hand_.PalmNormal.ToUnity();
-    //}
-    //if (palm) {
-    //  return -palm.up;
-    //}
-    //return -Vector3.up;
+    }
+    if (palm) {
+      return -palm.up;
+    }
+    return -Vector3.up;
   }
 
   /** Calculates the direction vector of the forearm in global coordinates.
   * @returns A Vector3 representing the direction of the forearm (pointing from elbow to wrist).
   */
   public Vector3 GetArmDirection() {
-    //if (controller_ != null && hand_ != null) {
-    //  return controller_.transform.TransformDirection(hand_.Arm.Direction.ToUnity(mirror_z_axis_));
-    //}
-    //if (forearm) {
-    //  return forearm.forward;
-    //}
+    if (hand_ != null) {
+      return hand_.Arm.Direction.ToUnity();
+    }
+    if (forearm) {
+      return forearm.forward;
+    }
     return Vector3.forward;
   }
 
@@ -151,15 +148,14 @@ public abstract class HandModel : IHandModel {
   * @returns A Vector3 containing the Unity coordinates of the center of the forearm.
   */
   public Vector3 GetArmCenter() {
-    //if (controller_ != null && hand_ != null) {
+    if (hand_ != null) {
       Vector leap_center = 0.5f * (hand_.Arm.WristPosition + hand_.Arm.ElbowPosition);
       return leap_center.ToUnityScaled();
-
-    //}
-    //if (forearm) {
-    //  return forearm.position;
-    //}
-    //return Vector3.zero;
+    }
+    if (forearm) {
+      return forearm.position;
+    }
+    return Vector3.zero;
   }
 
   /** Returns the measured length of the forearm in meters.*/
@@ -176,44 +172,42 @@ public abstract class HandModel : IHandModel {
   * @returns A Vector3 containing the Unity coordinates of the elbow.
   */
   public Vector3 GetElbowPosition() {
-    //if (controller_ != null && hand_ != null) {
+    if (hand_ != null) {
       Vector3 local_position = hand_.Arm.ElbowPosition.ToUnityScaled ();
       return local_position;
-
-    //}
-    //if (elbowJoint) {
-    //  return elbowJoint.position;
-    //}
-    //return Vector3.zero;
+    }
+    if (elbowJoint) {
+      return elbowJoint.position;
+    }
+    return Vector3.zero;
   }
 
   /** Calculates the position of the wrist in global coordinates.
   * @returns A Vector3 containing the Unity coordinates of the wrist.
   */
   public Vector3 GetWristPosition() {
-    //if (controller_ != null && hand_ != null) {
+    if (hand_ != null) {
       Vector3 local_position = hand_.Arm.WristPosition.ToUnityScaled ();
       return local_position;
-    //}
-    //if (wristJoint) {
-    //  return wristJoint.position;
-    //}
-    //return Vector3.zero;
+    }
+    if (wristJoint) {
+      return wristJoint.position;
+    }
+    return Vector3.zero;
   }
 
   /** Calculates the rotation of the forearm in global coordinates.
   * @returns A Quaternion representing the rotation of the arm. 
   */
   public Quaternion GetArmRotation() {
-    //if (controller_ != null && hand_ != null) {
+    if (hand_ != null) {
       Quaternion local_rotation = hand_.Arm.Basis.Rotation ();
       return local_rotation;
-
-    //}
-    //if (forearm) {
-    //  return forearm.rotation;
-    //}
-    //return Quaternion.identity;
+    }
+    if (forearm) {
+      return forearm.rotation;
+    }
+    return Quaternion.identity;
   }
 
   /** 

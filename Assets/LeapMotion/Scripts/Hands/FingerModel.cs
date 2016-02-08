@@ -115,7 +115,7 @@ public abstract class FingerModel : MonoBehaviour {
     return offset_;
   }
 
-  /** Returns the location of the tip of the finger in relation to the controller.*/
+  /** Returns the location of the tip of the finger */
   public Vector3 GetTipPosition() {
     if (finger_ != null) {
       Vector3 local_tip = finger_.Bone ((Bone.BoneType.TYPE_DISTAL)).NextJoint.ToUnityScaled ();
@@ -128,7 +128,7 @@ public abstract class FingerModel : MonoBehaviour {
     return Vector3.zero;
   }
 
-  /** Returns the location of the given joint on the finger in relation to the controller.*/
+  /** Returns the location of the given joint on the finger */
   public Vector3 GetJointPosition(int joint) {
     if (joint >= NUM_BONES) {
       return GetTipPosition ();
@@ -150,7 +150,7 @@ public abstract class FingerModel : MonoBehaviour {
     return ray;
   }
 
-  /** Returns the center of the given bone on the finger in relation to the controller.*/
+  /** Returns the center of the given bone on the finger */
   public Vector3 GetBoneCenter(int bone_type) {
     if (finger_ != null) {
       Bone bone = finger_.Bone ((Bone.BoneType)(bone_type));
@@ -163,7 +163,7 @@ public abstract class FingerModel : MonoBehaviour {
     return Vector3.zero;
   }
 
-  /** Returns the direction the given bone is facing on the finger in relation to the controller.*/
+  /** Returns the direction the given bone is facing on the finger */
   public Vector3 GetBoneDirection(int bone_type) {
     if (finger_ != null) {
       Vector3 direction = GetJointPosition (bone_type + 1) - GetJointPosition (bone_type);
@@ -175,7 +175,7 @@ public abstract class FingerModel : MonoBehaviour {
     return Vector3.forward;
   }
 
-  /** Returns the rotation quaternion of the given bone in relation to the controller.*/
+  /** Returns the rotation quaternion of the given bone */
   public Quaternion GetBoneRotation(int bone_type) {
     if (finger_ != null) {
       Quaternion local_rotation = finger_.Bone ((Bone.BoneType)(bone_type)).Basis.Rotation ();
