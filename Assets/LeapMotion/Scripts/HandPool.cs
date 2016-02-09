@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
+using UnityEditor;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 
 namespace Leap {
   public class HandPool :
@@ -48,5 +50,27 @@ namespace Leap {
       }
       return handRep;
     }
+#if UNITY_EDITOR
+    void OnValidate(){
+      if (LeftGraphicsModel) {
+        ValidateIHandModelPrefab(LeftGraphicsModel);
+      }
+      if (RightGraphicsModel) {
+        ValidateIHandModelPrefab(RightGraphicsModel);
+      }
+      if (LeftGraphicsModel) {
+        ValidateIHandModelPrefab(LeftPhysicsModel);
+      }
+      if (RightGraphicsModel) {
+        ValidateIHandModelPrefab(RightPhysicsModel);
+      }
+    }
+    void ValidateIHandModelPrefab(IHandModel iHandModel) {
+      if (PrefabUtility.GetPrefabType(iHandModel) != PrefabType.PrefabInstance) {
+        EditorUtility.DisplayDialog("Warning", "This slot needs to have an instance of a prefab from your scene. Make your hand prefab a child of the LeapHanadContrller in your scene,  then drag here", "OK");
+      }
+
+    }
+#endif 
   }
 }
