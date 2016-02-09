@@ -171,7 +171,7 @@ namespace Leap {
       leap_controller_.StopConnection();
     }
     void OnApplicationPause(bool isPaused) {
-      Debug.Log("Pause " + isPaused);
+      //Debug.Log("Pause " + isPaused);
       if (isPaused)
         leap_controller_.StopConnection();
       else
