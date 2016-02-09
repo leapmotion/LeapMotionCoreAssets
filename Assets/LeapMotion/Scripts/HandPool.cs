@@ -52,24 +52,23 @@ namespace Leap {
     }
 #if UNITY_EDITOR
     void OnValidate(){
-      if (LeftGraphicsModel) {
+      if (LeftGraphicsModel != null) {
         ValidateIHandModelPrefab(LeftGraphicsModel);
       }
-      if (RightGraphicsModel) {
+      if (RightGraphicsModel != null) {
         ValidateIHandModelPrefab(RightGraphicsModel);
       }
-      if (LeftGraphicsModel) {
+      if (LeftPhysicsModel != null) {
         ValidateIHandModelPrefab(LeftPhysicsModel);
       }
-      if (RightGraphicsModel) {
+      if (RightPhysicsModel != null) {
         ValidateIHandModelPrefab(RightPhysicsModel);
       }
     }
     void ValidateIHandModelPrefab(IHandModel iHandModel) {
-      if (PrefabUtility.GetPrefabType(iHandModel) != PrefabType.PrefabInstance) {
+      if (PrefabUtility.GetPrefabType(iHandModel) == PrefabType.Prefab) {
         EditorUtility.DisplayDialog("Warning", "This slot needs to have an instance of a prefab from your scene. Make your hand prefab a child of the LeapHanadContrller in your scene,  then drag here", "OK");
       }
-
     }
 #endif 
   }
