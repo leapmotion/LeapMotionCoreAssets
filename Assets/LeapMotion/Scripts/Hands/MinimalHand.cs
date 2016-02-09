@@ -9,7 +9,7 @@ public class MinimalHand : IHandModel {
   private Mesh _palmMesh;
 
   [SerializeField]
-  private float _palmScale;
+  private float _palmScale = 0.02f;
 
   [SerializeField]
   private Material _palmMat;
