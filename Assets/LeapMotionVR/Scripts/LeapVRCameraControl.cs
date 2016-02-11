@@ -46,7 +46,7 @@ public class LeapVRCameraControl : MonoBehaviour {
     }
 #endif
 
-    _deviceInfo = new LeapDeviceInfo(LeapDeviceType.Dragonfly);
+    _deviceInfo = new LeapDeviceInfo(LeapDeviceType.Peripheral);
   }
 
   void Update() {
@@ -107,6 +107,7 @@ public class LeapVRCameraControl : MonoBehaviour {
 
     if (_overrideEyePosition) {
       offsetMatrix = _finalCenterMatrix;
+      //Debug.Log(_deviceInfo.baseline);
       Vector3 ipdOffset = (_eyeType.IsLeftEye ? 1 : -1) * transform.right * _deviceInfo.baseline * 0.5f;
       Vector3 forwardOffset = -transform.forward * _deviceInfo.focalPlaneOffset;
       offsetMatrix *= Matrix4x4.TRS(ipdOffset + forwardOffset, Quaternion.identity, Vector3.one);

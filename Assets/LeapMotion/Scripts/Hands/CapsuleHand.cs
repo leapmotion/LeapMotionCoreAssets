@@ -43,10 +43,11 @@ public class CapsuleHand : IHandModel {
       return ModelType.Graphics;
     }
   }
-
+  [SerializeField]
+  private Chirality handedness;
   public override Chirality Handedness {
     get {
-      return Chirality.Either;
+      return handedness;
     }
   }
 
@@ -236,7 +237,7 @@ public class CapsuleHand : IHandModel {
     sphere.GetComponent<Renderer>().sharedMaterial = jointMat;
 
     sphere.name = name;
-    sphere.hideFlags = HideFlags.DontSaveInEditor;
+    sphere.hideFlags = HideFlags.DontSaveInEditor | HideFlags.HideInHierarchy | HideFlags.HideInInspector;
 
     if (isPartOfArm) {
       _armRenderers.Add(sphere.GetComponent<Renderer>());
@@ -257,7 +258,7 @@ public class CapsuleHand : IHandModel {
     _sphereATransforms.Add(jointA);
     _sphereBTransforms.Add(jointB);
 
-    capsule.hideFlags = HideFlags.DontSaveInEditor;
+    capsule.hideFlags = HideFlags.DontSaveInEditor | HideFlags.HideInHierarchy | HideFlags.HideInInspector;
 
     if (isPartOfArm) {
       _armRenderers.Add(capsule.GetComponent<Renderer>());
