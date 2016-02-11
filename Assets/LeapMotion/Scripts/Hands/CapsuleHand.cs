@@ -22,6 +22,8 @@ public class CapsuleHand : IHandModel {
 
   public bool showArm = true;
   public Material mat;
+  private Material jointMat;
+  
 
   private Dictionary<int, Transform> _jointSpheres;
   private Transform mockThumbJointSphere;
@@ -36,13 +38,16 @@ public class CapsuleHand : IHandModel {
 
   public override void InitHand() {
 
+    jointMat = new Material(mat);
+    jointMat.hideFlags = HideFlags.DontSaveInEditor;
+    jointMat.color = _colorList[_colorIndex];
+    _colorIndex = (_colorIndex + 1) % _colorList.Length;
+
     _jointSpheres = new Dictionary<int, Transform>();
     _capsuleToSpheres = new Dictionary<Transform, KeyValuePair<Transform, Transform>>();
 
     createSpheres();
     createCapsules();
-
-    _colorIndex = (_colorIndex + 1) % _colorList.Length;
   }
 
   private void createSpheres() {
@@ -119,24 +124,25 @@ public class CapsuleHand : IHandModel {
 
   private Transform createSphere(string name, float radius) {
     GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    Destroy(sphere.GetComponent<Collider>());
+    DestroyImmediate(sphere.GetComponent<Collider>());
     sphere.transform.parent = transform;
     sphere.transform.localScale = Vector3.one * radius * 2;
-    sphere.GetComponent<Renderer>().material = mat;
-    sphere.GetComponent<Renderer>().material.color = _colorList[_colorIndex];
+    sphere.GetComponent<Renderer>().sharedMaterial = jointMat;
+
     sphere.name = name;
+    sphere.hideFlags = HideFlags.DontSaveInEditor;
     return sphere.transform;
   }
 
   private void createCapsule(string name, Transform jointA, Transform jointB) {
     GameObject capsule = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-    Destroy(capsule.GetComponent<Collider>());
+    DestroyImmediate(capsule.GetComponent<Collider>());
     capsule.name = name;
     capsule.transform.parent = transform;
     capsule.transform.localScale = Vector3.one * CYLINDER_RADIUS * 2;
-    capsule.GetComponent<Renderer>().material = mat;
-    capsule.GetComponent<Renderer>().material.color = Color.white;
+    capsule.GetComponent<Renderer>().sharedMaterial = mat;
     _capsuleToSpheres[capsule.transform] = new KeyValuePair<Transform, Transform>(jointA, jointB);
+    capsule.hideFlags = HideFlags.DontSaveInEditor;
   }
 
   public override void UpdateHand() {
