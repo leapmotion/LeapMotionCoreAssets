@@ -14,14 +14,13 @@ public abstract class IHandModel : MonoBehaviour {
   public abstract Chirality Handedness { get; }
   public abstract ModelType HandModelType { get; }
   public virtual void InitHand(){
-    if (!EditorApplication.isPlaying) {
-      Debug.Log("IHandModel.InitHand()");
-    }
+    Debug.Log("IHandModel.InitHand()");
   }
   public abstract void UpdateHand();
   public abstract Hand GetLeapHand(); 
   public abstract void SetLeapHand(Hand hand);
   private bool isLeft;
+#if UNITY_EDITOR
   void Awake() {
     if (!EditorApplication.isPlaying) {
       Debug.Log("IHandModel.Awake()");
@@ -35,18 +34,18 @@ public abstract class IHandModel : MonoBehaviour {
   void Update() {
     if (!EditorApplication.isPlaying) {
       Debug.Log("IHandModel.Update()");
-      if (GetLeapHand() == null) {
+      //if (GetLeapHand() == null ) {
         Debug.Log("IHandModel.Update() needs to re-Init");
         if (Handedness == Chirality.Left) {
           isLeft = true;
         }
         SetLeapHand(TestHandFactory.MakeTestHand(0, 0, isLeft).TransformedCopy(GetLeapMatrix()));
         InitHand();
-      }
+      //}
       UpdateHand();
     }
   }
-
+#endif
   //Todo move this to a utility.  Needs to be same as Provider
   /** Conversion factor for millimeters to meters. */
   protected const float MM_TO_M = 1e-3f;
