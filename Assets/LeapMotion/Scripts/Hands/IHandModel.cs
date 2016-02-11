@@ -34,14 +34,15 @@ public abstract class IHandModel : MonoBehaviour {
   void Update() {
     if (!EditorApplication.isPlaying) {
       Debug.Log("IHandModel.Update()");
-      //if (GetLeapHand() == null ) {
+      if (GetLeapHand() == null ) {
         Debug.Log("IHandModel.Update() needs to re-Init");
         if (Handedness == Chirality.Left) {
           isLeft = true;
         }
         SetLeapHand(TestHandFactory.MakeTestHand(0, 0, isLeft).TransformedCopy(GetLeapMatrix()));
         InitHand();
-      //}
+      }
+      SetLeapHand(TestHandFactory.MakeTestHand(0, 0, isLeft).TransformedCopy(GetLeapMatrix()));
       UpdateHand();
     }
   }
