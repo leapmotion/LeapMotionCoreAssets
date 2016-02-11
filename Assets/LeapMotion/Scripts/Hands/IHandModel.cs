@@ -40,9 +40,7 @@ public abstract class IHandModel : MonoBehaviour {
           isLeft = true;
         }
         SetLeapHand(TestHandFactory.MakeTestHand(0, 0, isLeft).TransformedCopy(GetLeapMatrix()));
-        InitHand();
       }
-      SetLeapHand(TestHandFactory.MakeTestHand(0, 0, isLeft).TransformedCopy(GetLeapMatrix()));
       UpdateHand();
     }
   }
