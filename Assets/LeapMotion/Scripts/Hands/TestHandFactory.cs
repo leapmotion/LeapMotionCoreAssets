@@ -48,7 +48,7 @@ using System.Runtime.InteropServices;
             if(isLeft){
                 return testHand;
             } else {
-                Matrix leftToRight = new Matrix(Vector.Left, Vector.Up, Vector.Forward);
+                Matrix leftToRight = new Matrix(Vector.Right, Vector.Up, Vector.Forward);
                 return testHand.TransformedCopy(leftToRight);
             }
         }

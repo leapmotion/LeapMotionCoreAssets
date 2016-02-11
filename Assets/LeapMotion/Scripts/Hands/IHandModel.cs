@@ -21,11 +21,14 @@ public abstract class IHandModel : MonoBehaviour {
   public abstract void UpdateHand();
   public abstract Hand GetLeapHand(); 
   public abstract void SetLeapHand(Hand hand);
-
+  private bool isLeft;
   void Awake() {
     if (!EditorApplication.isPlaying) {
       Debug.Log("IHandModel.Awake()");
-      SetLeapHand(TestHandFactory.MakeTestHand(0, 0, true));
+      if (Handedness == Chirality.Left) {
+        isLeft = true;
+      }
+      SetLeapHand(TestHandFactory.MakeTestHand(0, 0, isLeft).TransformedCopy(GetLeapMatrix()));
       InitHand();
     }
   }
@@ -33,11 +36,27 @@ public abstract class IHandModel : MonoBehaviour {
     if (!EditorApplication.isPlaying) {
       Debug.Log("IHandModel.Update()");
       if (GetLeapHand() == null) {
-        SetLeapHand(TestHandFactory.MakeTestHand(0, 0, true));
+        Debug.Log("IHandModel.Update() needs to re-Init");
+        if (Handedness == Chirality.Left) {
+          isLeft = true;
+        }
+        SetLeapHand(TestHandFactory.MakeTestHand(0, 0, isLeft).TransformedCopy(GetLeapMatrix()));
         InitHand();
       }
       UpdateHand();
     }
+  }
+
+  //Todo move this to a utility.  Needs to be same as Provider
+  /** Conversion factor for millimeters to meters. */
+  protected const float MM_TO_M = 1e-3f;
+  private Matrix GetLeapMatrix() {
+    Transform t = this.transform.parent.transform;
+    Vector xbasis = new Vector(t.right.x, t.right.y, t.right.z) * t.localScale.x * MM_TO_M;
+    Vector ybasis = new Vector(t.up.x, t.up.y, t.up.z) * t.localScale.y * MM_TO_M;
+    Vector zbasis = new Vector(t.forward.x, t.forward.y, t.forward.z) * -t.localScale.z * MM_TO_M;
+    Vector trans = new Vector(t.position.x, t.position.y, t.position.z);
+    return new Matrix(xbasis, ybasis, zbasis, trans);
   }
 }
 
