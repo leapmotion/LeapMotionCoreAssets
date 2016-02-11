@@ -109,6 +109,7 @@ public class CapsuleHand : IHandModel {
         int key = getFingerJointIndex((int)finger.Type, j);
         Transform sphere = _jointSpheres[key];
         sphere.position = finger.JointPosition((Finger.FingerJoint)j).ToUnityScaled();
+
       }
     }
 
