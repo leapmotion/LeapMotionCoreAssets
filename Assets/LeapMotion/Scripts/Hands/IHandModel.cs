@@ -14,7 +14,7 @@ public abstract class IHandModel : MonoBehaviour {
   public abstract Chirality Handedness { get; }
   public abstract ModelType HandModelType { get; }
   public virtual void InitHand(){
-    Debug.Log("IHandModel.InitHand()");
+    //Debug.Log("IHandModel.InitHand()");
   }
   public abstract void UpdateHand();
   public abstract Hand GetLeapHand(); 
@@ -23,7 +23,7 @@ public abstract class IHandModel : MonoBehaviour {
 #if UNITY_EDITOR
   void Awake() {
     if (!EditorApplication.isPlaying) {
-      Debug.Log("IHandModel.Awake()");
+      //Debug.Log("IHandModel.Awake()");
       if (Handedness == Chirality.Left) {
         isLeft = true;
       }
@@ -36,7 +36,7 @@ public abstract class IHandModel : MonoBehaviour {
       if (Handedness == Chirality.Left) {
         isLeft = true;
       }
-      Debug.Log("IHandModel.Update()");
+      //Debug.Log("IHandModel.Update()");
       SetLeapHand(TestHandFactory.MakeTestHand(0, 0, isLeft).TransformedCopy(GetLeapMatrix()));
       UpdateHand();
     }
