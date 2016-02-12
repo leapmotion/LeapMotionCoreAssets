@@ -149,6 +149,10 @@ public class CapsuleHand : IHandModel {
       Vector3 delta = sphereA.position - sphereB.position;
       Vector3 perp = Vector3.Cross(delta, Vector3.up);
 
+      if (delta.magnitude == 0.0f) {
+        continue;
+      }
+
       capsule.rotation = Quaternion.LookRotation(perp, delta);
       Vector3 scale = capsule.localScale;
       scale.y = delta.magnitude / 2.0f;
