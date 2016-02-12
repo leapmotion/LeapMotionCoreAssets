@@ -18,7 +18,7 @@ namespace Leap {
          bool IsServiceConnected {get;}
          bool HasFocus {get;}
          Config Config {get;}
-         ImageList Images {get;}
+//         ImageList Images {get;}
          DeviceList Devices {get;}
          TrackedQuad TrackedQuad {get;}
 

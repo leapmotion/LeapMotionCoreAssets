@@ -57,7 +57,6 @@ namespace Leap
 
         float _minSphereRadius = 42; //mm
         float _maxSphereradius = 160; //mm
-        bool _needToCalculateSphere = true;
 
         /**
      * Constructs a Hand object.
@@ -80,7 +79,6 @@ namespace Leap
              _basis = Matrix.Identity;
              _needToCalculateBasis = false;
              _sphereCenter = Vector.Zero;
-             _needToCalculateSphere = false;
         }
 
         public Hand(int frameID,

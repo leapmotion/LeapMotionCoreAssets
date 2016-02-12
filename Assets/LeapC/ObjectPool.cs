@@ -16,7 +16,7 @@ namespace LeapInternal
         private UInt64 age = 0;
         private const double _growRate = 1.5;
 
-        public int InUse{get; private set;}
+        public int InUse{get; private set;} //TODO remove so objects don't need to know about their pool to check in
         public bool Growable{get; set;}
 
         /**
@@ -70,6 +70,7 @@ namespace LeapInternal
         }
 
         public void CheckIn(T pooledObject){
+            pooledObject.CheckIn();
             pooledObject.age = 0;
             InUse--;
         }

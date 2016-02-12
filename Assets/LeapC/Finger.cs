@@ -44,8 +44,6 @@ namespace Leap
          Vector _direction;
          float _width = 0;
          float _length = 0;
-         bool _isTool = false;
-         bool _isFinger = false;
          bool _isExtended = false;
          bool _isValid = false;
          Vector _stabilizedTipPosition;
@@ -92,8 +90,6 @@ namespace Leap
             _direction = direction;
             _width = width;
             _length = length;
-            _isTool = false;
-            _isFinger = true;
             _isExtended = isExtended;
             _isValid = false;
             _stabilizedTipPosition = stabilizedTipPosition;

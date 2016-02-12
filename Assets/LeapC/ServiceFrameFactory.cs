@@ -41,68 +41,27 @@ namespace LeapInternal
             return newFrame;
         }
 
-        public Image makeImage (ref LEAP_IMAGE_COMPLETE_EVENT imageMsg, ImageData pendingImageData, DistortionData distortionData)
-        {
-            LEAP_IMAGE_PROPERTIES props = LeapC.PtrToStruct<LEAP_IMAGE_PROPERTIES> (imageMsg.properties);
-            Image.ImageType apiImageType;
-            switch (props.type) {
-                case eLeapImageType.eLeapImageType_Default:
-                    apiImageType = Image.ImageType.DEFAULT;
-                    break;
-                case eLeapImageType.eLeapImageType_Raw:
-                    apiImageType = Image.ImageType.RAW;
-                    break;
-                default:
-                    apiImageType = Image.ImageType.DEFAULT;
-                    break;
-            }
-            Image.FormatType apiImageFormat;
-            switch (props.format) {
-                case eLeapImageFormat.eLeapImageType_IR:
-                    apiImageFormat = Image.FormatType.INFRARED;
-                    break;
-                case eLeapImageFormat.eLeapImageType_RGBIr_Bayer:
-                    apiImageFormat = Image.FormatType.IBRG;
-                    break;
-                default:
-                    apiImageFormat = Image.FormatType.INFRARED;
-                    break;
-            }
-            Image.PerspectiveType apiPerspectiveType;
-            switch (props.perspective) {
-                case eLeapPerspectiveType.eLeapPerspectiveType_stereo_left:
-                    apiPerspectiveType = Image.PerspectiveType.STEREO_LEFT;
-                    break;
-                case eLeapPerspectiveType.eLeapPerspectiveType_stereo_right:
-                    apiPerspectiveType = Image.PerspectiveType.STEREO_RIGHT;
-                    break;
-                case eLeapPerspectiveType.eLeapPerspectiveType_mono:
-                    apiPerspectiveType = Image.PerspectiveType.MONO;
-                    break;
-                default:
-                    apiPerspectiveType = Image.PerspectiveType.INVALID;
-                    break;
-            }
-
-            pendingImageData.CompleteImageData (apiImageType,
-                apiImageFormat,
-                apiPerspectiveType,
-                props.bpp,
-                props.width,
-                props.height,
-                imageMsg.info.timestamp,
-                imageMsg.info.frame_id,
-                .5f,
-                .5f,
-                .5f / LeapC.DistortionSize,
-                .5f / LeapC.DistortionSize,
-                distortionData,
-                LeapC.DistortionSize,
-                imageMsg.matrix_version);
-            pendingImageData.unPinHandle (); //Done with pin for unmanaged code
-            Image newImage = new Image (pendingImageData); //Create the public API object
-            return newImage;
-        }
+//        public Image makeImage (ref LEAP_IMAGE_COMPLETE_EVENT imageMsg, ImageData pendingImageData, DistortionData distortionData)
+//        {
+//            LEAP_IMAGE_PROPERTIES props = LeapC.PtrToStruct<LEAP_IMAGE_PROPERTIES> (imageMsg.properties);
+//
+//            pendingImageData.CompleteImageData (props.type,
+//                props.format,
+//                props.bpp,
+//                props.width,
+//                props.height,
+//                imageMsg.info.timestamp,
+//                imageMsg.info.frame_id,
+//                .5f,
+//                .5f,
+//                .5f / LeapC.DistortionSize,
+//                .5f / LeapC.DistortionSize,
+//                distortionData,
+//                LeapC.DistortionSize,
+//                imageMsg.matrix_version);
+//            Image newImage = new Image (pendingImageData); //Create the public API object
+//            return newImage;
+//        }
 
         public TrackedQuad makeQuad (ref LEAP_TRACKED_QUAD_EVENT quadMsg)
         {
@@ -113,8 +72,7 @@ namespace LeapInternal
                                    quadMsg.visible,
                                    quadMsg.position.ToLeapVector (),
                                    quadMsg.orientation.ToLeapMatrix (),
-                                   quadMsg.info.frame_id,
-                                   null);
+                                   quadMsg.info.frame_id);
             return quad;
         }
 

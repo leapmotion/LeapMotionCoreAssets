@@ -35,7 +35,6 @@ namespace Leap
         Vector _position;
         Matrix _orientation;
         Int64 _id = 0;
-        Controller _controller;
 
         // TODO: revisit dispose code
         // Dispose() is called explicitly by CoreAssets, so adding the stub implementation for now.
@@ -81,8 +80,7 @@ namespace Leap
                             bool visible,
                             Vector position,
                             Matrix orientation,
-                            Int64 id,
-                            Controller controller)
+                            Int64 id)
         {
             _width = width;
             _height = height;
@@ -92,7 +90,6 @@ namespace Leap
             _position = position;
             _orientation = orientation;
             _id = id;
-            _controller = controller;
 
             _isValid = true;
         }
@@ -210,11 +207,11 @@ namespace Leap
     * \include TrackedQuad_images.txt
     * @since 2.2.6
     */
-        public ImageList Images {
-            get {
-                return new ImageList ();
-            } 
-        }
+//        public ImageList Images {
+//            get {
+//                return new ImageList ();
+//            } 
+//        }
 
     /**
     * Reports whether this is a valid object.

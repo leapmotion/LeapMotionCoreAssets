@@ -67,7 +67,6 @@ namespace Leap
     public class Controller : IController
     {
         Connection _connection;
-        ImageList _images;
         bool _disposed = false;
         Config _config;
 
@@ -85,11 +84,10 @@ namespace Leap
         public event EventHandler<DeviceEventArgs> Device;
         public event EventHandler<DeviceEventArgs> DeviceLost;
         public event EventHandler<ImageEventArgs> ImageReady;
+        public event EventHandler<ImageRequestFailedEventArgs> ImageRequestFailed;
         public event EventHandler<LeapEventArgs> ServiceChange;
         public event EventHandler<DeviceFailureEventArgs> DeviceFailure;
         public event EventHandler<LogEventArgs> LogMessage;
-        
-        //new
         public event EventHandler<PolicyEventArgs> PolicyChange;
         public event EventHandler<ConfigChangeEventArgs> ConfigChange;
         public event EventHandler<DistortionEventArgs> DistortionChange;
@@ -139,7 +137,8 @@ namespace Leap
             _connection.LeapConnection += OnConnect;
             _connection.LeapConnectionLost += OnDisconnect;
             _connection.LeapFrame += OnFrame;
-            _connection.LeapImageComplete += OnImages;
+            _connection.LeapImageReady += OnImages;
+            _connection.LeapImageRequestFailed += OnFailedImageRequest;
             _connection.LeapPolicyChange += OnPolicyChange;
             _connection.LeapLogEvent += OnLogEvent;
             _connection.LeapTrackedQuad += OnTrackedQuad;
@@ -159,6 +158,13 @@ namespace Leap
         public void StopConnection ()
         {
             _connection.Stop ();
+        }
+
+        public Image RequestImages(Int64 frameId, Image.ImageType type){
+            return _connection.RequestImages(frameId, type);
+        }
+        public Image RequestImages(Int64 frameId, Image.ImageType type, byte[] imageBuffer){
+            return _connection.RequestImages(frameId, type, imageBuffer);
         }
 
         /**
@@ -420,16 +426,30 @@ namespace Leap
      * @return An ImageList object containing the most recent camera images.
      * @since 2.2.1
      */
-        public ImageList Images {
-            get {
-                if (_images == null)
-                    _images = new ImageList ();
+//        public ImageList Images {
+//            get {
+//                if (_images == null)
+//                    _images = new ImageList ();
+//
+//                _connection.GetLatestImages (ref _images);
+//                return _images;
+//            } 
+//        }
 
-                _connection.GetLatestImages (ref _images);
-                return _images;
-            } 
+        public enum ImageRequestResult{
+            UNKNOWN = 0,
+            SUCCESS,
+            REQUEST_TOO_LATE,
+            INSUFFICIENT_BUFFER,
+            REQUEST_FAILED,
         }
-            
+        //Images on demand
+//        public Image RequestDefaultImages(Int64 frameId, IntPtr buffer, out int bufferSize){
+//            return _connection.RequestImages(frameId, buffer, out bufferSize, Image.ImageType.DEFAULT);
+//        }
+//        public ImageRequestResult RequestRawImages(Int64 frameId, IntPtr buffer, out int bufferSize){
+//            return _connection.RequestImages(frameId, buffer, out bufferSize, Image.ImageType.RAW);
+//        }
         /**
      * The list of currently attached and recognized Leap Motion controller devices.
      *
@@ -617,6 +637,11 @@ namespace Leap
         protected virtual void OnImages (object sender, ImageEventArgs eventArgs)
         {
             ImageReady.DispatchOnContext<ImageEventArgs> (this, EventContext, eventArgs);
+        }
+
+        protected virtual void OnFailedImageRequest (object sender, ImageRequestFailedEventArgs eventArgs)
+        {
+            ImageRequestFailed.DispatchOnContext<ImageRequestFailedEventArgs> (this, EventContext, eventArgs);
         }
 
         protected virtual void OnDistortionChange (object sender, DistortionEventArgs eventArgs)

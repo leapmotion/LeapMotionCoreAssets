@@ -5,16 +5,21 @@
 * https://developer.leapmotion.com/sdk_agreement, or another agreement         *
 * between Leap Motion and you, your company or other organization.             *
 \******************************************************************************/
-using System;
-using System.Collections.Generic;
-
-namespace Leap
+namespace LeapInternal
 {
-    public class DistortionData{
-        public UInt64 version{get; set;}
-        public float width{get; set;}
-        public float height{get; set;}
-        public float[] data{get; set;}
+    using System;
+    using Leap;
+
+    public class ImageReference
+    {
+        public Image imageObject{get; set;}
+        public ImageData imageData{get; set;}
+        public long Timestamp{get; set;}
+
+        public ImageReference(Image image, ImageData data, long timestamp){
+            this.imageObject = image;
+            this.imageData = data;
+            this.Timestamp = timestamp;
+        }
     }
 }
-

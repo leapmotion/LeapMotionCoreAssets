@@ -20,7 +20,8 @@ using System.Runtime.InteropServices;
         EVENT_CONFIG_RESPONSE,   //!< Response to a Config value request
         EVENT_CONFIG_CHANGE,     //!< Success response to a Config value change
         EVENT_FRAME,             //!< A tracking frame has been received
-        EVENT_IMAGE,             //!< A new image is available
+        EVENT_IMAGE,             //!< A requested image is available
+        EVENT_IMAGE_REQUEST_FAILED, //!< A requested image could not be provided
         EVENT_DISTORTION_CHANGE, //!< The distortion matrix used for image correction has changed
         EVENT_TRACKED_QUAD,      //!< A new tracked quad has been received
         EVENT_LOG_EVENT,         //!< A diagnostic event has occured
@@ -53,7 +54,34 @@ using System.Runtime.InteropServices;
         
         public Image image{ get; set; }
     }
-    
+    public class ImageRequestFailedEventArgs : LeapEventArgs{
+        public ImageRequestFailedEventArgs(Int64 frameId, Image.ImageType imageType) : base(LeapEvent.EVENT_IMAGE_REQUEST_FAILED)
+        {
+            this.frameId = frameId;
+            this.imageType = imageType;
+        }
+
+        public ImageRequestFailedEventArgs(Int64 frameId, Image.ImageType imageType,
+                                           Image.RequestFailureReason reason,
+                                           string message, 
+                                           Int64 requiredBufferSize
+        ) : base(LeapEvent.EVENT_IMAGE_REQUEST_FAILED)
+        {
+            this.frameId = frameId;
+            this.imageType = imageType;
+            this.reason = reason;
+            this.message = message;
+            this.requiredBufferSize = requiredBufferSize;
+        }
+
+        public Int64 frameId{get; set;}
+        public Image.ImageType imageType{get; set;}
+        public Image.RequestFailureReason reason{get; set;}
+        public string message{get; set;}
+        public Int64 requiredBufferSize{get; set;}
+
+    }
+
     public class LogEventArgs : LeapEventArgs
     {
         public LogEventArgs (MessageSeverity severity, Int64 timestamp, string message) : base(LeapEvent.EVENT_LOG_EVENT)
@@ -92,7 +120,10 @@ using System.Runtime.InteropServices;
 
     public class DistortionEventArgs : LeapEventArgs
     {
-        public DistortionEventArgs():base(LeapEvent.EVENT_DISTORTION_CHANGE){}
+        public DistortionEventArgs(DistortionData distortion):base(LeapEvent.EVENT_DISTORTION_CHANGE){
+            this.distortion = distortion;
+        }
+        public DistortionData distortion{get; set;}
     }
 
     public class ConfigChangeEventArgs : LeapEventArgs

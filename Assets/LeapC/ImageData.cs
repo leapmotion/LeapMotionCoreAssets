@@ -24,9 +24,8 @@ namespace LeapInternal
         public Int64 frame_id;
         public Int64 timestamp;
 
-        public Image.ImageType type;
-        public Image.FormatType format;
-        public Image.PerspectiveType perspective;
+        public eLeapImageType type;
+        public eLeapImageFormat format;
         public UInt32 bpp;
         public UInt32 width;
         public UInt32 height;
@@ -41,15 +40,11 @@ namespace LeapInternal
         public ImageData(){}
         public ImageData(UInt64 bufferLength, UInt64 index){
             pixelBuffer = new byte[bufferLength];
-            for(int p = 0; p < (int)bufferLength; p++){
-                pixelBuffer[p] = 0x77;
-            }
             this.index = index;
         }
 
-        public void CompleteImageData(Image.ImageType type,
-                                      Image.FormatType format,
-                                      Image.PerspectiveType perspective,
+        public void CompleteImageData(eLeapImageType type,
+                                      eLeapImageFormat format,
                                       UInt32 bpp, 
                                       UInt32 width, 
                                       UInt32 height,
@@ -64,7 +59,6 @@ namespace LeapInternal
                                       UInt64 distortion_matrix_version){
             this.type = type;
             this.format = format;
-            this.perspective = perspective;
             this.bpp = bpp;
             this.width = width;
             this.height = height;
@@ -80,6 +74,13 @@ namespace LeapInternal
             isComplete = true;
         }
 
+        public override void CheckIn ()
+        {
+            base.CheckIn();
+            this.unPinHandle();
+            this.index = 0;
+            this.isComplete = false;
+        }
         public IntPtr getPinnedHandle(){
             if(pixelBuffer == null)
                 return IntPtr.Zero;
@@ -108,7 +109,6 @@ namespace LeapInternal
             copy.index = this.index;
             copy.type = this.type; 
             copy.format = this.format;
-            copy.perspective = this.perspective; 
             copy.bpp = this.bpp;
             copy.width = this.width;
             copy.height = this.height;

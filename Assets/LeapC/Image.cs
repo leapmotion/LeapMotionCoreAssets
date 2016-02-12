@@ -25,17 +25,48 @@ namespace Leap
    * @since 2.1.0
    */
 
-    public class Image
+    public class Image :IDisposable
     {
         private ImageData imageData; //The pooled object containing the actual data
         private UInt64 referenceIndex = 0; //Corresponds to the index in the pooled object
+
+        // TODO: revisit dispose code
+        bool _disposed = false;
+
+        public void Dispose(){
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing){
+            if (_disposed)
+              return;
+
+            // cleanup
+            if (disposing) {
+                this.imageData.CheckIn();
+            }
+
+            // Free any unmanaged objects here.
+            //
+            _disposed = true;
+        }
 
         public Image(ImageData data){
             this.imageData = data;
             this.referenceIndex = data.index; //validates that image data hasn't been recycled
         }
 
-        /**
+        ~Image() {
+            Dispose(false);
+        }
+
+        public bool IsComplete{
+            get{
+                return imageData.isComplete;
+            }
+        }
+    /**
   * The image data.
   *
   * The image data is a set of 8-bit intensity values. The buffer is
@@ -47,7 +78,7 @@ namespace Leap
   */
         public byte[] Data {
             get {
-                if(IsValid)
+                if(IsValid && imageData.isComplete)
                     return imageData.pixelBuffer;
                 return null;
             }
@@ -55,7 +86,7 @@ namespace Leap
 
         public void DataWithArg (byte[] dst)
         {
-            if(IsValid)
+            if(IsValid && imageData.isComplete)
                 Buffer.BlockCopy(Data, 0, dst, 0, Data.Length);
         }
         /**
@@ -90,7 +121,7 @@ namespace Leap
   */
         public float[] Distortion {
             get {
-                if(IsValid)
+                if(IsValid && imageData.isComplete)
                     return imageData.DistortionData.data;
 
                 return new float[0];
@@ -99,7 +130,7 @@ namespace Leap
 
         public void DistortionWithArg (float[] dst)
         {
-            if(IsValid)
+            if(IsValid && imageData.isComplete)
                 Buffer.BlockCopy(Distortion, 0, dst, 0, Distortion.Length);
         }
 
@@ -116,10 +147,6 @@ namespace Leap
         public Image ()
         {
         }
-
-        //Can only support these in unsafe code or copying the data or doing something equally unsavory
-        //public System.IntPtr DataPointer() { return LeapPINVOKE.Image_DataPointer(swigCPtr); }
-        //public System.IntPtr DistortionPointer() { return LeapPINVOKE.Image_DistortionPointer(swigCPtr); }
 
         /**
      * Provides the corrected camera ray intercepting the specified point on the image.
@@ -142,7 +169,7 @@ namespace Leap
      */
         public Vector Rectify (Vector uv)
         {
-            if(this.IsValid){
+            if(this.IsValid && imageData.isComplete){
                 //TODO test Rectify
                 //Warp uv to correct distortion
                 Vector rectified = Warp(uv);
@@ -181,7 +208,7 @@ namespace Leap
         public Vector Warp (Vector xy)
         {
             //TODO test Warp
-            if(this.IsValid)
+            if(this.IsValid && imageData.isComplete)
                 return Warp(xy, imageData.width, imageData.height);
             return Vector.Zero;
         }
@@ -196,7 +223,7 @@ namespace Leap
          */
         public Vector Warp (Vector xy, float targetWidth, float targetHeight)
         {
-            if(this.IsValid){
+            if(this.IsValid && imageData.isComplete){
                 //Calculate the position in the calibration map (still with a fractional part)
                 float calibrationX = 63 * xy.x / targetWidth;
                 float calibrationY = 62 * (1 - xy.y / targetHeight); // The y origin is at the bottom
@@ -249,7 +276,7 @@ namespace Leap
             return this.IsValid &&
                 other.IsValid &&
                 this.SequenceId == other.SequenceId &&
-                this.Id == other.Id &&
+                this.Type == other.Type &&
                 this.Timestamp == other.Timestamp;
         }
 
@@ -261,9 +288,12 @@ namespace Leap
      */
         public override string ToString ()
         {
-            if(this.IsValid)
-                return "Image " + this.SequenceId + (this.Id == 0 ? " right camera." : "left camera.");
+            if(this.IsValid && imageData.isComplete)
+                return "Image sequence" + this.SequenceId + ", format: " + this.Format + ", type: " + this.Type;
 
+            if(this.IsValid)
+                return "Incomplete image sequence" + this.SequenceId + ", format: " + this.Format + ", type: " + this.Type;
+            
             return "Invalid Image";
         }
 
@@ -283,29 +313,6 @@ namespace Leap
             } 
         }
 
-/**
-     * The image ID.
-     *
-     * Images with ID of 0 are from the left camera; those with an ID of 1 are from the
-     * right camera (with the device in its standard operating position with the
-     * green LED facing the operator).
-     *
-     * @since 2.1.0
-     */
-        public int Id {
-            get {
-                if(IsValid){
-                    if(this.imageData.perspective == Image.PerspectiveType.STEREO_LEFT)
-                        return 0;
-                    else if(this.imageData.perspective == Image.PerspectiveType.STEREO_RIGHT)
-                        return 1;
-                    else if(this.imageData.perspective == Image.PerspectiveType.MONO)
-                        return 2;
-                }
-
-                return -1;
-            } 
-        }
 
 /**
      * The image width.
@@ -367,30 +374,36 @@ namespace Leap
      */
         public Image.FormatType Format {
             get {
-                if(IsValid)
-                    return imageData.format;
-
+                if(IsValid){
+                    switch (imageData.format) {
+                    case eLeapImageFormat.eLeapImageType_IR:
+                        return Image.FormatType.INFRARED;
+                    case eLeapImageFormat.eLeapImageType_RGBIr_Bayer:
+                        return Image.FormatType.IBRG;
+                    default:
+                        return Image.FormatType.INFRARED;
+                    }
+                }
                 return Image.FormatType.INFRARED;
             } 
         }
 
         public Image.ImageType Type{
             get{
-                if(IsValid)
-                    return imageData.type;
-
+                if(IsValid){
+                    switch (imageData.type) {
+                    case eLeapImageType.eLeapImageType_Default:
+                        return Image.ImageType.DEFAULT;
+                    case eLeapImageType.eLeapImageType_Raw:
+                        return Image.ImageType.RAW;
+                    default:
+                        return Image.ImageType.DEFAULT;
+                    }
+                }
                 return Image.ImageType.DEFAULT;
             }
         }
 
-        public Image.PerspectiveType Perspective{
-            get{
-                if(IsValid)
-                    return imageData.perspective;
-
-                return Image.PerspectiveType.INVALID;
-            }
-        }
 /**
      * The stride of the distortion map.
      *
@@ -404,7 +417,7 @@ namespace Leap
      */
         public int DistortionWidth {
             get {
-                if(IsValid)
+                if(IsValid && imageData.isComplete)
                     return imageData.DistortionSize * 2;
 
                 return 0;
@@ -422,7 +435,7 @@ namespace Leap
      */
         public int DistortionHeight {
             get {
-                if(IsValid)
+                if(IsValid && imageData.isComplete)
                     return imageData.DistortionSize;
 
                 return 0;
@@ -441,7 +454,7 @@ namespace Leap
      */
         public float RayOffsetX {
             get {
-                if(IsValid)
+                if(IsValid && imageData.isComplete)
                     return imageData.RayOffsetX;
 
                 return 0;
@@ -460,7 +473,7 @@ namespace Leap
      */
         public float RayOffsetY {
             get {
-                if(IsValid)
+                if(IsValid && imageData.isComplete)
                     return imageData.RayOffsetY;
 
                 return 0;
@@ -479,7 +492,7 @@ namespace Leap
      */
         public float RayScaleX {
             get {
-                if(IsValid)
+                if(IsValid && imageData.isComplete)
                     return imageData.RayScaleX;
 
                 return 0;
@@ -498,7 +511,7 @@ namespace Leap
      */
         public float RayScaleY {
             get {
-                if(IsValid)
+                if(IsValid && imageData.isComplete)
                     return imageData.RayScaleY;
 
                 return 0;
@@ -512,7 +525,7 @@ namespace Leap
      */
         public long Timestamp {
             get {
-                if(IsValid)
+                if(IsValid && imageData.isComplete)
                     return (long)imageData.timestamp;
 
                 return 0;
@@ -577,6 +590,13 @@ namespace Leap
         {
             DEFAULT,
             RAW
+        }
+
+        public enum RequestFailureReason{
+            Image_Unavailable,
+            Images_Disabled,
+            Insufficient_Buffer,
+            Unknown_Error,
         }
     }
 

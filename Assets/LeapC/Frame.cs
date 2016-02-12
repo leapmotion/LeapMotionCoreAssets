@@ -31,8 +31,6 @@ namespace Leap
     {
         FingerList _fingers;
         HandList _hands;
-        ImageList _images;
-        ImageList _rawImages;
         TrackedQuad _trackedQuad;
         InteractionBox _interactionBox;
         long _id = -1;
@@ -539,23 +537,6 @@ namespace Leap
 
                 return _hands;
             } 
-        }
-
-        /**
-     * The list of images from the Leap Motion cameras.
-     *
-     * @return An ImageList object containing the camera images analyzed to create this Frame.
-     * @since 2.1
-     */
-        public ImageList Images {
-            get {
-                if (_images == null)
-                    _images = new ImageList ();
-                return _images;
-            } 
-            set {
-                _images = value;
-            }
         }
 
         /**

@@ -40,10 +40,8 @@ namespace LeapInternal
 
     public enum eLeapPolicyFlag : uint {
         eLeapPolicyFlag_BackgroundFrames = 0x00000001, //!< Allows frame receipt even when this application is not the foreground application
-        eLeapPolicyFlag_Images           = 0x00000002, //!< Enables images to be received
         eLeapPolicyFlag_OptimizeHMD      = 0x00000004, //!< Optimize HMD Policy Flag
         eLeapPolicyFlag_AllowPauseResume = 0x00000008, //!< Modifies the security token to allow calls to LeapPauseDevice to succeed
-        eLeapPolicyFlag_RawImages        = 0x00000040, //!< Enables raw images to be received
         eLeapPolicyFlag_IncludeAllFrames = 0x00008000, //!< Include native-app frames when receiving background frames.
         eLeapPolicyFlag_NonExclusive     = 0x00800000  //!< Allow background apps to also receive frames.
     };
@@ -60,6 +58,7 @@ namespace LeapInternal
     };
 
     public enum eLeapImageType {
+        eLeapImageType_Unknown = 0,
         eLeapImageType_Default, //!< Default processed IR image
         eLeapImageType_Raw //!< Image from raw sensor values
     };
@@ -76,6 +75,13 @@ namespace LeapInternal
         eLeapPerspectiveType_stereo_right = 2, //!< A canonically right image
         eLeapPerspectiveType_mono = 3, //!< Reserved for future use
     };
+
+    public enum eLeapImageRequestError {
+        eLeapImageRequestError_Unknown, //!< The reason for the failure is unknown
+        eLeapImageRequestError_ImagesDisabled, //!< Images are turned off in the user's configuration
+        eLeapImageRequestError_Unavailable, //!< The requested images are not available
+        eLeapImageRequestError_InsufficientBuffer, //!< The provided buffer is not large enough for the requested images
+    }
 
     public enum eLeapHandType {
         eLeapHandType_Left, //!< Left hand
@@ -110,15 +116,14 @@ namespace LeapInternal
         eLeapRS_ProtocolError             = 0xE2010008, //!< A communications protocol error has occurred
         eLeapRS_InvalidClientID           = 0xE2010009, //!< The server incorrectly specified zero as a client ID
         eLeapRS_UnexpectedClosed          = 0xE201000A, //!< The connection to the service was unexpectedly closed while reading a message
+        eLeapRS_CannotCancelImageFrameRequest = 0xE201000B, //!< An attempt to cancel an image request failed (either too late, or the image token was invalid)
         eLeapRS_NotAvailable              = 0xE7010002, //!< A connection could not be established to the Leap Motion service
-        eLeapRS_ImageAlreadyRead          = 0xE7010003, //!< The specified image handle has already been used to receive an image
         eLeapRS_NotStreaming              = 0xE7010004, //!< The requested operation can only be performed while the device is streaming
         /**
         * It is possible that the device identifier
         * is invalid, or that the device has been disconnected since being enumerated.
         */
         eLeapRS_CannotOpenDevice          = 0xE7010005, //!< The specified device could not be opened. Invalid device identifier or the device has been disconnected since being enumerated.
-        eLeapRS_InvalidImageHandle        = 0xE7010006, //!< The specified image handle has expired or is otherwise invalid
     };
 
     public enum eLeapEventType {
@@ -136,7 +141,7 @@ namespace LeapInternal
          * Depending on the image types the user has requested, this event may be asserted more than once
          * per frame.
          */
-        eLeapEventType_Image, //!< A new image is available
+        eLeapEventType_ImageRequestError, //!< A requested image could not be acquired
         eLeapEventType_ImageComplete, //!<  An image transfer is complete
         eLeapEventType_TrackedQuad, //!< A new tracked quad has been received
         eLeapEventType_LogEvent, //!< A diagnostic event has occured
@@ -203,13 +208,6 @@ namespace LeapInternal
     }
 
     [StructLayout(LayoutKind.Sequential, Pack=1)]
-    public struct LEAP_IMAGE
-    {
-        public IntPtr handle; //void *
-        public UInt64 index;
-    }
-
-    [StructLayout(LayoutKind.Sequential, Pack=1)]
     public struct LEAP_CONNECTION_LOST_EVENT {
         public UInt32 flags;
     }
@@ -268,7 +266,7 @@ namespace LeapInternal
 
     [StructLayout(LayoutKind.Sequential, Pack=1)]
     public struct LEAP_DISTORTION_MATRIX {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst=2*64*64)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst=2*64*64*2)]//2floats * 64 width * 64 height * 2 matrices
         public float[] matrix_data;
     }
 
@@ -281,22 +279,37 @@ namespace LeapInternal
     }
 
     [StructLayout(LayoutKind.Sequential, Pack=1)]
-    public struct LEAP_IMAGE_EVENT
-    {
-        public UInt64 image_size;
-        public LEAP_IMAGE image;
+    public struct LEAP_IMAGE_FRAME_REQUEST_TOKEN {
+         public UInt32 requestID;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack=1)]
     public struct LEAP_IMAGE_COMPLETE_EVENT
     {
+        public LEAP_IMAGE_FRAME_REQUEST_TOKEN token;
         public LEAP_FRAME_HEADER info;
         public IntPtr properties; //LEAP_IMAGE_PROPERTIES*
-        public LEAP_IMAGE image;
         public UInt64 matrix_version;
         public IntPtr calib; //LEAP_CALIBRATION
-        public IntPtr distortionMatrix; //LEAP_DISTORTION_MATRIX*
-        public IntPtr pfnData; // void*
+        public IntPtr distortionMatrix; //LEAP_DISTORTION_MATRIX* distortion_matrix[2]
+        public IntPtr pfnData; // void* the user-supplied buffer
+        public UInt64 data_written; //The amount of data written to the buffer
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack=1)]
+    public struct LEAP_IMAGE_FRAME_DESCRIPTION {
+        public Int64 frame_id;
+        public eLeapImageType type;
+        public UInt64 buffer_len;
+        public IntPtr pBuffer;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack=1)]
+    public struct LEAP_IMAGE_FRAME_REQUEST_ERROR_EVENT {
+        public LEAP_IMAGE_FRAME_REQUEST_TOKEN token;
+        public eLeapImageRequestError error;
+        public UInt64 required_buffer_len; //The required buffer size, for insufficient buffer errors
+        public LEAP_IMAGE_FRAME_DESCRIPTION description;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack=1)]
@@ -307,7 +320,6 @@ namespace LeapInternal
         public UInt32 bpp;
         public UInt32 width;
         public UInt32 height;
-        public eLeapPerspectiveType perspective;
         public float x_scale;
         public float y_scale;
         public float x_offset;
@@ -518,11 +530,11 @@ namespace LeapInternal
 		[DllImport("LeapC", EntryPoint="LeapPollConnection")]
         public static extern eLeapRS PollConnection(IntPtr hConnection, UInt32 timeout, ref LEAP_CONNECTION_MESSAGE msg);
 
-        [DllImport("LeapC", EntryPoint="LeapSetImageBuffer")]
-        public static extern eLeapRS SetImageBuffer(IntPtr imagePtr, IntPtr pBuffer, UInt64 buffer_len);
 
-        [DllImport("LeapC", EntryPoint="LeapSetImageBuffer")]
-        public static extern eLeapRS SetImageBuffer(ref LEAP_IMAGE imagePtr, IntPtr pBuffer, UInt64 buffer_len);
+        [DllImport("LeapC", EntryPoint="LeapRequestImages")]
+        public static extern eLeapRS RequestImages(IntPtr hConnection, ref LEAP_IMAGE_FRAME_DESCRIPTION description, out LEAP_IMAGE_FRAME_REQUEST_TOKEN pToken);
+        [DllImport("LeapC", EntryPoint="LeapCancelImageBuffer")]
+        public static extern eLeapRS CancelImageBuffer(IntPtr hConnection, ref LEAP_IMAGE_FRAME_REQUEST_TOKEN token);
 
         [DllImport("LeapC", EntryPoint="LeapCloseDevice")]
         public static extern void CloseDevice (IntPtr pDevice);
@@ -537,7 +549,6 @@ namespace LeapInternal
         [DllImport("LeapC", EntryPoint="LeapRequestConfigValue")]
         public static extern eLeapRS RequestConfigValue(IntPtr hConnection, string name, out UInt32 request_id);
 
-        // TODO: refactor this and move the following helper functions to somewhere else
         public static eLeapRS SaveConfigValue(IntPtr hConnection, string key, bool value, out UInt32 requestId){
             LEAP_VARIANT_VALUE_TYPE valueStruct = new LEAP_VARIANT_VALUE_TYPE(); //This is a C# approximation of a C union
             valueStruct.type = eLeapValueType.eLeapValueType_Boolean;

@@ -44,19 +44,21 @@ namespace LeapInternal
         public CircularObjectBuffer<Frame> Frames{ get; set; }
 
         private ServiceFrameFactory frameFactory = new ServiceFrameFactory ();
-        private Queue<Frame> pendingFrames = new Queue<Frame> (); //Holds frames until images and tracked quad are available
         private DeviceList _devices = new DeviceList ();
         private FailedDeviceList _failedDevices;
 
-        private CircularImageBuffer _imageCache;
+//        private CircularImageBuffer _imageCache;
+        private Dictionary<UInt32, ImageReference> _pendingImageRequests = new Dictionary<UInt32, ImageReference>();
         private ObjectPool<ImageData> _imageDataCache;
-
+        private ObjectPool<ImageData> _imageRawDataCache;
+//        private List<ImageData> _imageUserBuffers;
         private CircularObjectBuffer<TrackedQuad> _quads;
         private int _frameBufferLength = 60;
         private int _imageBufferLength = 20 * 4;
+        private ulong _standardImageBufferSize = 640 * 240 * 2; //width * heigth * 2
+        private ulong _standardRawBufferSize = 640 * 240 * 2 * 8; //width * heigth * 2 images * 8 bpp
         private int _quadBufferLength = 60;
         private bool _growImageMemory = false;
-        private long _pendingFrameTimeOut = 100;
         //TODO determine optimum pending timeout value
 
         private IntPtr _leapConnection;
@@ -66,8 +68,8 @@ namespace LeapInternal
         //Policy and enabled features
         private UInt64 _requestedPolicies = 0;
         private UInt64 _activePolicies = 0;
-        private bool _imagesAreEnabled = false;
-        private bool _rawImagesAreEnabled = false;
+//        private bool _imagesAreEnabled = false;
+//        private bool _rawImagesAreEnabled = false;
         private bool _trackedQuadsAreEnabled = false;
 
         //Config change status
@@ -82,7 +84,8 @@ namespace LeapInternal
         public EventHandler<DeviceFailureEventArgs> LeapDeviceFailure;
         public EventHandler<PolicyEventArgs> LeapPolicyChange;
         public EventHandler<FrameEventArgs> LeapFrame;
-        public EventHandler<ImageEventArgs> LeapImageComplete;
+        public EventHandler<ImageEventArgs> LeapImageReady;
+        public EventHandler<ImageRequestFailedEventArgs> LeapImageRequestFailed;
         public EventHandler<TrackedQuadEventArgs> LeapTrackedQuad;
         public EventHandler<LogEventArgs> LeapLogEvent;
         public EventHandler<SetConfigResponseEventArgs> LeapConfigResponse;
@@ -90,7 +93,6 @@ namespace LeapInternal
         public EventHandler<DistortionEventArgs> LeapDistortionChange;
 
         private bool _disposed = false;
-        private bool _needToCheckPendingFrames = false;
 
         public void Dispose ()
         { 
@@ -119,7 +121,8 @@ namespace LeapInternal
             Frames = new CircularObjectBuffer<Frame> (_frameBufferLength);
             _quads = new CircularObjectBuffer<TrackedQuad> (_quadBufferLength);
             _imageDataCache = new ObjectPool<ImageData>(_imageBufferLength, false);
-            _imageCache = new CircularImageBuffer(_imageBufferLength);
+            _imageRawDataCache = new ObjectPool<ImageData>(_imageBufferLength, false);
+            DistortionCache = new DistortionDictionary();
         }
 
         public void Start ()
@@ -158,6 +161,7 @@ namespace LeapInternal
                         uint timeout = 1000; //TODO determine optimal timeout value
                         result = LeapC.PollConnection (_leapConnection, timeout, ref _msg);
                         reportAbnormalResults ("LeapC PollConnection call was ", result);
+//                        Logger.Log("Received: " + _msg.type);
                         if (result == eLeapRS.eLeapRS_Success) {
                             switch (_msg.type) {
                             case eLeapEventType.eLeapEventType_Connection:
@@ -182,28 +186,24 @@ namespace LeapInternal
                                 break;
                             case eLeapEventType.eLeapEventType_Tracking:
                                 LEAP_TRACKING_EVENT tracking_evt = LeapC.PtrToStruct<LEAP_TRACKING_EVENT> (_msg.eventStructPtr);
-                                if((LeapC.GetNow() - tracking_evt.info.timestamp) < 60000 /*microseconds*/){ //skip frames if we are getting behind
-                                    lastFrameId = tracking_evt.info.frame_id;
-                                    enqueueFrame (ref tracking_evt);
-                                    _needToCheckPendingFrames = true;
-                                }
-                                break;
-                            case eLeapEventType.eLeapEventType_Image:
-                                LEAP_IMAGE_EVENT image_evt = LeapC.PtrToStruct<LEAP_IMAGE_EVENT> (_msg.eventStructPtr);
-                                if(lastImageId <= lastFrameId + 4){ //Skip images if they get too far behind their frames
-                                    startImage (ref image_evt);
-                                }
+                                lastFrameId = tracking_evt.info.frame_id;
+                                handleTrackingMessage (ref tracking_evt);
                                 break;
                             case eLeapEventType.eLeapEventType_ImageComplete:
+                                completeCount++;
                                 LEAP_IMAGE_COMPLETE_EVENT image_complete_evt = LeapC.PtrToStruct<LEAP_IMAGE_COMPLETE_EVENT> (_msg.eventStructPtr);
                                 lastImageId = image_complete_evt.info.frame_id;
-                                completeImage (ref image_complete_evt);
-                                _needToCheckPendingFrames = true;
+                                handleImageCompletion (ref image_complete_evt);
+                                break;
+                            case eLeapEventType.eLeapEventType_ImageRequestError:
+                                failedCount++;
+                                LEAP_IMAGE_FRAME_REQUEST_ERROR_EVENT failed_image_evt = LeapC.PtrToStruct<LEAP_IMAGE_FRAME_REQUEST_ERROR_EVENT>(_msg.eventStructPtr);
+//                                Logger.LogStruct(failed_image_evt, "---------------- Received failed image event");
+                                handleFailedImageRequest(ref failed_image_evt);
                                 break;
                             case eLeapEventType.eLeapEventType_TrackedQuad:
                                 LEAP_TRACKED_QUAD_EVENT quad_evt = LeapC.PtrToStruct<LEAP_TRACKED_QUAD_EVENT> (_msg.eventStructPtr); 
                                 handleQuadMessage (ref quad_evt);
-                                _needToCheckPendingFrames = true;
                                 break;
                             case eLeapEventType.eLeapEventType_LogEvent:
                                 LEAP_LOG_EVENT log_evt = LeapC.PtrToStruct<LEAP_LOG_EVENT> (_msg.eventStructPtr);
@@ -234,139 +234,200 @@ namespace LeapInternal
                             reportAbnormalResults ("LeapC OpenConnection call was ", result);
                         }
                     } // if have connection handle
-                    if(_needToCheckPendingFrames == true){
-                        checkPendingFrames ();
-                        _needToCheckPendingFrames = false;
-                    }
                 } //while running
             } catch (Exception e) {
                 Logger.Log ("Exception: " + e);
             }
         }
 
-        private void checkPendingFrames ()
-        {
-            if (pendingFrames.Count > 0) {
-                Frame pending = pendingFrames.Peek ();
-                if (isFrameReady (pending) || (pending.Timestamp < LeapC.GetNow () - _pendingFrameTimeOut)) { //is ready or too late to wait
-                    pendingFrames.Dequeue ();
-                    Frames.Put (pending);
-                    this.LeapFrame.Dispatch<FrameEventArgs> (this, new FrameEventArgs (pending));
-                    checkPendingFrames (); //check the next frame if this one was ready
-                }
-            }
-        }
-
-        private bool isFrameReady (Frame frame)
-        {
-            if ((!_imagesAreEnabled || frame.Images.Count == 2) &&
-                (!_rawImagesAreEnabled || frame.Images.Count == 4) &&
-                (!_trackedQuadsAreEnabled || frame.TrackedQuad.IsValid)) {
-                return true;
-            }
-
-            return false;
-        }
-
-        private void enqueueFrame (ref LEAP_TRACKING_EVENT trackingMsg)
+        private void handleTrackingMessage (ref LEAP_TRACKING_EVENT trackingMsg)
         {
             Frame newFrame = frameFactory.makeFrame (ref trackingMsg);
-            if (_imagesAreEnabled) {
-                _imageCache.GetImagesForFrame (newFrame.Id, newFrame.Images);
-            }
             if (_trackedQuadsAreEnabled)
                 newFrame.TrackedQuad = this.findTrackQuadForFrame (newFrame.Id);
-
-            pendingFrames.Enqueue (newFrame);
+            Frames.Put(newFrame);
+            this.LeapFrame.Dispatch<FrameEventArgs>(this, new FrameEventArgs(newFrame));
         }
 
-        private void enableIRImages ()
-        {
-            //Create image buffers if images turned on
-            if (_imageDataCache == null) {
-                _imageDataCache = new ObjectPool<ImageData> (_imageBufferLength, _growImageMemory);
-                _imageCache = new CircularImageBuffer (_imageBufferLength);
-            }
-            if (DistortionCache == null) {
-                DistortionCache = new DistortionDictionary ();
-            }
-            _imagesAreEnabled = true;
-        }
-
-        private void startImage (ref LEAP_IMAGE_EVENT imageMsg)
-        {
-            if (_imagesAreEnabled) {
-                ImageData newImageData = _imageDataCache.CheckOut ();
-                newImageData.poolIndex = imageMsg.image.index;
-                if (newImageData.pixelBuffer == null || (ulong)newImageData.pixelBuffer.Length != imageMsg.image_size) {
-                    newImageData.pixelBuffer = new byte[imageMsg.image_size];
-                }
-
-                eLeapRS result = LeapC.SetImageBuffer (ref imageMsg.image, newImageData.getPinnedHandle (), imageMsg.image_size);
-                reportAbnormalResults("LeapC SetImageBuffer call was ", result);
+        int requestCount = 0;
+        int completeCount = 0;
+        int failedCount = 0;
+        public Image RequestImages(Int64 frameId, Image.ImageType imageType){
+            ImageData imageData;
+            int bufferSize = 0;
+            if(imageType == Image.ImageType.DEFAULT){
+                imageData = _imageDataCache.CheckOut();
+                imageData.type = eLeapImageType.eLeapImageType_Default;
+                bufferSize = (int)_standardImageBufferSize;
             } else {
-                //If image policies have been turned off, then discard the images
-                eLeapRS discardResult = LeapC.SetImageBuffer (ref imageMsg.image, IntPtr.Zero, 0);
-                reportAbnormalResults("LeapC SetImageBuffer(0,0,0) call was ", discardResult);
+                imageData = _imageDataCache.CheckOut();
+                imageData.type = eLeapImageType.eLeapImageType_Raw;
+                bufferSize = (int)_standardRawBufferSize;
             }
+            if (imageData.pixelBuffer == null || imageData.pixelBuffer.Length != bufferSize) {
+                    imageData.pixelBuffer = new byte[bufferSize];
+                }
+            imageData.frame_id = frameId;
+            return RequestImages(imageData);
         }
 
-        private void completeImage (ref LEAP_IMAGE_COMPLETE_EVENT imageMsg)
+        public Image RequestImages(Int64 frameId, Image.ImageType imageType, byte[] buffer){
+            ImageData imageData = new ImageData();
+            if(imageType == Image.ImageType.DEFAULT)
+                imageData.type = eLeapImageType.eLeapImageType_Default;
+            else
+                imageData.type = eLeapImageType.eLeapImageType_Raw;
+            
+            imageData.frame_id = frameId;
+            imageData.pixelBuffer = buffer;
+            return RequestImages(imageData);
+        }
+
+        private Image RequestImages(ImageData imageData){
+            requestCount++;
+            LEAP_IMAGE_FRAME_DESCRIPTION imageSpecifier = new LEAP_IMAGE_FRAME_DESCRIPTION();
+            imageSpecifier.frame_id = imageData.frame_id;
+            imageSpecifier.type = imageData.type;
+            imageSpecifier.pBuffer = imageData.getPinnedHandle();
+            imageSpecifier.buffer_len =  (ulong)imageData.pixelBuffer.LongLength;
+            LEAP_IMAGE_FRAME_REQUEST_TOKEN token;
+            eLeapRS result = LeapC.RequestImages(_leapConnection, ref imageSpecifier, out token);
+            Logger.Log("Added request: " + token.requestID + " pc " + _pendingImageRequests.Count + ", rc " + requestCount + ", sc " + (completeCount + failedCount) + "(" + completeCount + "," + failedCount + ")");
+
+            if(result == eLeapRS.eLeapRS_Success){
+                imageData.isComplete = false;
+                imageData.index = token.requestID;
+                Image futureImage = new Image(imageData);
+                lock(lockPendingImageList){
+                    _pendingImageRequests[token.requestID] = new ImageReference(futureImage, imageData, LeapC.GetNow());
+                }
+                return futureImage;
+            } else {
+                imageData.unPinHandle();
+                reportAbnormalResults ("LeapC Image Request call was ", result);
+                return Image.Invalid;
+            }
+
+        }
+
+        private object lockPendingImageList= new object();
+        private void handleImageCompletion (ref LEAP_IMAGE_COMPLETE_EVENT imageMsg)
         {
             LEAP_IMAGE_PROPERTIES props = LeapC.PtrToStruct<LEAP_IMAGE_PROPERTIES> (imageMsg.properties);
-            ImageData pendingImageData = _imageDataCache.FindByPoolIndex (imageMsg.image.index);
-
-            if (pendingImageData != null) {
+            ImageReference pendingImage = null;
+            lock(lockPendingImageList){
+                _pendingImageRequests.TryGetValue(imageMsg.token.requestID, out pendingImage);
+            }
+            if(pendingImage != null){
+                //TODO guard distortion dictionary against unbounded growth
                 DistortionData distData;
                 if (!DistortionCache.TryGetValue (imageMsg.matrix_version, out distData)) {//if fails, then create new entry
                     distData = new DistortionData ();
                     distData.version = imageMsg.matrix_version;
                     distData.width = 64; //fixed value for now
                     distData.height = 64; //fixed value for now
-                    distData.data = new float[(int)(2 * distData.width * distData.height)]; //2 float values per map point
+                    distData.data = new float[(int)(2 * distData.width * distData.height * 2)]; //2 float values per map point
                     LEAP_DISTORTION_MATRIX matrix = LeapC.PtrToStruct<LEAP_DISTORTION_MATRIX> (imageMsg.distortionMatrix);
                     Array.Copy (matrix.matrix_data, distData.data, matrix.matrix_data.Length);
                     DistortionCache.Add ((UInt64)imageMsg.matrix_version, distData);
                 }
 
                 //Signal distortion data change if necessary
-                if ((props.perspective == eLeapPerspectiveType.eLeapPerspectiveType_stereo_left) && (imageMsg.matrix_version != DistortionCache.CurrentLeftMatrix) ||
-                    (props.perspective == eLeapPerspectiveType.eLeapPerspectiveType_stereo_right) && (imageMsg.matrix_version != DistortionCache.CurrentRightMatrix)) { //then the distortion matrix has changed
+                if ((imageMsg.matrix_version != DistortionCache.CurrentMatrix)) { //then the distortion matrix has changed
                     DistortionCache.DistortionChange = true;
-                    this.LeapDistortionChange.Dispatch<DistortionEventArgs> (this, new DistortionEventArgs ());
+                    this.LeapDistortionChange.Dispatch<DistortionEventArgs> (this, new DistortionEventArgs (distData));
                 } else {
                     DistortionCache.DistortionChange = false; // clear old change flag
                 }
-                if (props.perspective == eLeapPerspectiveType.eLeapPerspectiveType_stereo_left) {
-                    DistortionCache.CurrentLeftMatrix = imageMsg.matrix_version;
-                } else {
-                    DistortionCache.CurrentRightMatrix = imageMsg.matrix_version;
+                DistortionCache.CurrentMatrix = imageMsg.matrix_version;
+
+                pendingImage.imageData.CompleteImageData(props.type,
+                    props.format,
+                    props.bpp,
+                    props.width,
+                    props.height,
+                    imageMsg.info.timestamp,
+                    imageMsg.info.frame_id,
+                    props.x_offset,
+                    props.y_offset,
+                    props.x_scale,
+                    props.y_scale,
+                    distData,
+                    LeapC.DistortionSize,
+                    imageMsg.matrix_version);
+
+                Image completedImage = pendingImage.imageObject;
+                lock(lockPendingImageList){
+                    _pendingImageRequests.Remove(imageMsg.token.requestID);
+                }
+                this.LeapImageReady.Dispatch<ImageEventArgs> (this, new ImageEventArgs (completedImage));
+            }
+        }
+
+        private void handleFailedImageRequest(ref LEAP_IMAGE_FRAME_REQUEST_ERROR_EVENT failed_image_evt){
+            //LEAP_IMAGE_FRAME_REQUEST_TOKEN token = LeapC.PtrToStruct<LEAP_IMAGE_FRAME_REQUEST_TOKEN>(failed_image_evt.token);
+
+            ImageReference pendingImage = null;
+            lock(lockPendingImageList){
+                _pendingImageRequests.TryGetValue(failed_image_evt.token.requestID, out pendingImage);
+            }
+
+            if(pendingImage != null){
+                pendingImage.imageData.CheckIn();
+                lock(_pendingImageRequests){
+                    _pendingImageRequests.Remove(failed_image_evt.token.requestID);
                 }
 
-                Image newImage = frameFactory.makeImage (ref imageMsg, pendingImageData, distData);
-                _imageCache.Put (newImage);
-                for (int f = 0; f < pendingFrames.Count; f++) {
-                    Frame frame = pendingFrames.Dequeue ();
-                    if (frame.Id == newImage.Id)
-                        frame.Images.Add (newImage);
-                    pendingFrames.Enqueue (frame);
+                ImageRequestFailedEventArgs errorEventArgs = new ImageRequestFailedEventArgs(failed_image_evt.description.frame_id, pendingImage.imageObject.Type);
+                switch(failed_image_evt.error){
+                case eLeapImageRequestError.eLeapImageRequestError_InsufficientBuffer:
+                    errorEventArgs.message = "The buffer specified for the request was too small.";
+                    errorEventArgs.reason = Image.RequestFailureReason.Insufficient_Buffer;
+                    break;
+                case eLeapImageRequestError.eLeapImageRequestError_Unavailable:
+                    errorEventArgs.message = "The image was request too late and is no longer available.";
+                    errorEventArgs.reason = Image.RequestFailureReason.Image_Unavailable;
+                    break;
+                case eLeapImageRequestError.eLeapImageRequestError_ImagesDisabled:
+                    errorEventArgs.message = "Images are disabled by the current configuration settings.";
+                    errorEventArgs.reason = Image.RequestFailureReason.Images_Disabled;
+                    break;
+                default:
+                    errorEventArgs.message = "The image request failed for an undetermined reason.";
+                    errorEventArgs.reason = Image.RequestFailureReason.Unknown_Error;
+                    break;
                 }
-                this.LeapImageComplete.Dispatch<ImageEventArgs> (this, new ImageEventArgs (newImage));
+                errorEventArgs.requiredBufferSize = (long)failed_image_evt.required_buffer_len;
+
+                this.LeapImageRequestFailed.Dispatch<ImageRequestFailedEventArgs>(this, errorEventArgs);
+            } else {
+                Logger.Log("Failed Image Request Event without pending image data: " + failed_image_evt.token.requestID); 
             }
+
+            //Purge old requests
+            List<UInt32> keys = new List<UInt32>(_pendingImageRequests.Keys);
+            ImageReference request;
+            long now = LeapC.GetNow();
+            for(int k = 0; k < keys.Count; k++){
+                request = _pendingImageRequests[keys[k]];
+                if((now - request.Timestamp) > 90000){
+                    lock(_pendingImageRequests){
+                        _pendingImageRequests.Remove(keys[k]);
+                    }
+                    request.imageData.CheckIn();
+                }
+            }
+
+//            Logger.Log("Pending request count: " + _pendingImageRequests.Count);
         }
 
         private void handleQuadMessage (ref LEAP_TRACKED_QUAD_EVENT quad_evt)
         {
             TrackedQuad quad = frameFactory.makeQuad (ref quad_evt);
             _quads.Put (quad);
+            //TODO put quad in frame if frame already exists in buffer
 
-            for (int f = 0; f < pendingFrames.Count; f++) {
-                Frame frame = pendingFrames.Dequeue ();
-                if (frame.Id == quad.Id)
-                    frame.TrackedQuad = quad;
-                
-                pendingFrames.Enqueue (frame);
-            }
+            this.LeapTrackedQuad.Dispatch<TrackedQuadEventArgs>(this, new TrackedQuadEventArgs(quad));
         }
 
         private void handleConnection (ref LEAP_CONNECTION_EVENT connectionMsg)
@@ -541,14 +602,6 @@ namespace LeapInternal
                 // the this is the policy change event from the last SetPolicy, after that, the user called SetPolicy again
                 //TODO handle failure to set deisred policy -- maybe a PolicyDenied event 
             }
-
-            if ((policyMsg.current_policy & (UInt64)eLeapPolicyFlag.eLeapPolicyFlag_Images)
-                == (UInt64)eLeapPolicyFlag.eLeapPolicyFlag_Images)
-                enableIRImages ();
-
-            if ((policyMsg.current_policy & (UInt64)eLeapPolicyFlag.eLeapPolicyFlag_RawImages)
-                == (UInt64)eLeapPolicyFlag.eLeapPolicyFlag_RawImages)
-                _rawImagesAreEnabled = true;
         }
 
         public void SetPolicy (Controller.PolicyFlag policy)
@@ -577,10 +630,6 @@ namespace LeapInternal
                 return eLeapPolicyFlag.eLeapPolicyFlag_BackgroundFrames;
             case Controller.PolicyFlag.POLICY_OPTIMIZE_HMD:
                 return eLeapPolicyFlag.eLeapPolicyFlag_OptimizeHMD;
-            case Controller.PolicyFlag.POLICY_IMAGES:
-                return eLeapPolicyFlag.eLeapPolicyFlag_Images;
-            case Controller.PolicyFlag.POLICY_RAW_IMAGES:
-                return eLeapPolicyFlag.eLeapPolicyFlag_RawImages;
             case Controller.PolicyFlag.POLICY_DEFAULT:
                 return 0;
             default:
@@ -696,15 +745,15 @@ namespace LeapInternal
             } 
         }
 
-        public void GetLatestImages (ref ImageList receiver)
-        {
-            _imageCache.GetLatestImages (receiver);
-        }
-
-        public int GetFrameImagesForFrame (long frameId, ref ImageList images)
-        {
-            return _imageCache.GetImagesForFrame (frameId, images);
-        }
+//        public void GetLatestImages (ref ImageList receiver)
+//        {
+//            _imageCache.GetLatestImages (receiver);
+//        }
+//
+//        public int GetFrameImagesForFrame (long frameId, ref ImageList images)
+//        {
+//            return _imageCache.GetImagesForFrame (frameId, images);
+//        }
 
         private TrackedQuad findTrackQuadForFrame (long frameId)
         {

@@ -13,8 +13,7 @@ namespace LeapInternal
 {
     //TODO ensure thread safety
     public class DistortionDictionary : Dictionary<UInt64, DistortionData>{
-        public UInt64 CurrentRightMatrix = 0;
-        public UInt64 CurrentLeftMatrix = 0;
+        public UInt64 CurrentMatrix = 0;
 
         public bool DistortionChange = false;
 

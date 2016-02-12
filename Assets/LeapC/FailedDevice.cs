@@ -27,9 +27,9 @@ using System.Runtime.InteropServices;
 
     //TODO Implement FailedDevices
 public class FailedDevice{
-        bool _isValid;
-        string _pnpId;
-        FailureType _failureType;
+        bool _isValid = false;
+        string _pnpId = "0";
+        FailureType _failureType = FailureType.FAIL_UNKNOWN;
 
   public FailedDevice(){}
 
