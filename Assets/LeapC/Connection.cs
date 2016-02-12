@@ -161,7 +161,7 @@ namespace LeapInternal
                         uint timeout = 1000; //TODO determine optimal timeout value
                         result = LeapC.PollConnection (_leapConnection, timeout, ref _msg);
                         reportAbnormalResults ("LeapC PollConnection call was ", result);
-//                        Logger.Log("Received: " + _msg.type);
+                        //Logger.Log("Received: " + _msg.type);
                         if (result == eLeapRS.eLeapRS_Success) {
                             switch (_msg.type) {
                             case eLeapEventType.eLeapEventType_Connection:
@@ -284,6 +284,7 @@ namespace LeapInternal
         }
 
         private Image RequestImages(ImageData imageData){
+
             requestCount++;
             LEAP_IMAGE_FRAME_DESCRIPTION imageSpecifier = new LEAP_IMAGE_FRAME_DESCRIPTION();
             imageSpecifier.frame_id = imageData.frame_id;
@@ -292,7 +293,6 @@ namespace LeapInternal
             imageSpecifier.buffer_len =  (ulong)imageData.pixelBuffer.LongLength;
             LEAP_IMAGE_FRAME_REQUEST_TOKEN token;
             eLeapRS result = LeapC.RequestImages(_leapConnection, ref imageSpecifier, out token);
-            Logger.Log("Added request: " + token.requestID + " pc " + _pendingImageRequests.Count + ", rc " + requestCount + ", sc " + (completeCount + failedCount) + "(" + completeCount + "," + failedCount + ")");
 
             if(result == eLeapRS.eLeapRS_Success){
                 imageData.isComplete = false;
@@ -313,6 +313,7 @@ namespace LeapInternal
         private object lockPendingImageList= new object();
         private void handleImageCompletion (ref LEAP_IMAGE_COMPLETE_EVENT imageMsg)
         {
+          //Logger.Log("Image completed");
             LEAP_IMAGE_PROPERTIES props = LeapC.PtrToStruct<LEAP_IMAGE_PROPERTIES> (imageMsg.properties);
             ImageReference pendingImage = null;
             lock(lockPendingImageList){
@@ -366,7 +367,7 @@ namespace LeapInternal
 
         private void handleFailedImageRequest(ref LEAP_IMAGE_FRAME_REQUEST_ERROR_EVENT failed_image_evt){
             //LEAP_IMAGE_FRAME_REQUEST_TOKEN token = LeapC.PtrToStruct<LEAP_IMAGE_FRAME_REQUEST_TOKEN>(failed_image_evt.token);
-
+          //Logger.Log("Failed Image");
             ImageReference pendingImage = null;
             lock(lockPendingImageList){
                 _pendingImageRequests.TryGetValue(failed_image_evt.token.requestID, out pendingImage);
@@ -401,7 +402,7 @@ namespace LeapInternal
 
                 this.LeapImageRequestFailed.Dispatch<ImageRequestFailedEventArgs>(this, errorEventArgs);
             } else {
-                Logger.Log("Failed Image Request Event without pending image data: " + failed_image_evt.token.requestID); 
+                //Logger.Log("Failed Image Request Event without pending image data: " + failed_image_evt.token.requestID); 
             }
 
             //Purge old requests

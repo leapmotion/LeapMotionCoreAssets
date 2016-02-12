@@ -303,7 +303,7 @@ public class LeapImageRetriever : MonoBehaviour {
         long start = controller.Now();
         if(!image.IsComplete) lateImages++;
         while(!image.IsComplete){
-            if(controller.Now() - start > 2000) break;
+            if(controller.Now() - start > 9000) break;
         }
         if(image.IsComplete){
             if (_eyeTextureData.CheckStale(image, image)) {
@@ -322,7 +322,7 @@ public class LeapImageRetriever : MonoBehaviour {
   void Update() {
         startTime = Time.time;
         if(startTime - lastTime > 1){
-            Debug.Log("Late images per second: " + (lateImages - superLateImages) + " lost images " + superLateImages + " out of " + requestedImages);
+            //Debug.Log("Late images per second: " + (lateImages - superLateImages) + " lost images " + superLateImages + " out of " + requestedImages);
             lateImages = 0;
             superLateImages = 0;
             requestedImages = 0;

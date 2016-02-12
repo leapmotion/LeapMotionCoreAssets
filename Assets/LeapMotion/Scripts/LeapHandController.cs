@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using Leap;
 
 namespace Leap {
+
+  [ExecuteAfter(typeof(LeapProvider))]
   public class LeapHandController : MonoBehaviour {
     /** The scale factors for hand movement. Set greater than 1 to give the hands a greater range of motion. */
     public Vector3 handMovementScale = Vector3.one;
@@ -54,12 +56,16 @@ namespace Leap {
     private long prev_graphics_id_ = 0;
     private long prev_physics_id_ = 0;
 
+    public bool doTheUpdate = true;
+
     /** Draws the Leap Motion gizmo when in the Unity editor. */
+    /*
     void OnDrawGizmos() {
       // Draws the little Leap Motion Controller in the Editor view.
       Gizmos.matrix = Matrix4x4.Scale(GIZMO_SCALE * Vector3.one);
       Gizmos.DrawIcon(transform.position, "leap_motion.png");
     }
+    */
 
     // Use this for initialization
     void Start() {
@@ -73,11 +79,15 @@ namespace Leap {
     */
     public void IgnoreCollisionsWithHands(GameObject to_ignore, bool ignore = true) {
       foreach (HandRepresentation rep in physicsReps.Values) {
-      //Todo move this to HandModel
+        //Todo move this to HandModel
         //Leap.Utils.IgnoreCollisions(rep.handModel.gameObject, to_ignore, ignore);
       }
     }
     void Update() {
+      if (!doTheUpdate) {
+        return;
+      }
+
       Frame frame = Provider.CurrentFrame;
       if (frame.Id != prev_graphics_id_ && graphicsEnabled) {
         UpdateHandRepresentations(graphicsReps, ModelType.Graphics);
@@ -130,11 +140,15 @@ namespace Leap {
     }
     /** Updates the physics objects */
     protected virtual void FixedUpdate() {
+      if (!doTheUpdate) {
+        return;
+      }
+
       //All FixedUpdates of a frame happen before Update, so only the last of these calculations is passed
       //into Update for smoothing.
       var latestFrame = Provider.CurrentFrame;
       Provider.PerFrameFixedUpdateOffset = latestFrame.Timestamp * NS_TO_S - Time.fixedTime;
-      
+
       Frame frame = Provider.GetFixedFrame();
 
       if (frame.Id != prev_physics_id_ && physicsEnabled) {
