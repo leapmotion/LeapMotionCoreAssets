@@ -241,7 +241,7 @@ public class CapsuleHand : IHandModel {
     sphere.GetComponent<Renderer>().sharedMaterial = jointMat;
 
     sphere.name = name;
-    sphere.hideFlags = HideFlags.DontSaveInEditor | HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+    sphere.hideFlags = HideFlags.DontSave | HideFlags.HideInHierarchy | HideFlags.HideInInspector;
 
     if (isPartOfArm) {
       _armRenderers.Add(sphere.GetComponent<Renderer>());
@@ -262,7 +262,7 @@ public class CapsuleHand : IHandModel {
     _sphereATransforms.Add(jointA);
     _sphereBTransforms.Add(jointB);
 
-    capsule.hideFlags = HideFlags.DontSaveInEditor | HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+    capsule.hideFlags = HideFlags.DontSave | HideFlags.HideInHierarchy | HideFlags.HideInInspector;
 
     if (isPartOfArm) {
       _armRenderers.Add(capsule.GetComponent<Renderer>());

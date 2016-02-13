@@ -56,8 +56,6 @@ namespace Leap {
     private long prev_graphics_id_ = 0;
     private long prev_physics_id_ = 0;
 
-    public bool doTheUpdate = true;
-
     /** Draws the Leap Motion gizmo when in the Unity editor. */
     /*
     void OnDrawGizmos() {
@@ -84,10 +82,6 @@ namespace Leap {
       }
     }
     void Update() {
-      if (!doTheUpdate) {
-        return;
-      }
-
       Frame frame = Provider.CurrentFrame;
       if (frame.Id != prev_graphics_id_ && graphicsEnabled) {
         UpdateHandRepresentations(graphicsReps, ModelType.Graphics);
@@ -140,9 +134,6 @@ namespace Leap {
     }
     /** Updates the physics objects */
     protected virtual void FixedUpdate() {
-      if (!doTheUpdate) {
-        return;
-      }
 
       //All FixedUpdates of a frame happen before Update, so only the last of these calculations is passed
       //into Update for smoothing.
