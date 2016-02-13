@@ -64,12 +64,14 @@ namespace Leap {
     }
 
     /** Returns the Leap Controller instance. */
-    public Controller GetLeapController() {
+    public Controller GetLeapController()
+    {
+      if (!flag_initialized_)
+        InitializeFlags();
 #if UNITY_EDITOR
       //Do a null check to deal with hot reloading
       if (leap_controller_ == null) {
         leap_controller_ = new Controller();
-        InitializeFlags();
       }
 #endif
       return leap_controller_;
