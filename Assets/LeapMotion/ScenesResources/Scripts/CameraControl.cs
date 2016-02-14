@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Leap;
 
 public class CameraControl : MonoBehaviour {
-
   public GameObject scene = null;
 
   private Vector3 m_originPosition;
