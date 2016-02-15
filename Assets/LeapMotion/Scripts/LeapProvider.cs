@@ -35,16 +35,26 @@ namespace Leap {
 
   /** If overrideDeviceType is enabled, the hand controller will return a device of this type. */
   public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Peripheral;
-    
+
     void Awake() {
       leap_controller_ = new Controller();
+      if (leap_controller_.IsConnected) {
+        InitializeFlags();
+      }
+      else {
+        leap_controller_.Connect += HandleControllerConnect;
+      }
     }
 
     // Use this for initialization
     void Start() {
       //set empty frame
-      InitializeFlags();
       CurrentFrame = new Frame();
+
+    }
+
+    void HandleControllerConnect(object sender, LeapEventArgs args) {
+      InitializeFlags();
     }
 
     /** 
