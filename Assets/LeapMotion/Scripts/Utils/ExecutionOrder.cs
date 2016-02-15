@@ -5,9 +5,7 @@ using UnityEditor.Callbacks;
 #endif
 using System;
 using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 
 /* The ExecuteBefore and ExecuteAfter attributes can be used to cause a behavior to be executed after or before
  * another behavior.  This is a more robust way to specify requirements in ordering than using Unity's built in
@@ -185,7 +183,7 @@ public class ExecutionOrderSolver {
   }
 
   /* Given all of the loaded monoscripts inside of the UnityEngine namespace, construct a locked Node
-   * for every group of scropts with the same execution index.  The node with the index of 0 is assigned
+   * for every group of scripts with the same execution index.  The node with the index of 0 is assigned
    * to be the default node.
    */
   private static void constructLockedNodes(MonoScript[] monoscripts, out List<Node> nodes, out Node defaultNode) {
@@ -282,7 +280,8 @@ public class ExecutionOrderSolver {
       return;
     }
 
-    if (isBefore != (node.executionIndex < relativeIndex)) {
+    if (isBefore != (node.executionIndex < relativeIndex) ||
+        node.executionIndex == relativeIndex) {
       node.nodeType = NodeType.RELATIVE_UNORDERED;
     }
 

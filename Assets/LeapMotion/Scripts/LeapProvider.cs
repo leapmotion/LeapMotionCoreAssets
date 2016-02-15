@@ -36,17 +36,25 @@ namespace Leap {
   /** If overrideDeviceType is enabled, the hand controller will return a device of this type. */
   public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Peripheral;
 
-  private bool flag_initialized_ = false;
     void Awake() {
       leap_controller_ = new Controller();
-
+      if (leap_controller_.IsConnected) {
+        InitializeFlags();
+      }
+      else {
+        leap_controller_.Connect += HandleControllerConnect;
+      }
     }
 
     // Use this for initialization
     void Start() {
-
       //set empty frame
       CurrentFrame = new Frame();
+
+    }
+
+    void HandleControllerConnect(object sender, LeapEventArgs args) {
+      InitializeFlags();
     }
 
     /** 
@@ -59,8 +67,6 @@ namespace Leap {
         leap_controller_.SetPolicy(Controller.PolicyFlag.POLICY_OPTIMIZE_HMD);
       else
         leap_controller_.ClearPolicy(Controller.PolicyFlag.POLICY_OPTIMIZE_HMD);
-
-      flag_initialized_ = true;
     }
 
     /** Returns the Leap Controller instance. */
@@ -69,7 +75,6 @@ namespace Leap {
       //Do a null check to deal with hot reloading
       if (leap_controller_ == null) {
         leap_controller_ = new Controller();
-        InitializeFlags();
       }
 #endif
       return leap_controller_;
@@ -133,7 +138,9 @@ namespace Leap {
 
       //perFrameFixedUpdateOffset_ contains the maximum offset of this Update cycle
       smoothedFixedUpdateOffset_.Update(PerFrameFixedUpdateOffset, Time.deltaTime);
-
+      float now = leap_controller_.Now();
+      //Debug.Log("leap_controller_.Now():" + leap_controller_.Now() + " - CurrentFrame.Timestamp:" + CurrentFrame.Timestamp + " = " + (leap_controller_.Now() - CurrentFrame.Timestamp));
+      //Debug.Log("provider.Update().CurrentFrame.Id: " + CurrentFrame.Id);
     }
 
     void FixedUpdate() {
@@ -168,6 +175,7 @@ namespace Leap {
     }
     void OnDestroy() {
       //DestroyAllHands();
+      leap_controller_.ClearPolicy(Controller.PolicyFlag.POLICY_OPTIMIZE_HMD);
       leap_controller_.StopConnection();
     }
     void OnApplicationPause(bool isPaused) {

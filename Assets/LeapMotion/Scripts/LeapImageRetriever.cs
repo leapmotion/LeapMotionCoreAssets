@@ -306,6 +306,8 @@ public class LeapImageRetriever : MonoBehaviour {
             if(controller.Now() - start > 9000) break;
         }
         if(image.IsComplete){
+          //Debug.Log("controller_.Now():" + controller.Now() + " - CurrentFrame.Timestamp:" + image.Timestamp + " = " + (controller.Now() - image.Timestamp));
+          //Debug.Log("LeapImageRetriever.OnPreRender image.SequenceId: " + image.SequenceId);
             if (_eyeTextureData.CheckStale(image, image)) {
                           _eyeTextureData.Reconstruct(image, image);
                         }
@@ -333,6 +335,7 @@ public class LeapImageRetriever : MonoBehaviour {
     Controller controller = provider.GetLeapController();
      
     image = controller.RequestImages(imageFrame.Id, Image.ImageType.DEFAULT);
+
      
   }
 
