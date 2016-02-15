@@ -35,17 +35,15 @@ namespace Leap {
 
   /** If overrideDeviceType is enabled, the hand controller will return a device of this type. */
   public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Peripheral;
-
-  private bool flag_initialized_ = false;
+    
     void Awake() {
       leap_controller_ = new Controller();
-
     }
 
     // Use this for initialization
     void Start() {
-
       //set empty frame
+      InitializeFlags();
       CurrentFrame = new Frame();
     }
 
@@ -59,8 +57,6 @@ namespace Leap {
         leap_controller_.SetPolicy(Controller.PolicyFlag.POLICY_OPTIMIZE_HMD);
       else
         leap_controller_.ClearPolicy(Controller.PolicyFlag.POLICY_OPTIMIZE_HMD);
-
-      flag_initialized_ = true;
     }
 
     /** Returns the Leap Controller instance. */
@@ -69,7 +65,6 @@ namespace Leap {
       //Do a null check to deal with hot reloading
       if (leap_controller_ == null) {
         leap_controller_ = new Controller();
-        InitializeFlags();
       }
 #endif
       return leap_controller_;
@@ -170,6 +165,7 @@ namespace Leap {
     }
     void OnDestroy() {
       //DestroyAllHands();
+      leap_controller_.ClearPolicy(Controller.PolicyFlag.POLICY_OPTIMIZE_HMD);
       leap_controller_.StopConnection();
     }
     void OnApplicationPause(bool isPaused) {
