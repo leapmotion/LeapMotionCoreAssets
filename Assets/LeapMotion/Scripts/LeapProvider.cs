@@ -133,7 +133,9 @@ namespace Leap {
 
       //perFrameFixedUpdateOffset_ contains the maximum offset of this Update cycle
       smoothedFixedUpdateOffset_.Update(PerFrameFixedUpdateOffset, Time.deltaTime);
-
+      float now = leap_controller_.Now();
+      //Debug.Log("leap_controller_.Now():" + leap_controller_.Now() + " - CurrentFrame.Timestamp:" + CurrentFrame.Timestamp + " = " + (leap_controller_.Now() - CurrentFrame.Timestamp));
+      //Debug.Log("provider.Update().CurrentFrame.Id: " + CurrentFrame.Id);
     }
 
     void FixedUpdate() {
