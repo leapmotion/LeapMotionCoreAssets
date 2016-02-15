@@ -17,6 +17,7 @@ public class LeapVRCameraControl : MonoBehaviour {
 
   public static event Action OnLeftPreRender;
   public static event Action OnRightPreRender;
+  
 
   [SerializeField]
   private EyeType _eyeType = new EyeType(EyeType.OrderType.CENTER);
