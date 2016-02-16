@@ -39,7 +39,7 @@ namespace LeapInternal
 
         public int ConnectionKey { get; private set; }
 
-        public DistortionDictionary DistortionCache{ get; private set; }
+        //public DistortionDictionary DistortionCache{ get; private set; }
 
         public CircularObjectBuffer<Frame> Frames{ get; set; }
 
@@ -47,19 +47,17 @@ namespace LeapInternal
         private DeviceList _devices = new DeviceList ();
         private FailedDeviceList _failedDevices;
 
-//        private CircularImageBuffer _imageCache;
         private Dictionary<UInt32, ImageReference> _pendingImageRequests = new Dictionary<UInt32, ImageReference>();
         private ObjectPool<ImageData> _imageDataCache;
         private ObjectPool<ImageData> _imageRawDataCache;
-//        private List<ImageData> _imageUserBuffers;
         private CircularObjectBuffer<TrackedQuad> _quads;
         private int _frameBufferLength = 60;
         private int _imageBufferLength = 20 * 4;
+        private int _quadBufferLength = 60;
         private ulong _standardImageBufferSize = 640 * 240 * 2; //width * heigth * 2
         private ulong _standardRawBufferSize = 640 * 240 * 2 * 8; //width * heigth * 2 images * 8 bpp
-        private int _quadBufferLength = 60;
-        private bool _growImageMemory = false;
-        //TODO determine optimum pending timeout value
+        private DistortionData _currentDistortionData = new DistortionData();
+//        private bool _growImageMemory = false;
 
         private IntPtr _leapConnection;
         private Thread _polster;
@@ -68,8 +66,6 @@ namespace LeapInternal
         //Policy and enabled features
         private UInt64 _requestedPolicies = 0;
         private UInt64 _activePolicies = 0;
-//        private bool _imagesAreEnabled = false;
-//        private bool _rawImagesAreEnabled = false;
         private bool _trackedQuadsAreEnabled = false;
 
         //Config change status
@@ -122,7 +118,7 @@ namespace LeapInternal
             _quads = new CircularObjectBuffer<TrackedQuad> (_quadBufferLength);
             _imageDataCache = new ObjectPool<ImageData>(_imageBufferLength, false);
             _imageRawDataCache = new ObjectPool<ImageData>(_imageBufferLength, false);
-            DistortionCache = new DistortionDictionary();
+//            DistortionCache = new DistortionDictionary();
         }
 
         public void Start ()
@@ -147,8 +143,6 @@ namespace LeapInternal
         }
 
 
-        Int64 lastFrameId = 0;
-        Int64 lastImageId = Int64.MinValue;
         //Run in Polster thread, fills in object queues
         private void processMessages ()
         {
@@ -158,10 +152,9 @@ namespace LeapInternal
                 while (_isRunning) {
                     if (_leapConnection != IntPtr.Zero) {
                         LEAP_CONNECTION_MESSAGE _msg = new LEAP_CONNECTION_MESSAGE ();
-                        uint timeout = 1000; //TODO determine optimal timeout value
+                        uint timeout = 1000;
                         result = LeapC.PollConnection (_leapConnection, timeout, ref _msg);
                         reportAbnormalResults ("LeapC PollConnection call was ", result);
-                        //Logger.Log("Received: " + _msg.type);
                         if (result == eLeapRS.eLeapRS_Success) {
                             switch (_msg.type) {
                             case eLeapEventType.eLeapEventType_Connection:
@@ -186,19 +179,16 @@ namespace LeapInternal
                                 break;
                             case eLeapEventType.eLeapEventType_Tracking:
                                 LEAP_TRACKING_EVENT tracking_evt = LeapC.PtrToStruct<LEAP_TRACKING_EVENT> (_msg.eventStructPtr);
-                                lastFrameId = tracking_evt.info.frame_id;
                                 handleTrackingMessage (ref tracking_evt);
                                 break;
                             case eLeapEventType.eLeapEventType_ImageComplete:
                                 completeCount++;
                                 LEAP_IMAGE_COMPLETE_EVENT image_complete_evt = LeapC.PtrToStruct<LEAP_IMAGE_COMPLETE_EVENT> (_msg.eventStructPtr);
-                                lastImageId = image_complete_evt.info.frame_id;
                                 handleImageCompletion (ref image_complete_evt);
                                 break;
                             case eLeapEventType.eLeapEventType_ImageRequestError:
                                 failedCount++;
                                 LEAP_IMAGE_FRAME_REQUEST_ERROR_EVENT failed_image_evt = LeapC.PtrToStruct<LEAP_IMAGE_FRAME_REQUEST_ERROR_EVENT>(_msg.eventStructPtr);
-//                                Logger.LogStruct(failed_image_evt, "---------------- Received failed image event");
                                 handleFailedImageRequest(ref failed_image_evt);
                                 break;
                             case eLeapEventType.eLeapEventType_TrackedQuad:
@@ -260,7 +250,7 @@ namespace LeapInternal
                 imageData.type = eLeapImageType.eLeapImageType_Default;
                 bufferSize = (int)_standardImageBufferSize;
             } else {
-                imageData = _imageDataCache.CheckOut();
+                imageData = _imageRawDataCache.CheckOut();
                 imageData.type = eLeapImageType.eLeapImageType_Raw;
                 bufferSize = (int)_standardRawBufferSize;
             }
@@ -284,7 +274,6 @@ namespace LeapInternal
         }
 
         private Image RequestImages(ImageData imageData){
-
             requestCount++;
             LEAP_IMAGE_FRAME_DESCRIPTION imageSpecifier = new LEAP_IMAGE_FRAME_DESCRIPTION();
             imageSpecifier.frame_id = imageData.frame_id;
@@ -313,34 +302,24 @@ namespace LeapInternal
         private object lockPendingImageList= new object();
         private void handleImageCompletion (ref LEAP_IMAGE_COMPLETE_EVENT imageMsg)
         {
-          //Logger.Log("Image completed");
             LEAP_IMAGE_PROPERTIES props = LeapC.PtrToStruct<LEAP_IMAGE_PROPERTIES> (imageMsg.properties);
             ImageReference pendingImage = null;
             lock(lockPendingImageList){
                 _pendingImageRequests.TryGetValue(imageMsg.token.requestID, out pendingImage);
             }
             if(pendingImage != null){
-                //TODO guard distortion dictionary against unbounded growth
-                DistortionData distData;
-                if (!DistortionCache.TryGetValue (imageMsg.matrix_version, out distData)) {//if fails, then create new entry
-                    distData = new DistortionData ();
-                    distData.version = imageMsg.matrix_version;
-                    distData.width = 64; //fixed value for now
-                    distData.height = 64; //fixed value for now
-                    distData.data = new float[(int)(2 * distData.width * distData.height * 2)]; //2 float values per map point
+                //Update distortion data, if changed
+                if((_currentDistortionData.Version != imageMsg.matrix_version) || !_currentDistortionData.IsValid ){
+                    _currentDistortionData = new DistortionData();
+                    _currentDistortionData.Version = imageMsg.matrix_version;
+                    _currentDistortionData.Width = LeapC.DistortionSize; //fixed value for now
+                    _currentDistortionData.Height = LeapC.DistortionSize; //fixed value for now
+                    if(_currentDistortionData.Data == null || _currentDistortionData.Data.Length != (2 * _currentDistortionData.Width * _currentDistortionData.Height * 2))
+                        _currentDistortionData.Data = new float[(int)(2 * _currentDistortionData.Width * _currentDistortionData.Height * 2)]; //2 float values per map point
                     LEAP_DISTORTION_MATRIX matrix = LeapC.PtrToStruct<LEAP_DISTORTION_MATRIX> (imageMsg.distortionMatrix);
-                    Array.Copy (matrix.matrix_data, distData.data, matrix.matrix_data.Length);
-                    DistortionCache.Add ((UInt64)imageMsg.matrix_version, distData);
+                    Array.Copy (matrix.matrix_data, _currentDistortionData.Data, matrix.matrix_data.Length);
+                    this.LeapDistortionChange.Dispatch<DistortionEventArgs> (this, new DistortionEventArgs (_currentDistortionData));
                 }
-
-                //Signal distortion data change if necessary
-                if ((imageMsg.matrix_version != DistortionCache.CurrentMatrix)) { //then the distortion matrix has changed
-                    DistortionCache.DistortionChange = true;
-                    this.LeapDistortionChange.Dispatch<DistortionEventArgs> (this, new DistortionEventArgs (distData));
-                } else {
-                    DistortionCache.DistortionChange = false; // clear old change flag
-                }
-                DistortionCache.CurrentMatrix = imageMsg.matrix_version;
 
                 pendingImage.imageData.CompleteImageData(props.type,
                     props.format,
@@ -353,7 +332,7 @@ namespace LeapInternal
                     props.y_offset,
                     props.x_scale,
                     props.y_scale,
-                    distData,
+                    _currentDistortionData,
                     LeapC.DistortionSize,
                     imageMsg.matrix_version);
 
@@ -366,8 +345,6 @@ namespace LeapInternal
         }
 
         private void handleFailedImageRequest(ref LEAP_IMAGE_FRAME_REQUEST_ERROR_EVENT failed_image_evt){
-            //LEAP_IMAGE_FRAME_REQUEST_TOKEN token = LeapC.PtrToStruct<LEAP_IMAGE_FRAME_REQUEST_TOKEN>(failed_image_evt.token);
-          //Logger.Log("Failed Image");
             ImageReference pendingImage = null;
             lock(lockPendingImageList){
                 _pendingImageRequests.TryGetValue(failed_image_evt.token.requestID, out pendingImage);
@@ -384,6 +361,10 @@ namespace LeapInternal
                 case eLeapImageRequestError.eLeapImageRequestError_InsufficientBuffer:
                     errorEventArgs.message = "The buffer specified for the request was too small.";
                     errorEventArgs.reason = Image.RequestFailureReason.Insufficient_Buffer;
+                    if(failed_image_evt.description.type == eLeapImageType.eLeapImageType_Default && _standardImageBufferSize < failed_image_evt.required_buffer_len)
+                        _standardImageBufferSize = failed_image_evt.required_buffer_len;
+                    else if(failed_image_evt.description.type == eLeapImageType.eLeapImageType_Raw && _standardRawBufferSize < failed_image_evt.required_buffer_len)
+                        _standardRawBufferSize = failed_image_evt.required_buffer_len;
                     break;
                 case eLeapImageRequestError.eLeapImageRequestError_Unavailable:
                     errorEventArgs.message = "The image was request too late and is no longer available.";
@@ -401,10 +382,7 @@ namespace LeapInternal
                 errorEventArgs.requiredBufferSize = (long)failed_image_evt.required_buffer_len;
 
                 this.LeapImageRequestFailed.Dispatch<ImageRequestFailedEventArgs>(this, errorEventArgs);
-            } else {
-                //Logger.Log("Failed Image Request Event without pending image data: " + failed_image_evt.token.requestID); 
             }
-
             //Purge old requests
             List<UInt32> keys = new List<UInt32>(_pendingImageRequests.Keys);
             ImageReference request;
@@ -418,15 +396,12 @@ namespace LeapInternal
                     request.imageData.CheckIn();
                 }
             }
-
-//            Logger.Log("Pending request count: " + _pendingImageRequests.Count);
         }
 
         private void handleQuadMessage (ref LEAP_TRACKED_QUAD_EVENT quad_evt)
         {
             TrackedQuad quad = frameFactory.makeQuad (ref quad_evt);
             _quads.Put (quad);
-            //TODO put quad in frame if frame already exists in buffer
 
             this.LeapTrackedQuad.Dispatch<TrackedQuadEventArgs>(this, new TrackedQuadEventArgs(quad));
         }
@@ -572,7 +547,6 @@ namespace LeapInternal
 
         private void reportLogMessage (ref LEAP_LOG_EVENT logMsg)
         {
-            Logger.LogStruct (logMsg);
             this.LeapLogEvent.Dispatch<LogEventArgs> (this, new LogEventArgs (publicSeverity (logMsg.severity), logMsg.timestamp, logMsg.message));
         }
 
@@ -600,8 +574,8 @@ namespace LeapInternal
 
             if (_activePolicies != _requestedPolicies) {
                 // This could happen when config is turned off, or
-                // the this is the policy change event from the last SetPolicy, after that, the user called SetPolicy again
-                //TODO handle failure to set deisred policy -- maybe a PolicyDenied event 
+                // this is the policy change event from the last SetPolicy, after that, the user called SetPolicy again
+                //TODO handle failure to set desired policy -- maybe a PolicyDenied event 
             }
         }
 
@@ -746,16 +720,6 @@ namespace LeapInternal
             } 
         }
 
-//        public void GetLatestImages (ref ImageList receiver)
-//        {
-//            _imageCache.GetLatestImages (receiver);
-//        }
-//
-//        public int GetFrameImagesForFrame (long frameId, ref ImageList images)
-//        {
-//            return _imageCache.GetImagesForFrame (frameId, images);
-//        }
-
         private TrackedQuad findTrackQuadForFrame (long frameId)
         {
             TrackedQuad quad = null;
@@ -809,19 +773,20 @@ namespace LeapInternal
             } 
         }
 
-        public bool IsPaused {
-            get {
-                return false; //TODO implement IsPaused
-            }
-        }
+//        public bool IsPaused {
+//            get {
+//                return false; //TODO implement IsPaused
+//            }
+//        }
+//
+//        public void SetPaused (bool newState)
+//        {
+//            //TODO implement pausing
+//            eLeapRS result;
+//            result = LeapC.SetDeviceFlags()
+//        }
 
-        public void SetPaused (bool newState)
-        {
-            //TODO implement pausing
-        }
-
-        private eLeapRS _lastResult;
-
+        private eLeapRS _lastResult; //Used to avoid repeating the same log message, ie. for events like time out
         private void reportAbnormalResults (string context, eLeapRS result)
         {
             if (result != eLeapRS.eLeapRS_Success &&

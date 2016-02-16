@@ -11,10 +11,28 @@ using System.Collections.Generic;
 namespace Leap
 {
     public class DistortionData{
-        public UInt64 version{get; set;}
-        public float width{get; set;}
-        public float height{get; set;}
-        public float[] data{get; set;}
+        public DistortionData(){}
+        public DistortionData(UInt64 version, float width, float height, float[] data){
+            Version = version;
+            Width = width;
+            Height = height;
+            Data = data;
+        }
+        public UInt64 Version{get; set;}
+        public float Width{get; set;}
+        public float Height{get; set;}
+        public float[] Data{get; set;}
+        public bool IsValid{
+            get{
+                if(Data != null &&
+                    Width == LeapInternal.LeapC.DistortionSize &&
+                    Height == LeapInternal.LeapC.DistortionSize &&
+                    Data.Length == Width * Height * 2 * 2)
+                    return true;
+
+                return false;
+            }
+        }
     }
 }
 

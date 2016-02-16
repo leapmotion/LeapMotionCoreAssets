@@ -26,18 +26,6 @@ namespace Leap
     {
         public HandList():base(){}
         public HandList(int initialCapacity):base(initialCapacity){}
-        /**
-     * Appends the members of the specified HandList to this HandList.
-     * @param other A HandList object containing Hand objects
-     * to append to the end of this HandList.
-     * @since 1.0
-     */
-        public HandList Append (HandList other)
-        {
-            this.InsertRange (this.Count - 1, other);
-            return this;
-        }
-        
 
         
         /**
@@ -52,7 +40,7 @@ namespace Leap
         public HandList HandType (bool leftHand)
         {
             return (HandList) this.FindAll (delegate (Hand hand) {
-                return hand.IsLeft && leftHand;
+                return hand.IsLeft == leftHand;
             });
         }
         

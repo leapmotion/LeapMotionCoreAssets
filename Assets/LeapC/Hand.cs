@@ -36,7 +36,9 @@ namespace Leap
         int _id = 0;
         float _confidence = 0;
         float _grabStrength = 0;
+        float _grabAngle = 0;
         float _pinchStrength = 0;
+        float _pinchDistance = 0;
         float _palmWidth = 0;
         float _sphereRadius = 0;
         bool _isValid = false;
@@ -85,7 +87,9 @@ namespace Leap
                     int id,
                     float confidence,
                     float grabStrength,
+                    float grabAngle,
                     float pinchStrength,
+                    float pinchDistance,
                     float palmWidth,
                     bool isLeft,
                     float timeVisible,
@@ -102,7 +106,9 @@ namespace Leap
             _id = id;
             _confidence = confidence;
             _grabStrength = grabStrength;
+            _grabAngle = grabAngle;
             _pinchStrength = pinchStrength;
+            _pinchDistance = pinchDistance;
             _palmWidth = palmWidth;
             _isLeft = isLeft;
             _isRight = !isLeft;
@@ -127,7 +133,9 @@ namespace Leap
                 _id,
                 _confidence,
                 _grabStrength,
+                _grabAngle,
                 _pinchStrength,
+                _pinchDistance,
                 _palmWidth * hScale,
                 _isLeft,
                 _timeVisible,
@@ -192,7 +200,6 @@ namespace Leap
      */
         public Vector Translation (Frame sinceFrame)
         {
-            //TODO Hand motion API 
             Hand sinceHand = sinceFrame.Hand(this.Id);
 
             if(!sinceHand.IsValid)
@@ -678,7 +685,25 @@ namespace Leap
             } 
         }
 
-/**
+        /**
+     * The angle between the fingers and the hand of a grab hand pose.
+     *
+     * The angle is computed by looking at the angle between the direction of the
+     * 4 fingers and the direction of the hand. Thumb is not considered when
+     * computing the angle.
+     * The angle is 0 radian for an open hand, and reaches pi radians when the pose
+     * is a tight fist.
+     *
+     * @returns The angle of a grab hand pose between 0 and pi radians (0 and 180 degrees).
+     * @since 3.0
+     */
+        public float GrabAngle {
+            get {
+                return _grabAngle;
+            } 
+        }
+
+     /**
      * The holding strength of a pinch hand pose.
      *
      * The strength is zero for an open hand, and blends to 1.0 when a pinching
@@ -697,7 +722,26 @@ namespace Leap
             } 
         }
 
-/**
+        /**
+     * The distance between the thumb and index finger of a pinch hand pose.
+     *
+     * The distance is computed by looking at the shortest distance between
+     * the last 2 phalanges of the thumb and those of the index finger.
+     * This pinch measurement only takes thumb and index finger into account.
+     *
+     * \include Hand_pinchDistance.txt
+     *
+     * @returns The distance between the thumb and index finger of a pinch hand
+     * pose in millimeters.
+     * @since 3.0
+     */
+    public float PinchDistance {
+        get {
+            return _pinchDistance;
+        } 
+    }
+
+    /**
      * The estimated width of the palm when the hand is in a flat position.
      *
      * \include Hand_palmWidth.txt

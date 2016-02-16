@@ -28,18 +28,6 @@ namespace Leap
         public FingerList(int initialCapacity):base(initialCapacity){}
 
         /**
-     * Appends the members of the specified FingerList to this FingerList.
-     * @param other A FingerList object containing Finger objects
-     * to append to the end of this FingerList.
-     * @since 1.0
-     */
-        public FingerList Append (FingerList other)
-        {
-            this.InsertRange (this.Count - 1, other);
-            return this;
-        }
-
-        /**
      * Returns a new list containing those fingers in the current list that are
      * extended.
      *

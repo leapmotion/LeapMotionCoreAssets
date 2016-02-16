@@ -15,6 +15,7 @@ namespace LeapInternal{
 
         public virtual void CheckIn(){
             age = 0;
+            poolIndex = 0;
         }
     }
 }

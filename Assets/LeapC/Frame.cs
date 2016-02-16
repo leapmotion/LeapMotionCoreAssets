@@ -60,8 +60,6 @@ namespace Leap
 
             for (int h = 0; h < this.Hands.Count; h++)
                 transformedFrame.AddHand (this.Hands [h].TransformedCopy (trs));
-            
-            //TODO tools are deprecated, not adding them here -- need to remove all tool concepts
             return transformedFrame;
         }
 

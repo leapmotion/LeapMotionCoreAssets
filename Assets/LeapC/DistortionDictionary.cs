@@ -11,20 +11,51 @@ using Leap;
 
 namespace LeapInternal
 {
-    //TODO ensure thread safety
+    //TODO test thread safety
     public class DistortionDictionary : Dictionary<UInt64, DistortionData>{
-        public UInt64 CurrentMatrix = 0;
 
-        public bool DistortionChange = false;
+        private UInt64 _currentMatrix = 0;
+        private bool _distortionChange = false;
+        private object locker = new object();
+
+        public UInt64 CurrentMatrix{
+            get{
+                lock(locker){
+                    return _currentMatrix;
+                }
+            }
+            set {
+                lock(locker){
+                    _currentMatrix = value;
+                }
+            }
+        }
+        public bool DistortionChange{
+            get{
+                lock(locker){
+                    return _distortionChange;
+                }
+            }
+            set {
+                lock(locker){
+                    _distortionChange = value;
+                }
+            }
+
+        }
 
         public DistortionData GetMatrix(UInt64 version){
-            DistortionData matrix;
-            this.TryGetValue(version, out matrix);
-            return matrix;
+            lock(locker){
+                DistortionData matrix;
+                this.TryGetValue(version, out matrix);
+                return matrix;
+            }
         }
 
         public bool VersionExists(UInt64 version){
-            return this.ContainsKey(version);
+            lock(locker){
+                return this.ContainsKey(version);
+            }
         }
 
     }

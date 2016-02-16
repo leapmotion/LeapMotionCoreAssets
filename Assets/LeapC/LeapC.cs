@@ -402,6 +402,8 @@ namespace LeapInternal
         public eLeapHandType type;
         public float confidence;
         public UInt64 visible_time;
+        public float pinch_distance;
+        public float grab_angle;
         public float pinch_strength;
         public float grab_strength;
         public IntPtr palm; //LEAP_PALM*
