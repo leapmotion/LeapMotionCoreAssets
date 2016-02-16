@@ -149,7 +149,9 @@ public class CapsuleHand : IHandModel {
       Vector3 delta = sphereA.position - sphereB.position;
 
       Vector3 scale = capsule.localScale;
-      scale.y = delta.magnitude / 2.0f;
+      scale.x = CYLINDER_RADIUS * 2;
+      scale.y = delta.magnitude * 0.5f / transform.lossyScale.x;
+      scale.z = CYLINDER_RADIUS * 2;
 
       capsule.localScale = scale;
 

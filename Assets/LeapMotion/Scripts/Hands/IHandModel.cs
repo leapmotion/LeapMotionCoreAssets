@@ -47,9 +47,9 @@ public abstract class IHandModel : MonoBehaviour {
   protected const float MM_TO_M = 1e-3f;
   private Matrix GetLeapMatrix() {
     Transform t = this.transform.transform;
-    Vector xbasis = new Vector(t.right.x, t.right.y, t.right.z) * t.localScale.x * MM_TO_M;
-    Vector ybasis = new Vector(t.up.x, t.up.y, t.up.z) * t.localScale.y * MM_TO_M;
-    Vector zbasis = new Vector(t.forward.x, t.forward.y, t.forward.z) * -t.localScale.z * MM_TO_M;
+    Vector xbasis = new Vector(t.right.x, t.right.y, t.right.z) * t.lossyScale.x * MM_TO_M;
+    Vector ybasis = new Vector(t.up.x, t.up.y, t.up.z) * t.lossyScale.y * MM_TO_M;
+    Vector zbasis = new Vector(t.forward.x, t.forward.y, t.forward.z) * -t.lossyScale.z * MM_TO_M;
     Vector trans = new Vector(t.position.x, t.position.y, t.position.z);
     return new Matrix(xbasis, ybasis, zbasis, trans);
   }
