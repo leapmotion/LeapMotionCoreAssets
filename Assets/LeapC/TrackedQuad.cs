@@ -23,7 +23,6 @@ namespace Leap
   * Get a new object from subsequent frames to get the latest state information.
   * @since 2.2.6
   */
-    //TODO implement TrackedQuad
     public class TrackedQuad : IDisposable
     {
         float _width = 0;

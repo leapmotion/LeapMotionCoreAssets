@@ -30,7 +30,6 @@ namespace Leap
         private ImageData imageData; //The pooled object containing the actual data
         private UInt64 referenceIndex = 0; //Corresponds to the index in the pooled object
 
-        // TODO: revisit dispose code
         bool _disposed = false;
 
         public void Dispose(){
@@ -122,7 +121,7 @@ namespace Leap
         public float[] Distortion {
             get {
                 if(IsValid && imageData.isComplete)
-                    return imageData.DistortionData.data;
+                    return imageData.DistortionData.Data;
 
                 return new float[0];
             }
@@ -170,7 +169,7 @@ namespace Leap
         public Vector Rectify (Vector uv)
         {
             if(this.IsValid && imageData.isComplete){
-                //TODO test Rectify
+                //TODO update Rectify to deal with stacked images and distortion
                 //Warp uv to correct distortion
                 Vector rectified = Warp(uv);
                 //normalize to ray
@@ -207,7 +206,7 @@ namespace Leap
      */
         public Vector Warp (Vector xy)
         {
-            //TODO test Warp
+            //TODO Need to update Warp to deal with stacked images and distortion
             if(this.IsValid && imageData.isComplete)
                 return Warp(xy, imageData.width, imageData.height);
             return Vector.Zero;

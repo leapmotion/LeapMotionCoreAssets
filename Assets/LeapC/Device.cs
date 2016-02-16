@@ -115,6 +115,29 @@ namespace Leap
             }
             private set{}
         }
+
+        public bool SetPaused(bool pause){
+            ulong prior_state = 0;
+            ulong set_flags = 0;
+            ulong clear_flags = 0;
+            if(pause)
+                set_flags = (ulong)eLeapDeviceFlag.eLeapDeviceFlag_Stream;
+            else 
+                clear_flags = (ulong)eLeapDeviceFlag.eLeapDeviceFlag_Stream;
+
+            eLeapRS result = eLeapRS.eLeapRS_UnknownError;
+            if(IsValid){
+                result = LeapC.SetDeviceFlags(_hDevice, set_flags, clear_flags, out prior_state);
+            }
+            if(result == eLeapRS.eLeapRS_Success)
+                return true;
+
+            return false;
+        }
+
+        public bool IsPaused(){
+            return false;
+        }
         /**
      * The distance to the nearest edge of the Leap Motion controller's view volume.
      *
@@ -244,7 +267,34 @@ namespace Leap
      */
         public bool IsValid {
             get {
-                return _isValid;
+//                IntPtr device;
+//                eLeapRS result = LeapC.OpenDevice(_hDevice, out device);
+//                if(result == eLeapRS.eLeapRS_Success){
+//                    LEAP_DEVICE_INFO deviceInfo = new LEAP_DEVICE_INFO();
+//                    deviceInfo.serial = Marshal.AllocCoTaskMem(_serialNumber.Length);
+//                    deviceInfo.size =(uint) Marshal.SizeOf(deviceInfo);
+//                    deviceInfo.serial_length = (uint)_serialNumber.Length;
+//                    result = LeapC.GetDeviceInfo (device, out deviceInfo);
+//                    if (deviceInfo.serial_length != (uint)_serialNumber.Length) {
+//                        Marshal.FreeCoTaskMem(deviceInfo.serial);
+//                        deviceInfo.serial = Marshal.AllocCoTaskMem((int)deviceInfo.serial_length);
+//                        deviceInfo.size = (uint) Marshal.SizeOf(deviceInfo);
+//                        result = LeapC.GetDeviceInfo (device, out deviceInfo);
+//                    }
+//                    if(result == eLeapRS.eLeapRS_Success){
+//                        string serialnumber = Marshal.PtrToStringAnsi(deviceInfo.serial);
+//                        Marshal.FreeCoTaskMem(deviceInfo.serial);
+//                        this.Update(deviceInfo.h_fov,
+//                            deviceInfo.v_fov,
+//                            deviceInfo.range,
+//                            deviceInfo.baseline,
+//                            (deviceInfo.caps == (UInt32)eLeapDeviceCaps.eLeapDeviceCaps_Embedded),
+//                            (deviceInfo.status == (UInt32)eLeapDeviceStatus.eLeapDeviceStatus_Streaming),
+//                            serialnumber);
+//                        return true;
+//                    }
+//                }
+                return false;
             } 
         }
 
@@ -338,7 +388,7 @@ namespace Leap
      * @since 2.4.0
      */  public bool IsSmudged {
             get {
-                return false; //TODO implement or remove
+                return false; //TODO implement or remove Is Smudged
             } 
         }
         
@@ -352,7 +402,7 @@ namespace Leap
      * @since 2.4.0
      */  public bool IsLightingBad {
             get {
-                return false; //Implement or remove
+                return false; //TODO Implement or remove IsLightingBad
             } 
         }
 /**

@@ -147,19 +147,28 @@ public class CapsuleHand : IHandModel {
       Transform sphereB = _sphereBTransforms[i];
 
       Vector3 delta = sphereA.position - sphereB.position;
-      Vector3 perp = Vector3.Cross(delta, Vector3.up);
 
-      if (delta.magnitude == 0.0f) {
-        continue;
-      }
-
-      capsule.rotation = Quaternion.LookRotation(perp, delta);
       Vector3 scale = capsule.localScale;
       scale.y = delta.magnitude / 2.0f;
 
       capsule.localScale = scale;
 
       capsule.position = (sphereA.position + sphereB.position) / 2;
+
+      if (delta.sqrMagnitude <= Mathf.Epsilon) {
+        //Two spheres are at the same location, no rotation will be found
+        continue;
+      }
+
+      Vector3 perp;
+      if (Vector3.Angle(delta, Vector3.up) > 170 || Vector3.Angle(delta, Vector3.up) < 10) {
+        perp = Vector3.Cross(delta, Vector3.right);
+      }
+      else {
+        perp = Vector3.Cross(delta, Vector3.up);
+      }
+
+      capsule.rotation = Quaternion.LookRotation(perp, delta);
     }
   }
 

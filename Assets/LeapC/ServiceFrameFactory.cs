@@ -31,7 +31,6 @@ namespace LeapInternal
             int handStructSize = Marshal.SizeOf (typeof(LEAP_HAND));
             int pHandArrayOffset = 0;
             for (int h = 0; h < trackingMsg.nHands; h++) {
-                //TODO verify pointer arithmetic is valid on both 32 and 64 bit platforms
                 LEAP_HAND hand = LeapC.PtrToStruct<LEAP_HAND> (new IntPtr (trackingMsg.pHands.ToInt64 () + pHandArrayOffset));
                 pHandArrayOffset += handStructSize;
 
@@ -40,28 +39,6 @@ namespace LeapInternal
             }
             return newFrame;
         }
-
-//        public Image makeImage (ref LEAP_IMAGE_COMPLETE_EVENT imageMsg, ImageData pendingImageData, DistortionData distortionData)
-//        {
-//            LEAP_IMAGE_PROPERTIES props = LeapC.PtrToStruct<LEAP_IMAGE_PROPERTIES> (imageMsg.properties);
-//
-//            pendingImageData.CompleteImageData (props.type,
-//                props.format,
-//                props.bpp,
-//                props.width,
-//                props.height,
-//                imageMsg.info.timestamp,
-//                imageMsg.info.frame_id,
-//                .5f,
-//                .5f,
-//                .5f / LeapC.DistortionSize,
-//                .5f / LeapC.DistortionSize,
-//                distortionData,
-//                LeapC.DistortionSize,
-//                imageMsg.matrix_version);
-//            Image newImage = new Image (pendingImageData); //Create the public API object
-//            return newImage;
-//        }
 
         public TrackedQuad makeQuad (ref LEAP_TRACKED_QUAD_EVENT quadMsg)
         {
@@ -87,7 +64,9 @@ namespace LeapInternal
                                (int)hand.id,
                                hand.confidence,
                                hand.grab_strength,
+                               hand.grab_angle,
                                hand.pinch_strength,
+                               hand.pinch_distance,
                                palm.width,
                                hand.type == eLeapHandType.eLeapHandType_Left,
                                hand.visible_time,

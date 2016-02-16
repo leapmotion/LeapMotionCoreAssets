@@ -146,6 +146,7 @@ namespace Leap
             _connection.LeapDevice += OnDevice;
             _connection.LeapDeviceLost += OnDeviceLost;
             _connection.LeapDeviceFailure += OnDeviceFailure;
+            _connection.LeapDistortionChange += OnDistortionChange;
 
             _connection.Start ();
         }
@@ -334,10 +335,10 @@ namespace Leap
      * @param pause Set true to pause the service; false to resume.
      * @since 2.4.0
      */
-        public void SetPaused (bool pause)
-        {
-            _connection.SetPaused (pause);
-        }
+//        public void SetPaused (bool pause)
+//        {
+//            _connection.SetPaused (pause);
+//        }
 
         /**
      * Reports whether the Leap Motion service is currently paused.
@@ -347,10 +348,10 @@ namespace Leap
      * @returns True, if the service is paused; false, otherwise.
      * @since 2.4.0
      */
-        public bool IsPaused ()
-        {
-            return _connection.IsPaused;
-        }
+//        public bool IsPaused ()
+//        {
+//            return _connection.IsPaused;
+//        }
 
         /**
      * Reports whether this Controller is connected to the Leap Motion service and

@@ -15,10 +15,9 @@ namespace LeapInternal
     {
         public bool isComplete = false;
         public byte[] pixelBuffer;
-        //private IntPtr dataPtr;
         private GCHandle _bufferHandle;
         private bool _isPinned = false;
-        private object lockable = new object();
+        private object locker = new object();
 
         public UInt64 index;
         public Int64 frame_id;
@@ -57,21 +56,23 @@ namespace LeapInternal
                                       DistortionData distortionData,
                                       int distortion_size,
                                       UInt64 distortion_matrix_version){
-            this.type = type;
-            this.format = format;
-            this.bpp = bpp;
-            this.width = width;
-            this.height = height;
-            this.timestamp = timestamp;
-            this.frame_id = frame_id;
-            this.RayOffsetX = x_offset;
-            this.RayOffsetY = y_offset;
-            this.RayScaleX = x_scale;
-            this.RayScaleY = y_offset;
-            this.DistortionData = distortionData;
-            this.DistortionSize = distortion_size;
-            this.DistortionMatrixKey = distortion_matrix_version;
-            isComplete = true;
+            lock(locker){
+                this.type = type;
+                this.format = format;
+                this.bpp = bpp;
+                this.width = width;
+                this.height = height;
+                this.timestamp = timestamp;
+                this.frame_id = frame_id;
+                this.RayOffsetX = x_offset;
+                this.RayOffsetY = y_offset;
+                this.RayScaleX = x_scale;
+                this.RayScaleY = y_offset;
+                this.DistortionData = distortionData;
+                this.DistortionSize = distortion_size;
+                this.DistortionMatrixKey = distortion_matrix_version;
+                isComplete = true;
+            }
         }
 
         public override void CheckIn ()
@@ -85,7 +86,7 @@ namespace LeapInternal
             if(pixelBuffer == null)
                 return IntPtr.Zero;
 
-            lock(lockable){
+            lock(locker){
                 if(!_isPinned){
                     _bufferHandle = GCHandle.Alloc(pixelBuffer, GCHandleType.Pinned);
                     _isPinned = true;
@@ -95,7 +96,7 @@ namespace LeapInternal
         }
 
         public void unPinHandle(){
-            lock(lockable){
+            lock(locker){
                 if(_isPinned){
                     _bufferHandle.Free();
                     _isPinned = false;
@@ -103,27 +104,27 @@ namespace LeapInternal
             }
         }
 
-        public ImageData Copy(){
-            ImageData copy = new ImageData();
-            copy.pixelBuffer = new byte[pixelBuffer.Length];
-            copy.index = this.index;
-            copy.type = this.type; 
-            copy.format = this.format;
-            copy.bpp = this.bpp;
-            copy.width = this.width;
-            copy.height = this.height;
-            copy.timestamp = this.timestamp;
-            copy.frame_id = this.frame_id;
-            copy.RayOffsetX = this.RayOffsetX;
-            copy.RayOffsetY = this.RayOffsetY;
-            copy.RayScaleX = this.RayScaleX;
-            copy.RayScaleY = this.RayScaleY;
-            copy.DistortionData = this.DistortionData;
-            copy.DistortionMatrixKey = this.DistortionMatrixKey;
-            copy.isComplete = this.isComplete;
-
-            return copy;
-        }
+//        public ImageData Copy(){
+//            ImageData copy = new ImageData();
+//            copy.pixelBuffer = new byte[pixelBuffer.Length];
+//            copy.index = this.index;
+//            copy.type = this.type; 
+//            copy.format = this.format;
+//            copy.bpp = this.bpp;
+//            copy.width = this.width;
+//            copy.height = this.height;
+//            copy.timestamp = this.timestamp;
+//            copy.frame_id = this.frame_id;
+//            copy.RayOffsetX = this.RayOffsetX;
+//            copy.RayOffsetY = this.RayOffsetY;
+//            copy.RayScaleX = this.RayScaleX;
+//            copy.RayScaleY = this.RayScaleY;
+//            copy.DistortionData = this.DistortionData;
+//            copy.DistortionMatrixKey = this.DistortionMatrixKey;
+//            copy.isComplete = this.isComplete;
+//
+//            return copy;
+//        }
     }
 
 
