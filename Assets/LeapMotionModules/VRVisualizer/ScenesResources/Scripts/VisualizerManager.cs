@@ -27,7 +27,7 @@ public class VisualizerManager : MonoBehaviour {
       m_PCVisualizer.gameObject.SetActive(false);
       m_VRVisualizer.gameObject.SetActive(true);
       m_modeText.text = "VR Mode";
-      m_warningText.text = "";
+      m_warningText.text = "Please put on your head-mounted display";
     }
     else
     {
