@@ -41,9 +41,7 @@ namespace Leap {
       if (leap_controller_.IsConnected) {
         InitializeFlags();
       }
-      else {
-        leap_controller_.Connect += HandleControllerConnect;
-      }
+      leap_controller_.Device += HandleControllerConnect;
     }
 
     // Use this for initialization
