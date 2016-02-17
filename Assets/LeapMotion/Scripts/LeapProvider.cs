@@ -5,36 +5,35 @@ using Leap;
 
 namespace Leap {
   public class LeapProvider :
-    MonoBehaviour
-  {
+    MonoBehaviour {
     public Frame CurrentFrame { get; private set; }
     public Image CurrentImage { get; private set; }
     private Transform providerSpace;
     private Matrix leapMat;
 
-    public Controller leap_controller_ { get; set; }
+    protected Controller leap_controller_;
 
     /** The smoothed offset between the FixedUpdate timeline and the Leap timeline.  
    * Used to provide temporally correct frames within FixedUpdate */
-  private SmoothedFloat smoothedFixedUpdateOffset_ = new SmoothedFloat();
-  /** The maximum offset calculated per frame */
-  public float PerFrameFixedUpdateOffset;
-     /** Conversion factor for millimeters to meters. */
-  protected const float MM_TO_M = 1e-3f;
-  /** Conversion factor for nanoseconds to seconds. */
-  protected const float NS_TO_S = 1e-6f;
-  /** Conversion factor for seconds to nanoseconds. */
-  protected const float S_TO_NS = 1e6f;
-  /** How much smoothing to use when calculating the FixedUpdate offset. */
-  protected const float FIXED_UPDATE_OFFSET_SMOOTHING_DELAY = 0.1f;
+    private SmoothedFloat smoothedFixedUpdateOffset_ = new SmoothedFloat();
+    /** The maximum offset calculated per frame */
+    public float PerFrameFixedUpdateOffset;
+    /** Conversion factor for millimeters to meters. */
+    protected const float MM_TO_M = 1e-3f;
+    /** Conversion factor for nanoseconds to seconds. */
+    protected const float NS_TO_S = 1e-6f;
+    /** Conversion factor for seconds to nanoseconds. */
+    protected const float S_TO_NS = 1e6f;
+    /** How much smoothing to use when calculating the FixedUpdate offset. */
+    protected const float FIXED_UPDATE_OFFSET_SMOOTHING_DELAY = 0.1f;
 
-  /** Set true if the Leap Motion hardware is mounted on an HMD; otherwise, leave false. */
-  public bool isHeadMounted = false;
+    /** Set true if the Leap Motion hardware is mounted on an HMD; otherwise, leave false. */
+    public bool isHeadMounted = false;
 
-  public bool overrideDeviceType = false;
+    public bool overrideDeviceType = false;
 
-  /** If overrideDeviceType is enabled, the hand controller will return a device of this type. */
-  public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Peripheral;
+    /** If overrideDeviceType is enabled, the hand controller will return a device of this type. */
+    public LeapDeviceType overrideDeviceTypeWith = LeapDeviceType.Peripheral;
 
     void Awake() {
       leap_controller_ = new Controller();
@@ -55,8 +54,7 @@ namespace Leap {
       InitializeFlags();
     }
 
-    protected void OnDisable()
-    {
+    protected void OnDisable() {
       leap_controller_.Device -= HandleControllerConnect;
     }
 
@@ -118,8 +116,7 @@ namespace Leap {
         info.trackingRange = devices[0].Range / 1000f;
         info.serialID = devices[0].SerialNumber;
         return info;
-      }
-      else if (devices.Count > 1) {
+      } else if (devices.Count > 1) {
         return new LeapDeviceInfo(LeapDeviceType.Peripheral);
       }
       return new LeapDeviceInfo(LeapDeviceType.Invalid);
@@ -168,13 +165,12 @@ namespace Leap {
 
         if (Mathf.Abs(historyFrame.Timestamp - correctedTimestamp) < Mathf.Abs(closestFrame.Timestamp - correctedTimestamp)) {
           closestFrame = historyFrame;
-        }
-        else {
+        } else {
           //Since frames are always reported in order, we can terminate the search once we stop finding a closer frame
           break;
         }
       }
-      return closestFrame; 
+      return closestFrame;
     }
     void OnDestroy() {
       //DestroyAllHands();
