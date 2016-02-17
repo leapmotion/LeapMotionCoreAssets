@@ -1,4 +1,10 @@
-﻿using UnityEngine;
+﻿/******************************************************************************\
+* Copyright (C) Leap Motion, Inc. All rights reserved.               *
+* Use subject to the terms of the Leap Motion SDK Agreement available at       *
+* https://developer.leapmotion.com/sdk_agreement, or another agreement         *
+* between Leap Motion and you, your company or other organization.             *
+\******************************************************************************/
+using UnityEngine;
 using System.Collections;
 
 public class VisualizerControls : MonoBehaviour {
