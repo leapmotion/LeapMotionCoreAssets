@@ -57,6 +57,7 @@ public class VisualizerManager : MonoBehaviour {
     {
       if (m_controller.IsConnected)
       {
+        // HACK (wyu): LeapProvider should listen to events and update itself when Leap devices are connected/disconnected instead of having to reload the scene to reinitialize variables
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
       }
     }
