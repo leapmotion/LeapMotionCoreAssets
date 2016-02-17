@@ -293,6 +293,14 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
+  void OnDisable()
+  {
+    if (_instance == this)
+    {
+      _instance = null;
+    }
+  }
+
     int requestedImages = 0;
     int lateImages = 0;
     int superLateImages = 0;
