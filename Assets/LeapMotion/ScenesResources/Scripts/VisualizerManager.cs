@@ -16,28 +16,25 @@ public class VisualizerManager : MonoBehaviour {
   {
     Screen.SetResolution(Screen.currentResolution.width, Screen.currentResolution.height, false);
     leap_controller_ = new Controller();
+    if (VRDevice.isPresent)
+    {
+      m_PCVisualizer.gameObject.SetActive(false);
+      m_VRVisualizer.gameObject.SetActive(true);
+      m_modeText.text = "VR Mode";
+      m_warningText.text = "";
+    }
+    else
+    {
+      m_VRVisualizer.gameObject.SetActive(false);
+      m_PCVisualizer.gameObject.SetActive(true);
+      m_modeText.text = "Desktop Mode";
+      m_warningText.text = "Orion is built for virtual reality and performs best when head-mounted";
+    }
   }
 
   void Start()
   {
     m_leapConnected = leap_controller_.IsConnected;
-    if (m_leapConnected)
-    {
-      if (VRDevice.isPresent)
-      {
-        m_PCVisualizer.gameObject.SetActive(false);
-        m_VRVisualizer.gameObject.SetActive(true);
-        m_modeText.text = "VR Mode";
-        m_warningText.text = "";
-      }
-      else
-      {
-        m_VRVisualizer.gameObject.SetActive(false);
-        m_PCVisualizer.gameObject.SetActive(true);
-        m_modeText.text = "Desktop Mode";
-        m_warningText.text = "Orion is built for virtual reality and performs best when head-mounted";
-      }
-    }
   }
 
   void Update()

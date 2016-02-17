@@ -198,6 +198,11 @@ public class LeapVRTemporalWarping : MonoBehaviour {
     }
   }
 
+  protected void OnDisable()
+  {
+    LeapVRCameraControl.OnValidCameraParams -= onValidCameraParams;
+  }
+
   protected void Update() {
     if (Input.GetKeyDown(recenter)) {
       InputTracking.Recenter();
