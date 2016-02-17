@@ -9,13 +9,19 @@ public class VisualizerManager : MonoBehaviour {
   public UnityEngine.UI.Text m_modeText;
   public UnityEngine.UI.Text m_warningText;
 
-  private Controller leap_controller_ = null;
+  private Controller m_controller = null;
   private bool m_leapConnected = false;
+
+  private void FindController()
+  {
+    LeapProvider provider = GameObject.FindObjectOfType<LeapProvider>() as LeapProvider;
+    if (provider != null)
+      m_controller = provider.GetLeapController();
+  }
 
   void Awake()
   {
     Screen.SetResolution(Screen.currentResolution.width, Screen.currentResolution.height, false);
-    leap_controller_ = new Controller();
     if (VRDevice.isPresent)
     {
       m_PCVisualizer.gameObject.SetActive(false);
@@ -34,7 +40,9 @@ public class VisualizerManager : MonoBehaviour {
 
   void Start()
   {
-    m_leapConnected = leap_controller_.IsConnected;
+    FindController();
+    if (m_controller != null)
+      m_leapConnected = m_controller.IsConnected;
   }
 
   void Update()
@@ -42,9 +50,15 @@ public class VisualizerManager : MonoBehaviour {
     if (m_leapConnected)
       return;
 
-    if (leap_controller_.IsConnected)
+    if (m_controller == null)
     {
-      SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+      FindController();
+    } else
+    {
+      if (m_controller.IsConnected)
+      {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+      }
     }
   }
 }
