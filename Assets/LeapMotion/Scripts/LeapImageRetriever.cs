@@ -262,6 +262,8 @@ public class LeapImageRetriever : MonoBehaviour {
           Debug.LogWarning("Unexpected format type " + raw.Format);
           break;
       }
+
+      _isStale = false;
     }
 
     public void UpdateTextures(Image bright, Image raw) {
