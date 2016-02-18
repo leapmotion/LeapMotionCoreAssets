@@ -29,7 +29,7 @@ namespace Leap {
         handFinishBehavior.Reset();
       }
     }
-
+    /** To be called if the HandRepresentation no longer has a Leap Hand. */
     public override void Finish() {
       if (handFinishBehavior) {
         handFinishBehavior.HandFinish();

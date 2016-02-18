@@ -81,6 +81,7 @@ namespace Leap {
         //Leap.Utils.IgnoreCollisions(rep.handModel.gameObject, to_ignore, ignore);
       }
     }
+    /** Updates the graphics HandRepresentations. */
     void Update() {
       Frame frame = Provider.CurrentFrame;
       if (frame.Id != prev_graphics_id_ && graphicsEnabled) {
@@ -89,7 +90,13 @@ namespace Leap {
 
       }
     }
-
+    /** 
+    * Updates HandRepresentations based in the specified HandRepresentation Dictionary.
+    * Active HandRepresentation instances are updated if the hand they represent is still
+    * present in the Provider's CurrentFrame; otherwise, the HandRepresentation is removed. If new
+    * Leap Hand objects are present in the Leap HandRepresentation Dictionary, new HandRepresentations are 
+    * created and added to the dictionary. 
+    */
     void UpdateHandRepresentations(Dictionary<int, HandRepresentation> all_hand_reps, ModelType modelType) {
       foreach (Leap.Hand curHand in Provider.CurrentFrame.Hands) {
         HandRepresentation rep;
@@ -97,25 +104,20 @@ namespace Leap {
           rep = Factory.MakeHandRepresentation(curHand, modelType);
           if (rep != null) {
             all_hand_reps.Add(curHand.Id, rep);
-            //float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
-            //rep.handModel.transform.localScale = hand_scale * Vector3.one;
           }
         }
         if (rep != null) {
           rep.IsMarked = true;
-          //float hand_scale = curHand.PalmWidth / rep.handModel.handModelPalmWidth;
-          //rep.handModel.transform.localScale = hand_scale * Vector3.one;
           rep.UpdateRepresentation(curHand, modelType);
           rep.LastUpdatedTime = (int)Provider.CurrentFrame.Timestamp;
         }
       }
 
-      //Mark-and-sweep or set difference implementation
+      //Mark-and-sweep to finish unused HandRepresentations
       HandRepresentation toBeDeleted = null;
       foreach (KeyValuePair<int, HandRepresentation> r in all_hand_reps) {
         if (r.Value != null) {
           if (r.Value.IsMarked) {
-            //Debug.Log("LeapHandController Marking False");
             r.Value.IsMarked = false;
           }
           else {
@@ -132,7 +134,7 @@ namespace Leap {
         toBeDeleted.Finish();
       }
     }
-    /** Updates the physics objects */
+    /** Updates the physics HandRepresentations. */
     protected virtual void FixedUpdate() {
 
       //All FixedUpdates of a frame happen before Update, so only the last of these calculations is passed
@@ -144,7 +146,6 @@ namespace Leap {
 
       if (frame.Id != prev_physics_id_ && physicsEnabled) {
         UpdateHandRepresentations(physicsReps, ModelType.Physics);
-        //UpdateHandModels(hand_physics_, frame.Hands, leftPhysicsModel, rightPhysicsModel);
         prev_physics_id_ = frame.Id;
       }
     }

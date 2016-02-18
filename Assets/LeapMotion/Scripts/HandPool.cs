@@ -5,6 +5,12 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 
+/** 
+ * HandPool holds a pool of IHandModels and makes HandRepresentations 
+ * when given a Leap Hand and a model type or graphics or physics.
+ * When a HandRepresentation is created, an IHandModel is removed from the pool.
+ * When a HandRepresentation is finished, its IHandModel is returned to the pool.
+ */
 namespace Leap {
   public class HandPool :
     HandFactory
@@ -51,6 +57,7 @@ namespace Leap {
       }
       return handRep;
     }
+    //Validate the that IHandModel is an instance of a prefab from the scene vs. a prefab from the project
 #if UNITY_EDITOR
     void OnValidate(){
       if (LeftGraphicsModel != null) {
