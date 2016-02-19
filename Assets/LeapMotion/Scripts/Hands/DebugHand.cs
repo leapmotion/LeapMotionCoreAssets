@@ -16,6 +16,11 @@ using Leap;
  * so that you can see where the hands are in the scene view.
  * */
 public class DebugHand : HandModel {
+  public override ModelType HandModelType {
+    get {
+      return ModelType.Graphics;
+    }
+  }
 
   /**
   * Initializes the hand and calls the line drawing function.

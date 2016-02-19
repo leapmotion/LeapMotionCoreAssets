@@ -19,8 +19,19 @@ using Leap;
 * and in the Unity FixedUpdate() phase for physics objects. InitHand() is called once,
 * when the hand is created and is followed by a call to UpdateHand().
 */
-public abstract class HandModel : MonoBehaviour {
+public abstract class HandModel : IHandModel {
 
+  [SerializeField]
+  private Chirality handedness;
+  public override Chirality Handedness {
+    get { return handedness; }
+  }
+
+  private ModelType handModelType;
+  public override abstract ModelType HandModelType {
+    get;
+  }
+  
   /** The number of fingers on a hand.*/
   public const int NUM_FINGERS = 5;
 
@@ -45,21 +56,21 @@ public abstract class HandModel : MonoBehaviour {
   /** The Leap Hand object this hand model represents. */
   protected Hand hand_;
   /** The parent HandController object for this hand. */
-  protected HandController controller_;
-
-  /** Whether the parent HandController instance has been set to mirror across the z axis.*/
-  protected bool mirror_z_axis_ = false;
+  //protected HandController controller_;
+  protected LeapHandController controller_;
 
   /** 
   * Calculates the offset between the wrist position and the controller based
   * on the HandController.handMovementScale property and the Leap hand wrist position.
   */
+  //TODO: Remove this
   public Vector3 GetHandOffset() {
     if (controller_ == null || hand_ == null)
       return Vector3.zero;
 
     Vector3 additional_movement = controller_.handMovementScale - Vector3.one;
-    Vector3 scaled_wrist_position = Vector3.Scale(additional_movement, hand_.WristPosition.ToUnityScaled(mirror_z_axis_));
+
+    Vector3 scaled_wrist_position = Vector3.Scale(additional_movement, hand_.WristPosition.ToUnityScaled());
 
     return controller_.transform.TransformPoint(scaled_wrist_position) -
            controller_.transform.position;
@@ -69,21 +80,22 @@ public abstract class HandModel : MonoBehaviour {
   * @returns A Vector3 containing the Unity coordinates of the palm position.
   */
   public Vector3 GetPalmPosition() {
-    if (controller_ != null && hand_ != null) {
-      return controller_.transform.TransformPoint (hand_.PalmPosition.ToUnityScaled (mirror_z_axis_)) + GetHandOffset ();
-    }
-    if (palm) {
-      return palm.position;
-    }
-    return Vector3.zero;
+    //if (hand_ != null) {
+      return hand_.PalmPosition.ToVector3();
+
+    //}
+    //if (palm) {
+    //  return palm.position;
+    //}
+    //return Vector3.zero;
   }
 
   /** Calculates the rotation of the hand in global coordinates.
   * @returns A Quaternion representing the rotation of the hand. 
   */
   public Quaternion GetPalmRotation() {
-    if (controller_ != null && hand_ != null) {
-      return controller_.transform.rotation * hand_.Basis.Rotation(mirror_z_axis_);
+    if (hand_ != null) {
+      return hand_.Basis.Rotation();
     }
     if (palm) {
       return palm.rotation;
@@ -95,8 +107,8 @@ public abstract class HandModel : MonoBehaviour {
   * @returns A Vector3 representing the direction of the hand.
   */
   public Vector3 GetPalmDirection() {
-    if (controller_ != null && hand_ != null) {
-      return controller_.transform.TransformDirection(hand_.Direction.ToUnity(mirror_z_axis_));
+    if (hand_ != null) {
+      return hand_.Direction.ToUnity();
     }
     if (palm) {
       return palm.forward;
@@ -108,8 +120,8 @@ public abstract class HandModel : MonoBehaviour {
   * @returns A Vector3 representing the vector perpendicular to the palm.
   */
   public Vector3 GetPalmNormal() {
-    if (controller_ != null && hand_ != null) {
-      return controller_.transform.TransformDirection(hand_.PalmNormal.ToUnity(mirror_z_axis_));
+    if (hand_ != null) {
+      return hand_.PalmNormal.ToUnity();
     }
     if (palm) {
       return -palm.up;
@@ -121,8 +133,8 @@ public abstract class HandModel : MonoBehaviour {
   * @returns A Vector3 representing the direction of the forearm (pointing from elbow to wrist).
   */
   public Vector3 GetArmDirection() {
-    if (controller_ != null && hand_ != null) {
-      return controller_.transform.TransformDirection(hand_.Arm.Direction.ToUnity(mirror_z_axis_));
+    if (hand_ != null) {
+      return hand_.Arm.Direction.ToUnity();
     }
     if (forearm) {
       return forearm.forward;
@@ -134,9 +146,9 @@ public abstract class HandModel : MonoBehaviour {
   * @returns A Vector3 containing the Unity coordinates of the center of the forearm.
   */
   public Vector3 GetArmCenter() {
-    if (controller_ != null && hand_ != null) {
+    if (hand_ != null) {
       Vector leap_center = 0.5f * (hand_.Arm.WristPosition + hand_.Arm.ElbowPosition);
-      return controller_.transform.TransformPoint (leap_center.ToUnityScaled (mirror_z_axis_)) + GetHandOffset ();
+      return leap_center.ToUnityScaled();
     }
     if (forearm) {
       return forearm.position;
@@ -158,9 +170,9 @@ public abstract class HandModel : MonoBehaviour {
   * @returns A Vector3 containing the Unity coordinates of the elbow.
   */
   public Vector3 GetElbowPosition() {
-    if (controller_ != null && hand_ != null) {
-      Vector3 local_position = hand_.Arm.ElbowPosition.ToUnityScaled (mirror_z_axis_);
-      return controller_.transform.TransformPoint (local_position) + GetHandOffset ();
+    if (hand_ != null) {
+      Vector3 local_position = hand_.Arm.ElbowPosition.ToUnityScaled ();
+      return local_position;
     }
     if (elbowJoint) {
       return elbowJoint.position;
@@ -172,9 +184,9 @@ public abstract class HandModel : MonoBehaviour {
   * @returns A Vector3 containing the Unity coordinates of the wrist.
   */
   public Vector3 GetWristPosition() {
-    if (controller_ != null && hand_ != null) {
-      Vector3 local_position = hand_.Arm.WristPosition.ToUnityScaled (mirror_z_axis_);
-      return controller_.transform.TransformPoint (local_position) + GetHandOffset ();
+    if (hand_ != null) {
+      Vector3 local_position = hand_.Arm.WristPosition.ToUnityScaled ();
+      return local_position;
     }
     if (wristJoint) {
       return wristJoint.position;
@@ -186,9 +198,9 @@ public abstract class HandModel : MonoBehaviour {
   * @returns A Quaternion representing the rotation of the arm. 
   */
   public Quaternion GetArmRotation() {
-    if (controller_ != null && hand_ != null) {
-      Quaternion local_rotation = hand_.Arm.Basis.Rotation (mirror_z_axis_);
-      return controller_.transform.rotation * local_rotation;
+    if (hand_ != null) {
+      Quaternion local_rotation = hand_.Arm.Basis.Rotation ();
+      return local_rotation;
     }
     if (forearm) {
       return forearm.rotation;
@@ -202,7 +214,7 @@ public abstract class HandModel : MonoBehaviour {
   * Leap Hand object are relative to the Leap Motion coordinate system,
   * which uses a right-handed axes and units of millimeters.
   */
-  public Hand GetLeapHand() {
+  public override Hand GetLeapHand() {
     return hand_;
   }
 
@@ -211,7 +223,7 @@ public abstract class HandModel : MonoBehaviour {
   * Note that the Leap Hand objects are recreated every frame. The parent 
   * HandController calls this method to set or update the underlying hand.
   */
-  public void SetLeapHand(Hand hand) {
+  public override void SetLeapHand(Hand hand) {
     hand_ = hand;
     for (int i = 0; i < fingers.Length; ++i) {
       if (fingers[i] != null) {
@@ -221,32 +233,20 @@ public abstract class HandModel : MonoBehaviour {
     }
   }
 
-  /** 
-  * Sets the mirror z-axis flag for this Hand Model and its fingers.
-  * Mirroring the z axis reverses the hand so that they face the opposite direction -- as if in a mirror.
-  * @param mirror Set true, the default value to mirror; false for normal rendering. 
-  */
-  public void MirrorZAxis(bool mirror = true) {
-    mirror_z_axis_ = mirror;
-    for (int i = 0; i < fingers.Length; ++i) {
-      if (fingers[i] != null)
-        fingers[i].MirrorZAxis(mirror);
-    }
-  }
 
-  /** Whether this hand is currently mirrored.*/
-  public bool IsMirrored() {
-    return mirror_z_axis_;
-  }
 
+
+  //Todo Kill these
   /** The parent HandController object of this hand.*/
-  public HandController GetController() {
+  //public HandController GetController() {
+  public LeapHandController GetController() {
     return controller_;
   }
-
+ 
   /** Sets the parent HandController object. */
-  public void SetController(HandController controller) {
+  public void SetController(LeapHandController controller) {
     controller_ = controller;
+    Debug.Log("SetController:" + controller_);
     for (int i = 0; i < fingers.Length; ++i) {
       if (fingers[i] != null)
         fingers[i].SetController(controller_);
@@ -258,15 +258,14 @@ public abstract class HandModel : MonoBehaviour {
   * This function is called by the HandController during the Unity Update() phase when a new hand is detected
   * by the Leap Motion device.
   */
-  public virtual void InitHand() {
+  public override void InitHand() {
+    Debug.Log("HandModel.InitHand() +++++++++++++++++++++++++++++++++++++++++++");
     for (int f = 0; f < fingers.Length; ++f) {
       if (fingers[f] != null) {
         fingers[f].fingerType = (Finger.FingerType)f;
         fingers[f].InitFinger();
       }
     }
-
-    UpdateHand ();
   }
 
   /**
@@ -287,5 +286,5 @@ public abstract class HandModel : MonoBehaviour {
   * function during the Unity Update() phase. For HandModel instances in the physics hand list, the HandController
   * calls this function in the FixedUpdate() phase.
   */
-  public abstract void UpdateHand();
+  public override abstract void UpdateHand();
 }

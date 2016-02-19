@@ -1,15 +1,16 @@
-﻿/******************************************************************************\
+/******************************************************************************\
 * Copyright (C) Leap Motion, Inc. 2011-2014.                                   *
 * Leap Motion proprietary. Licensed under Apache 2.0                           *
 * Available at http://www.apache.org/licenses/LICENSE-2.0.html                 *
 \******************************************************************************/
 using UnityEngine;
 using UnityEngine.Serialization;
-using System.Runtime.InteropServices;
+using System;
 using Leap;
 
 // To use the LeapImageRetriever you must be on version 2.1+
 // and enable "Allow Images" in the Leap Motion settings.
+[ExecuteAfter(typeof(LeapProvider))]
 [RequireComponent(typeof(Camera))]
 public class LeapImageRetriever : MonoBehaviour {
   public const string GLOBAL_COLOR_SPACE_GAMMA_NAME = "_LeapGlobalColorSpaceGamma";
@@ -23,21 +24,30 @@ public class LeapImageRetriever : MonoBehaviour {
   public static LeapImageRetriever Instance {
     get {
       if (_instance == null) {
-        _instance = FindObjectOfType<LeapImageRetriever>();
-        if (_instance == null) {
-          Debug.LogError("Could not find an instance of LeapImageRetriever in the scene!  Make sure one exists and is enabled!");
-        }
+        Debug.LogError("Could not find an instance of LeapImageRetriever in the scene!  Make sure one exists and is enabled!");
       }
       return _instance;
     }
   }
 
   [SerializeField]
+  LeapProvider provider;
+  [SerializeField]
   [FormerlySerializedAs("gammaCorrection")]
   private float _gammaCorrection = 1.0f;
 
   private int _missedImages = 0;
   private EyeTextureData _eyeTextureData = new EyeTextureData();
+
+  //Image that we have requested from the service.  Are requested in Update and retrieved in OnPreRender
+  protected Image _requestedImage = new Image();
+
+  //Debug vars for image retrieval
+  protected int _requestedImages = 0;
+  protected int _lateImages = 0;
+  protected int _superLateImages = 0;
+  protected float _startTime = 0;
+  protected float _lastTime = 0;
 
   public EyeTextureData TextureData {
     get {
@@ -55,27 +65,27 @@ public class LeapImageRetriever : MonoBehaviour {
       }
     }
 
-    public bool CheckStale(Image left, Image right) {
+    public bool CheckStale(Image image) {
       if (_combinedTexture == null || _intermediateArray == null) {
         return true;
       }
 
-      if (left.Width != _combinedTexture.width || left.Height * 2 != _combinedTexture.height) {
+      if (image.Width != _combinedTexture.width || image.Height * 2 != _combinedTexture.height) {
         return true;
       }
 
-      if (_combinedTexture.format != getTextureFormat(left)) {
+      if (_combinedTexture.format != getTextureFormat(image)) {
         return true;
       }
 
       return false;
     }
 
-    public void Reconstruct(Image left, Image right, string globalShaderName, string pixelSizeName) {
-      int combinedWidth = left.Width;
-      int combinedHeight = left.Height * 2;
+    public void Reconstruct(Image image, string globalShaderName, string pixelSizeName) {
+      int combinedWidth = image.Width;
+      int combinedHeight = image.Height * 2;
 
-      TextureFormat format = getTextureFormat(left);
+      TextureFormat format = getTextureFormat(image);
 
       if (_combinedTexture != null) {
         DestroyImmediate(_combinedTexture);
@@ -90,12 +100,12 @@ public class LeapImageRetriever : MonoBehaviour {
       _intermediateArray = new byte[combinedWidth * combinedHeight * bytesPerPixel(format)];
 
       Shader.SetGlobalTexture(globalShaderName, _combinedTexture);
-      Shader.SetGlobalVector(pixelSizeName, new Vector2(1.0f / left.Width, 1.0f / left.Height));
+      Shader.SetGlobalVector(pixelSizeName, new Vector2(1.0f / image.Width, 1.0f / image.Height));
     }
 
-    public void UpdateTexture(Image left, Image right) {
-      Marshal.Copy(left.DataPointer(), _intermediateArray, 0, _intermediateArray.Length / 2);
-      Marshal.Copy(right.DataPointer(), _intermediateArray, _intermediateArray.Length / 2, _intermediateArray.Length / 2);
+    public void UpdateTexture(Image image) {
+      Array.Copy(image.Data, 0, _intermediateArray, 0, _intermediateArray.Length);
+      //	  Array.Copy(right.Data, 0, _intermediateArray, _intermediateArray.Length / 2, _intermediateArray.Length / 2);
       _combinedTexture.LoadRawTextureData(_intermediateArray);
       _combinedTexture.Apply();
     }
@@ -139,9 +149,9 @@ public class LeapImageRetriever : MonoBehaviour {
       return _combinedTexture == null;
     }
 
-    public void Reconstruct(Image leftImage, Image rightImage, string shaderName) {
-      int combinedWidth = leftImage.DistortionWidth / 2;
-      int combinedHeight = leftImage.DistortionHeight * 2;
+    public void Reconstruct(Image image, string shaderName) {
+      int combinedWidth = image.DistortionWidth / 2;
+      int combinedHeight = image.DistortionHeight * 2;
 
       if (_combinedTexture != null) {
         DestroyImmediate(_combinedTexture);
@@ -153,8 +163,8 @@ public class LeapImageRetriever : MonoBehaviour {
       _combinedTexture.wrapMode = TextureWrapMode.Clamp;
       _combinedTexture.hideFlags = HideFlags.DontSave;
 
-      addDistortionData(leftImage, colorArray, 0);
-      addDistortionData(rightImage, colorArray, colorArray.Length / 2);
+      addDistortionData(image, colorArray, 0);
+      //      addDistortionData(rightImage, colorArray, colorArray.Length / 2);
 
 
 
@@ -203,6 +213,7 @@ public class LeapImageRetriever : MonoBehaviour {
     public readonly LeapTextureData BrightTexture;
     public readonly LeapTextureData RawTexture;
     public readonly LeapDistortionData Distortion;
+    private bool _isStale = false;
 
     public static void ResetGlobalShaderValues() {
       Texture2D empty = new Texture2D(1, 1, TextureFormat.ARGB32, false, false);
@@ -221,19 +232,24 @@ public class LeapImageRetriever : MonoBehaviour {
       Distortion = new LeapDistortionData();
     }
 
-    public bool CheckStale(Image leftBright, Image rightBright, Image leftRaw, Image rightRaw) {
-      return BrightTexture.CheckStale(leftBright, rightBright) ||
-             RawTexture.CheckStale(leftRaw, rightRaw) ||
-             Distortion.CheckStale();
+    public bool CheckStale(Image bright, Image raw) {
+      return BrightTexture.CheckStale(bright) ||
+             RawTexture.CheckStale(raw) ||
+             Distortion.CheckStale() ||
+             _isStale;
     }
 
-    public void Reconstruct(Image leftBright, Image rightBright, Image leftRaw, Image rightRaw) {
-      BrightTexture.Reconstruct(leftBright, rightBright, GLOBAL_BRIGHT_TEXTURE_NAME, GLOBAL_BRIGHT_PIXEL_SIZE_NAME);
-      RawTexture.Reconstruct(leftRaw, rightRaw, GLOBAL_RAW_TEXTURE_NAME, GLOBAL_RAW_PIXEL_SIZE_NAME);
+    public void MarkStale() {
+      _isStale = true;
+    }
 
-      Distortion.Reconstruct(leftRaw, rightRaw, GLOBAL_DISTORTION_TEXTURE_NAME);
+    public void Reconstruct(Image bright, Image raw) {
+      BrightTexture.Reconstruct(bright, GLOBAL_BRIGHT_TEXTURE_NAME, GLOBAL_BRIGHT_PIXEL_SIZE_NAME);
+      RawTexture.Reconstruct(raw, GLOBAL_RAW_TEXTURE_NAME, GLOBAL_RAW_PIXEL_SIZE_NAME);
 
-      switch (leftRaw.Format) {
+      Distortion.Reconstruct(raw, GLOBAL_DISTORTION_TEXTURE_NAME);
+
+      switch (raw.Format) {
         case Image.FormatType.INFRARED:
           Shader.DisableKeyword(RGB_SHADER_VARIANT_NAME);
           Shader.EnableKeyword(IR_SHADER_VARIANT_NAME);
@@ -243,14 +259,16 @@ public class LeapImageRetriever : MonoBehaviour {
           Shader.EnableKeyword(RGB_SHADER_VARIANT_NAME);
           break;
         default:
-          Debug.LogWarning("Unexpected format type " + leftRaw.Format);
+          Debug.LogWarning("Unexpected format type " + raw.Format);
           break;
       }
+
+      _isStale = false;
     }
 
-    public void UpdateTextures(Image leftBright, Image rightBright, Image leftRaw, Image rightRaw) {
-      BrightTexture.UpdateTexture(leftBright, rightBright);
-      RawTexture.UpdateTexture(leftRaw, rightRaw);
+    public void UpdateTextures(Image bright, Image raw) {
+      BrightTexture.UpdateTexture(bright);
+      RawTexture.UpdateTexture(raw);
     }
   }
 
@@ -275,17 +293,26 @@ public class LeapImageRetriever : MonoBehaviour {
   }
 
   void Start() {
-    if (HandController.Main == null) {
-      Debug.LogWarning("Cannot use LeapImageRetriever if there is no main HandController!");
+    if (provider == null) {
+      Debug.LogWarning("Cannot use LeapImageRetriever if there is no LeapProvider!");
       enabled = false;
       return;
     }
 
     ApplyGammaCorrectionValues();
     ApplyCameraProjectionValues();
+  }
 
-    var controller = HandController.Main.GetLeapController();
-    controller.SetPolicy(Controller.PolicyFlag.POLICY_IMAGES);
+  void OnEnable() {
+    provider.GetLeapController().DistortionChange += onDistortionChange;
+  }
+
+  void OnDisable() {
+    provider.GetLeapController().DistortionChange -= onDistortionChange;
+
+    if (_instance == this) {
+      _instance = null;
+    }
   }
 
   void OnDestroy() {
@@ -294,34 +321,41 @@ public class LeapImageRetriever : MonoBehaviour {
     }
   }
 
-  void Update() {
-    Frame imageFrame = HandController.Main.GetImageFrame();
-
-    using (ImageList brightList = imageFrame.Images)
-    using (ImageList rawList = imageFrame.RawImages) {
-      if (brightList == null || brightList.Count == 0 || rawList == null || rawList.Count == 0) {
-        _missedImages++;
-        if (_missedImages == IMAGE_WARNING_WAIT) {
-          Debug.LogWarning("Can't find any images. " +
-            "Make sure you enabled 'Allow Images' in the Leap Motion Settings, " +
-            "you are on tracking version 2.1+ and " +
-            "your Leap Motion device is plugged in.");
-        }
-        return;
-      } else {
-        _missedImages = 0;
-      }
-      
-      using (Image leftBright = brightList[LEFT_IMAGE_INDEX])
-      using (Image rightBright = brightList[RIGHT_IMAGE_INDEX])
-      using (Image leftRaw = rawList[LEFT_IMAGE_INDEX])
-      using (Image rightRaw = rawList[RIGHT_IMAGE_INDEX]) {
-        if (_eyeTextureData.CheckStale(leftBright, rightBright, leftRaw, rightRaw)) {
-          _eyeTextureData.Reconstruct(leftBright, rightBright, leftRaw, rightRaw);
-        }
-        _eyeTextureData.UpdateTextures(leftBright, rightBright, leftRaw, rightRaw);
-      }
+  
+  void OnPreRender() {
+    Controller controller = provider.GetLeapController();
+    long start = controller.Now();
+    if (!_requestedImage.IsComplete) _lateImages++;
+    while (!_requestedImage.IsComplete) {
+      if (controller.Now() - start > 9000) break;
     }
+    if (_requestedImage.IsComplete) {
+      //Debug.Log("controller_.Now():" + controller.Now() + " - CurrentFrame.Timestamp:" + image.Timestamp + " = " + (controller.Now() - image.Timestamp));
+      //Debug.Log("LeapImageRetriever.OnPreRender image.SequenceId: " + image.SequenceId);
+      if (_eyeTextureData.CheckStale(_requestedImage, _requestedImage)) {
+        _eyeTextureData.Reconstruct(_requestedImage, _requestedImage);
+      }
+      _eyeTextureData.UpdateTextures(_requestedImage, _requestedImage);
+    } else {
+      //            Debug.Log("Shucks");
+      _superLateImages++;
+    }
+  }
+  
+  void Update() {
+    _startTime = Time.time;
+    if (_startTime - _lastTime > 1) {
+      //Debug.Log("Late images per second: " + (lateImages - superLateImages) + " lost images " + superLateImages + " out of " + requestedImages);
+      _lateImages = 0;
+      _superLateImages = 0;
+      _requestedImages = 0;
+      _lastTime = _startTime;
+    }
+    _requestedImages++;
+    Frame imageFrame = provider.CurrentFrame;
+    Controller controller = provider.GetLeapController();
+
+    _requestedImage = controller.RequestImages(imageFrame.Id, Image.ImageType.DEFAULT);
   }
 
   public void ApplyGammaCorrectionValues() {
@@ -343,5 +377,9 @@ public class LeapImageRetriever : MonoBehaviour {
     projection.z = c.projectionMatrix[0, 0];
     projection.w = c.projectionMatrix[1, 1];
     Shader.SetGlobalVector(GLOBAL_CAMERA_PROJECTION_NAME, projection);
+  }
+
+  void onDistortionChange(object sender, LeapEventArgs args) {
+    _eyeTextureData.MarkStale();
   }
 }

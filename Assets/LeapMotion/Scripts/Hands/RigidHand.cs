@@ -10,7 +10,11 @@ using Leap;
 
 // The model for our rigid hand made out of various polyhedra.
 public class RigidHand : SkeletalHand {
-
+  public override ModelType HandModelType {
+    get {
+      return ModelType.Physics;
+    }
+  }
   public float filtering = 0.5f;
 
   public override void InitHand() {
@@ -18,9 +22,11 @@ public class RigidHand : SkeletalHand {
   }
 
   public override void UpdateHand() {
+
     for (int f = 0; f < fingers.Length; ++f) {
-      if (fingers[f] != null)
+      if (fingers[f] != null) {
         fingers[f].UpdateFinger();
+      }
     }
 
     if (palm != null) {

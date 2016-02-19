@@ -20,7 +20,7 @@ namespace Leap {
     /** Scale factor from Leap units (millimeters) to Unity units (meters). */
     public const float INPUT_SCALE = 0.001f;
     /** Constant used when converting from right-handed to left-handed axes.*/
-    public static readonly Vector3 Z_FLIP = new Vector3(1, 1, -1);
+    public static readonly Vector3 Z_FLIP = new Vector3(1, 1, 1);
 
     /** 
      * Converts a direction vector from Leap to Unity. (Does not scale.) 
@@ -31,10 +31,7 @@ namespace Leap {
      * @param mirror If true, the vector is reflected along the z axis.
      * @param leap_vector the Leap.Vector object to convert.
      */
-    public static Vector3 ToUnity(this Vector leap_vector, bool mirror = false) {
-      if (mirror)
-        return ToVector3(leap_vector);
-
+    public static Vector3 ToUnity(this Vector leap_vector) {
       return FlipZ(ToVector3(leap_vector));
     }
 
@@ -49,18 +46,17 @@ namespace Leap {
      * @param mirror If true, the vector is reflected along the z axis.
      * @param leap_vector the Leap.Vector object to convert. 
      */
-    public static Vector3 ToUnityScaled(this Vector leap_vector, bool mirror = false) {
-      if (mirror)
-        return INPUT_SCALE * ToVector3(leap_vector);
-      
-      return INPUT_SCALE * FlipZ(ToVector3(leap_vector));
+    public static Vector3 ToUnityScaled(this Vector leap_vector) {      
+      //return INPUT_SCALE * FlipZ(ToVector3(leap_vector));
+      return FlipZ(ToVector3(leap_vector));
+
     }
 
     private static Vector3 FlipZ(Vector3 vector) {
       return Vector3.Scale(vector, Z_FLIP);
     }
 
-    private static Vector3 ToVector3(Vector vector) {
+    public static Vector3 ToVector3(this Vector vector) {
       return new Vector3(vector.x, vector.y, vector.z);
     }
   }
@@ -84,9 +80,11 @@ namespace Leap {
      * @param matrix The Leap.Matrix to convert.
      * @param mirror If true, the operation is reflected along the z axis.
      */
-    public static Quaternion Rotation(this Matrix matrix, bool mirror = false) {
-      Vector3 up = matrix.TransformDirection(LEAP_UP).ToUnity(mirror);
-      Vector3 forward = matrix.TransformDirection(LEAP_FORWARD).ToUnity(mirror);
+    public static Quaternion Rotation(this Matrix matrix) {
+      //Vector3 up = matrix.TransformDirection(LEAP_UP).ToUnity(mirror);
+      //Vector3 forward = matrix.TransformDirection(LEAP_FORWARD).ToUnity(mirror);
+      Vector3 up = matrix.yBasis.ToUnity();
+      Vector3 forward = -matrix.zBasis.ToUnity();
       return Quaternion.LookRotation(forward, up);
     }
 
@@ -98,7 +96,7 @@ namespace Leap {
      * @param mirror If true, the operation is reflected along the z axis.
      */
     public static Vector3 Translation(this Matrix matrix, bool mirror = false) {
-      return matrix.TransformPoint(LEAP_ORIGIN).ToUnityScaled(mirror);
+      return matrix.TransformPoint(LEAP_ORIGIN).ToUnityScaled();
     }
   }
 }

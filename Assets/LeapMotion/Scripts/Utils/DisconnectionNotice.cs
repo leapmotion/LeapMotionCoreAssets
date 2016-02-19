@@ -24,7 +24,7 @@ public class DisconnectionNotice : MonoBehaviour {
   /** A delay before beginning the fade-in effect. */
   public int waitFrames = 10;
   /** An alternative image to use when the hardware is embedded in a keyboard or laptop. */
-  public Texture2D embeddedReplacementImage;
+  public Sprite embeddedReplacementImage;
   /** The fully on texture tint color. */
   public Color onColor = Color.white;
 
@@ -38,7 +38,7 @@ public class DisconnectionNotice : MonoBehaviour {
   }
 
   void SetAlpha(float alpha) {
-    GetComponent<GUITexture>().color = Color.Lerp(Color.clear, onColor, alpha);
+    GetComponent<UnityEngine.UI.Image>().color = Color.Lerp(Color.clear, onColor, alpha);
   }
 
   /** The connection state of the controller. */
@@ -56,7 +56,7 @@ public class DisconnectionNotice : MonoBehaviour {
         
   void Update() {
     if (embeddedReplacementImage != null && IsEmbedded()) {
-      GetComponent<GUITexture>().texture = embeddedReplacementImage;
+      GetComponent<UnityEngine.UI.Image>().sprite = embeddedReplacementImage;
     }
 
     if (IsConnected())

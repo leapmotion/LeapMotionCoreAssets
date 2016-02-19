@@ -10,11 +10,17 @@ using Leap;
 
 // Class to setup a rigged hand based on a model.
 public class RiggedHand : HandModel {
-	
+  public override ModelType HandModelType {
+    get {
+      return ModelType.Graphics;
+    }
+  }
+
   public Vector3 modelFingerPointing = Vector3.forward;
   public Vector3 modelPalmFacing = -Vector3.up;
 
   public override void InitHand() {
+    Debug.Log("HandModel.InitHand()");
     UpdateHand();
   }
 

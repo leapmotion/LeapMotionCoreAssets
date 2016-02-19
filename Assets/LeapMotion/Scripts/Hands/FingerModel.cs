@@ -47,15 +47,15 @@ public abstract class FingerModel : MonoBehaviour {
   protected bool mirror_z_axis_ = false;
 
   /** The parent HandController instance. */
-  protected HandController controller_;
+  protected LeapHandController controller_;
 
   /** Assigns the HandController parent for this FingerModel object. */
-  public void SetController(HandController controller) {
+  public void SetController(LeapHandController controller) {
     controller_ = controller;
   }
 
   /** The parent HandController instance. */
-  public HandController GetController() {
+  public LeapHandController GetController() {
     return controller_;
   }
 
@@ -115,11 +115,12 @@ public abstract class FingerModel : MonoBehaviour {
     return offset_;
   }
 
-  /** Returns the location of the tip of the finger in relation to the controller.*/
+  /** Returns the location of the tip of the finger */
   public Vector3 GetTipPosition() {
-    if (controller_ != null && finger_ != null) {
-      Vector3 local_tip = finger_.Bone ((Bone.BoneType.TYPE_DISTAL)).NextJoint.ToUnityScaled (mirror_z_axis_);
-      return controller_.transform.TransformPoint (local_tip) + offset_;
+    if (finger_ != null) {
+      Vector3 local_tip = finger_.Bone ((Bone.BoneType.TYPE_DISTAL)).NextJoint.ToUnityScaled ();
+      return local_tip;
+
     }
     if (bones [NUM_BONES - 1] && joints [NUM_JOINTS - 2]) {
       return 2f*bones [NUM_BONES - 1].position - joints [NUM_JOINTS - 2].position;
@@ -127,14 +128,15 @@ public abstract class FingerModel : MonoBehaviour {
     return Vector3.zero;
   }
 
-  /** Returns the location of the given joint on the finger in relation to the controller.*/
+  /** Returns the location of the given joint on the finger */
   public Vector3 GetJointPosition(int joint) {
     if (joint >= NUM_BONES) {
       return GetTipPosition ();
     }
-    if (controller_ != null && finger_ != null) {
-      Vector3 local_position = finger_.Bone ((Bone.BoneType)(joint)).PrevJoint.ToUnityScaled (mirror_z_axis_);
-      return controller_.transform.TransformPoint (local_position) + offset_;
+    if (finger_ != null) {
+      Vector3 local_position = finger_.Bone ((Bone.BoneType)(joint)).PrevJoint.ToUnityScaled ();
+      return local_position;
+
     }
     if (joints [joint]) {
       return joints[joint].position;
@@ -148,11 +150,12 @@ public abstract class FingerModel : MonoBehaviour {
     return ray;
   }
 
-  /** Returns the center of the given bone on the finger in relation to the controller.*/
+  /** Returns the center of the given bone on the finger */
   public Vector3 GetBoneCenter(int bone_type) {
-    if (controller_ != null && finger_ != null) {
+    if (finger_ != null) {
       Bone bone = finger_.Bone ((Bone.BoneType)(bone_type));
-      return controller_.transform.TransformPoint (bone.Center.ToUnityScaled (mirror_z_axis_)) + offset_;
+      return bone.Center.ToUnityScaled();
+
     }
     if (bones [bone_type]) {
       return bones[bone_type].position;
@@ -160,9 +163,9 @@ public abstract class FingerModel : MonoBehaviour {
     return Vector3.zero;
   }
 
-  /** Returns the direction the given bone is facing on the finger in relation to the controller.*/
+  /** Returns the direction the given bone is facing on the finger */
   public Vector3 GetBoneDirection(int bone_type) {
-    if (controller_ != null && finger_ != null) {
+    if (finger_ != null) {
       Vector3 direction = GetJointPosition (bone_type + 1) - GetJointPosition (bone_type);
       return direction.normalized;
     }
@@ -172,11 +175,12 @@ public abstract class FingerModel : MonoBehaviour {
     return Vector3.forward;
   }
 
-  /** Returns the rotation quaternion of the given bone in relation to the controller.*/
+  /** Returns the rotation quaternion of the given bone */
   public Quaternion GetBoneRotation(int bone_type) {
-    if (controller_ != null && finger_ != null) {
-      Quaternion local_rotation = finger_.Bone ((Bone.BoneType)(bone_type)).Basis.Rotation (mirror_z_axis_);
-      return controller_.transform.rotation * local_rotation;
+    if (finger_ != null) {
+      Quaternion local_rotation = finger_.Bone ((Bone.BoneType)(bone_type)).Basis.Rotation ();
+      return local_rotation;
+
     }
     if (bones[bone_type]) {
       return bones[bone_type].rotation;
@@ -186,12 +190,16 @@ public abstract class FingerModel : MonoBehaviour {
   
   /** Returns the length of the finger bone.*/
   public float GetBoneLength(int bone_type) {
-    return finger_.Bone ((Bone.BoneType)(bone_type)).Length * UnityVectorExtension.INPUT_SCALE;
+    //return finger_.Bone ((Bone.BoneType)(bone_type)).Length * UnityVectorExtension.INPUT_SCALE;
+    return finger_.Bone((Bone.BoneType)(bone_type)).Length;
+
   }
   
   /** Returns the width of the finger bone.*/
   public float GetBoneWidth(int bone_type) {
-    return finger_.Bone((Bone.BoneType)(bone_type)).Width * UnityVectorExtension.INPUT_SCALE;
+    //return finger_.Bone((Bone.BoneType)(bone_type)).Width * UnityVectorExtension.INPUT_SCALE;
+    return finger_.Bone((Bone.BoneType)(bone_type)).Width;
+
   }
   
   /**
@@ -204,8 +212,8 @@ public abstract class FingerModel : MonoBehaviour {
     // so the inverse of the parent rotation appears on the left.
     Quaternion jointRotation = Quaternion.identity;
     if (finger_ != null) {
-      jointRotation = Quaternion.Inverse (finger_.Bone ((Bone.BoneType)(joint_type)).Basis.Rotation (mirror_z_axis_)) 
-        * finger_.Bone ((Bone.BoneType)(joint_type + 1)).Basis.Rotation (mirror_z_axis_);
+      jointRotation = Quaternion.Inverse (finger_.Bone ((Bone.BoneType)(joint_type)).Basis.Rotation ()) 
+        * finger_.Bone ((Bone.BoneType)(joint_type + 1)).Basis.Rotation ();
     } else if (bones [joint_type] && bones [joint_type + 1]) {
       jointRotation = Quaternion.Inverse (GetBoneRotation (joint_type)) * GetBoneRotation (joint_type + 1);
     }
@@ -230,8 +238,8 @@ public abstract class FingerModel : MonoBehaviour {
     // so the inverse of the parent rotation appears on the left.
     Quaternion jointRotation = Quaternion.identity;
     if (finger_ != null) {
-      jointRotation = Quaternion.Inverse (finger_.Bone ((Bone.BoneType)(0)).Basis.Rotation (mirror_z_axis_)) 
-        * finger_.Bone ((Bone.BoneType)(1)).Basis.Rotation (mirror_z_axis_);
+      jointRotation = Quaternion.Inverse (finger_.Bone ((Bone.BoneType)(0)).Basis.Rotation ()) 
+        * finger_.Bone ((Bone.BoneType)(1)).Basis.Rotation ();
     } else if (bones [0] && bones [1]) {
       jointRotation = Quaternion.Inverse (GetBoneRotation (0)) * GetBoneRotation (1);
     }
