@@ -1,0 +1,36 @@
+v2.2
+ - Added support for LeapMotion v2.2
+ - Passthrough improvement
+ - Added support for Dragonfly
+
+v1.0
+ - Skin textures for hands
+ - Rigged hand with forearms
+ - Miscellaneous bug fixes
+
+v0.5
+ - New hand models!
+ - Easy to enable Head Mounted Display (HMD) mode
+
+v0.4.0
+ - Added image passthrough scripts and prefabs.
+ - Added Recording and playback functionality.
+ - Added field of view to HandController prefab in Scene view.
+ - Fixed a couple bugs in the Interaction Utilities.
+ - Fixed a rotational bug in the Rigid Hand for low frame rates.
+
+v0.3.0
+ - Added Interaction Utilities (alpha)
+ - Added the FingerModel GetRay() function.
+ - Fixed Rigid Hand initial scaling issue.
+
+v0.2.0
+ - Added non-relative hand movement vector so you can you have small hands travel long distances.
+ - Added tool tracking and some example tools.
+ - Added a robot hand.
+ - Added a debug hand.
+ - Added example scenes.
+ - Fixed a bug in the Magnetic Pinch script.
+
+v0.1.0
+ - Initial Release
