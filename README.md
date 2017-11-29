@@ -15,3 +15,9 @@ LeapMotionCoreAssets
 2.2.0.23475 - 4b81270ffaebeb65d99753d40f0d6fb9584915f0
 - Leap Motion v2.2.0.23475
 - Oculus 0.4.4
+
+## License
+
+Use of Leap Motion Core Assets is subject to the [Leap Motion developer SDK agreement][sdkagreement].
+
+[sdkagreement]: https://developer.leapmotion.com/sdk_agreement "Leap Motion Developer SDK Agreement"
