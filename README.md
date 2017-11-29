@@ -18,6 +18,6 @@ LeapMotionCoreAssets
 
 ## License
 
-Use of Leap Motion's UnityModules is subject to the [Leap Motion developer SDK agreement][sdkagreement].
+Use of Leap Motion Core Assets is subject to the [Leap Motion developer SDK agreement][sdkagreement].
 
 [sdkagreement]: https://developer.leapmotion.com/sdk_agreement "Leap Motion Developer SDK Agreement"
