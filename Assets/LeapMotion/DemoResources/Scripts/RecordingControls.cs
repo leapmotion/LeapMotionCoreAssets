@@ -1,11 +1,11 @@
 ﻿using UnityEngine;
-using System.Collections;
+using UnityEngine.UI;
 
 public class RecordingControls : MonoBehaviour {
   [Multiline]
   public string header;
-  public GUIText controlsGui;
-  public GUIText recordingGui;
+  public Text controlsGui;
+  public Text recordingGui;
 
   public KeyCode beginRecordingKey = KeyCode.R;
   public KeyCode endRecordingKey = KeyCode.R;

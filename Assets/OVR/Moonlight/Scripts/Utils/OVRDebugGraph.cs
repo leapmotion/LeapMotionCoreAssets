@@ -50,7 +50,7 @@ public class OVRDebugGraph : MonoBehaviour
 	/// </summary>
 	void Start()
 	{
-		if (!VR.VRDevice.isPresent)
+		if (!UnityEngine.XR.XRDevice.isPresent)
 		{
 			enabled = false;
 			return;
