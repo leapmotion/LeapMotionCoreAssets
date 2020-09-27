@@ -105,8 +105,8 @@ public class OVROverlay : MonoBehaviour
 		Transform camPose = Camera.current.transform;
 		Matrix4x4 modelToCamera = camPose.worldToLocalMatrix * transform.localToWorldMatrix;
 
-		Vector3 headPos = VR.InputTracking.GetLocalPosition(VR.VRNode.Head);
-		Quaternion headOrt = VR.InputTracking.GetLocalRotation(VR.VRNode.Head);
+		Vector3 headPos = UnityEngine.XR.InputTracking.GetLocalPosition(UnityEngine.XR.XRNode.Head);
+		Quaternion headOrt = UnityEngine.XR.InputTracking.GetLocalRotation(UnityEngine.XR.XRNode.Head);
 		Matrix4x4 cameraToStart = Matrix4x4.TRS(headPos, headOrt, Vector3.one);
 
 		Matrix4x4 modelToStart = cameraToStart * modelToCamera;

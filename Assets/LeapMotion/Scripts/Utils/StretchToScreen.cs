@@ -5,12 +5,10 @@
 \******************************************************************************/
 
 using UnityEngine;
-using System.Collections;
 
 public class StretchToScreen : MonoBehaviour {
 
   void Awake() {
-    GetComponent<GUITexture>().pixelInset = new Rect(0.0f, 0.0f, Screen.width, Screen.height);
+    GetComponent<UnityEngine.UI.Image>().SetClipRect(new Rect(0.0f, 0.0f, Screen.width, Screen.height), true);
   }
 }
-

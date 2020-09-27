@@ -156,7 +156,7 @@ public class OVRProfile : Object
 		locale = jniOvr.CallStatic<string>("getProfileLocale");
 #endif
 
-		if (VR.VRDevice.isPresent)
+		if (UnityEngine.XR.XRDevice.isPresent)
 		{
 			ipd = OVRPlugin.ipd;
 			eyeHeight = OVRPlugin.eyeHeight;

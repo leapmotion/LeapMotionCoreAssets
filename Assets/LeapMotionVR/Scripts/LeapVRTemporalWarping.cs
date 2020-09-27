@@ -196,7 +196,7 @@ public class LeapVRTemporalWarping : MonoBehaviour {
 
   protected void Update() {
     if (Input.GetKeyDown(recenter)) {
-      InputTracking.Recenter();
+      UnityEngine.XR.InputTracking.Recenter();
     }
 
     // Manual Time Alignment
@@ -231,8 +231,8 @@ public class LeapVRTemporalWarping : MonoBehaviour {
     long leapNow = HandController.Main.GetLeapController().Now();
     _history.Add(new TransformData() {
       leapTime = leapNow,
-      localPosition = InputTracking.GetLocalPosition(VRNode.CenterEye),
-      localRotation = InputTracking.GetLocalRotation(VRNode.CenterEye)
+      localPosition = UnityEngine.XR.InputTracking.GetLocalPosition(UnityEngine.XR.XRNode.CenterEye),
+      localRotation = UnityEngine.XR.InputTracking.GetLocalRotation(UnityEngine.XR.XRNode.CenterEye)
     });
 
     // Reduce history length
@@ -247,8 +247,8 @@ public class LeapVRTemporalWarping : MonoBehaviour {
       return;
     }
 
-    Vector3 currCenterPos = _trackingAnchor.TransformPoint(InputTracking.GetLocalPosition(VRNode.CenterEye));
-    Quaternion currCenterRot = _trackingAnchor.rotation * InputTracking.GetLocalRotation(VRNode.CenterEye);
+    Vector3 currCenterPos = _trackingAnchor.TransformPoint(UnityEngine.XR.InputTracking.GetLocalPosition(UnityEngine.XR.XRNode.CenterEye));
+    Quaternion currCenterRot = _trackingAnchor.rotation * UnityEngine.XR.InputTracking.GetLocalRotation(UnityEngine.XR.XRNode.CenterEye);
 
     //Get the transform at the time when the latest image was captured
     long rewindTime = HandController.Main.GetFrame().Timestamp;

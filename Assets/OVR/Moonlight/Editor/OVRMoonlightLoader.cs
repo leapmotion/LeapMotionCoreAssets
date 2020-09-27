@@ -82,11 +82,11 @@ class OVRMoonlightLoader
 		if (!PlayerSettings.virtualRealitySupported)
 			return;
 
-		if (PlayerSettings.bundleIdentifier == "" || PlayerSettings.bundleIdentifier == "com.Company.ProductName")
+		if (PlayerSettings.applicationIdentifier == "" || PlayerSettings.applicationIdentifier == "com.Company.ProductName")
 		{
 			string defaultBundleId = "com.oculus.UnitySample";
-			Debug.LogWarning("\"" + PlayerSettings.bundleIdentifier + "\" is not a valid bundle identifier. Defaulting to \"" + defaultBundleId + "\".");
-			PlayerSettings.bundleIdentifier = defaultBundleId;
+			Debug.LogWarning("\"" + PlayerSettings.applicationIdentifier + "\" is not a valid bundle identifier. Defaulting to \"" + defaultBundleId + "\".");
+			PlayerSettings.applicationIdentifier = defaultBundleId;
 		}
 	}
 }
